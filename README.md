@@ -44,14 +44,14 @@ through UDFs/UDAFs/UDTFs of Hive.
 Basic Usage
 ------------
 
-``sql
+```sql
 SELECT 
   feature, 
   CAST(avg(weight) as FLOAT) as weight
 FROM
  (SELECT logress(features,label) as (feature,weight) FROM training_features) t
 GROUP BY feature;
-``
+```
 
 License
 ---------
@@ -63,7 +63,7 @@ According to LGPL 2.1, softwares that modifies/copies Hivemall MUST open their s
 On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.
 
 If you want other (commercial) licensing options, please contact me.
-Makoto YUI <m.yui AT aist.go.jp>
+Makoto YUI \<m.yui AT aist.go.jp\>
 
 Copyright
 ---------
