@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+-- macros available from hive 0.12.0
+-- see https://issues.apache.org/jira/browse/HIVE-2655
+
+--------------------------
+-- Statistics functions --
+--------------------------
+
+create temporary macro SIGMOID(x DOUBLE)
+1.0 / (1.0 + exp(-x));
+
+--------------------------
+-- Evaluation functions --
+--------------------------
+
+-- Root Mean Squared Error
+create temporary macro RMSE(predicted FLOAT, actual FLOAT)
+sqrt(sum(pow(predicted - actual,2.0))/count(1));
+
+-- Mean Squared Error
+create temporary macro MSE(predicted FLOAT, actual FLOAT)
+sum(pow(predicted - actual,2.0))/count(1);
+
+-- Mean Absolute Error
+create temporary macro MAE(predicted FLOAT, actual FLOAT)
+sum(abs(predicted - actual))/count(1);
+
+-- sum of squared errors
+create temporary macro SSE(predicted FLOAT, actual FLOAT)
+sum(pow(actual - predicted,2.0));
+
+-- sum of squared total
+create temporary macro SST(actual FLOAT, mean_actual FLOAT)
+sum(pow(actual-mean_actual,2.0));
+
+-- coefficient of determination (R^2)
+create temporary macro R2(predicted FLOAT, actural FLOAT, mean_actual FLOAT)
+1 - (SSE(predicted, actual) / SST(actual, mean_actual));

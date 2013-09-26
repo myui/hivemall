@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+-- delete jar /home/myui/tmp/hivemall.jar;
+-- add jar /home/myui/tmp/hivemall.jar;
+
+-- drop temporary function LogressAggr;
+-- create temporary function LogressAggr as 'hivemall.regression.LogressAggrUDAF';
+
+-- drop temporary function LogressLiblinear;
+-- create temporary function LogressLiblinear as 'hivemall.regression.LogressLiblinearUDTF';
+
+drop temporary function logress;
+create temporary function logress as 'hivemall.regression.LogressUDTF';
+
+drop temporary function logress_iter;
+create temporary function logress_iter as 'hivemall.regression.LogressIterUDTF';
+
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';

@@ -1,0 +1,27 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+----------------------
+-- voting functions --
+----------------------
+
+drop temporary function voted_avg;
+create temporary function voted_avg as 'hivemall.ensemble.bagging.VotedAvgUDAF';
+
+drop temporary function weight_voted_avg;
+create temporary function weight_voted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF';
+
+--------------------
+-- misc functions --
+--------------------
+
+drop temporary function max_label;
+create temporary function max_label as 'hivemall.ensemble.MaxValueLabelUDAF';
+
+drop temporary function maxrow;
+create temporary function maxrow as 'hivemall.ensemble.MaxRowUDAF';

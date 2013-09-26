@@ -1,0 +1,49 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+-----------------------
+-- hashing functions --
+-----------------------
+
+drop temporary function mhash;
+create temporary function mhash as 'hivemall.ftvec.hashing.MurmurHash3UDF';
+
+drop temporary function sha1;
+create temporary function sha1 as 'hivemall.ftvec.hashing.Sha1UDF';
+
+drop temporary function array_hash_values;
+create temporary function array_hash_values as 'hivemall.ftvec.array.ArrayHashValuesUDF';
+
+-----------------------
+-- scaling functions --
+-----------------------
+
+drop temporary function rescale;
+create temporary function rescale as 'hivemall.ftvec.scaling.RescaleUDF';
+
+drop temporary function rescale_fv;
+create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleFeatureValueUDF';
+
+drop temporary function zscore;
+create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
+
+--------------------
+-- misc functions --
+--------------------
+
+drop temporary function amplify;
+create temporary function amplify as 'hivemall.ftvec.AmplifierUDTF';
+
+drop temporary function conv2dense;
+create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
+
+drop temporary function addBias;
+create temporary function addBias as 'hivemall.ftvec.FtvecAddBiasUDF';
+
+drop temporary function sortByFeature;
+create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
