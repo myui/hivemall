@@ -60,7 +60,7 @@ FROM
 GROUP BY feature;
 ```
 
-Find more examples on our wiki page.
+Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/_pages).
 
 License
 ---------
