@@ -1,42 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="hivemall">
-    <property environment="env"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.6"/>
-    <property name="source" value="1.6"/>
-    <path id="hivemall.classpath">
-        <pathelement location="build"/>
-    	<pathelement location="lib/commons-cli-1.2.jar"/>
-        <pathelement location="lib/commons-logging-1.0.4.jar"/>
-        <pathelement location="lib/hadoop-core-0.20.2-cdh3u5.jar"/>
-        <pathelement location="lib/hive-exec-0.9.0.jar"/>
-        <pathelement location="lib/hive-serde-0.9.0.jar"/>
-    </path>
-    <target name="init">
-        <mkdir dir="build"/>
-        <copy includeemptydirs="false" todir="build">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-    </target>
-    <target name="clean">
-        <delete dir="build"/>
-    </target>
-    <target depends="clean" name="cleanall"/>
-    <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects"/>
-    <target depends="init" name="build-project">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="build" source="${source}" target="${target}">
-            <src path="src"/>
-            <classpath refid="hivemall.classpath"/>
-        </javac>
-    </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+<project basedir="." default="jar" name="hivemall">
+
+	<property file="build.properties" />
+
+	<path id="classpath">
+		<fileset dir="lib/">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="compile">
+		<delete failonerror="true" dir="${build.dir}" />
+		<mkdir dir="${build.dir}" />
+		<javac includeantruntime="false" bootclasspath="${java.bootclasspath}" srcdir="${src.dir}" destdir="${build.dir}" source="${javac.source}" target="${javac.target}" debug="${javac.debug}" debuglevel="${javac.debuglevel}">
+			<classpath>
+				<path refid="classpath" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall.jar" />
+		<jar destfile="${target.dir}/hivemall.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${jar.title}" />
+				<attribute name="Implementation-Version" value="${version}" />
+				<attribute name="Implementation-Vendor" value="${jar.vendor}" />
+			</manifest>
+		</jar>
+		<delete failonerror="true" dir="${build.dir}" />
+	</target>
+
+	<target name="javadoc" depends="compile">
+		<delete failonerror="true" dir="${javadoc.dstdir}" />
+		<mkdir dir="${javadoc.dstdir}" />
+		<javadoc windowtitle="${javadoc.title}" doctitle="${javadoc.title}" bottom="${javadoc.bottom}" failonerror="true" classpathref="classpath" excludepackagenames="${javadoc.excludepackagenames}" linksource="${javadoc.linksource}" destdir="${javadoc.dstdir}" sourcepath="${src.dir}" useexternalfile="true" docencoding="${javadoc.docencoding}" locale="${javadoc.locale}" link="${javadoc.link}" private="${javadoc.private}" />
+	</target>
+
+	<target name="clean">
+		<delete failonerror="true">
+			<fileset dir="${target.dir}" excludes=".gitignore"/>
+		</delete>
+	</target>
+
 </project>

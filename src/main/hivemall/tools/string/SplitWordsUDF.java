@@ -28,7 +28,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 public class SplitWordsUDF extends UDF {
 
     public List<String> evaluate(String query) {
-        return evaluate(query, "[\\s　]+");
+        return evaluate(query, "[\\s ]+");
     }
 
     public List<String> evaluate(String query, String regex) {
