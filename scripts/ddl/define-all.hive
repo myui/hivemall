@@ -9,9 +9,9 @@
 -- delete jar /home/myui/tmp/hivemall.jar;
 -- add jar /home/myui/tmp/hivemall.jar;
 
------------------------
- binary classification
------------------------
+---------------------------
+-- binary classification --
+---------------------------
 
 drop temporary function perceptron;
 create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
@@ -25,9 +25,9 @@ create temporary function train_pa1 as 'hivemall.classifier.PassiveAggressiveUDT
 drop temporary function train_pa2;
 create temporary function train_pa2 as 'hivemall.classifier.PassiveAggressiveUDTF$PA2';
 
-----------------------------
- Multiclass classification
-----------------------------
+--------------------------------
+--  Multiclass classification --
+-------------------------------- 
 
 drop temporary function train_multiclass_perceptron;
 create temporary function train_multiclass_perceptron as 'hivemall.classifier.multiclass.MulticlassPerceptronUDTF';
