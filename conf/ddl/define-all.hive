@@ -1,0 +1,178 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+-- delete jar /home/myui/tmp/hivemall.jar;
+-- add jar /home/myui/tmp/hivemall.jar;
+
+-----------------------
+ binary classification
+-----------------------
+
+drop temporary function perceptron;
+create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
+
+drop temporary function train_pa;
+create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
+
+drop temporary function train_pa1;
+create temporary function train_pa1 as 'hivemall.classifier.PassiveAggressiveUDTF$PA1';
+
+drop temporary function train_pa2;
+create temporary function train_pa2 as 'hivemall.classifier.PassiveAggressiveUDTF$PA2';
+
+----------------------------
+ Multiclass classification
+----------------------------
+
+drop temporary function train_multiclass_perceptron;
+create temporary function train_multiclass_perceptron as 'hivemall.classifier.multiclass.MulticlassPerceptronUDTF';
+
+drop temporary function train_multiclass_pa;
+create temporary function train_multiclass_pa as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF';
+
+drop temporary function train_multiclass_pa1;
+create temporary function train_multiclass_pa1 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA1';
+
+drop temporary function train_multiclass_pa2;
+create temporary function train_multiclass_pa2 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2';
+
+----------------------
+-- voting functions --
+----------------------
+
+drop temporary function voted_avg;
+create temporary function voted_avg as 'hivemall.ensemble.bagging.VotedAvgUDAF';
+
+drop temporary function weight_voted_avg;
+create temporary function weight_voted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF';
+
+--------------------
+-- misc functions --
+--------------------
+
+drop temporary function max_label;
+create temporary function max_label as 'hivemall.ensemble.MaxValueLabelUDAF';
+
+drop temporary function maxrow;
+create temporary function maxrow as 'hivemall.ensemble.MaxRowUDAF';
+
+-----------------------
+-- hashing functions --
+-----------------------
+
+drop temporary function mhash;
+create temporary function mhash as 'hivemall.ftvec.hashing.MurmurHash3UDF';
+
+drop temporary function sha1;
+create temporary function sha1 as 'hivemall.ftvec.hashing.Sha1UDF';
+
+drop temporary function array_hash_values;
+create temporary function array_hash_values as 'hivemall.ftvec.array.ArrayHashValuesUDF';
+
+-----------------------
+-- scaling functions --
+-----------------------
+
+drop temporary function rescale;
+create temporary function rescale as 'hivemall.ftvec.scaling.RescaleUDF';
+
+drop temporary function rescale_fv;
+create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleFeatureValueUDF';
+
+drop temporary function zscore;
+create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
+
+--------------------
+-- misc functions --
+--------------------
+
+drop temporary function amplify;
+create temporary function amplify as 'hivemall.ftvec.AmplifierUDTF';
+
+drop temporary function conv2dense;
+create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
+
+drop temporary function addBias;
+create temporary function addBias as 'hivemall.ftvec.FtvecAddBiasUDF';
+
+drop temporary function sortByFeature;
+create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
+
+--------------------------
+-- Regression functions --
+--------------------------
+
+drop temporary function logress;
+create temporary function logress as 'hivemall.regression.LogressUDTF';
+
+drop temporary function logress_iter;
+create temporary function logress_iter as 'hivemall.regression.LogressIterUDTF';
+
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
+---------------------
+-- array functions --
+---------------------
+
+drop temporary function AllocFloatArray;
+create temporary function AllocFloatArray as 'hivemall.tools.array.AllocFloatArrayUDF';
+
+drop temporary function array_remove;
+create temporary function array_remove as 'hivemall.tools.array.ArrayRemoveUDF';
+
+drop temporary function sort_and_uniq_array;
+create temporary function sort_and_uniq_array as 'hivemall.tools.array.SortAndUniqArrayUDF';
+
+drop temporary function subarray_endwith;
+create temporary function subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF';
+
+drop temporary function subarray_startwith;
+create temporary function subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF';
+
+drop temporary function collect_all;
+create temporary function collect_all as 'hivemall.tools.array.CollectAllUDAF';
+
+drop temporary function concat_array;
+create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
+
+---------------------
+-- map functions --
+---------------------
+
+drop temporary function map_get_sum;
+create temporary function map_get_sum as 'hivemall.tools.map.MapGetSumUDF';
+
+drop temporary function map_tail_n;
+create temporary function map_tail_n as 'hivemall.tools.map.MapTailN';
+
+drop temporary function to_map;
+create temporary function to_map as 'hivemall.tools.map.UDAFToMap';
+
+drop temporary function to_ordered_map;
+create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap';
+
+----------------------
+-- string functions --
+----------------------
+
+drop temporary function isStopword;
+create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
+
+drop temporary function split_words;
+create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
+
