@@ -25,7 +25,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 /**
  * @see http://en.wikipedia.org/wiki/Standard_score
  */
-public class ZScore extends UDF {
+public class ZScoreUDF extends UDF {
 
     public float evaluate(float value, float mean, float stddev) {
         return (value - mean) / stddev;
