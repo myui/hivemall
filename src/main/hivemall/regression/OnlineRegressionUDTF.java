@@ -138,7 +138,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
 
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
-        float biasValue = 1.f;
+        float biasValue = 0.f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
