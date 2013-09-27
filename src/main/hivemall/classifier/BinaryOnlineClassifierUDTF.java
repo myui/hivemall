@@ -129,7 +129,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
 
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
-        float bias = 1.f;
+        float bias = 0.f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
