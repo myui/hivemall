@@ -41,6 +41,13 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Bias clause
 
+System requirements
+--------------------
+
+* Hive 0.9 or later (needs compilation for 0.8.1)
+
+* Hadoop 0.20.x (CDH3 is our target)
+
 Basic Usage
 ------------
 
@@ -52,6 +59,8 @@ FROM
  (SELECT logress(features,label) as (feature,weight) FROM training_features) t
 GROUP BY feature;
 ```
+
+Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/_pages).
 
 License
 ---------
