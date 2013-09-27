@@ -9,6 +9,10 @@
 -- delete jar /home/myui/tmp/hivemall.jar;
 -- add jar /home/myui/tmp/hivemall.jar;
 
+--------------------------
+-- Regression functions --
+--------------------------
+
 -- drop temporary function LogressAggr;
 -- create temporary function LogressAggr as 'hivemall.regression.LogressAggrUDAF';
 

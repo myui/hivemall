@@ -10,27 +10,23 @@
 -- add jar /home/myui/tmp/hivemall.jar;
 
 -----------------------
- binary classification
+-- binary classification
 -----------------------
 
 drop temporary function perceptron;
 create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
--- create temporary function perceptron as 'hivemall.classifier.multiclass.MulticlassPerceptronUDTF';
 
 drop temporary function train_pa;
 create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
--- create temporary function train_pa as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF';
 
 drop temporary function train_pa1;
 create temporary function train_pa1 as 'hivemall.classifier.PassiveAggressiveUDTF$PA1';
--- create temporary function train_pa1 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA1';
 
 drop temporary function train_pa2;
 create temporary function train_pa2 as 'hivemall.classifier.PassiveAggressiveUDTF$PA2';
--- create temporary function train_pa2 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2';
 
 ----------------------------
- Multiclass classification
+-- Multiclass classification
 ----------------------------
 
 drop temporary function train_multiclass_perceptron;
@@ -44,3 +40,25 @@ create temporary function train_multiclass_pa1 as 'hivemall.classifier.multiclas
 
 drop temporary function train_multiclass_pa2;
 create temporary function train_multiclass_pa2 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2';
+
+----------------------------
+-- Regression
+----------------------------
+
+drop temporary function logress;
+create temporary function logress as 'hivemall.regression.LogressUDTF';
+
+drop temporary function logress_iter;
+create temporary function logress_iter as 'hivemall.regression.LogressIterUDTF';
+
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
