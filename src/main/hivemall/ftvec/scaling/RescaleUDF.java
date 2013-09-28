@@ -36,6 +36,10 @@ public class RescaleUDF extends UDF {
         return min_max_normalization(value, min, max);
     }
 
+    public float evaluate(float value, double min, double max) {
+        return min_max_normalization(value, (float) min, (float) max);
+    }
+
     public static float min_max_normalization(final float value, final float min, final float max) {
         return (value - min) / (max - min);
     }

@@ -24,6 +24,10 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 
 public class RescaleFeatureValueUDF extends UDF {
 
+    public String evaluate(String s, double min, double max) {
+        return evaluate(s, (float) min, (float) max);
+    }
+
     public String evaluate(String s, float min, float max) {
         String[] fv = s.split(":");
         if(fv.length != 2) {
