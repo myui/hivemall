@@ -176,3 +176,9 @@ create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
 drop temporary function split_words;
 create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 
+---------------------
+-- macro functions --
+---------------------
+
+drop temporary function sigmoid;
+create temporary function sigmoid as 'hivemall.tools.macros.SigmodUDF';
