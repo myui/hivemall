@@ -53,6 +53,7 @@ import org.apache.hadoop.io.Text;
 public abstract class OnlineRegressionUDTF extends GenericUDTF {
 
     protected ListObjectInspector featureListOI;
+    protected ObjectInspector featureInputOI;
     protected FloatObjectInspector targetOI;
     protected boolean parseX;
 
@@ -69,17 +70,18 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
-        ObjectInspector featureRawOI = processFeaturesOI(argOIs[0]);
+        this.featureInputOI = processFeaturesOI(argOIs[0]);
         this.targetOI = (FloatObjectInspector) argOIs[1];
 
         processOptions(argOIs);
 
+        ObjectInspector featureOutputOI = featureInputOI;
         if(parseX && feature_hashing) {
-            featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+            featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         }
 
         if(bias != 0.f) {
-            this.biasKey = (featureRawOI.getTypeName() == Constants.INT_TYPE_NAME) ? HivemallConstants.BIAS_CLAUSE_INT
+            this.biasKey = (featureOutputOI.getTypeName() == Constants.INT_TYPE_NAME) ? HivemallConstants.BIAS_CLAUSE_INT
                     : new Text(HivemallConstants.BIAS_CLAUSE);
         } else {
             this.biasKey = null;
@@ -89,7 +91,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
         fieldNames.add("feature");
-        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureRawOI);
+        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureOutputOI);
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
@@ -178,7 +180,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     }
 
     protected float predict(final Collection<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final ObjectInspector featureInspector = this.featureInputOI;
         final boolean parseX = this.parseX;
 
         float score = 0f;
@@ -210,7 +212,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     }
 
     protected PredictionResult calcScore(Collection<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final ObjectInspector featureInspector = this.featureInputOI;
         final boolean parseX = this.parseX;
 
         float score = 0.f;
@@ -255,7 +257,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     }
 
     protected void update(Collection<?> features, float coeff) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final ObjectInspector featureInspector = this.featureInputOI;
 
         for(Object f : features) {// w[i] += y * x[i]
             final Object x;
