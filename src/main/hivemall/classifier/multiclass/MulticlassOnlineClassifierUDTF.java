@@ -140,7 +140,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
-            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[3]).getWritableConstantValue().toString();
+            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[2]).getWritableConstantValue().toString();
             cl = parseOptions(rawArgs);
 
             if(cl.hasOption("fh")) {
