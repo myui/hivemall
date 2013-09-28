@@ -94,4 +94,4 @@ Please refer the following paper for research uses:
 Acknowledgment
 --------------
 
-This work was partly supported by a JSPS grant-in-aid for young scientists (B) #24700111 and a JSPS grant-in-aid for scientific research (A) #24240015.
+This work was supported in part by a JSPS grant-in-aid for young scientists (B) #24700111 and a JSPS grant-in-aid for scientific research (A) #24240015.
