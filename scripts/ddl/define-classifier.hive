@@ -6,9 +6,6 @@
 -- Registration Number: H25PRO-1520
 -----------------------------------------------------------------------------
 
--- delete jar /home/myui/tmp/hivemall.jar;
--- add jar /home/myui/tmp/hivemall.jar;
-
 ---------------------------
 -- binary classification --
 ---------------------------

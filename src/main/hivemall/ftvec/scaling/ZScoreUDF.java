@@ -27,6 +27,10 @@ import org.apache.hadoop.hive.ql.exec.UDF;
  */
 public class ZScoreUDF extends UDF {
 
+    public float evaluate(float value, double mean, double stddev) {
+        return evaluate(value, (float) mean, (float) stddev);
+    }
+
     public float evaluate(float value, float mean, float stddev) {
         return (value - mean) / stddev;
     }

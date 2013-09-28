@@ -18,30 +18,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.ftvec.scaling;
+package hivemall.tools.macros;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 
-/**
- * Min-Max normalization 
- * 
- * @see http://en.wikipedia.org/wiki/Feature_scaling
- */
-public class RescaleUDF extends UDF {
+public class SigmodUDF extends UDF {
 
-    /**
-     * min-max normalization
-     */
-    public float evaluate(float value, float min, float max) {
-        return min_max_normalization(value, min, max);
+    public float evaluate(float x) {
+        return 1.0f / (1.0f + (float) Math.exp(-x));
     }
 
-    public float evaluate(float value, double min, double max) {
-        return min_max_normalization(value, (float) min, (float) max);
-    }
-
-    public static float min_max_normalization(final float value, final float min, final float max) {
-        return (value - min) / (max - min);
+    public float evaluate(double x) {
+        return (float) (1.0 / (1.0 + Math.exp(-x)));
     }
 
 }

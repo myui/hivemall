@@ -1,3 +1,4 @@
 /.fatjar
 /build
 .git
+.settings
