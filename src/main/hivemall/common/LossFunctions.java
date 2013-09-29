@@ -20,6 +20,9 @@
  */
 package hivemall.common;
 
+/**
+ * @link https://github.com/JohnLangford/vowpal_wabbit/wiki/Loss-functions
+ */
 public final class LossFunctions {
 
     public enum LossType {
@@ -82,13 +85,55 @@ public final class LossFunctions {
          */
         public float dloss(float p, float y);
 
+        public boolean forBinaryClassification();
+
+        public boolean forRegression();
+
     }
 
-    public static final class SquaredLoss implements LossFunction {
+    public static abstract class BinaryLoss implements LossFunction {
+
+        protected void checkTarget(float y) {
+            if(y == 1.f || y == -1.f) {
+                throw new IllegalArgumentException("target must be [+1,-1]: " + y);
+            }
+        }
+
+        @Override
+        public boolean forBinaryClassification() {
+            return true;
+        }
+
+        @Override
+        public boolean forRegression() {
+            return false;
+        }
+    }
+
+    public static abstract class RegressionLoss implements LossFunction {
+
+        @Override
+        public boolean forBinaryClassification() {
+            return false;
+        }
+
+        @Override
+        public boolean forRegression() {
+            return true;
+        }
+
+    }
+
+    /**
+     * Squared loss for regression problems.
+     * 
+     * If you're trying to minimize the mean error, use squared-loss.
+     */
+    public static final class SquaredLoss extends RegressionLoss {
 
         @Override
         public float loss(float p, float y) {
-            return ((p - y) * (p - y)) / 2f;
+            return ((p - y) * (p - y)) / 2.f;
         }
 
         @Override
@@ -100,35 +145,44 @@ public final class LossFunctions {
     /**
      * Logistic regression loss for binary classification with y in {-1, 1}.
      */
-    public static final class LogLoss implements LossFunction {
+    public static final class LogLoss extends BinaryLoss {
 
+        /**
+         * <code>logloss(p,y) = log(1+exp(-p*y))</code>
+         */
         @Override
         public float loss(float p, float y) {
-            assert (y == -1f || y == 1f) : y;
-            float z = y * p;
+            checkTarget(y);
 
+            float z = y * p;
+            if(z > 18.f) {
+                return (float) Math.exp(-z);
+            }
+            if(z < -18.f) {
+                return -z;
+            }
             return (float) Math.log(1.d + Math.exp(-z));
         }
 
         @Override
         public float dloss(float p, float y) {
-            assert (y == -1f || y == 1f) : y;
-            double z = y * p;
+            checkTarget(y);
 
-            if(z < 0.d) {
-                return (float) (-1.d / (1.d + Math.exp(z)));
-            } else {
-                double t = Math.exp(-z);
-                return (float) (-t / (t + 1.d));
+            float z = y * p;
+            if(z > 18.f) {
+                return (float) Math.exp(-z) * -y;
             }
+            if(z < -18.f) {
+                return -y;
+            }
+            return -y / ((float) Math.exp(z) + 1.f);
         }
-
     }
 
     /**
      * Hinge loss for binary classification tasks with y in {-1,1}.     
      */
-    public static final class HingeLoss implements LossFunction {
+    public static final class HingeLoss extends BinaryLoss {
 
         private float threshold;
 
@@ -151,14 +205,18 @@ public final class LossFunctions {
 
         @Override
         public float loss(float p, float y) {
+            checkTarget(y);
+
             float loss = hingeLoss(p, y, threshold);
             return (loss > 0.f) ? loss : 0.f;
         }
 
         @Override
         public float dloss(float p, float y) {
+            checkTarget(y);
+
             float loss = hingeLoss(p, y, threshold);
-            return (loss > 0.f) ? -1.f : 0.f;
+            return (loss > 0.f) ? -y : 0.f;
         }
 
         public static float hingeLoss(float p, float y) {
@@ -166,7 +224,7 @@ public final class LossFunctions {
         }
 
         public static float hingeLoss(float p, float y, float threshold) {
-            assert (y == -1f || y == 1f) : y;
+            assert (y == -1.f || y == 1.f) : y;
             float z = y * p;
             return threshold - z;
         }
@@ -175,64 +233,78 @@ public final class LossFunctions {
     /**
      * Squared Hinge loss for binary classification tasks with y in {-1,1}.
      */
-    public static final class SquaredHingeLoss implements LossFunction {
+    public static final class SquaredHingeLoss extends BinaryLoss {
 
         @Override
         public float loss(float p, float y) {
-            assert (y == -1f || y == 1f) : y;
-            float z = y * p;
+            checkTarget(y);
 
-            float loss = (1.f - z) * (1.f - z);
-            return (loss > 0.f) ? loss : 0.f;
+            float z = y * p;
+            float d = 1.f - z;
+            return (d > 0.f) ? (d * d) : 0.f;
         }
 
         @Override
         public float dloss(float p, float y) {
-            assert (y == -1f || y == 1f) : y;
-            float z = y * p;
+            checkTarget(y);
 
-            float loss = (1.f - z) * (1.f - z);
-            return (loss > 0.f) ? -2 * (1.f - z) : 0.f;
+            float d = 1 - (y * p);
+            return (d > 0.f) ? -2.f * d * y : 0.f;
         }
 
     }
 
-    public static final class QuantileLoss implements LossFunction {
+    /** 
+     * Quantile loss is useful to predict rank/order and you do not mind the mean error to increase 
+     * as long as you get the relative order correct. 
+     * 
+     * @link http://en.wikipedia.org/wiki/Quantile_regression
+     */
+    public static final class QuantileLoss extends RegressionLoss {
 
         private float tau;
 
         public QuantileLoss() {
-            this(0.5f);
+            this.tau = 0.5f;
         }
 
         public QuantileLoss(float tau) {
-            this.tau = tau;
+            setTau(tau);
         }
 
         public void setTau(float tau) {
+            if(tau <= 0 || tau >= 1.0) {
+                throw new IllegalArgumentException("tau must be in range (0, 1): " + tau);
+            }
             this.tau = tau;
         }
 
         @Override
         public float loss(float p, float y) {
-            if(y > p) {
-                return tau * (y - p);
+            float e = y - p;
+            if(e > 0.f) {
+                return tau * e;
             } else {
-                return (1.f - tau) * (p - y);
+                return -(1.f - tau) * e;
             }
         }
 
         @Override
         public float dloss(float p, float y) {
-            return (y > p) ? -tau : (1.f - tau);
+            float e = y - p;
+            if(e == 0.f) {
+                return 0.f;
+            }
+            return (e > 0.f) ? -tau : (1.f - tau);
         }
 
     }
 
     /**
-     * Epsilon-Insensitive loss used by SVR. loss = max(0, |y - p| - epsilon).
+     * Epsilon-Insensitive loss used by Support Vector Regression (SVR). 
+     * <code>loss = max(0, |y - p| - epsilon)</code>
      */
-    public static final class EpsilonInsensitiveLoss implements LossFunction {
+    public static final class EpsilonInsensitiveLoss extends RegressionLoss {
 
         private float epsilon;
 
@@ -256,10 +328,10 @@ public final class LossFunctions {
 
         @Override
         public float dloss(float p, float y) {
-            if(y - p > epsilon) {
+            if((y - p) > epsilon) {// real value > predicted value - epsilon
                 return -1.f;
             }
-            if(p - y > epsilon) {
+            if((p - y) > epsilon) {// real value < predicted value - epsilon
                 return 1.f;
             }
             return 0.f;
