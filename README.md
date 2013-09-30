@@ -78,7 +78,7 @@ Copyright
 ---------
 
 Copyright (C) 2013 National Institute of Advanced Industrial Science and Technology (AIST)  
-Registration Number: H25PRO-1520
+Registration Number: [H25PRO-1520](http://itri.aist-go.jp/section/knowledge.html)
 
 Put the above copyrights and the registration number for the services/softwares that use Hivemall.
 
