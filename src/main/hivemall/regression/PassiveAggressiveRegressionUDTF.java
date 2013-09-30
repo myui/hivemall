@@ -20,6 +20,7 @@
  */
 package hivemall.regression;
 
+import hivemall.common.LossFunctions.EpsilonInsensitiveLoss;
 import hivemall.common.OnlineVariance;
 import hivemall.common.PredictionResult;
 
@@ -107,8 +108,12 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         }
     }
 
+    /** 
+     * |w^t - y| - epsilon 
+     */
     protected float loss(float target, float predicted) {
-        return Math.abs(target - predicted) - epsilon; // |w^t - y| - epsilon
+        //return Math.abs(target - predicted) - epsilon;
+        return EpsilonInsensitiveLoss.loss(predicted, target, epsilon);
     }
 
     /**
@@ -134,7 +139,9 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         @Override
         protected float loss(float target, float predicted) {
             float stddev = (float) target_stddev.stddev();
-            return Math.abs(target - predicted) - (epsilon * stddev);
+            //return Math.abs(target - predicted) - (epsilon * stddev);
+            float e = epsilon * stddev;
+            return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
 
     }
@@ -169,7 +176,9 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         @Override
         protected float loss(float target, float predicted) {
             float stddev = (float) target_stddev.stddev();
-            return Math.abs(target - predicted) - (epsilon * stddev);
+            //return Math.abs(target - predicted) - (epsilon * stddev);
+            float e = epsilon * stddev;
+            return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
 
     }
