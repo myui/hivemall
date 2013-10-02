@@ -20,12 +20,13 @@
  */
 package hivemall.ftvec;
 
+import hivemall.common.HivemallConstants;
+
 import java.util.ArrayList;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
-import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -41,7 +42,7 @@ public class AmplifierUDTF extends GenericUDTF {
         if(!(argOIs.length >= 2)) {
             throw new UDFArgumentException("amplifier(int xtimes, *) takes at least two arguments");
         }
-        if(argOIs[0].getTypeName() != Constants.INT_TYPE_NAME) {
+        if(argOIs[0].getTypeName() != HivemallConstants.INT_TYPE_NAME) {
             throw new UDFArgumentException("first argument must be int: " + argOIs[0].getTypeName());
         }
         if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {

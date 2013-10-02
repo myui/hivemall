@@ -25,4 +25,24 @@ public final class HivemallConstants {
     public static final String BIAS_CLAUSE = "+bias";
     public static final int BIAS_CLAUSE_INT = -1;
 
+    // org.apache.hadoop.hive.serde.Constants (hive 0.9)
+    // org.apache.hadoop.hive.serde.serdeConstants (hive 0.10 or later)
+    public static final String VOID_TYPE_NAME = "void";
+    public static final String BOOLEAN_TYPE_NAME = "boolean";
+    public static final String TINYINT_TYPE_NAME = "tinyint";
+    public static final String SMALLINT_TYPE_NAME = "smallint";
+    public static final String INT_TYPE_NAME = "int";
+    public static final String BIGINT_TYPE_NAME = "bigint";
+    public static final String FLOAT_TYPE_NAME = "float";
+    public static final String DOUBLE_TYPE_NAME = "double";
+    public static final String STRING_TYPE_NAME = "string";
+    public static final String DATE_TYPE_NAME = "date";
+    public static final String DATETIME_TYPE_NAME = "datetime";
+    public static final String TIMESTAMP_TYPE_NAME = "timestamp";
+    public static final String BINARY_TYPE_NAME = "binary";
+    public static final String LIST_TYPE_NAME = "array";
+    public static final String MAP_TYPE_NAME = "map";
+    public static final String STRUCT_TYPE_NAME = "struct";
+    public static final String UNION_TYPE_NAME = "uniontype";
+
 }
