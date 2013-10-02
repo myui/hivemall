@@ -38,7 +38,6 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
-import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -70,15 +69,17 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         this.featureListOI = (ListObjectInspector) argOIs[0];
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(keyTypeName != Constants.STRING_TYPE_NAME && keyTypeName != Constants.INT_TYPE_NAME
-                && keyTypeName != Constants.BIGINT_TYPE_NAME) {
+        if(keyTypeName != HivemallConstants.STRING_TYPE_NAME
+                && keyTypeName != HivemallConstants.INT_TYPE_NAME
+                && keyTypeName != HivemallConstants.BIGINT_TYPE_NAME) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = (keyTypeName == Constants.STRING_TYPE_NAME);
+        this.parseX = (keyTypeName == HivemallConstants.STRING_TYPE_NAME);
         this.labelRawOI = argOIs[1];
         String labelTypeName = labelRawOI.getTypeName();
-        if(labelTypeName != Constants.STRING_TYPE_NAME && labelTypeName != Constants.INT_TYPE_NAME) {
+        if(labelTypeName != HivemallConstants.STRING_TYPE_NAME
+                && labelTypeName != HivemallConstants.INT_TYPE_NAME) {
             throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: " + keyTypeName);
         }
 
@@ -89,7 +90,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         }
 
         if(bias != 0.f) {
-            this.biasKey = (featureRawOI.getTypeName() == Constants.INT_TYPE_NAME) ? HivemallConstants.BIAS_CLAUSE_INT
+            this.biasKey = (featureRawOI.getTypeName() == HivemallConstants.INT_TYPE_NAME) ? HivemallConstants.BIAS_CLAUSE_INT
                     : new Text(HivemallConstants.BIAS_CLAUSE);
         } else {
             this.biasKey = null;

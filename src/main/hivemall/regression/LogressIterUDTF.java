@@ -20,13 +20,14 @@
  */
 package hivemall.regression;
 
+import hivemall.common.HivemallConstants;
+
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -50,13 +51,14 @@ public class LogressIterUDTF extends LogressUDTF {
         MapObjectInspector featuresWithWeightOI = (MapObjectInspector) arg;
         ObjectInspector featureOI = featuresWithWeightOI.getMapKeyObjectInspector();
         String keyTypeName = featureOI.getTypeName();
-        if(keyTypeName != Constants.STRING_TYPE_NAME && keyTypeName != Constants.INT_TYPE_NAME
-                && keyTypeName != Constants.BIGINT_TYPE_NAME) {
+        if(keyTypeName != HivemallConstants.STRING_TYPE_NAME
+                && keyTypeName != HivemallConstants.INT_TYPE_NAME
+                && keyTypeName != HivemallConstants.BIGINT_TYPE_NAME) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
         ObjectInspector weightOI = featuresWithWeightOI.getMapValueObjectInspector();
-        if(weightOI.getTypeName() != Constants.FLOAT_TYPE_NAME) {
+        if(weightOI.getTypeName() != HivemallConstants.FLOAT_TYPE_NAME) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of value type Float: "
                     + weightOI.getTypeName());
         }

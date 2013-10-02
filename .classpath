@@ -4,11 +4,11 @@
 	<classpathentry excluding="junk/**" kind="src" path="src/dev"/>
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-core-0.20.2-cdh3u5.jar" sourcepath="/hadoop-0.20.2-cdh3u6"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="lib/hive-exec-0.9.0.jar" sourcepath="/hive-0.9"/>
-	<classpathentry kind="lib" path="lib/hive-serde-0.9.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-core-0.20.2-cdh3u6.jar"/>
+	<classpathentry kind="lib" path="lib/hive-exec-0.9.0.jar"/>
+	<classpathentry kind="lib" path="lib/hive-serde-0.9.0.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
