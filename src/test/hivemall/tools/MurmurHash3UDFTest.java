@@ -22,12 +22,13 @@ package hivemall.tools;
 
 import hivemall.ftvec.hashing.MurmurHash3UDF;
 
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.junit.Test;
 
 public class MurmurHash3UDFTest {
 
     @Test
-    public void testEvaluate() {
+    public void testEvaluate() throws UDFArgumentException {
         MurmurHash3UDF udf = new MurmurHash3UDF();
         System.out.println(udf.evaluate("sadfdfjljlkajfla;few", 1 << 24));
         System.out.println(udf.evaluate("sadfdfjljlkajfla;fe", 1 << 24));
