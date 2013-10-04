@@ -36,6 +36,9 @@ public interface EtaEstimator {
 
         @Override
         public float eta(int t) {
+            if(t > total_steps) {
+                return eta0 / 2.f;
+            }
             return eta0 / (1.f + (t / total_steps));
         }
 

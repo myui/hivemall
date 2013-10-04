@@ -96,7 +96,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
         this.weights = new HashMap<Object, FloatWritable>(8192);
-        this.count = 0;
+        this.count = 1;
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -183,7 +183,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         final ObjectInspector featureInspector = this.featureInputOI;
         final boolean parseX = this.parseX;
 
-        float score = 0f;
+        float score = 0.f;
         for(Object f : features) {// a += w[i] * x[i]
             final Object k;
             final float v;

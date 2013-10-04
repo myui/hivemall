@@ -28,19 +28,35 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 
 public class ArrayHashValuesUDF extends UDF {
 
+    public List<Integer> evaluate(List<String> values) {
+        return evaluate(values, null, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+    }
+
+    public List<Integer> evaluate(List<String> values, String prefix) {
+        return evaluate(values, prefix, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+    }
+
     public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
+        return hashValues(values, prefix, numFeatures);
+    }
+
+    private static List<Integer> hashValues(List<String> values, String prefix, int numFeatures) {
         if(values == null) {
             return null;
         }
         if(values.isEmpty()) {
             return Collections.emptyList();
         }
-        int size = values.size();
+        final int size = values.size();
         final Integer[] ary = new Integer[size];
         for(int i = 0; i < size; i++) {
             String v = values.get(i);
-            String data = (prefix == null) ? (i + ':' + v) : (prefix + i + ':' + v);
-            ary[i] = MurmurHash3UDF.murmurhash3(data, numFeatures);
+            if(v == null) {
+                ary[i] = null;
+            } else {
+                String data = (prefix == null) ? (i + ':' + v) : (prefix + i + ':' + v);
+                ary[i] = MurmurHash3UDF.murmurhash3(data, numFeatures);
+            }
         }
         return Arrays.asList(ary);
     }
