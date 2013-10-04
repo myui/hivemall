@@ -44,7 +44,7 @@ through UDFs/UDAFs/UDTFs of Hive.
 System requirements
 --------------------
 
-* Hive 0.9 or later (needs compilation for 0.8.1)
+* Hive 0.9 or later
 
 * Hadoop 0.20.x (CDH3 is our target)
 
@@ -69,10 +69,11 @@ GNU Lesser General Public License 2.1
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 
 According to LGPL 2.1, softwares that modifies/copies Hivemall MUST open their source codes upon requests.  
-On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.
+On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.  
+See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail.
 
 If you want other (commercial) licensing options, please contact me.  
-Makoto YUI \<m.yui AT aist.go.jp\>
+[Makoto YUI](http://staff.aist.go.jp/m.yui/index_e.html) \<m.yui AT aist.go.jp\>
 
 Copyright
 ---------
