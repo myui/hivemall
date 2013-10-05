@@ -116,7 +116,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause. Use 0.0 to disable. [default 1.0]");
+        opts.addOption("b", "bias", true, "Bias clause. [default 0.0 (disable)]");
         return opts;
     }
 
