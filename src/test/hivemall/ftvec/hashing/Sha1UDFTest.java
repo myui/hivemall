@@ -20,8 +20,6 @@
  */
 package hivemall.ftvec.hashing;
 
-import hivemall.ftvec.hashing.Sha1UDF;
-
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
