@@ -73,11 +73,10 @@ public class PassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[]{intListOI, intOI});
 
         /* train weights by List<Object> */
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        List<?> features1 = (List<?>) intListOI.getList(list);
+        List<Integer> features1 = new ArrayList<Integer>();
+        features1.add(1);
+        features1.add(2);
+        features1.add(3);
         udtf.train(features1, 1);
 
         /* check weights */
@@ -157,13 +156,9 @@ public class PassiveAggressiveUDTFTest {
         /* define aggressive parameter */
         udtf.initialize(new ObjectInspector[]{intListOI, intOI});
 
-        /* train weights by List<Object> */
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        List<?> features1 = (List<?>) intListOI.getList(list);
-        udtf.train(features1, 1);
+        /* train weights */
+        List<?> features = (List<?>) intListOI.getList(new Object[]{1, 2, 3});
+        udtf.train(features, 1);
 
         /* check weights */
         assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
@@ -184,13 +179,9 @@ public class PassiveAggressiveUDTFTest {
         /* define aggressive parameter */
         udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
 
-        /* train weights by List<Object> */
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        List<?> features1 = (List<?>) intListOI.getList(list);
-        udtf.train(features1, 1);
+        /* train weights */
+        List<?> features = (List<?>) intListOI.getList(new Object[]{1, 2, 3});
+        udtf.train(features, 1);
 
         /* check weights */
         assertEquals(0.1000000f, udtf.weights.get(1).get(), 1e-5f);
