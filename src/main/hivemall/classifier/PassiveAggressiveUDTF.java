@@ -25,6 +25,7 @@ import hivemall.common.PredictionResult;
 
 import java.util.List;
 
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -66,6 +67,14 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
         /** Aggressiveness parameter */
         protected float c;
+
+        @Override
+        protected Options getOptions() {
+            System.out.println("OverrideOptions");
+            Options opts = super.getOptions();
+            opts.addOption("c", "cparam", true, "Aggressiveness parameter C [default 1.0]");
+            return opts;
+        }
 
         @Override
         protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {

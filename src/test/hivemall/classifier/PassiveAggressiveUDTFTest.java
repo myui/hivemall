@@ -28,20 +28,66 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.junit.Test;
 
 public class PassiveAggressiveUDTFTest {
+
+    @Test
+    public void testPA1WithoutParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        /* define aggressive parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+
+        /* train weights by List<Object> */
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        List<?> features1 = (List<?>) intListOI.getList(list);
+        udtf.train(features1, 1);
+
+        /* check weights */
+        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.weights.get(3).get(), 1e-5f);
+    }
+
+    @Test
+    public void testPA1WithParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            new String("-c 0.1")
+        );
+        /* define aggressive parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+
+        /* train weights by List<Object> */
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        List<?> features1 = (List<?>) intListOI.getList(list);
+        udtf.train(features1, 1);
+
+        /* check weights */
+        assertEquals(0.1000000f, udtf.weights.get(1).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.weights.get(2).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.weights.get(3).get(), 1e-5f);
+    }
 
     @Test
     public void testInitialize() throws UDFArgumentException {
