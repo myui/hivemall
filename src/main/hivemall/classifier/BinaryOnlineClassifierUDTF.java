@@ -4,11 +4,11 @@
  * Copyright (C) 2013
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
- *   
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -108,7 +108,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 1.0, 0.0 to disable]");
+        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         return opts;
     }
 
