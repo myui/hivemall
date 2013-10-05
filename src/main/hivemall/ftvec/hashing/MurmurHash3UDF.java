@@ -31,6 +31,17 @@ public class MurmurHash3UDF extends UDF {
         return evaluate(word, DEFAULT_NUM_FEATURES);
     }
 
+    public int evaluate(String word, boolean rawValue) throws UDFArgumentException {
+        if(rawValue) {
+            if(word == null) {
+                throw new UDFArgumentException("argument must not be null");
+            }
+            return murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c);
+        } else {
+            return evaluate(word, DEFAULT_NUM_FEATURES);
+        }
+    }
+
     public int evaluate(String word, int numFeatures) throws UDFArgumentException {
         if(word == null) {
             throw new UDFArgumentException("argument must not be null");

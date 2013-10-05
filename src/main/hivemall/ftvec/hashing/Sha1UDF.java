@@ -27,6 +27,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 
 public class Sha1UDF extends UDF {
 
+    public static final int DEFAULT_NUM_FEATURES = 16777216;
+
     private final MessageDigest sha256;
 
     public Sha1UDF() {
@@ -39,7 +41,15 @@ public class Sha1UDF extends UDF {
     }
 
     public int evaluate(String word) {
-        return sha1(word);
+        return evaluate(word, DEFAULT_NUM_FEATURES);
+    }
+
+    public int evaluate(String word, boolean rawValue) {
+        if(rawValue) {
+            return sha1(word);
+        } else {
+            return evaluate(word, DEFAULT_NUM_FEATURES);
+        }
     }
 
     public int evaluate(String word, int numFeatures) {
