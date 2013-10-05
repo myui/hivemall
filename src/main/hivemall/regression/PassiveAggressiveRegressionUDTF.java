@@ -4,11 +4,11 @@
  * Copyright (C) 2013
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
- *   
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -94,6 +94,8 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
 
     @Override
     protected void train(Map<Object, FloatWritable> weights, Collection<?> features, float target) {
+        preTrain(target);
+
         PredictionResult margin = calcScore(features);
         float predicted = margin.getScore();
         float loss = loss(target, predicted);
@@ -108,11 +110,12 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         }
     }
 
+    protected void preTrain(float target) {}
+
     /** 
      * |w^t - y| - epsilon 
      */
     protected float loss(float target, float predicted) {
-        //return Math.abs(target - predicted) - epsilon;
         return EpsilonInsensitiveLoss.loss(predicted, target, epsilon);
     }
 
@@ -127,19 +130,23 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
 
     public static class PA1a extends PassiveAggressiveRegressionUDTF {
 
-        private OnlineVariance target_stddev;
+        private OnlineVariance targetStdDev;
 
         @Override
         public StructObjectInspector initialize(ObjectInspector[] argOIs)
                 throws UDFArgumentException {
-            this.target_stddev = new OnlineVariance();
+            this.targetStdDev = new OnlineVariance();
             return super.initialize(argOIs);
         }
 
         @Override
+        protected void preTrain(float target) {
+            targetStdDev.handle(target);
+        }
+
+        @Override
         protected float loss(float target, float predicted) {
-            float stddev = (float) target_stddev.stddev();
-            //return Math.abs(target - predicted) - (epsilon * stddev);
+            float stddev = (float) targetStdDev.stddev();
             float e = epsilon * stddev;
             return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
@@ -164,19 +171,23 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
 
     public static class PA2a extends PA2 {
 
-        private OnlineVariance target_stddev;
+        private OnlineVariance targetStdDev;
 
         @Override
         public StructObjectInspector initialize(ObjectInspector[] argOIs)
                 throws UDFArgumentException {
-            this.target_stddev = new OnlineVariance();
+            this.targetStdDev = new OnlineVariance();
             return super.initialize(argOIs);
         }
 
         @Override
+        protected void preTrain(float target) {
+            targetStdDev.handle(target);
+        }
+
+        @Override
         protected float loss(float target, float predicted) {
-            float stddev = (float) target_stddev.stddev();
-            //return Math.abs(target - predicted) - (epsilon * stddev);
+            float stddev = (float) targetStdDev.stddev();
             float e = epsilon * stddev;
             return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
