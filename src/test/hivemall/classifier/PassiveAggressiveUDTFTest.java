@@ -40,56 +40,6 @@ import org.junit.Test;
 public class PassiveAggressiveUDTFTest {
 
     @Test
-    public void testPA1WithoutParameter() throws UDFArgumentException {
-        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
-        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-
-        /* define aggressive parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
-
-        /* train weights by List<Object> */
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        List<?> features1 = (List<?>) intListOI.getList(list);
-        udtf.train(features1, 1);
-
-        /* check weights */
-        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(3).get(), 1e-5f);
-    }
-
-    @Test
-    public void testPA1WithParameter() throws UDFArgumentException {
-        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
-        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            new String("-c 0.1")
-        );
-        /* define aggressive parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
-
-        /* train weights by List<Object> */
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(1);
-        list.add(2);
-        list.add(3);
-        List<?> features1 = (List<?>) intListOI.getList(list);
-        udtf.train(features1, 1);
-
-        /* check weights */
-        assertEquals(0.1000000f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.weights.get(3).get(), 1e-5f);
-    }
-
-    @Test
     public void testInitialize() throws UDFArgumentException {
         PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
@@ -160,4 +110,134 @@ public class PassiveAggressiveUDTFTest {
         float expectedLearningRate2 = 10.0f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
+
+    @Test
+    public void testPA1Eta() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            new String("-c 3.0")
+        );
+
+        /* do initialize() with aggressiveness parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+        float loss = 0.1f;
+
+        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        float expectedLearningRate1 = 2.0f;
+        assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
+
+        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        float expectedLearningRate2 = 3.0f;
+        assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
+    }
+
+    @Test
+    public void testPA1EtaDefaultParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        float loss = 0.1f;
+
+        PredictionResult margin = new PredictionResult(0.5f, 0.05f);
+        float expectedLearningRate = 1.0f;
+        assertEquals(expectedLearningRate, udtf.eta(loss, margin), 1e-5f);
+    }
+
+    @Test
+    public void testPA1TrainWithoutParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        /* define aggressive parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+
+        /* train weights by List<Object> */
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        List<?> features1 = (List<?>) intListOI.getList(list);
+        udtf.train(features1, 1);
+
+        /* check weights */
+        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.weights.get(3).get(), 1e-5f);
+    }
+
+    @Test
+    public void testPA1TrainWithParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            new String("-c 0.1")
+        );
+        /* define aggressive parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+
+        /* train weights by List<Object> */
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        List<?> features1 = (List<?>) intListOI.getList(list);
+        udtf.train(features1, 1);
+
+        /* check weights */
+        assertEquals(0.1000000f, udtf.weights.get(1).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.weights.get(2).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.weights.get(3).get(), 1e-5f);
+    }
+
+    @Test
+    public void testPA2EtaWithoutParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA2();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        /* do initialize() with aggressiveness parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        float loss = 0.1f;
+
+        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        float expectedLearningRate1 = 0.1818181f;
+        assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
+
+        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        float expectedLearningRate2 = 0.1960784f;
+        assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
+    }
+
+    @Test
+    public void testPA2EtaWithParameter() throws UDFArgumentException {
+        PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA2();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            new String("-c 3.0")
+        );
+
+        /* do initialize() with aggressiveness parameter */
+        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+        float loss = 0.1f;
+
+        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        float expectedLearningRate1 = 0.4615384f;
+        assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
+
+        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        float expectedLearningRate2 = 0.5660377f;
+        assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
+    }
+
 }

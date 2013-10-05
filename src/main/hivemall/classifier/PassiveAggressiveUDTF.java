@@ -70,7 +70,6 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
         @Override
         protected Options getOptions() {
-            System.out.println("OverrideOptions");
             Options opts = super.getOptions();
             opts.addOption("c", "cparam", true, "Aggressiveness parameter C [default 1.0]");
             return opts;
