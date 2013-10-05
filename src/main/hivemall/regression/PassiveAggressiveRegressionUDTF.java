@@ -4,11 +4,11 @@
  * Copyright (C) 2013
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
- *   
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -112,7 +112,6 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
      * |w^t - y| - epsilon 
      */
     protected float loss(float target, float predicted) {
-        //return Math.abs(target - predicted) - epsilon;
         return EpsilonInsensitiveLoss.loss(predicted, target, epsilon);
     }
 
@@ -139,7 +138,6 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         @Override
         protected float loss(float target, float predicted) {
             float stddev = (float) target_stddev.stddev();
-            //return Math.abs(target - predicted) - (epsilon * stddev);
             float e = epsilon * stddev;
             return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
@@ -176,7 +174,6 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
         @Override
         protected float loss(float target, float predicted) {
             float stddev = (float) target_stddev.stddev();
-            //return Math.abs(target - predicted) - (epsilon * stddev);
             float e = epsilon * stddev;
             return EpsilonInsensitiveLoss.loss(predicted, target, e);
         }
