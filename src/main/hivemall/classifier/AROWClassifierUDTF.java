@@ -93,7 +93,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             float var = margin.getVariance();
             float beta = 1.f / (var + r);
             float alpha = (1.f - m) * beta;
-            update(features, alpha, beta);
+            update(features, y, alpha, beta);
         }
     }
 
@@ -102,7 +102,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
     }
 
-    protected void update(final List<?> features, final float alpha, final float beta) {
+    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
@@ -117,18 +117,18 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
                 v = 1.f;
             }
             WeightValue old_w = weights.get(k);
-            WeightValue new_w = getNewWeight(old_w, v, alpha, beta);
+            WeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
             weights.put(k, new_w);
         }
 
         if(biasKey != null) {
             WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, alpha, beta);
+            WeightValue new_bias = getNewWeight(old_bias, bias, y, alpha, beta);
             weights.put(biasKey, new_bias);
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float v, final float alpha, final float beta) {
+    private static WeightValue getNewWeight(final WeightValue old, final float x, final float y, final float alpha, final float beta) {
         final float old_v;
         final float old_cov;
         if(old == null) {
@@ -139,8 +139,8 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             old_cov = old.getCovariance();
         }
 
-        float cv = old_cov * v;
-        float new_w = old_v + (alpha * cv);
+        float cv = old_cov * x;
+        float new_w = old_v + (y * alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
         return new WeightValue(new_w, new_cov);
