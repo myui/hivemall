@@ -89,14 +89,17 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         PredictionResult margin = calcScoreAndVariance(features);
         float m = margin.getScore() * y;
 
-        if(m >= 1.f) {
-            return;
+        if(m < 1.f) {
+            float var = margin.getVariance();
+            float beta = 1.f / (var + r);
+            float alpha = (1.f - m) * beta;
+            update(features, alpha, beta);
         }
+    }
 
-        float var = margin.getVariance();
-        float beta = 1.f / (var + r);
-        float alpha = (1.f - m) * beta;
-        update(features, alpha, beta);
+    protected float loss(PredictionResult margin, float y) {
+        float m = margin.getScore() * y;
+        return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
     }
 
     protected void update(final List<?> features, final float alpha, final float beta) {
