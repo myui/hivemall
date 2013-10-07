@@ -100,11 +100,10 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     @Override
     protected void train(List<?> features, Object actual_label) {
         Margin margin = getMarginAndVariance(features, actual_label);
-        Object missed_label = margin.getMaxIncorrectLabel();
-
         float gamma = getGamma(margin);
 
-        if(gamma > 0.f) {// alpha = max(0, gamma)            
+        if(gamma > 0.f) {// alpha = max(0, gamma)                   
+            Object missed_label = margin.getMaxIncorrectLabel();
             update(features, gamma, actual_label, missed_label, gamma, phi);
         }
     }
