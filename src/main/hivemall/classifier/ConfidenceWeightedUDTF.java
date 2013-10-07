@@ -20,7 +20,9 @@
  */
 package hivemall.classifier;
 
+import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
+import hivemall.common.WeightValue;
 import hivemall.utils.StatsUtils;
 
 import java.util.List;
@@ -29,6 +31,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
@@ -98,7 +101,7 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
 
         if(gamma > 0.f) {// alpha = max(0, gamma)
             float coeff = gamma * y;
-            update(features, coeff, gamma, phi);
+            update(features, coeff, gamma);
         }
     }
 
@@ -112,4 +115,34 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         return gamma;
     }
 
+    protected void update(final List<?> features, final float coeff, final float alpha) {
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+
+        for(Object f : features) {// w[f] += y * x[f]
+            final Object k;
+            final float v;
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                k = fv.getFeature();
+                v = fv.getValue();
+            } else {
+                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                v = 1.f;
+            }
+            WeightValue old_w = weights.get(k);
+            float new_w = (old_w == null) ? coeff * v : old_w.getValue() + (coeff * v);
+            float old_cov = (old_w == null) ? 1.f : old_w.getCovariance();
+            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
+            weights.put(k, new WeightValue(new_w, new_cov));
+        }
+
+        if(biasKey != null) {
+            WeightValue old_bias = weights.get(biasKey);
+            float new_bias = (old_bias == null) ? coeff * bias : old_bias.getValue()
+                    + (coeff * bias);
+            float old_cov = (old_bias == null) ? 1.f : old_bias.getCovariance();
+            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * bias * bias));
+            weights.put(biasKey, new WeightValue(new_bias, new_cov));
+        }
+    }
 }
