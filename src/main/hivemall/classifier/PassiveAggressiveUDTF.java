@@ -1,4 +1,4 @@
-/**
+/*
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2013
@@ -47,7 +47,7 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
     protected void train(final List<?> features, final int label) {
         final int y = label > 0 ? 1 : -1;
 
-        PredictionResult margin = calcScore(features);
+        PredictionResult margin = calcScoreAndNorm(features);
         float p = margin.getScore();
         float loss = HingeLoss.hingeLoss(p, y); // 1.0 - y * p
 
