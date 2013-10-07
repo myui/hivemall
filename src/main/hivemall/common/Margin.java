@@ -1,4 +1,4 @@
-/**
+/*
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2013
@@ -26,10 +26,21 @@ public final class Margin {
     private final Object maxIncorrectLabel;
     private final float maxIncorrectScore;
 
+    private float variance;
+
     public Margin(float correctScore, Object maxIncorrectLabel, float maxIncorrectScore) {
         this.correctScore = correctScore;
         this.maxIncorrectLabel = maxIncorrectLabel;
         this.maxIncorrectScore = maxIncorrectScore;
+    }
+
+    public float get() {
+        return correctScore - maxIncorrectScore;
+    }
+
+    public Margin variance(float var) {
+        this.variance = var;
+        return this;
     }
 
     public float getCorrectScore() {
@@ -44,8 +55,8 @@ public final class Margin {
         return maxIncorrectScore;
     }
 
-    public float get() {
-        return correctScore - maxIncorrectScore;
+    public float getVariance() {
+        return variance;
     }
 
 }
