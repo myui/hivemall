@@ -43,7 +43,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
  * @link http://dl.acm.org/citation.cfm?id=1390190
  * @link http://dl.acm.org/citation.cfm?id=1699577
  */
-public class MultiClassConfidenceWeightedUDTF extends MulticlassOnlineClassifierUDTF {
+public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifierUDTF {
 
     /** confidence parameter phi */
     protected float phi;
