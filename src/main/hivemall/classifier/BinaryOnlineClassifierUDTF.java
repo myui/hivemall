@@ -1,4 +1,4 @@
-/**
+/*
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2013
@@ -23,6 +23,7 @@ package hivemall.classifier;
 import hivemall.common.FeatureValue;
 import hivemall.common.HivemallConstants;
 import hivemall.common.PredictionResult;
+import hivemall.common.WeightValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
     protected float bias;
     protected Object biasKey;
 
-    protected Map<Object, FloatWritable> weights;
+    protected Map<Object, WeightValue> weights;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -100,7 +101,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new HashMap<Object, FloatWritable>(8192);
+        this.weights = new HashMap<Object, WeightValue>(8192);
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -190,23 +191,23 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1f;
             }
-            FloatWritable old_w = weights.get(k);
+            WeightValue old_w = weights.get(k);
             if(old_w != null) {
-                score += (old_w.get() * v);
+                score += (old_w.getValue() * v);
             }
         }
 
         if(biasKey != null) {
-            FloatWritable biasWeight = weights.get(biasKey);
+            WeightValue biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
-                score += biasWeight.get();
+                score += biasWeight.getValue();
             }
         }
 
         return score;
     }
 
-    protected PredictionResult calcScore(List<?> features) {
+    protected PredictionResult calcScoreAndNorm(List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final boolean parseX = this.parseX;
 
@@ -224,29 +225,69 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            FloatWritable old_w = weights.get(k);
+            WeightValue old_w = weights.get(k);
             if(old_w != null) {
-                score += (old_w.get() * v);
+                score += (old_w.getValue() * v);
             }
             squared_norm += (v * v);
         }
 
         if(biasKey != null) {
-            FloatWritable biasWeight = weights.get(biasKey);
+            WeightValue biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
-                score += (biasWeight.get() * bias);
+                score += (biasWeight.getValue() * bias);
             }
-            squared_norm += (bias * bias); // REVIEWME
+            squared_norm += (bias * bias);
         }
 
-        return new PredictionResult(score, squared_norm);
+        return new PredictionResult(score).squaredNorm(squared_norm);
+    }
+
+    protected PredictionResult calcScoreAndVariance(List<?> features) {
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final boolean parseX = this.parseX;
+
+        float score = 0.f;
+        float variance = 0.f;
+
+        for(Object f : features) {// a += w[i] * x[i]
+            final Object k;
+            final float v;
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                k = fv.getFeature();
+                v = fv.getValue();
+            } else {
+                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                v = 1.f;
+            }
+            WeightValue old_w = weights.get(k);
+            if(old_w == null) {
+                variance += (1.f * v * v);
+            } else {
+                score += (old_w.getValue() * v);
+                variance += (old_w.getCovariance() * v * v);
+            }
+        }
+
+        if(biasKey != null) {
+            WeightValue biasWeight = weights.get(biasKey);
+            if(biasWeight == null) {
+                variance += (1.f * bias * bias);
+            } else {
+                score += (biasWeight.getValue() * bias);
+                variance += (biasWeight.getCovariance() * bias * bias);
+            }
+        }
+
+        return new PredictionResult(score).variance(variance);
     }
 
     protected void update(List<?> features, int y, float p) {
         throw new IllegalStateException();
     }
 
-    protected void update(List<?> features, float coeff) {
+    protected void update(final List<?> features, final float coeff) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {// w[f] += y * x[f]
@@ -260,15 +301,47 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            FloatWritable old_w = weights.get(k);
-            float new_w = (old_w == null) ? coeff * v : old_w.get() + (coeff * v);
-            weights.put(k, new FloatWritable(new_w));
+            WeightValue old_w = weights.get(k);
+            float new_w = (old_w == null) ? coeff * v : old_w.getValue() + (coeff * v);
+            weights.put(k, new WeightValue(new_w));
         }
 
         if(biasKey != null) {
-            FloatWritable old_bias = weights.get(biasKey);
-            float new_bias = (old_bias == null) ? coeff * bias : old_bias.get() + (coeff * bias);
-            weights.put(biasKey, new FloatWritable(new_bias));
+            WeightValue old_bias = weights.get(biasKey);
+            float new_bias = (old_bias == null) ? coeff * bias : old_bias.getValue()
+                    + (coeff * bias);
+            weights.put(biasKey, new WeightValue(new_bias));
+        }
+    }
+
+    protected void update(final List<?> features, final float coeff, final float alpha, final float phi) {
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+
+        for(Object f : features) {// w[f] += y * x[f]
+            final Object k;
+            final float v;
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                k = fv.getFeature();
+                v = fv.getValue();
+            } else {
+                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                v = 1.f;
+            }
+            WeightValue old_w = weights.get(k);
+            float new_w = (old_w == null) ? coeff * v : old_w.getValue() + (coeff * v);
+            float old_cov = (old_w == null) ? 1.f : old_w.getCovariance();
+            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
+            weights.put(k, new WeightValue(new_w, new_cov));
+        }
+
+        if(biasKey != null) {
+            WeightValue old_bias = weights.get(biasKey);
+            float new_bias = (old_bias == null) ? coeff * bias : old_bias.getValue()
+                    + (coeff * bias);
+            float old_cov = (old_bias == null) ? 1.f : old_bias.getCovariance();
+            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * bias * bias));
+            weights.put(biasKey, new WeightValue(new_bias, new_cov));
         }
     }
 
@@ -276,11 +349,12 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
     public void close() throws HiveException {
         if(weights != null) {
             final Object[] forwardMapObj = new Object[2];
-            for(Map.Entry<Object, FloatWritable> e : weights.entrySet()) {
+            for(Map.Entry<Object, WeightValue> e : weights.entrySet()) {
                 Object k = e.getKey();
-                FloatWritable v = e.getValue();
+                WeightValue v = e.getValue();
+                FloatWritable fv = new FloatWritable(v.getValue());
                 forwardMapObj[0] = k;
-                forwardMapObj[1] = v;
+                forwardMapObj[1] = fv;
                 forward(forwardMapObj);
             }
             this.weights = null;

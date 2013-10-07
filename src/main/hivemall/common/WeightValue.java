@@ -20,47 +20,30 @@
  */
 package hivemall.common;
 
-public class PredictionResult {
+public class WeightValue {
 
-    private final Object predictedLabel;
-    private final float predictedScore;
+    private final float value;
+    private float covariance;
 
-    private float squaredNorm;
-    private float variance;
-
-    public PredictionResult(float predictedScore) {
-        this(null, predictedScore);
+    public WeightValue(float weight) {
+        this.value = weight;
     }
 
-    public PredictionResult(Object predictedLabel, float predictedScore) {
-        this.predictedLabel = predictedLabel;
-        this.predictedScore = predictedScore;
+    public WeightValue(float weight, float covariance) {
+        this.value = weight;
+        this.covariance = covariance;
     }
 
-    public PredictionResult squaredNorm(float sqnorm) {
-        this.squaredNorm = sqnorm;
-        return this;
+    public float get() {
+        return value;
+    }
+    
+    public float getValue() {
+        return value;
     }
 
-    public PredictionResult variance(float var) {
-        this.variance = var;
-        return this;
-    }
-
-    public Object getLabel() {
-        return predictedLabel;
-    }
-
-    public float getScore() {
-        return predictedScore;
-    }
-
-    public float getSquaredNorm() {
-        return squaredNorm;
-    }
-
-    public float getVariance() {
-        return variance;
+    public float getCovariance() {
+        return covariance;
     }
 
 }
