@@ -118,7 +118,7 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
     protected void update(final List<?> features, final float coeff, final float alpha) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
-        for(Object f : features) {// w[f] += y * x[f]
+        for(Object f : features) {
             final Object k;
             final float v;
             if(parseX) {

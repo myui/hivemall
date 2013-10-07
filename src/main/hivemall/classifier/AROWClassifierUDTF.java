@@ -105,7 +105,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     protected void update(final List<?> features, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
-        for(Object f : features) {// w[f] += y * x[f]
+        for(Object f : features) {
             final Object k;
             final float v;
             if(parseX) {
