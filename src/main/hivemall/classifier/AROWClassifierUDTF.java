@@ -102,7 +102,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
     }
 
-    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
+    protected void update(final List<?> features, final int y, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
