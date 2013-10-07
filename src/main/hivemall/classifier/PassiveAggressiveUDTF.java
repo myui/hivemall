@@ -51,7 +51,7 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
         float p = margin.getScore();
         float loss = HingeLoss.hingeLoss(p, y); // 1.0 - y * p
 
-        if(loss > 0.f) {
+        if(loss > 0.f) { // y * p < 1
             float eta = eta(loss, margin);
             float coeff = eta * y;
             update(features, coeff);
