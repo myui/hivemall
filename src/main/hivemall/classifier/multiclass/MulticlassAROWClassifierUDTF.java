@@ -87,15 +87,15 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
     @Override
     protected void train(List<?> features, Object actual_label) {
         Margin margin = getMarginAndVariance(features, actual_label);
-        float score = margin.get();
+        float m = margin.get();
 
-        if(score >= 1.f) {
+        if(m >= 1.f) {
             return;
         }
 
         float var = margin.getVariance();
         float beta = 1.f / (var + r);
-        float alpha = (1.f - score) * beta;
+        float alpha = (1.f - m) * beta;
 
         Object missed_label = margin.getMaxIncorrectLabel();
         update(features, actual_label, missed_label, alpha, beta);
