@@ -287,7 +287,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float v, final float alpha, final float beta, final boolean pos) {
+    private static WeightValue getNewWeight(final WeightValue old, final float v, final float alpha, final float beta, final boolean positive) {
         final float old_v;
         final float old_cov;
         if(old == null) {
@@ -299,7 +299,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
         }
 
         float cv = old_cov * v;
-        float new_w = pos ? old_v + (alpha * cv) : old_v - (alpha * cv);
+        float new_w = positive ? old_v + (alpha * cv) : old_v - (alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
         return new WeightValue(new_w, new_cov);
