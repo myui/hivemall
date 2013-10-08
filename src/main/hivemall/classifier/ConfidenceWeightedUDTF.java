@@ -110,9 +110,12 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         float var = margin.getVariance();
 
         float b = 1.f + 2.f * phi * score;
-        float gamma = (-b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var))) / 4.f * phi
-                * var;
-        return gamma;
+        float gamma_numer = (-b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var)));
+        if(gamma_numer <= 0.f) {
+            return 0.f;
+        }
+        float gamma_denom = 4.f * phi * var;
+        return gamma_numer / gamma_denom;
     }
 
     protected void update(final List<?> features, final float coeff, final float alpha) {
@@ -130,19 +133,29 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
                 v = 1.f;
             }
             WeightValue old_w = weights.get(k);
-            float new_w = (old_w == null) ? coeff * v : old_w.getValue() + (coeff * v);
-            float old_cov = (old_w == null) ? 1.f : old_w.getCovariance();
-            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
-            weights.put(k, new WeightValue(new_w, new_cov));
+            WeightValue new_w = getNewWeight(old_w, v, coeff, alpha, phi);
+            weights.put(k, new_w);
         }
 
         if(biasKey != null) {
             WeightValue old_bias = weights.get(biasKey);
-            float new_bias = (old_bias == null) ? coeff * bias : old_bias.getValue()
-                    + (coeff * bias);
-            float old_cov = (old_bias == null) ? 1.f : old_bias.getCovariance();
-            float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * bias * bias));
-            weights.put(biasKey, new WeightValue(new_bias, new_cov));
+            WeightValue new_bias = getNewWeight(old_bias, bias, coeff, alpha, phi);
+            weights.put(biasKey, new_bias);
         }
+    }
+
+    private static WeightValue getNewWeight(final WeightValue old, final float v, final float coeff, final float alpha, final float phi) {
+        final float old_w, old_cov;
+        if(old == null) {
+            old_w = 0.f;
+            old_cov = 1.f;
+        } else {
+            old_w = old.get();
+            old_cov = old.getCovariance();
+        }
+
+        float new_w = old_w + (coeff * old_cov * v);
+        float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
+        return new WeightValue(new_w, new_cov);
     }
 }
