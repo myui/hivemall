@@ -104,7 +104,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
 
         if(gamma > 0.f) {// alpha = max(0, gamma)                   
             Object missed_label = margin.getMaxIncorrectLabel();
-            update(features, gamma, actual_label, missed_label, gamma, phi);
+            update(features, gamma, actual_label, missed_label, phi);
         }
     }
 
@@ -118,7 +118,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
         return gamma;
     }
 
-    protected void update(List<?> features, float coeff, Object actual_label, Object missed_label, final float alpha, final float phi) {
+    protected void update(List<?> features, float coeff, Object actual_label, Object missed_label, final float phi) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
@@ -153,40 +153,43 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
                 v = 1.f;
             }
             WeightValue old_correctclass_w = weightsToAdd.get(k);
-            float add_w = (old_correctclass_w == null) ? coeff * v : old_correctclass_w.getValue()
-                    + (coeff * v);
-            float new_correctcov = covariance(old_correctclass_w, v, alpha, phi);
-            weightsToAdd.put(k, new WeightValue(add_w, new_correctcov));
+            WeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, coeff, phi, true);
+            weightsToAdd.put(k, new_correctclass_w);
 
             if(weightsToSub != null) {
                 WeightValue old_wrongclass_w = weightsToSub.get(k);
-                float sub_w = (old_wrongclass_w == null) ? -(coeff * v)
-                        : old_wrongclass_w.getValue() - (coeff * v);
-                float new_wrongcov = covariance(old_wrongclass_w, v, alpha, phi);
-                weightsToSub.put(k, new WeightValue(sub_w, new_wrongcov));
+                WeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, coeff, phi, false);
+                weightsToSub.put(k, new_wrongclass_w);
             }
         }
 
         if(biasKey != null) {
             WeightValue old_correctclass_bias = weightsToAdd.get(biasKey);
-            float add_bias = (old_correctclass_bias == null) ? coeff * bias
-                    : old_correctclass_bias.getValue() + (coeff * bias);
-            float new_correctbias_cov = covariance(old_correctclass_bias, bias, alpha, phi);
-            weightsToAdd.put(biasKey, new WeightValue(add_bias, new_correctbias_cov));
+            WeightValue new_correctclass_bias = getNewWeight(old_correctclass_bias, bias, coeff, phi, true);
+            weightsToAdd.put(biasKey, new_correctclass_bias);
 
             if(weightsToSub != null) {
                 WeightValue old_wrongclass_bias = weightsToSub.get(biasKey);
-                float sub_bias = (old_wrongclass_bias == null) ? -(coeff * bias)
-                        : old_wrongclass_bias.getValue() - (coeff * bias);
-                float new_wrongbias_cov = covariance(old_wrongclass_bias, bias, alpha, phi);
-                weightsToSub.put(biasKey, new WeightValue(sub_bias, new_wrongbias_cov));
+                WeightValue new_wrongclass_bias = getNewWeight(old_wrongclass_bias, bias, coeff, phi, false);
+                weightsToSub.put(biasKey, new_wrongclass_bias);
             }
         }
     }
 
-    private static float covariance(final WeightValue old_w, final float v, final float alpha, final float phi) {
-        float old_cov = (old_w == null) ? 1.f : old_w.getCovariance();
-        return 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
+    private static WeightValue getNewWeight(final WeightValue old, final float v, final float coeff, final float phi, final boolean positive) {
+        final float old_w, old_cov;
+        if(old == null) {
+            old_w = 0.f;
+            old_cov = 1.f;
+        } else {
+            old_w = old.get();
+            old_cov = old.getCovariance();
+        }
+
+        float delta_w = coeff * old_cov * v;
+        float new_w = positive ? old_w + delta_w : old_w - delta_w;
+        float new_cov = 1.f / (1.f / old_cov + (2.f * coeff * phi * v * v));
+        return new WeightValue(new_w, new_cov);
     }
 
 }
