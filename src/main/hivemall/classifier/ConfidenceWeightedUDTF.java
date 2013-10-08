@@ -97,7 +97,7 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         final int y = label > 0 ? 1 : -1;
 
         PredictionResult margin = calcScoreAndVariance(features);
-        float gamma = getGamma(margin);
+        float gamma = getGamma(margin, y);
 
         if(gamma > 0.f) {// alpha = max(0, gamma)
             float coeff = gamma * y;
@@ -105,16 +105,16 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         }
     }
 
-    protected final float getGamma(PredictionResult margin) {
-        float score = margin.getScore();
+    protected final float getGamma(PredictionResult margin, int y) {
+        float score = margin.getScore() * y;
         float var = margin.getVariance();
 
         float b = 1.f + 2.f * phi * score;
-        float gamma_numer = (-b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var)));
-        if(gamma_numer <= 0.f) {
+        float gamma_numer = -b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var));
+        float gamma_denom = 4.f * phi * var;
+        if(gamma_denom == 0.f) {// avoid divide-by-zero
             return 0.f;
         }
-        float gamma_denom = 4.f * phi * var;
         return gamma_numer / gamma_denom;
     }
 
@@ -144,7 +144,7 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float v, final float coeff, final float alpha, final float phi) {
+    private static WeightValue getNewWeight(final WeightValue old, final float x, final float coeff, final float alpha, final float phi) {
         final float old_w, old_cov;
         if(old == null) {
             old_w = 0.f;
@@ -154,8 +154,8 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
             old_cov = old.getCovariance();
         }
 
-        float new_w = old_w + (coeff * old_cov * v);
-        float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * v * v));
+        float new_w = old_w + (coeff * old_cov * x);
+        float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * x * x));
         return new WeightValue(new_w, new_cov);
     }
 }
