@@ -1,7 +1,7 @@
 Hivemall: Hive scalable machine learning library
 =================================================
 
-Hivemall is a scalable machine learning library running on Hive/Hadoop, licensed under the LGPL 2.1.  
+Hivemall is a scalable machine learning library that runs on Apache Hive, licensed under the LGPL 2.1.  
 Hivemall is designed to be scalable to the number of training instances as well as the number of training features.
 
 Supported Algorithms
@@ -76,19 +76,21 @@ http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 
 According to LGPL 2.1, softwares that modifies/copies Hivemall MUST open their source codes upon requests.  
 On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.  
-See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail.
+See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail. 
+The LGPL does not require you to distribute source code of programs as far as just using/linking Hivemall in your application, so you can use Hivemall in closed-source apps and for most commercial uses.  
+Those who wish to extend Hivemall can do so as long as they publish the modified codes under the LGPL, a condition which we find quite reasonable.
 
-If you want other (commercial) licensing options, please contact me.  
+If you want other (commercial) licensing options, please contact me. 
+I and my institute are ready to provide a commercial friendly license with an additional support contract.  
 [Makoto YUI](http://staff.aist.go.jp/m.yui/index_e.html) \<m.yui AT aist.go.jp\>
 
 Copyright
 ---------
 
 Copyright (C) 2013 National Institute of Advanced Industrial Science and Technology (AIST)  
-Registration Number: [H25PRO-1520](http://itri.aist-go.jp/section/knowledge.html)
+Registration Number: [H25PRO-1520]
 
-Put the above copyrights and the registration number for the services/softwares that use Hivemall.
-
+Put the above copyrights for the services/softwares that use Hivemall.
 
 References
 ----------
