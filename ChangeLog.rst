@@ -2,11 +2,12 @@ Version 0.1-rc3 - to appear
 ----------------------------
 
 * Enhancement
-    * 
+    * Add new classifiers (Confidence Weighted, AROW, Soft Confidence Weighted)
 
 * Bugfix
     * fixed a bug in PA1a and PA2a that stddev was not calculated correctly [@75ccdd336c]
     * fixed option handle for aggressive parameter C [@095d9395f0]
+    * changed the default power_t from 0.25 to 0.1 [@7081291]
 
 Version 0.1-rc2 - 2013/10/04 
 ----------------------------
