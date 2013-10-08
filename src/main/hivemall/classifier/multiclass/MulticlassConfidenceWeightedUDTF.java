@@ -104,7 +104,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
 
         if(gamma > 0.f) {// alpha = max(0, gamma)                   
             Object missed_label = margin.getMaxIncorrectLabel();
-            update(features, gamma, actual_label, missed_label, phi);
+            update(features, gamma, actual_label, missed_label);
         }
     }
 
@@ -121,7 +121,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
         return gamma_numer / gamma_denom;
     }
 
-    protected void update(List<?> features, float alpha, Object actual_label, Object missed_label, final float phi) {
+    protected void update(List<?> features, float alpha, Object actual_label, Object missed_label) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
