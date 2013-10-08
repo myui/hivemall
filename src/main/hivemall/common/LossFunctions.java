@@ -93,8 +93,8 @@ public final class LossFunctions {
 
     public static abstract class BinaryLoss implements LossFunction {
 
-        protected void checkTarget(float y) {
-            if(y == 1.f || y == -1.f) {
+        protected static void checkTarget(float y) {
+            if(!(y == 1.f || y == -1.f)) {
                 throw new IllegalArgumentException("target must be [+1,-1]: " + y);
             }
         }
@@ -205,16 +205,12 @@ public final class LossFunctions {
 
         @Override
         public float loss(float p, float y) {
-            checkTarget(y);
-
             float loss = hingeLoss(p, y, threshold);
             return (loss > 0.f) ? loss : 0.f;
         }
 
         @Override
         public float dloss(float p, float y) {
-            checkTarget(y);
-
             float loss = hingeLoss(p, y, threshold);
             return (loss > 0.f) ? -y : 0.f;
         }
@@ -223,8 +219,9 @@ public final class LossFunctions {
             return hingeLoss(p, y, 1.f);
         }
 
-        public static float hingeLoss(float p, float y, float threshold) {
-            assert (y == -1.f || y == 1.f) : y;
+        public static float hingeLoss(final float p, final float y, final float threshold) {
+            checkTarget(y);
+            
             float z = y * p;
             return threshold - z;
         }
@@ -237,11 +234,7 @@ public final class LossFunctions {
 
         @Override
         public float loss(float p, float y) {
-            checkTarget(y);
-
-            float z = y * p;
-            float d = 1.f - z;
-            return (d > 0.f) ? (d * d) : 0.f;
+            return squaredHingeLoss(p, y);
         }
 
         @Override
@@ -250,6 +243,14 @@ public final class LossFunctions {
 
             float d = 1 - (y * p);
             return (d > 0.f) ? -2.f * d * y : 0.f;
+        }
+
+        public static float squaredHingeLoss(final float p, final float y) {
+            checkTarget(y);
+
+            float z = y * p;
+            float d = 1.f - z;
+            return (d > 0.f) ? (d * d) : 0.f;
         }
 
     }

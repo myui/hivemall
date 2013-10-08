@@ -46,7 +46,6 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
         assert (!features.isEmpty());
 
         Margin margin = getMargin(features, actual_label);
-        Object missed_label = margin.getMaxIncorrectLabel();
         float loss = loss(margin);
 
         if(loss > 0.f) { // & missed_label != null
@@ -55,6 +54,7 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
                 return;
             }
             float coeff = eta(loss, sqnorm);
+            Object missed_label = margin.getMaxIncorrectLabel();
             update(features, coeff, actual_label, missed_label);
         }
     }

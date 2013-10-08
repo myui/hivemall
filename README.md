@@ -14,7 +14,13 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Perceptron
 
-* Passive Aggressive (PA1, PA2)
+* Passive Aggressive (PA, PA1, PA2)
+
+* Confidence Weighted (CW)
+
+* Adaptive Regularization of Weight Vectors (AROW)
+
+* Soft Confidence Weighted (SCW1, SCW2)
 
 ## Regression
 
