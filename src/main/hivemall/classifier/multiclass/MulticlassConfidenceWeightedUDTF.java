@@ -83,7 +83,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
                 if(eta_str != null) {
                     double eta = Double.parseDouble(eta_str);
                     if(eta <= 0.5 || eta > 1) {
-                        throw new UDFArgumentException("Confidence hyperparameter eta must be in range (0.5,1]: "
+                        throw new UDFArgumentException("Confidence hyperparameter eta must be in range (0.5, 1]: "
                                 + eta_str);
                     }
                     phi = (float) StatsUtils.probit(eta, 5d);
