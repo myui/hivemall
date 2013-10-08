@@ -121,7 +121,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
         return gamma_numer / gamma_denom;
     }
 
-    protected void update(List<?> features, float coeff, Object actual_label, Object missed_label, final float phi) {
+    protected void update(List<?> features, float alpha, Object actual_label, Object missed_label, final float phi) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
@@ -156,30 +156,30 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
                 v = 1.f;
             }
             WeightValue old_correctclass_w = weightsToAdd.get(k);
-            WeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, coeff, phi, true);
+            WeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, phi, true);
             weightsToAdd.put(k, new_correctclass_w);
 
             if(weightsToSub != null) {
                 WeightValue old_wrongclass_w = weightsToSub.get(k);
-                WeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, coeff, phi, false);
+                WeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, phi, false);
                 weightsToSub.put(k, new_wrongclass_w);
             }
         }
 
         if(biasKey != null) {
             WeightValue old_correctclass_bias = weightsToAdd.get(biasKey);
-            WeightValue new_correctclass_bias = getNewWeight(old_correctclass_bias, bias, coeff, phi, true);
+            WeightValue new_correctclass_bias = getNewWeight(old_correctclass_bias, bias, alpha, phi, true);
             weightsToAdd.put(biasKey, new_correctclass_bias);
 
             if(weightsToSub != null) {
                 WeightValue old_wrongclass_bias = weightsToSub.get(biasKey);
-                WeightValue new_wrongclass_bias = getNewWeight(old_wrongclass_bias, bias, coeff, phi, false);
+                WeightValue new_wrongclass_bias = getNewWeight(old_wrongclass_bias, bias, alpha, phi, false);
                 weightsToSub.put(biasKey, new_wrongclass_bias);
             }
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float v, final float coeff, final float phi, final boolean positive) {
+    private static WeightValue getNewWeight(final WeightValue old, final float x, final float alpha, final float phi, final boolean positive) {
         final float old_w, old_cov;
         if(old == null) {
             old_w = 0.f;
@@ -189,9 +189,9 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
             old_cov = old.getCovariance();
         }
 
-        float delta_w = coeff * old_cov * v;
+        float delta_w = alpha * old_cov * x;
         float new_w = positive ? old_w + delta_w : old_w - delta_w;
-        float new_cov = 1.f / (1.f / old_cov + (2.f * coeff * phi * v * v));
+        float new_cov = 1.f / (1.f / old_cov + (2.f * alpha * phi * x * x));
         return new WeightValue(new_w, new_cov);
     }
 
