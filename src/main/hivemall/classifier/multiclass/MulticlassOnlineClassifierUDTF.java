@@ -215,11 +215,20 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
     }
 
     protected Margin getMarginAndVariance(final List<?> features, final Object actual_label) {
+        return getMarginAndVariance(features, actual_label, false);
+    }
+
+    protected Margin getMarginAndVariance(final List<?> features, final Object actual_label, boolean nonZeroVariance) {
         float correctScore = 0.f;
         float correctVariance = 0.f;
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
         float maxAnotherVariance = 0.f;
+
+        if(nonZeroVariance && label2FeatureWeight.isEmpty()) {// for initial call
+            float var = 2.f * calcVariance(features);
+            return new Margin(correctScore, maxAnotherLabel, maxAnotherScore).variance(var);
+        }
 
         for(Map.Entry<Object, Map<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
             Object label = label2map.getKey();
@@ -295,6 +304,29 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         }
 
         return score;
+    }
+
+    protected final float calcVariance(final List<?> features) {
+        final boolean parseX = this.parseX;
+
+        float variance = 0.f;
+
+        for(Object f : features) {// a += w[i] * x[i]
+            final float v;
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                v = fv.getValue();
+            } else {
+                v = 1.f;
+            }
+            variance += v * v;
+        }
+
+        if(bias != 0.f) {
+            variance += bias * bias;
+        }
+
+        return variance;
     }
 
     protected final PredictionResult calcScoreAndVariance(final Map<Object, WeightValue> weights, final List<?> features) {

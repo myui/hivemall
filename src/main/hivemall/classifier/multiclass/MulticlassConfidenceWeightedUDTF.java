@@ -99,7 +99,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
 
     @Override
     protected void train(List<?> features, Object actual_label) {
-        Margin margin = getMarginAndVariance(features, actual_label);
+        Margin margin = getMarginAndVariance(features, actual_label, true);
         float gamma = getGamma(margin);
 
         if(gamma > 0.f) {// alpha = max(0, gamma)                   
@@ -111,6 +111,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     protected final float getGamma(Margin margin) {
         float m = margin.get();
         float var = margin.getVariance();
+        assert (var != 0);
 
         float b = 1.f + 2.f * phi * m;
         float gamma_numer = -b + (float) Math.sqrt(b * b - 8.f * phi * (m - phi * var));

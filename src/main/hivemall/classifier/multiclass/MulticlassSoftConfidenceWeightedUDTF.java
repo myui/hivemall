@@ -110,7 +110,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
 
     @Override
     protected void train(List<?> features, Object actual_label) {
-        Margin margin = getMarginAndVariance(features, actual_label);
+        Margin margin = getMarginAndVariance(features, actual_label, true);
         float loss = loss(margin);
 
         if(loss > 0.f) {
@@ -131,6 +131,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
     protected float loss(Margin margin) {
         float var = margin.getVariance();
         float m = margin.get();
+        assert (var != 0);
         float loss = phi * (float) Math.sqrt(var) - m;
         return Math.max(loss, 0.f);
     }
