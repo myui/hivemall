@@ -75,8 +75,8 @@ GNU Lesser General Public License 2.1
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 
 According to LGPL 2.1, softwares that modifies/copies Hivemall MUST open their source codes upon requests.  
-On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.
-See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail.  
+On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.  
+See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail.
 
 The LGPL does not require you to distribute source code of programs as far as just using/linking Hivemall in your application, so you can use Hivemall in closed-source apps and for most commercial uses.
 
