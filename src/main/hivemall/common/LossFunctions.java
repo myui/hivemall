@@ -94,7 +94,7 @@ public final class LossFunctions {
     public static abstract class BinaryLoss implements LossFunction {
 
         protected static void checkTarget(float y) {
-            if(y == 1.f || y == -1.f) {
+            if(!(y == 1.f || y == -1.f)) {
                 throw new IllegalArgumentException("target must be [+1,-1]: " + y);
             }
         }
