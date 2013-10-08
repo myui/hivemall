@@ -109,13 +109,16 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     }
 
     protected final float getGamma(Margin margin) {
-        float score = margin.get();
+        float m = margin.get();
         float var = margin.getVariance();
 
-        float b = 1.f + 2.f * phi * score;
-        float gamma = (-b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var))) / 4.f * phi
-                * var;
-        return gamma;
+        float b = 1.f + 2.f * phi * m;
+        float gamma_numer = -b + (float) Math.sqrt(b * b - 8.f * phi * (m - phi * var));
+        float gamma_denom = 4.f * phi * var;
+        if(gamma_denom == 0.f) {// avoid divide-by-zero
+            return 0.f;
+        }
+        return gamma_numer / gamma_denom;
     }
 
     protected void update(List<?> features, float coeff, Object actual_label, Object missed_label, final float phi) {
