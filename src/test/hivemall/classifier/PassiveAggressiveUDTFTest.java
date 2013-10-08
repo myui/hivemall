@@ -101,11 +101,11 @@ public class PassiveAggressiveUDTFTest {
         PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF();
         float loss = 0.1f;
 
-        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
         float expectedLearningRate1 = 2.0f;
         assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
 
-        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        PredictionResult margin2 = new PredictionResult(0.5f).squaredNorm(0.01f);
         float expectedLearningRate2 = 10.0f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
@@ -124,11 +124,11 @@ public class PassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
         float loss = 0.1f;
 
-        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
         float expectedLearningRate1 = 2.0f;
         assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
 
-        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        PredictionResult margin2 = new PredictionResult(0.5f).squaredNorm(0.01f);
         float expectedLearningRate2 = 3.0f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
@@ -142,7 +142,7 @@ public class PassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[]{intListOI, intOI});
         float loss = 0.1f;
 
-        PredictionResult margin = new PredictionResult(0.5f, 0.05f);
+        PredictionResult margin = new PredictionResult(0.5f).squaredNorm(0.05f);
         float expectedLearningRate = 1.0f;
         assertEquals(expectedLearningRate, udtf.eta(loss, margin), 1e-5f);
     }
@@ -199,11 +199,11 @@ public class PassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[]{intListOI, intOI});
         float loss = 0.1f;
 
-        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
         float expectedLearningRate1 = 0.1818181f;
         assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
 
-        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        PredictionResult margin2 = new PredictionResult(0.5f).squaredNorm(0.01f);
         float expectedLearningRate2 = 0.1960784f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
@@ -222,11 +222,11 @@ public class PassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
         float loss = 0.1f;
 
-        PredictionResult margin1 = new PredictionResult(0.5f, 0.05f);
+        PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
         float expectedLearningRate1 = 0.4615384f;
         assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
 
-        PredictionResult margin2 = new PredictionResult(0.5f, 0.01f);
+        PredictionResult margin2 = new PredictionResult(0.5f).squaredNorm(0.01f);
         float expectedLearningRate2 = 0.5660377f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }

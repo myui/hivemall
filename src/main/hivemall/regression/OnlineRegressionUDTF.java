@@ -1,4 +1,4 @@
-/**
+/*
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2013
@@ -244,7 +244,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
             squared_norm += (bias * bias); // REVIEWME
         }
 
-        return new PredictionResult(score, squared_norm);
+        return new PredictionResult(score).squaredNorm(squared_norm);
     }
 
     protected void update(Collection<?> features, float target, float predicted) {

@@ -22,6 +22,18 @@ create temporary function train_pa1 as 'hivemall.classifier.PassiveAggressiveUDT
 drop temporary function train_pa2;
 create temporary function train_pa2 as 'hivemall.classifier.PassiveAggressiveUDTF$PA2';
 
+drop temporary function train_cw;
+create temporary function train_cw as 'hivemall.classifier.ConfidenceWeightedUDTF';
+
+drop temporary function train_arow;
+create temporary function train_arow as 'hivemall.classifier.AROWClassifierUDTF';
+
+drop temporary function train_scw;
+create temporary function train_scw as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW1';
+
+drop temporary function train_scw2;
+create temporary function train_scw2 as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW2';
+
 -------------------------------
 -- Multiclass classification --
 -------------------------------
@@ -37,3 +49,16 @@ create temporary function train_multiclass_pa1 as 'hivemall.classifier.multiclas
 
 drop temporary function train_multiclass_pa2;
 create temporary function train_multiclass_pa2 as 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2';
+
+drop temporary function train_multiclass_cw;
+create temporary function train_multiclass_cw as 'hivemall.classifier.multiclass.MulticlassConfidenceWeightedUDTF';
+
+drop temporary function train_multiclass_arow;
+create temporary function train_multiclass_arow as 'hivemall.classifier.multiclass.MulticlassAROWClassifierUDTF';
+
+drop temporary function train_multiclass_scw;
+create temporary function train_multiclass_scw as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1';
+
+drop temporary function train_multiclass_scw2;
+create temporary function train_multiclass_scw2 as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2';
+
