@@ -26,23 +26,23 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 		<mkdir dir="${test.build.dir}" />
 		<javac includeantruntime="false" bootclasspath="${java.bootclasspath}" srcdir="${test.dir}" destdir="${test.build.dir}" source="${javac.source}" target="${javac.target}" debug="${javac.debug}" debuglevel="${javac.debuglevel}">
-            <classpath refid="classpath" />
-            <classpath location="${build.dir}" />
+			<classpath refid="classpath" />
+			<classpath location="${build.dir}" />
 		</javac>
 
 		<delete failonerror="true" dir="${test.result.dir}" />
 		<mkdir dir="${test.result.dir}" />
-        <junit printsummary="yes" fork="yes" haltonfailure="yes">
-            <classpath refid="classpath" />
-            <classpath location="${build.dir}" />
-            <classpath location="${test.build.dir}" />
-            <batchtest todir="${test.result.dir}">
-                <fileset dir="${test.dir}">
-                    <include name="**/*Test*.java"/>
-                </fileset>
-            </batchtest>
-            <formatter type="xml" usefile="true" />
-        </junit>
+		<junit printsummary="yes" fork="yes" haltonfailure="yes">
+			<classpath refid="classpath" />
+			<classpath location="${build.dir}" />
+			<classpath location="${test.build.dir}" />
+			<batchtest todir="${test.result.dir}">
+				<fileset dir="${test.dir}">
+					<include name="**/*Test*.java"/>
+				</fileset>
+			</batchtest>
+			<formatter type="xml" usefile="true" />
+		</junit>
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
