@@ -7,6 +7,9 @@
 		<fileset dir="lib/">
 			<include name="*.jar" />
 		</fileset>
+		<fileset dir="lib/optional">
+			<include name="*.jar" />
+		</fileset>
 	</path>
 
 	<target name="compile">
@@ -19,7 +22,31 @@
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile">
+	<target name="test" depends="compile">
+		<delete failonerror="true" dir="${test.build.dir}" />
+		<mkdir dir="${test.build.dir}" />
+		<javac includeantruntime="false" bootclasspath="${java.bootclasspath}" srcdir="${test.dir}" destdir="${test.build.dir}" source="${javac.source}" target="${javac.target}" debug="${javac.debug}" debuglevel="${javac.debuglevel}">
+            <classpath refid="classpath" />
+            <classpath location="${build.dir}" />
+		</javac>
+
+		<delete failonerror="true" dir="${test.result.dir}" />
+		<mkdir dir="${test.result.dir}" />
+        <junit printsummary="yes" fork="yes" haltonfailure="yes">
+            <classpath refid="classpath" />
+            <classpath location="${build.dir}" />
+            <classpath location="${test.build.dir}" />
+            <batchtest todir="${test.result.dir}">
+                <fileset dir="${test.dir}">
+                    <include name="**/*Test*.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" usefile="true" />
+        </junit>
+		<delete failonerror="true" dir="${test.build.dir}" />
+	</target>
+
+	<target name="jar" depends="test">
 		<delete failonerror="true" file="${target.dir}/hivemall.jar" />
 		<jar destfile="${target.dir}/hivemall.jar" basedir="${build.dir}">
 			<manifest>
