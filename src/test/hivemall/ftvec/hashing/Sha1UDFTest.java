@@ -31,13 +31,13 @@ public class Sha1UDFTest {
         Sha1UDF udf = new Sha1UDF();
 
         assertEquals(
-            "sha1('hive') == -1663232593",
-            -1663232593,
+            "sha1('hive') == 14489007",
+            14489007,
             udf.evaluate("hive")
         );
         assertEquals(
-            "sha1('mall') == 75665644",
-            75665644,
+            "sha1('mall') == 8556780",
+            8556780,
             udf.evaluate("mall")
         );
     }
