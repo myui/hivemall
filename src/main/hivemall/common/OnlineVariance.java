@@ -65,7 +65,7 @@ public final class OnlineVariance {
     }
 
     public double mean() {
-        return mean();
+        return mean;
     }
 
     public double variance() {
