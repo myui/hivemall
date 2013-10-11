@@ -16,6 +16,10 @@ create temporary function voted_avg as 'hivemall.ensemble.bagging.VotedAvgUDAF';
 drop temporary function weight_voted_avg;
 create temporary function weight_voted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF';
 
+-- alias of weight_voted_avg
+drop temporary function wvoted_avg;
+create temporary function wvoted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF';
+
 --------------------
 -- misc functions --
 --------------------
