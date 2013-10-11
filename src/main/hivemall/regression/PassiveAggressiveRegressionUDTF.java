@@ -57,7 +57,7 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("c", "aggressiveness", true, "Aggressiveness paramete [default Float.MAX_VALUE]");
-        opts.addOption("epsilon", true, "Sensitivity to prediction mistakes [default 0.1].");
+        opts.addOption("e", "epsilon", true, "Sensitivity to prediction mistakes [default 0.1].");
         return opts;
     }
 
