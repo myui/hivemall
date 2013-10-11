@@ -9,8 +9,11 @@
 * Kohei Ozaki
 	- Mavem pom
 	- Unit tests
+
 * Kohichi Miyano
 	- Hivemall's cute logo
+
 * Yukihiro Tagami
 	- Improvements on pom.xml and build.xml
 	- Fixed a bug/regression in Sha1UDFTest
+	- Fixed a bug in OnlineVariance and add OnlineVarianceTest
