@@ -3,7 +3,7 @@ BEGIN{ FS="\t"; OFS="\t"; }
 	possible_labels=$1;
 	rowid=$2;
 	label=$3;
-    features=$4;
+	features=$4;
 
 	label_count = split(possible_labels, label_array, ",");
  	
