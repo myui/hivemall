@@ -49,6 +49,8 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Bias clause
 
+* Data generator script for one-vs-the-rest classifiers
+
 System requirements
 --------------------
 
