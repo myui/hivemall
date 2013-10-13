@@ -20,7 +20,7 @@
  */
 package hivemall.classifier;
 
-import hivemall.common.LossFunctions.HingeLoss;
+import hivemall.common.LossFunctions;
 import hivemall.common.PredictionResult;
 
 import java.util.List;
@@ -49,7 +49,7 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
         PredictionResult margin = calcScoreAndNorm(features);
         float p = margin.getScore();
-        float loss = HingeLoss.hingeLoss(p, y); // 1.0 - y * p
+        float loss = LossFunctions.hingeLoss(p, y); // 1.0 - y * p
 
         if(loss > 0.f) { // y * p < 1
             float eta = eta(loss, margin);
