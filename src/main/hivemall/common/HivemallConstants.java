@@ -26,6 +26,7 @@ public final class HivemallConstants {
     public static final int BIAS_CLAUSE_INT = -1;
 
     public static final String RADIUS_CLAUSE = "+radius";
+    public static final int RADIUS_CLAUSE_INT = -2;
     public static final float DEFAULT_RADIUS = 1.f;
 
     // org.apache.hadoop.hive.serde.Constants (hive 0.9)
