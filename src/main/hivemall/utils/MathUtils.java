@@ -44,6 +44,10 @@ public final class MathUtils {
         return 1.d / (1.d + Math.exp(-x));
     }
 
+    public static double l2Norm(float v) {
+        return Math.sqrt(v * v);
+    }
+
     /**
      * Returns the inverse erf.
      * <p>

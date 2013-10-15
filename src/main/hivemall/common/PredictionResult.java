@@ -55,8 +55,13 @@ public class PredictionResult {
         return predictedScore;
     }
 
+    /** Just a synonym of getNorm() */
     public float getSquaredNorm() {
         return squaredNorm;
+    }
+
+    public float getL2Norm() {
+        return (float) Math.sqrt(squaredNorm);
     }
 
     public float getVariance() {
