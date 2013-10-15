@@ -55,7 +55,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("e", "radius", true, "Ball of radius (e > 0) [default 1.0]");
-        opts.addOption("b", true, "Upper bound of radius e (b > 0) (set b to learn radius)");
+        opts.addOption("b", "upper_bound", true, "Upper bound of radius e (b > 0) (set b to learn radius)");
         return opts;
     }
 
