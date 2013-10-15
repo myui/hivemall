@@ -77,8 +77,6 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
                     + keyTypeName);
         }
         this.parseX = (keyTypeName == HivemallConstants.STRING_TYPE_NAME);
-        this.weights = new HashMap<Object, WeightValue>(8192);
-
         processOptions(argOIs);
 
         if(parseX && feature_hashing) {
@@ -94,6 +92,8 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         if(learnRadius()) {
             this.radiusKey = (featureRawOI.getTypeName() == HivemallConstants.INT_TYPE_NAME) ? HivemallConstants.RADIUS_CLAUSE_INT
                     : new Text(HivemallConstants.RADIUS_CLAUSE);
+        } else {
+            this.radiusKey = null;
         }
 
         ArrayList<String> fieldNames = new ArrayList<String>();
@@ -105,7 +105,8 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        postInitilize();
+        this.weights = new HashMap<Object, WeightValue>(8192);
+
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
@@ -155,25 +156,15 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         return cl;
     }
 
-    protected void postInitilize() {}
+    protected boolean learnRadius() {
+        return false;
+    }
 
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
 
         train(features);
-    }
-
-    protected boolean learnRadius() {
-        return false;
-    }
-
-    public Object getRadiusKey() {
-        throw new IllegalStateException("getRadiusKey() should be overrided");
-    }
-
-    protected float getRadius() {
-        throw new IllegalStateException("getRadius() should be overrided");
     }
 
     protected void train(final List<?> features) {
@@ -225,10 +216,10 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
             sqnorm += (m * m);
         }
 
-        if(learnRadius()) {
-            float B = getRadius();
+        if(radiusKey != null) {
             WeightValue radiusWeight = weights.get(radiusKey);
-            float w = (radiusWeight == null) ? B : radiusWeight.get();
+            assert (radiusWeight != null);
+            float w = radiusWeight.get();
             float m = 0.f - w;
             margin += m;
             sqnorm += (m * m);
@@ -242,6 +233,10 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
     protected abstract void update(List<?> features, float loss, PredictionResult margin);
 
     protected void update(List<?> features, float eta) {
+        if(eta == 0.f) {
+            return; // no need to update
+        }
+
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {// w[f] += eta * (Yt - Wt) / ||Yt - Wt||
@@ -266,24 +261,29 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
             weights.put(biasKey, new_bias);
         }
 
-        if(learnRadius()) {
-            float B = getRadius();
+        if(radiusKey != null) {
             WeightValue oldRadiusWeight = weights.get(radiusKey);
-            WeightValue newRadiusWeight = getNewWeight(oldRadiusWeight, 0.f, eta, B);
+            if(oldRadiusWeight == null) {
+                throw new IllegalStateException("Initial radius value is not defined");
+            }
+            WeightValue newRadiusWeight = getNewWeight(oldRadiusWeight, 0.f, eta);
             weights.put(radiusKey, newRadiusWeight); // decrease over time, bounded in (0,B] 
         }
     }
 
     protected static WeightValue getNewWeight(final WeightValue old, final float y, final float eta) {
-        return getNewWeight(old, y, eta, 0.f);
-    }
-
-    protected static WeightValue getNewWeight(final WeightValue old, final float y, final float eta, final float defaultW) {
-        float w = (old == null) ? defaultW : old.get();
-        float v = y - w;
-        float tauv = eta * v / (float) MathUtils.l2Norm(v);
+        float w = (old == null) ? 0.f : old.get();
+        float diff = y - w;
+        if(Float.compare(diff, 0.f) == 0) {// can't use y == w or diff = 0.f
+            return new WeightValue(w);
+        }
+        float tauv = eta * (diff / (float) MathUtils.l2Norm(diff));
         float new_w = w + tauv;
-        return new WeightValue(new_w);
+        if(new_w <= 0.f) {
+            throw new IllegalStateException("w is bounded in (0,B]: " + new_w + ", w = " + w
+                    + ", tauv = " + tauv);
+        }
+        return new WeightValue(w);
     }
 
     @Override
