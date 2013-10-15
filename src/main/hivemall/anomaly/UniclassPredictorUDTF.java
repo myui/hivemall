@@ -132,7 +132,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
 
         CommandLine cl = null;
         if(argOIs.length >= 2) {
-            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[2]).getWritableConstantValue().toString();
+            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[1]).getWritableConstantValue().toString();
             cl = parseOptions(rawArgs);
 
             if(cl.hasOption("fh")) {
