@@ -40,6 +40,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
     /** Upper bound of radius e */
     protected float B;
 
+    protected boolean learn_radius;
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
@@ -47,7 +49,15 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes arguments: List<Int|BigInt|Text> features [, constant string options]");
         }
-        return super.initialize(argOIs);
+
+        StructObjectInspector inspector = super.initialize(argOIs);
+
+        this.learn_radius = learnRadius();
+        if(learn_radius) {
+            weights.put(radiusKey, new WeightValue(B));
+        }
+
+        return inspector;
     }
 
     @Override
@@ -89,11 +99,6 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
     }
 
     @Override
-    protected void postInitilize() {
-        weights.put(radiusKey, new WeightValue(B));
-    }
-
-    @Override
     protected float loss(PredictionResult margin) {
         float l2norm = margin.getL2Norm();
         float epsilon = getRadius();
@@ -106,9 +111,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
         return B > 0.f;
     }
 
-    @Override
     protected float getRadius() {
-        if(learnRadius()) {// sqrt(B^2-W_{t,n+1}^2)
+        if(learn_radius) {// sqrt(B^2-W_{t,n+1}^2)
             assert (radiusKey != null);
             float bb = B * B;
             WeightValue w = weights.get(radiusKey); // decrease over time
@@ -139,7 +143,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
     /** returns learning rate */
     protected float eta(float loss, PredictionResult margin) {
-        return loss;
+        return loss / margin.getSquaredNorm();
     }
 
     public static class PA1 extends UniclassPassiveAggressiveUDTF {
@@ -176,7 +180,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            return Math.min(c, loss);
+            float tau = loss / margin.getSquaredNorm();
+            return Math.min(c, tau);
         }
 
     }
@@ -185,7 +190,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            return loss / (1.f + (0.5f / c));
+            float tau = loss / margin.getSquaredNorm();
+            return tau / (1.f + (0.5f / c));
         }
     }
 }
