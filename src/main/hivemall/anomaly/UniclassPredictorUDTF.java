@@ -57,6 +57,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
     protected boolean feature_hashing;
     protected float bias;
     protected Object biasKey;
+    protected Object radiusKey;
 
     protected Map<Object, WeightValue> weights;
 
@@ -76,6 +77,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
                     + keyTypeName);
         }
         this.parseX = (keyTypeName == HivemallConstants.STRING_TYPE_NAME);
+        this.weights = new HashMap<Object, WeightValue>(8192);
 
         processOptions(argOIs);
 
@@ -89,6 +91,10 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         } else {
             this.biasKey = null;
         }
+        if(learnRadius()) {
+            this.radiusKey = (featureRawOI.getTypeName() == HivemallConstants.INT_TYPE_NAME) ? HivemallConstants.RADIUS_CLAUSE_INT
+                    : new Text(HivemallConstants.RADIUS_CLAUSE);
+        }
 
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
@@ -99,8 +105,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new HashMap<Object, WeightValue>(8192);
-
+        postInitilize();
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
@@ -109,21 +114,6 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         return opts;
-    }
-
-    protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
-        String[] args = optionValue.split("\\s+");
-
-        Options opts = getOptions();
-
-        BasicParser parser = new BasicParser();
-        final CommandLine cl;
-        try {
-            cl = parser.parse(opts, args);
-        } catch (ParseException e) {
-            throw new UDFArgumentException(e);
-        }
-        return cl;
     }
 
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -150,6 +140,23 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         return cl;
     }
 
+    protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
+        String[] args = optionValue.split("\\s+");
+
+        Options opts = getOptions();
+
+        BasicParser parser = new BasicParser();
+        final CommandLine cl;
+        try {
+            cl = parser.parse(opts, args);
+        } catch (ParseException e) {
+            throw new UDFArgumentException(e);
+        }
+        return cl;
+    }
+
+    protected void postInitilize() {}
+
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
@@ -159,6 +166,10 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
 
     protected boolean learnRadius() {
         return false;
+    }
+
+    public Object getRadiusKey() {
+        throw new IllegalStateException("getRadiusKey() should be overrided");
     }
 
     protected float getRadius() {
@@ -216,7 +227,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
 
         if(learnRadius()) {
             float B = getRadius();
-            WeightValue radiusWeight = weights.get(HivemallConstants.RADIUS_CLAUSE);
+            WeightValue radiusWeight = weights.get(radiusKey);
             float w = (radiusWeight == null) ? B : radiusWeight.get();
             float m = 0.f - w;
             margin += m;
@@ -257,9 +268,9 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
 
         if(learnRadius()) {
             float B = getRadius();
-            WeightValue oldRadiusWeight = weights.get(HivemallConstants.RADIUS_CLAUSE);
+            WeightValue oldRadiusWeight = weights.get(radiusKey);
             WeightValue newRadiusWeight = getNewWeight(oldRadiusWeight, 0.f, eta, B);
-            weights.put(HivemallConstants.RADIUS_CLAUSE, newRadiusWeight); // decrease over time, bounded in (0,B] 
+            weights.put(radiusKey, newRadiusWeight); // decrease over time, bounded in (0,B] 
         }
     }
 

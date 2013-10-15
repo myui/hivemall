@@ -20,7 +20,6 @@
  */
 package hivemall.anomaly;
 
-import hivemall.common.HivemallConstants;
 import hivemall.common.LossFunctions;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
@@ -55,7 +54,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("e", "radius", true, "Ball of radius (e > 0) [default 1.0]");
-        opts.addOption("b", "upper_bound", true, "Upper bound of radius e (b > 0) (set b to learn radius)");
+        opts.addOption("ub", "upper_bound", true, "Upper bound of radius e (ub > 0) (set ub to learn radius)");
         return opts;
     }
 
@@ -64,7 +63,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
         CommandLine cl = super.processOptions(argOIs);
 
         float epsilon = 1.f;
-        float b = -1.f;
+        float ub = -1.f;
 
         if(cl != null) {
             String opt_epsilon = cl.getOptionValue("e");
@@ -74,20 +73,24 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
                     throw new UDFArgumentException("Ball of radius e must be e > 0: " + opt_epsilon);
                 }
             }
-            String opt_radius = cl.getOptionValue("b");
+            String opt_radius = cl.getOptionValue("ub");
             if(opt_radius != null) {
-                b = Float.parseFloat(opt_radius);
-                if(!(b > 0.f)) {
-                    throw new UDFArgumentException("Upper bound of radius must be b > 0: "
+                ub = Float.parseFloat(opt_radius);
+                if(!(ub > 0.f)) {
+                    throw new UDFArgumentException("Upper bound of radius (ub) must be ub > 0: "
                             + opt_radius);
                 }
-                weights.put(HivemallConstants.RADIUS_CLAUSE, new WeightValue(b));
             }
         }
 
         this.epsilon = epsilon;
-        this.B = b;
+        this.B = ub;
         return cl;
+    }
+
+    @Override
+    protected void postInitilize() {
+        weights.put(radiusKey, new WeightValue(B));
     }
 
     @Override
@@ -105,9 +108,10 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
     @Override
     protected float getRadius() {
-        if(B > 0.f) {// sqrt(B^2-W_{t,n+1}^2)
+        if(learnRadius()) {// sqrt(B^2-W_{t,n+1}^2)
+            assert (radiusKey != null);
             float bb = B * B;
-            WeightValue w = weights.get(HivemallConstants.RADIUS_CLAUSE); // decrease over time
+            WeightValue w = weights.get(radiusKey); // decrease over time
             assert (w != null);
             float wt = w.get();
             if(wt == B) {
