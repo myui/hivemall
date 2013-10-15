@@ -65,6 +65,19 @@ create temporary function train_multiclass_scw as 'hivemall.classifier.multiclas
 drop temporary function train_multiclass_scw2;
 create temporary function train_multiclass_scw2 as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2';
 
+------------------------
+--  Anomaly detection --
+------------------------ 
+
+drop temporary function train_uniclass_pa;
+create temporary function train_uniclass_pa as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF';
+
+drop temporary function train_uniclass_pa1;
+create temporary function train_uniclass_pa1 as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF$PA1';
+
+drop temporary function train_uniclass_pa2;
+create temporary function train_uniclass_pa2 as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF$PA2';
+
 ----------------------
 -- voting functions --
 ----------------------

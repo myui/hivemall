@@ -1,0 +1,16 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+--
+-- Copyright (C) 2013
+-- National Institute of Advanced Industrial Science and Technology (AIST)
+-- Registration Number: H25PRO-1520
+-----------------------------------------------------------------------------
+
+drop temporary function train_uniclass_pa;
+create temporary function train_uniclass_pa as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF';
+
+drop temporary function train_uniclass_pa1;
+create temporary function train_uniclass_pa1 as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF$PA1';
+
+drop temporary function train_uniclass_pa2;
+create temporary function train_uniclass_pa2 as 'hivemall.anomaly.UniclassPassiveAggressiveUDTF$PA2';
