@@ -143,7 +143,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
     /** returns learning rate */
     protected float eta(float loss, PredictionResult margin) {
-        return loss;
+        return loss / margin.getSquaredNorm();
     }
 
     public static class PA1 extends UniclassPassiveAggressiveUDTF {
@@ -180,7 +180,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            return Math.min(c, loss);
+            float tau = loss / margin.getSquaredNorm();
+            return Math.min(c, tau);
         }
 
     }
@@ -189,7 +190,8 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            return loss / (1.f + (0.5f / c));
+            float tau = loss / margin.getSquaredNorm();
+            return tau / (1.f + (0.5f / c));
         }
     }
 }
