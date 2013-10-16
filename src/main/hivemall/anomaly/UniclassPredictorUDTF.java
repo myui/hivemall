@@ -215,6 +215,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
             sqnorm += (m * m);
         }
 
+        /*
         if(radiusKey != null) {
             WeightValue radiusWeight = weights.get(radiusKey);
             assert (radiusWeight != null);
@@ -223,6 +224,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
             margin += m;
             sqnorm += (m * m);
         }
+        */
 
         return new PredictionResult(margin).squaredNorm(sqnorm);
     }
@@ -231,8 +233,8 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
 
     protected abstract void update(List<?> features, float loss, PredictionResult margin);
 
-    protected void update(List<?> features, float eta) {
-        if(eta == 0.f) {
+    protected void update(List<?> features, float coeff) {
+        if(coeff == 0.f) {
             return; // no need to update
         }
 
@@ -250,13 +252,13 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
                 y = 1.f;
             }
             WeightValue old_w = weights.get(k);
-            WeightValue new_w = getNewWeight(old_w, y, eta);
+            WeightValue new_w = getNewWeight(old_w, y, coeff);
             weights.put(k, new_w);
         }
 
         if(biasKey != null) {
             WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, eta);
+            WeightValue new_bias = getNewWeight(old_bias, bias, coeff);
             weights.put(biasKey, new_bias);
         }
 
@@ -265,7 +267,7 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
             if(oldRadiusWeight == null) {
                 throw new IllegalStateException("Initial radius value is not defined");
             }
-            WeightValue newRadiusWeight = getNewWeight(oldRadiusWeight, 0.f, eta);
+            WeightValue newRadiusWeight = getNewWeight(oldRadiusWeight, 0.f, coeff);
             float new_w = newRadiusWeight.get();
             if(new_w <= 0.f) {
                 throw new IllegalStateException("w must be bounded in (0,B]: " + new_w);
@@ -274,13 +276,13 @@ public abstract class UniclassPredictorUDTF extends GenericUDTF {
         }
     }
 
-    protected static WeightValue getNewWeight(final WeightValue old, final float y, final float eta) {
+    protected static WeightValue getNewWeight(final WeightValue old, final float y, final float coeff) {
         float w = (old == null) ? 0.f : old.get();
         float diff = y - w;
         if(diff == 0.f) {// Float.compare(diff, 0.f) == 0
             return new WeightValue(w);
         }
-        float tauv = (diff > 0) ? eta : -eta; //eta * (diff / (float) MathUtils.l2Norm(diff));
+        float tauv = coeff * diff; // eta * (diff / (float) MathUtils.l2Norm(diff));
         float new_w = w + tauv;
         return new WeightValue(new_w);
     }
