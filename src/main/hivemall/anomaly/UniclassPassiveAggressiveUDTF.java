@@ -29,6 +29,7 @@ import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
@@ -143,7 +144,14 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
     /** returns learning rate */
     protected float eta(float loss, PredictionResult margin) {
-        return loss / margin.getSquaredNorm();
+        return loss / margin.getL2Norm();
+    }
+
+    @Override
+    public void close() throws HiveException {
+        float radius = getRadius();
+        weights.put(radiusKey, new WeightValue(radius));
+        super.close();
     }
 
     public static class PA1 extends UniclassPassiveAggressiveUDTF {
@@ -180,7 +188,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            float tau = loss / margin.getSquaredNorm();
+            float tau = loss / margin.getL2Norm();
             return Math.min(c, tau);
         }
 
@@ -190,7 +198,7 @@ public class UniclassPassiveAggressiveUDTF extends UniclassPredictorUDTF {
 
         @Override
         protected float eta(float loss, PredictionResult margin) {
-            float tau = loss / margin.getSquaredNorm();
+            float tau = loss / margin.getL2Norm();
             return tau / (1.f + (0.5f / c));
         }
     }
