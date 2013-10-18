@@ -83,17 +83,20 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         float predicted = margin.getScore();
 
         float loss = loss(target, predicted);
-        float var = margin.getVariance();
-        float beta = 1.f / (var + r);
 
-        update(features, loss, beta);
+        if(loss != 0.f) {
+            float var = margin.getVariance();
+            float beta = 1.f / (var + r);
+
+            update(features, loss, beta);
+        }
     }
 
     /**
      * @return target - predicted
      */
     protected float loss(float target, float predicted) {
-        return predicted - target; // y - m^Tx
+        return target - predicted; // y - m^Tx
     }
 
     protected void update(final List<?> features, final float loss, final float beta) {
