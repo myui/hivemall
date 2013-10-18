@@ -19,6 +19,9 @@ create temporary function sha1 as 'hivemall.ftvec.hashing.Sha1UDF';
 drop temporary function array_hash_values;
 create temporary function array_hash_values as 'hivemall.ftvec.hashing.ArrayHashValuesUDF';
 
+drop temporary function prefixed_hash_values;
+create temporary function prefixed_hash_values as 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF';
+
 -----------------------
 -- scaling functions --
 -----------------------
