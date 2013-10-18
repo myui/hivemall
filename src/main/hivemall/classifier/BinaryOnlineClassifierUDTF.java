@@ -200,7 +200,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         if(biasKey != null) {
             WeightValue biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
-                score += (biasWeight.getValue() + bias);
+                score += (biasWeight.getValue() * bias);
             }
         }
 
