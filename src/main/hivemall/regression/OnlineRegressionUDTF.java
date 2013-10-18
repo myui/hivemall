@@ -204,7 +204,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         if(biasKey != null) {
             FloatWritable biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
-                score += biasWeight.get();
+                score += (biasWeight.get() * bias);
             }
         }
 
