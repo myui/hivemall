@@ -23,6 +23,7 @@ package hivemall.regression;
 import hivemall.common.FeatureValue;
 import hivemall.common.HivemallConstants;
 import hivemall.common.PredictionResult;
+import hivemall.common.WeightValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,7 +61,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     protected float bias;
     protected Object biasKey;
 
-    protected Map<Object, FloatWritable> weights;
+    protected Map<Object, WeightValue> weights;
     protected int count;
 
     @Override
@@ -95,7 +96,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new HashMap<Object, FloatWritable>(8192);
+        this.weights = new HashMap<Object, WeightValue>(8192);
         this.count = 1;
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -168,13 +169,13 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         float target = targetOI.get(args[1]);
         checkTargetValue(target);
 
-        train(weights, features, target);
+        train(features, target);
         count++;
     }
 
     protected void checkTargetValue(float target) throws UDFArgumentException {}
 
-    protected void train(final Map<Object, FloatWritable> weights, final Collection<?> features, final float target) {
+    protected void train(final Collection<?> features, final float target) {
         float p = predict(features);
         update(features, target, p);
     }
@@ -195,14 +196,14 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            FloatWritable old_w = weights.get(k);
+            WeightValue old_w = weights.get(k);
             if(old_w != null) {
                 score += (old_w.get() * v);
             }
         }
 
         if(biasKey != null) {
-            FloatWritable biasWeight = weights.get(biasKey);
+            WeightValue biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
                 score += (biasWeight.get() * bias);
             }
@@ -211,7 +212,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         return score;
     }
 
-    protected PredictionResult calcScore(Collection<?> features) {
+    protected PredictionResult calcScoreAndNorm(Collection<?> features) {
         final ObjectInspector featureInspector = this.featureInputOI;
         final boolean parseX = this.parseX;
 
@@ -229,7 +230,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            FloatWritable old_w = weights.get(k);
+            WeightValue old_w = weights.get(k);
             if(old_w != null) {
                 score += (old_w.get() * v);
             }
@@ -237,7 +238,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         }
 
         if(biasKey != null) {
-            FloatWritable biasWeight = weights.get(biasKey);
+            WeightValue biasWeight = weights.get(biasKey);
             if(biasWeight != null) {
                 score += (biasWeight.get() * bias);
             }
@@ -245,6 +246,46 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         }
 
         return new PredictionResult(score).squaredNorm(squared_norm);
+    }
+
+    protected PredictionResult calcScoreAndVariance(Collection<?> features) {
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final boolean parseX = this.parseX;
+
+        float score = 0.f;
+        float variance = 0.f;
+
+        for(Object f : features) {// a += w[i] * x[i]
+            final Object k;
+            final float v;
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                k = fv.getFeature();
+                v = fv.getValue();
+            } else {
+                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                v = 1.f;
+            }
+            WeightValue old_w = weights.get(k);
+            if(old_w == null) {
+                variance += (1.f * v * v);
+            } else {
+                score += (old_w.getValue() * v);
+                variance += (old_w.getCovariance() * v * v);
+            }
+        }
+
+        if(biasKey != null) {
+            WeightValue biasWeight = weights.get(biasKey);
+            if(biasWeight == null) {
+                variance += (1.f * bias * bias);
+            } else {
+                score += (biasWeight.getValue() * bias);
+                variance += (biasWeight.getCovariance() * bias * bias);
+            }
+        }
+
+        return new PredictionResult(score).variance(variance);
     }
 
     protected void update(Collection<?> features, float target, float predicted) {
@@ -270,15 +311,15 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
                 x = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 xi = 1.f;
             }
-            FloatWritable old_w = weights.get(x);
+            WeightValue old_w = weights.get(x);
             float new_w = (old_w == null) ? coeff * xi : old_w.get() + (coeff * xi);
-            weights.put(x, new FloatWritable(new_w));
+            weights.put(x, new WeightValue(new_w));
         }
 
         if(biasKey != null) {
-            FloatWritable old_bias = weights.get(biasKey);
+            WeightValue old_bias = weights.get(biasKey);
             float new_bias = (old_bias == null) ? coeff * bias : old_bias.get() + (coeff * bias);
-            weights.put(biasKey, new FloatWritable(new_bias));
+            weights.put(biasKey, new WeightValue(new_bias));
         }
     }
 
@@ -286,11 +327,12 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     public void close() throws HiveException {
         if(weights != null) {
             final Object[] forwardMapObj = new Object[2];
-            for(Map.Entry<Object, FloatWritable> e : weights.entrySet()) {
+            for(Map.Entry<Object, WeightValue> e : weights.entrySet()) {
                 Object k = e.getKey();
-                FloatWritable v = e.getValue();
+                WeightValue v = e.getValue();
+                FloatWritable fv = new FloatWritable(v.get());
                 forwardMapObj[0] = k;
-                forwardMapObj[1] = v;
+                forwardMapObj[1] = fv;
                 forward(forwardMapObj);
             }
             this.weights = null;

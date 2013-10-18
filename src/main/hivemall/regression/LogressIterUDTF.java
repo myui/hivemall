@@ -21,6 +21,7 @@
 package hivemall.regression;
 
 import hivemall.common.HivemallConstants;
+import hivemall.common.WeightValue;
 
 import java.util.Map;
 import java.util.Set;
@@ -81,12 +82,13 @@ public class LogressIterUDTF extends LogressUDTF {
             Object k = e.getKey();
             Object feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
             if(!weights.containsKey(feature)) {
-                weights.put(feature, weight);
+                float v = weight.get();
+                weights.put(feature, new WeightValue(v));
             }
         }
 
         Set<Object> features = featuresWithWeight.keySet();
-        train(weights, features, target);
+        train(features, target);
         count++;
     }
 

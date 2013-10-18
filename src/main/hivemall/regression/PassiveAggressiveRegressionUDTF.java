@@ -25,14 +25,12 @@ import hivemall.common.OnlineVariance;
 import hivemall.common.PredictionResult;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.io.FloatWritable;
 
 public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
 
@@ -93,10 +91,10 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected void train(Map<Object, FloatWritable> weights, Collection<?> features, float target) {
+    protected void train(Collection<?> features, float target) {
         preTrain(target);
 
-        PredictionResult margin = calcScore(features);
+        PredictionResult margin = calcScoreAndNorm(features);
         float predicted = margin.getScore();
         float loss = loss(target, predicted);
 
