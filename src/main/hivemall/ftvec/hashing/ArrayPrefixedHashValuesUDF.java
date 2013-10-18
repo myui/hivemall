@@ -28,6 +28,13 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 public class ArrayPrefixedHashValuesUDF extends UDF {
 
     public List<String> evaluate(List<String> values, String prefix) {
+        if(values == null) {
+            return null;
+        }
+        if(prefix == null) {
+            prefix = "";
+        }
+
         List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
         final int len = hashValues.size();
         final String[] stringValues = new String[len];
