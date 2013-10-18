@@ -36,6 +36,17 @@ public class ArrayHashValuesUDF extends UDF {
         return evaluate(values, prefix, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
     }
 
+    public List<String> evaluate(List<String> values, String prefix, boolean returnStringArray) {
+        List<Integer> hashValues = hashValues(values, null, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+        final int len = hashValues.size();
+        final String[] stringValues = new String[len];
+        for(int i = 0; i < len; i++) {
+            Integer v = hashValues.get(i);
+            stringValues[i] = prefix + v.toString();
+        }
+        return Arrays.asList(stringValues);
+    }
+
     public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
         return hashValues(values, prefix, numFeatures);
     }
