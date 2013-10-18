@@ -129,18 +129,18 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     private static WeightValue getNewWeight(final WeightValue old, final float x, final float y, final float alpha, final float beta) {
-        final float old_v;
+        final float old_w;
         final float old_cov;
         if(old == null) {
-            old_v = 0.f;
+            old_w = 0.f;
             old_cov = 1.f;
         } else {
-            old_v = old.getValue();
+            old_w = old.getValue();
             old_cov = old.getCovariance();
         }
 
         float cv = old_cov * x;
-        float new_w = old_v + (y * alpha * cv);
+        float new_w = old_w + (y * alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
         return new WeightValue(new_w, new_cov);
