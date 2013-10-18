@@ -1,8 +1,18 @@
-Version 0.1-rc4 - to appear
+Version 0.1     - To appear
 ----------------------------
 
 * Bugfix
+    *
+
+Version 0.1-rc4 - 2013/10/18
+----------------------------
+
+* Enhancement
+    * Added a function prefixed_hash_values() [0a6ffb3]
+
+* Bugfix
     * Fixed recursion in OnlineVariance#mean() [c5b8c5b]
+    * Fixed score calculation w.r.t bias values in predict() [f895269, 0130cfe]
 
 Version 0.1-rc3 - 2013/10/08
 ----------------------------
