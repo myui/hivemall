@@ -31,6 +31,8 @@ through UDFs/UDAFs/UDTFs of Hive.
   
 * Passive Aggressive Regression (PA1, PA2)
 
+* AROW regression
+
 ## Ensemble
 
 * Bagging
