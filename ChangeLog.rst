@@ -1,8 +1,11 @@
 Version 0.1     - To appear
 ----------------------------
 
+* Enhancement
+    * Added AROW regression [f2f00a2]
+
 * Bugfix
-    *
+    * 
 
 Version 0.1-rc4 - 2013/10/18
 ----------------------------
