@@ -134,9 +134,9 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
             old_cov = old.getCovariance();
         }
 
-        float cv = old_cov * x;
-        float new_w = old_w + loss * cv;
-        float new_cov = old_cov - (beta * cv * cv);
+        float cov_x = old_cov * x;
+        float new_w = old_w + loss * cov_x;
+        float new_cov = old_cov - (beta * cov_x * cov_x);
 
         return new WeightValue(new_w, new_cov);
     }
