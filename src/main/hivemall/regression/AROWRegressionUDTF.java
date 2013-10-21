@@ -135,7 +135,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         }
 
         float cov_x = old_cov * x;
-        float new_w = old_w + loss * cov_x;
+        float new_w = old_w + loss * cov_x * beta;
         float new_cov = old_cov - (beta * cov_x * cov_x);
 
         return new WeightValue(new_w, new_cov);
