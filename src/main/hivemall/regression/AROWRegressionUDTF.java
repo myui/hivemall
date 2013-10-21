@@ -21,7 +21,7 @@
 package hivemall.regression;
 
 import hivemall.common.FeatureValue;
-import hivemall.common.LossFunctions.EpsilonInsensitiveLoss;
+import hivemall.common.LossFunctions;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 
@@ -188,7 +188,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
          * |w^t - y| - epsilon 
          */
         protected float loss(float target, float predicted) {
-            return EpsilonInsensitiveLoss.loss(predicted, target, epsilon);
+            return LossFunctions.epsilonInsensitiveLoss(predicted, target, epsilon);
         }
     }
 

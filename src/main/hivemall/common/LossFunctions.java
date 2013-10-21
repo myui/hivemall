@@ -214,17 +214,6 @@ public final class LossFunctions {
             float loss = hingeLoss(p, y, threshold);
             return (loss > 0.f) ? -y : 0.f;
         }
-
-        public static float hingeLoss(float p, float y) {
-            return hingeLoss(p, y, 1.f);
-        }
-
-        public static float hingeLoss(final float p, final float y, final float threshold) {
-            checkTarget(y);
-            
-            float z = y * p;
-            return threshold - z;
-        }
     }
 
     /**
@@ -243,14 +232,6 @@ public final class LossFunctions {
 
             float d = 1 - (y * p);
             return (d > 0.f) ? -2.f * d * y : 0.f;
-        }
-
-        public static float squaredHingeLoss(final float p, final float y) {
-            checkTarget(y);
-
-            float z = y * p;
-            float d = 1.f - z;
-            return (d > 0.f) ? (d * d) : 0.f;
         }
 
     }
@@ -338,12 +319,31 @@ public final class LossFunctions {
             return 0.f;
         }
 
-        /**
-         * Math.abs(target - predicted) - epsilon
-         */
-        public static float loss(float predicted, float target, float epsilon) {
-            return Math.abs(target - predicted) - epsilon;
-        }
+    }
 
+    public static float hingeLoss(final float p, final float y, final float threshold) {
+        BinaryLoss.checkTarget(y);
+
+        float z = y * p;
+        return threshold - z;
+    }
+
+    public static float hingeLoss(float p, float y) {
+        return hingeLoss(p, y, 1.f);
+    }
+
+    public static float squaredHingeLoss(final float p, final float y) {
+        BinaryLoss.checkTarget(y);
+
+        float z = y * p;
+        float d = 1.f - z;
+        return (d > 0.f) ? (d * d) : 0.f;
+    }
+
+    /**
+     * Math.abs(target - predicted) - epsilon
+     */
+    public static float epsilonInsensitiveLoss(float predicted, float target, float epsilon) {
+        return Math.abs(target - predicted) - epsilon;
     }
 }
