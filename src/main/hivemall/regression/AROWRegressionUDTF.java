@@ -25,7 +25,6 @@ import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -97,7 +96,8 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         return target - predicted; // y - m^Tx
     }
 
-    protected void update(final List<?> features, final float loss, final float beta) {
+    @Override
+    protected void update(final Collection<?> features, final float loss, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
