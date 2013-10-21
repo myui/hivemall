@@ -18,13 +18,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.classifier;
+package hivemall.regression;
 
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -33,14 +33,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-/**
- * Adaptive Regularization of Weight Vectors (AROW) binary classifier.
- * <pre>
- * [1] K. Crammer, A. Kulesza, and M. Dredze, "Adaptive Regularization of Weight Vectors",
- *     In Proc. NIPS, 2009.
- * </pre>
- */
-public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
+public class AROWRegressionUDTF extends OnlineRegressionUDTF {
 
     /** Regularization parameter r */
     protected float r;
@@ -49,7 +42,8 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
         if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("AROWClassifierUDTF takes 2 or 3 arguments: List<String|Int|BitInt> features, Int label [, constant String options]");
+            throw new UDFArgumentException(getClass().getSimpleName()
+                    + " takes arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
 
         return super.initialize(argOIs);
@@ -83,26 +77,27 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected void train(List<?> features, int label) {
-        final int y = label > 0 ? 1 : -1;
-
+    protected void train(Collection<?> features, float target) {
         PredictionResult margin = calcScoreAndVariance(features);
-        float m = margin.getScore() * y;
+        float predicted = margin.getScore();
 
-        if(m < 1.f) {
-            float var = margin.getVariance();
-            float beta = 1.f / (var + r);
-            float alpha = (1.f - m) * beta;
-            update(features, y, alpha, beta);
-        }
+        float loss = loss(target, predicted);
+
+        float var = margin.getVariance();
+        float beta = 1.f / (var + r);
+
+        update(features, loss, beta);
     }
 
-    protected float loss(PredictionResult margin, float y) {
-        float m = margin.getScore() * y;
-        return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
+    /**
+     * @return target - predicted
+     */
+    protected float loss(float target, float predicted) {
+        return target - predicted; // y - m^Tx
     }
 
-    protected void update(final List<?> features, final int y, final float alpha, final float beta) {
+    @Override
+    protected void update(final Collection<?> features, final float loss, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
@@ -117,18 +112,18 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
                 v = 1.f;
             }
             WeightValue old_w = weights.get(k);
-            WeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
+            WeightValue new_w = getNewWeight(old_w, v, loss, beta);
             weights.put(k, new_w);
         }
 
         if(biasKey != null) {
             WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, y, alpha, beta);
+            WeightValue new_bias = getNewWeight(old_bias, bias, loss, beta);
             weights.put(biasKey, new_bias);
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float x, final float y, final float alpha, final float beta) {
+    private static WeightValue getNewWeight(final WeightValue old, final float x, final float loss, final float beta) {
         final float old_w;
         final float old_cov;
         if(old == null) {
@@ -139,10 +134,11 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             old_cov = old.getCovariance();
         }
 
-        float cv = old_cov * x;
-        float new_w = old_w + (y * alpha * cv);
-        float new_cov = old_cov - (beta * cv * cv);
+        float cov_x = old_cov * x;
+        float new_w = old_w + loss * cov_x * beta;
+        float new_cov = old_cov - (beta * cov_x * cov_x);
 
         return new WeightValue(new_w, new_cov);
     }
+
 }

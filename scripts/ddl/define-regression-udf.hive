@@ -33,3 +33,6 @@ create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveR
 
 drop temporary function pa2a_regress;
 create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
+drop temporary function arow_regress;
+create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
