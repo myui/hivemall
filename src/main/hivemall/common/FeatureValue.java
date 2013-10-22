@@ -34,8 +34,9 @@ public final class FeatureValue {
         this.value = v;
     }
 
-    public Object getFeature() {
-        return feature;
+    @SuppressWarnings("unchecked")
+    public <T> T getFeature() {
+        return (T) feature;
     }
 
     public float getValue() {
