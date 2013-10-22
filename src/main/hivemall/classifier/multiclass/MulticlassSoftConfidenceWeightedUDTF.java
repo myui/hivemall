@@ -254,6 +254,9 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {// w[f] += y * x[f]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {

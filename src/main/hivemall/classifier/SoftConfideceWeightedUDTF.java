@@ -232,6 +232,9 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {

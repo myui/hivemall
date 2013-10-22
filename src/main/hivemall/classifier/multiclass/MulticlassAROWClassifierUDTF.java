@@ -125,6 +125,9 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {// w[f] += y * x[f]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {

@@ -256,6 +256,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         float squared_norm = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final float v;
             if(parseX) {
                 FeatureValue fv = FeatureValue.parse(f, feature_hashing);
@@ -280,6 +283,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         float score = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {
@@ -312,6 +318,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         float variance = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final float v;
             if(parseX) {
                 FeatureValue fv = FeatureValue.parse(f, feature_hashing);
@@ -337,6 +346,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         float variance = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {
@@ -393,6 +405,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {// w[f] += y * x[f]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {

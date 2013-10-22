@@ -186,6 +186,9 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
 
         float score = 0.f;
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {
@@ -220,6 +223,9 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         float squared_norm = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {
@@ -256,6 +262,9 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         float variance = 0.f;
 
         for(Object f : features) {// a += w[i] * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object k;
             final float v;
             if(parseX) {
@@ -301,6 +310,9 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         final ObjectInspector featureInspector = this.featureInputOI;
 
         for(Object f : features) {// w[i] += y * x[i]
+            if(f == null) {
+                continue;
+            }
             final Object x;
             final float xi;
             if(parseX) {
