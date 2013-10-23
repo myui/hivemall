@@ -51,12 +51,12 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Bias clause
 
-* Data generator script for one-vs-the-rest classifiers
+* Data generator for one-vs-the-rest classifiers
 
 System requirements
 --------------------
 
-* Hive 0.9 or later
+* Hive 0.9 and later (Tested for v0.9 - v0.12)
 
 * Hadoop 0.20.x (CDH3 is our target)
 
