@@ -1,11 +1,20 @@
-Version 0.1     - To appear
+Version 0.2-beta1 - to appear
+-----------------------------
+
+* Enhancement
+    * 
+* Bugfix
+    * 
+
+Version 0.1     - 2013/10/25
 ----------------------------
 
 * Enhancement
     * Added AROW regression [f2f00a2]
+    * Added AROW with a hinge loss (arowh_regress()) [239e90d]
 
 * Bugfix
-    * 
+    * Fixed a bug of null feature handling in classification/regression [1f392a3]
 
 Version 0.1-rc4 - 2013/10/18
 ----------------------------
