@@ -4,7 +4,7 @@
 
   <groupId>hivemall</groupId>
   <artifactId>hivemall</artifactId>
-  <version>0.1-rc2</version>
+  <version>0.1</version>
   <packaging>jar</packaging>
 
   <name>hivemall</name>
