@@ -180,4 +180,58 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         return new WeightValue(new_w, new_cov);
     }
 
+    public static class AROWh extends MulticlassAROWClassifierUDTF {
+
+        /** Aggressiveness parameter */
+        protected float c;
+
+        @Override
+        protected Options getOptions() {
+            Options opts = super.getOptions();
+            opts.addOption("c", "aggressiveness", true, "Aggressiveness parameter C [default 1.0]");
+            return opts;
+        }
+
+        @Override
+        protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
+            final CommandLine cl = super.processOptions(argOIs);
+
+            float c = 1.f;
+            if(cl != null) {
+                String c_str = cl.getOptionValue("c");
+                if(c_str != null) {
+                    c = Float.parseFloat(c_str);
+                    if(!(c > 0.f)) {
+                        throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
+                                + c);
+                    }
+                }
+            }
+
+            this.c = c;
+            return cl;
+        }
+
+        @Override
+        protected void train(List<?> features, Object actual_label) {
+            Margin margin = getMarginAndVariance(features, actual_label);
+
+            float loss = loss(margin);
+            if(loss > 0.f) {
+                float var = margin.getVariance();
+                float beta = 1.f / (var + r);
+                float alpha = loss * beta;
+
+                Object missed_label = margin.getMaxIncorrectLabel();
+                update(features, actual_label, missed_label, alpha, beta);
+            }
+        }
+
+        /** 
+         * @return C - m
+         */
+        protected float loss(Margin margin) {
+            return c - margin.get();
+        }
+    }
 }
