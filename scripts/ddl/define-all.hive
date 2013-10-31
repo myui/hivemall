@@ -159,8 +159,12 @@ create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressive
 drop temporary function arow_regress;
 create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
 
+drop temporary function arowe_regress;
+create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
+
+-- for backward compatibility
 drop temporary function arowh_regress;
-create temporary function arowh_regress as 'hivemall.regression.AROWRegressionUDTF$AROWh';
+create temporary function arowh_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
 
 ---------------------
 -- array functions --
