@@ -31,6 +31,9 @@ create temporary function train_cw as 'hivemall.classifier.ConfidenceWeightedUDT
 drop temporary function train_arow;
 create temporary function train_arow as 'hivemall.classifier.AROWClassifierUDTF';
 
+drop temporary function train_arowh;
+create temporary function train_arowh as 'hivemall.classifier.AROWClassifierUDTF$AROWh';
+
 drop temporary function train_scw;
 create temporary function train_scw as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW1';
 
