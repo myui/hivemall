@@ -169,6 +169,9 @@ create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUD
 drop temporary function arowh_regress;
 create temporary function arowh_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
 
+drop temporary function arowe2_regress;
+create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
 ---------------------
 -- array functions --
 ---------------------
