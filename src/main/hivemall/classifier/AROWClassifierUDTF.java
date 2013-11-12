@@ -201,7 +201,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         /** 
          * @return C - y * p
          */
-        protected float loss(float y, float p) {
+        protected float loss(final float p, final float y) {
             return LossFunctions.hingeLoss(p, y, c);
         }
     }
