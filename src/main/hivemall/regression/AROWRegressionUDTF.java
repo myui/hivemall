@@ -145,7 +145,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         return new WeightValue(new_w, new_cov);
     }
 
-    public static class AROWh extends AROWRegressionUDTF {
+    public static class AROWe extends AROWRegressionUDTF {
 
         /** Sensitivity to prediction mistakes */
         protected float epsilon;

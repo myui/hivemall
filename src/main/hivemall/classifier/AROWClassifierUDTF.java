@@ -21,6 +21,7 @@
 package hivemall.classifier;
 
 import hivemall.common.FeatureValue;
+import hivemall.common.LossFunctions;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 
@@ -84,7 +85,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
 
     @Override
     protected void train(List<?> features, int label) {
-        final int y = label > 0 ? 1 : -1;
+        final float y = label > 0 ? 1.f : -1.f;
 
         PredictionResult margin = calcScoreAndVariance(features);
         float m = margin.getScore() * y;
@@ -102,7 +103,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
     }
 
-    protected void update(final List<?> features, final int y, final float alpha, final float beta) {
+    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
@@ -147,5 +148,61 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         float new_cov = old_cov - (beta * cv * cv);
 
         return new WeightValue(new_w, new_cov);
+    }
+
+    public static class AROWh extends AROWClassifierUDTF {
+
+        /** Aggressiveness parameter */
+        protected float c;
+
+        @Override
+        protected Options getOptions() {
+            Options opts = super.getOptions();
+            opts.addOption("c", "aggressiveness", true, "Aggressiveness parameter C [default 1.0]");
+            return opts;
+        }
+
+        @Override
+        protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
+            final CommandLine cl = super.processOptions(argOIs);
+
+            float c = 1.f;
+            if(cl != null) {
+                String c_str = cl.getOptionValue("c");
+                if(c_str != null) {
+                    c = Float.parseFloat(c_str);
+                    if(!(c > 0.f)) {
+                        throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
+                                + c);
+                    }
+                }
+            }
+
+            this.c = c;
+            return cl;
+        }
+
+        @Override
+        protected void train(List<?> features, int label) {
+            final float y = label > 0 ? 1.f : -1.f;
+
+            PredictionResult margin = calcScoreAndVariance(features);
+            float p = margin.getScore();
+            float loss = loss(p, y); // C - m (m = y * p)
+
+            if(loss > 0.f) {// m < 1.0 || 1.0 - m > 0 
+                float var = margin.getVariance();
+                float beta = 1.f / (var + r);
+                float alpha = loss * beta; // (1.f - m) * beta
+                update(features, y, alpha, beta);
+            }
+        }
+
+        /** 
+         * @return C - y * p
+         */
+        protected float loss(final float p, final float y) {
+            return LossFunctions.hingeLoss(p, y, c);
+        }
     }
 }
