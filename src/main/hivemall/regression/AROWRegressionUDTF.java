@@ -22,6 +22,7 @@ package hivemall.regression;
 
 import hivemall.common.FeatureValue;
 import hivemall.common.LossFunctions;
+import hivemall.common.OnlineVariance;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 
@@ -175,6 +176,8 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
 
         @Override
         protected void train(Collection<?> features, float target) {
+            preTrain(target);
+
             PredictionResult margin = calcScoreAndVariance(features);
             float predicted = margin.getScore();
 
@@ -187,12 +190,39 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
             }
         }
 
+        protected void preTrain(float target) {}
+
         /** 
          * |w^t - y| - epsilon 
          */
         protected float loss(float target, float predicted) {
             return LossFunctions.epsilonInsensitiveLoss(predicted, target, epsilon);
         }
+    }
+
+    public static class AROWe2 extends AROWe {
+
+        private OnlineVariance targetStdDev;
+
+        @Override
+        public StructObjectInspector initialize(ObjectInspector[] argOIs)
+                throws UDFArgumentException {
+            this.targetStdDev = new OnlineVariance();
+            return super.initialize(argOIs);
+        }
+
+        @Override
+        protected void preTrain(float target) {
+            targetStdDev.handle(target);
+        }
+
+        @Override
+        protected float loss(float target, float predicted) {
+            float stddev = (float) targetStdDev.stddev();
+            float e = epsilon * stddev;
+            return LossFunctions.epsilonInsensitiveLoss(predicted, target, e);
+        }
+
     }
 
 }
