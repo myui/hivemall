@@ -34,7 +34,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 
-public class MapTailN extends GenericUDF {
+public class MapTailNUDF extends GenericUDF {
 
     private MapObjectInspector mapObjectInspector;
     private IntObjectInspector intObjectInspector;
