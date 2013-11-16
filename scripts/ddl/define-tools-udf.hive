@@ -39,7 +39,7 @@ drop temporary function map_get_sum;
 create temporary function map_get_sum as 'hivemall.tools.map.MapGetSumUDF';
 
 drop temporary function map_tail_n;
-create temporary function map_tail_n as 'hivemall.tools.map.MapTailN';
+create temporary function map_tail_n as 'hivemall.tools.map.MapTailNUDF';
 
 drop temporary function to_map;
 create temporary function to_map as 'hivemall.tools.map.UDAFToMap';
