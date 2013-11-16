@@ -22,10 +22,11 @@ package hivemall.utils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public final class ArrayUtils {
 
-    public static double[] set(double[] src, int index, double value) {
+    public static double[] set(double[] src, final int index, final double value) {
         if(index >= src.length) {
             src = Arrays.copyOf(src, src.length * 2);
         }
@@ -33,7 +34,7 @@ public final class ArrayUtils {
         return src;
     }
 
-    public static <T> T[] set(T[] src, int index, T value) {
+    public static <T> T[] set(T[] src, final int index, final T value) {
         if(index >= src.length) {
             src = Arrays.copyOf(src, src.length * 2);
         }
@@ -41,7 +42,7 @@ public final class ArrayUtils {
         return src;
     }
 
-    public static float[] toArray(List<Float> lst) {
+    public static float[] toArray(final List<Float> lst) {
         final int ndim = lst.size();
         final float[] ary = new float[ndim];
         int i = 0;
@@ -51,7 +52,7 @@ public final class ArrayUtils {
         return ary;
     }
 
-    public static Float[] toObject(float[] array) {
+    public static Float[] toObject(final float[] array) {
         final Float[] result = new Float[array.length];
         for(int i = 0; i < array.length; i++) {
             result[i] = array[i];
@@ -59,8 +60,27 @@ public final class ArrayUtils {
         return result;
     }
 
-    public static List<Float> toList(float[] array) {
+    public static List<Float> toList(final float[] array) {
         Float[] v = toObject(array);
         return Arrays.asList(v);
+    }
+
+    public static <T> void shuffle(final T[] array) {
+        shuffle(array, array.length);
+    }
+
+    /**
+     * Fisher–Yates shuffle
+     * 
+     * @link http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+     */
+    public static <T> void shuffle(final T[] array, final int size) {
+        final Random rnd = new Random();
+        for(int i = 0; i < size; i++) {
+            int randomPosition = rnd.nextInt(size);
+            T temp = array[i];
+            array[i] = array[randomPosition];
+            array[randomPosition] = temp;
+        }
     }
 }
