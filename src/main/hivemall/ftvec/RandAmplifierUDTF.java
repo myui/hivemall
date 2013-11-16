@@ -30,6 +30,8 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
 
@@ -41,9 +43,12 @@ public class RandAmplifierUDTF extends GenericUDTF {
     private Object[][] _forwardBuffers;
     private int _position;
 
+    private transient ObjectInspector[] retrunOIs;
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(!(argOIs.length >= 3)) {
+        final int numArgs = argOIs.length;
+        if(numArgs < 3) {
             throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
@@ -71,17 +76,21 @@ public class RandAmplifierUDTF extends GenericUDTF {
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
-        this._forwardBuffers = new Object[numBuffers][argOIs.length - 2];
+
+        int numForwardObjs = numArgs - 2;
+        this._forwardBuffers = new Object[numBuffers][numForwardObjs];
         this._position = 0;
 
-        ArrayList<String> fieldNames = new ArrayList<String>();
-        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-
-        for(int i = 1; i < argOIs.length; i++) {
-            fieldNames.add("c" + i);
-            fieldOIs.add(argOIs[i]);
+        final ArrayList<String> fieldNames = new ArrayList<String>();
+        final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+        this.retrunOIs = new ObjectInspector[numArgs];
+        for(int i = 2; i < numArgs; i++) {
+            fieldNames.add("c" + (i - 1));
+            ObjectInspector rawOI = argOIs[i];
+            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.WRITABLE);
+            fieldOIs.add(retOI);
+            retrunOIs[i] = retOI;
         }
-
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
@@ -91,7 +100,9 @@ public class RandAmplifierUDTF extends GenericUDTF {
         for(int x = 0; x < xtimes; x++) { // amplify x times              
             final Object[] forwardObjs = forwardBuffers[_position];
             for(int i = 2; i < args.length; i++) {// copy a row
-                forwardObjs[i - 2] = args[i];
+                Object arg = args[i];
+                ObjectInspector returnOI = retrunOIs[i];
+                forwardObjs[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, returnOI);
             }
             _position++;
             if(_position == numBuffers) {
