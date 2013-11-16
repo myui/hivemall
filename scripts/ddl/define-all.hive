@@ -128,6 +128,9 @@ create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 drop temporary function amplify;
 create temporary function amplify as 'hivemall.ftvec.AmplifierUDTF';
 
+drop temporary function rand_amplify;
+create temporary function rand_amplify as 'hivemall.ftvec.RandAmplifierUDTF';
+
 drop temporary function conv2dense;
 create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
 
