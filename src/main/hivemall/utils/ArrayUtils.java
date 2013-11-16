@@ -69,18 +69,30 @@ public final class ArrayUtils {
         shuffle(array, array.length);
     }
 
+    public static <T> void shuffle(final T[] array, final Random rnd) {
+        shuffle(array, array.length, rnd);
+    }
+
+    public static <T> void shuffle(final T[] array, final int size) {
+        Random rnd = new Random();
+        shuffle(array, size, rnd);
+    }
+
     /**
      * Fisher–Yates shuffle
      * 
      * @link http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
      */
-    public static <T> void shuffle(final T[] array, final int size) {
-        final Random rnd = new Random();
-        for(int i = 0; i < size; i++) {
-            int randomPosition = rnd.nextInt(size);
-            T temp = array[i];
-            array[i] = array[randomPosition];
-            array[randomPosition] = temp;
+    public static <T> void shuffle(final T[] array, final int size, final Random rnd) {
+        for(int i = size; i > 1; i--) {
+            int randomPosition = rnd.nextInt(i);
+            swap(array, i - 1, randomPosition);
         }
+    }
+
+    public static void swap(final Object[] arr, final int i, final int j) {
+        Object tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
     }
 }
