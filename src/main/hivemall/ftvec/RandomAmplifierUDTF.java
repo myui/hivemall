@@ -75,6 +75,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         }
 
         this.amplifier = new RandomDropoutAmplifier<Object[]>(numBuffers, xtimes);
+        amplifier.setDropoutListener(this);
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
