@@ -21,7 +21,8 @@
 package hivemall.ftvec;
 
 import hivemall.common.HivemallConstants;
-import hivemall.utils.ArrayUtils;
+import hivemall.common.RandomDropoutAmplifier;
+import hivemall.common.RandomDropoutAmplifier.DropoutListener;
 
 import java.util.ArrayList;
 
@@ -35,15 +36,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.Object
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
 
-public class RandAmplifierUDTF extends GenericUDTF {
-
-    private int xtimes;
-    private int numBuffers;
-
-    private Object[][] _forwardBuffers;
-    private int _position;
+public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
 
     private transient ObjectInspector[] retrunOIs;
+
+    private transient RandomDropoutAmplifier<Object[]> amplifier;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -59,7 +56,7 @@ public class RandAmplifierUDTF extends GenericUDTF {
             throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the first argument: "
                     + argOIs[0].getClass().getSimpleName());
         }
-        this.xtimes = ((WritableConstantIntObjectInspector) argOIs[0]).getWritableConstantValue().get();
+        int xtimes = ((WritableConstantIntObjectInspector) argOIs[0]).getWritableConstantValue().get();
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
@@ -72,14 +69,13 @@ public class RandAmplifierUDTF extends GenericUDTF {
             throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the second argument: "
                     + argOIs[1].getClass().getSimpleName());
         }
-        this.numBuffers = ((WritableConstantIntObjectInspector) argOIs[1]).getWritableConstantValue().get();
+        int numBuffers = ((WritableConstantIntObjectInspector) argOIs[1]).getWritableConstantValue().get();
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
 
-        int numForwardObjs = numArgs - 2;
-        this._forwardBuffers = new Object[numBuffers][numForwardObjs];
-        this._position = 0;
+        this.amplifier = new RandomDropoutAmplifier<Object[]>(numBuffers, xtimes);
+        amplifier.setDropoutListener(this);
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
@@ -96,38 +92,24 @@ public class RandAmplifierUDTF extends GenericUDTF {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        final Object[][] forwardBuffers = _forwardBuffers;
-        for(int x = 0; x < xtimes; x++) { // amplify x times              
-            final Object[] forwardObjs = forwardBuffers[_position];
-            for(int i = 2; i < args.length; i++) {// copy a row
-                Object arg = args[i];
-                ObjectInspector returnOI = retrunOIs[i];
-                forwardObjs[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, returnOI);
-            }
-            _position++;
-            if(_position == numBuffers) {
-                shuffleAndForward(forwardBuffers, _position);
-                this._position = 0;
-            }
+        final Object[] row = new Object[args.length - 2];
+        for(int i = 2; i < args.length; i++) {
+            Object arg = args[i];
+            ObjectInspector returnOI = retrunOIs[i];
+            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, returnOI);
         }
+        amplifier.add(row);
     }
 
     @Override
     public void close() throws HiveException {
-        if(_position > 0) {
-            shuffleAndForward(_forwardBuffers, _position);
-        }
-        this._forwardBuffers = null;
-        this._position = 0;
+        amplifier.sweepAll();
+        this.amplifier = null;
     }
 
-    private void shuffleAndForward(final Object[][] forwardBuffers, final int numForwards)
-            throws HiveException {
-        ArrayUtils.shuffle(forwardBuffers, numForwards);
-        for(int i = 0; i < numForwards; i++) {
-            Object[] forwardObj = forwardBuffers[i];
-            forward(forwardObj);
-        }
+    @Override
+    public void onDrop(Object[] row) throws HiveException {
+        forward(row);
     }
 
 }
