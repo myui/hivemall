@@ -29,7 +29,6 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 public class RandomDropoutAmplifier<T> {
 
     private final int numBuffers;
-    private final int lastPos;
     private final int xtimes;
 
     private final AgedObject<T>[][] slots;
@@ -48,7 +47,6 @@ public class RandomDropoutAmplifier<T> {
             throw new IllegalArgumentException("xtime must be greater than 0: " + xtimes);
         }
         this.numBuffers = numBuffers;
-        this.lastPos = numBuffers - 1;
         this.xtimes = xtimes;
         this.slots = new AgedObject[xtimes][numBuffers];
         this.position = 0;
@@ -77,8 +75,8 @@ public class RandomDropoutAmplifier<T> {
             for(int x = 0; x < xtimes; x++) {
                 AgedObject<T>[] slot = slots[x];
                 Random rnd = randoms[x];
-                int rindex1 = rnd.nextInt(lastPos);
-                int rindex2 = rnd.nextInt(lastPos);
+                int rindex1 = rnd.nextInt(numBuffers);
+                int rindex2 = rnd.nextInt(numBuffers);
                 AgedObject<T> replaced1 = slot[rindex1];
                 AgedObject<T> replaced2 = slot[rindex2];
                 assert (replaced1 != null);
