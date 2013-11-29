@@ -38,7 +38,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantI
 
 public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
 
-    private transient ObjectInspector[] retrunOIs;
+    private transient ObjectInspector[] argOIs;
 
     private transient RandomDropoutAmplifier<Object[]> amplifier;
 
@@ -73,19 +73,18 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
+        this.argOIs = argOIs;
 
         this.amplifier = new RandomDropoutAmplifier<Object[]>(numBuffers, xtimes);
         amplifier.setDropoutListener(this);
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-        this.retrunOIs = new ObjectInspector[numArgs];
         for(int i = 2; i < numArgs; i++) {
             fieldNames.add("c" + (i - 1));
             ObjectInspector rawOI = argOIs[i];
             ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.WRITABLE);
             fieldOIs.add(retOI);
-            retrunOIs[i] = retOI;
         }
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -95,8 +94,8 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         final Object[] row = new Object[args.length - 2];
         for(int i = 2; i < args.length; i++) {
             Object arg = args[i];
-            ObjectInspector returnOI = retrunOIs[i];
-            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, returnOI);
+            ObjectInspector argOI = argOIs[i];
+            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI);
         }
         amplifier.add(row);
     }
