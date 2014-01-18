@@ -101,12 +101,15 @@ Put the above copyrights for the services/softwares that use Hivemall.
 Support
 -------
 
-Support of Hivemall is through [Gitter](https://gitter.im/myui/hivemall) (evaluating the beta service for a moment).
+We are evaluating [Gitter](https://gitter.im/myui/hivemall) beta service for a moment.
 
 References
 ----------
 
 Please refer the following paper for research uses:
+
+* Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo paper), 
+NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows, Dec 2013.
 
 * Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'',  
  Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
