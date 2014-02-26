@@ -23,6 +23,7 @@ package hivemall.classifier.multiclass;
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.StatsUtils;
 
 import java.util.HashMap;
@@ -306,6 +307,6 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
         float new_w = positive ? old_v + (alpha * cv) : old_v - (alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
-        return new WeightValue(new_w, new_cov);
+        return new WeightValueWithCovar(new_w, new_cov);
     }
 }

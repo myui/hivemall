@@ -24,6 +24,7 @@ import hivemall.common.FeatureValue;
 import hivemall.common.LossFunctions;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 
 import java.util.List;
 
@@ -147,7 +148,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         float new_w = old_w + (y * alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
-        return new WeightValue(new_w, new_cov);
+        return new WeightValueWithCovar(new_w, new_cov);
     }
 
     public static class AROWh extends AROWClassifierUDTF {
