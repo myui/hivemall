@@ -24,8 +24,8 @@ import hivemall.common.FeatureValue;
 import hivemall.common.HivemallConstants;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
-import hivemall.utils.collections.OpenHashTable;
-import hivemall.utils.collections.OpenHashTable.IMapIterator;
+import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.collections.OpenHashMap.IMapIterator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
     protected float bias;
     protected Object biasKey;
 
-    protected OpenHashTable<Object, WeightValue> weights;
+    protected OpenHashMap<Object, WeightValue> weights;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -101,7 +101,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new OpenHashTable<Object, WeightValue>(8192);
+        this.weights = new OpenHashMap<Object, WeightValue>(8192);
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -332,8 +332,8 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
             final Object[] forwardMapObj = new Object[2];
             IMapIterator<Object, WeightValue> itor = weights.entries();
             while(itor.next() != -1) {
-                Object k = itor.getAndFreeKey();
-                WeightValue v = itor.getAndFreeValue();
+                Object k = itor.unsafeGetAndFreeKey();
+                WeightValue v = itor.unsafeGetAndFreeValue();
                 FloatWritable fv = new FloatWritable(v.getValue());
                 forwardMapObj[0] = k;
                 forwardMapObj[1] = fv;

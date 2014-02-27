@@ -24,7 +24,7 @@ import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
-import hivemall.utils.collections.OpenHashTable;
+import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.math.StatsUtils;
 
 import java.util.List;
@@ -237,16 +237,16 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
                     + actual_label);
         }
 
-        OpenHashTable<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
+        OpenHashMap<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
         if(weightsToAdd == null) {
-            weightsToAdd = new OpenHashTable<Object, WeightValue>(8192);
+            weightsToAdd = new OpenHashMap<Object, WeightValue>(8192);
             label2FeatureWeight.put(actual_label, weightsToAdd);
         }
-        OpenHashTable<Object, WeightValue> weightsToSub = null;
+        OpenHashMap<Object, WeightValue> weightsToSub = null;
         if(missed_label != null) {
             weightsToSub = label2FeatureWeight.get(missed_label);
             if(weightsToSub == null) {
-                weightsToSub = new OpenHashTable<Object, WeightValue>(8192);
+                weightsToSub = new OpenHashMap<Object, WeightValue>(8192);
                 label2FeatureWeight.put(missed_label, weightsToSub);
             }
         }
