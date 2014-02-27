@@ -24,7 +24,7 @@ import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
-import hivemall.utils.StatsUtils;
+import hivemall.utils.math.StatsUtils;
 
 import java.util.HashMap;
 import java.util.List;

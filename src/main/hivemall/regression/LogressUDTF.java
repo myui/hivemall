@@ -23,7 +23,7 @@ package hivemall.regression;
 import hivemall.common.EtaEstimator;
 import hivemall.common.EtaEstimator.InvscalingEtaEstimator;
 import hivemall.common.EtaEstimator.SimpleEtaEstimator;
-import hivemall.utils.MathUtils;
+import hivemall.utils.math.MathUtils;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
