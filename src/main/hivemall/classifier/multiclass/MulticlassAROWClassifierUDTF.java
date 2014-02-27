@@ -24,10 +24,9 @@ import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.utils.collections.OpenHashTable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -109,16 +108,16 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
                     + actual_label);
         }
 
-        Map<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
+        OpenHashTable<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
         if(weightsToAdd == null) {
-            weightsToAdd = new HashMap<Object, WeightValue>(8192);
+            weightsToAdd = new OpenHashTable<Object, WeightValue>(8192);
             label2FeatureWeight.put(actual_label, weightsToAdd);
         }
-        Map<Object, WeightValue> weightsToSub = null;
+        OpenHashTable<Object, WeightValue> weightsToSub = null;
         if(missed_label != null) {
             weightsToSub = label2FeatureWeight.get(missed_label);
             if(weightsToSub == null) {
-                weightsToSub = new HashMap<Object, WeightValue>(8192);
+                weightsToSub = new OpenHashTable<Object, WeightValue>(8192);
                 label2FeatureWeight.put(missed_label, weightsToSub);
             }
         }
