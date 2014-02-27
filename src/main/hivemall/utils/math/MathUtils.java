@@ -40,7 +40,43 @@ package hivemall.utils.math;
 
 public final class MathUtils {
 
-    public static double sigmoid(double x) {
+    /**
+     * Returns a bit mask for the specified number of bits.
+     */
+    public static int bitMask(final int numberOfBits) {
+        if(numberOfBits >= 32) {
+            return -1;
+        }
+        return (numberOfBits == 0 ? 0 : powerOf(2, numberOfBits) - 1);
+    }
+
+    /**
+     * Power of method for integer math.
+     */
+    public static int powerOf(final int value, final int powerOf) {
+        if(powerOf == 0) {
+            return 0;
+        }
+        int r = value;
+        for(int x = 1; x < powerOf; x++) {
+            r = r * value;
+        }
+        return r;
+    }
+
+    /**
+     * Returns the number of bits required to store a number.
+     */
+    public static int bitsRequired(int value) {
+        int bits = 0;
+        while(value != 0) {
+            bits++;
+            value >>= 1;
+        }
+        return bits;
+    }
+
+    public static double sigmoid(final double x) {
         return 1.d / (1.d + Math.exp(-x));
     }
 
