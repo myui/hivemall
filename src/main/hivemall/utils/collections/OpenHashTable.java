@@ -217,6 +217,10 @@ public class OpenHashTable<K, V> {
         return _used;
     }
 
+    public boolean isEmpty() {
+        return _used > 0;
+    }
+
     public void clear() {
         Arrays.fill(_states, FREE);
         this._used = 0;
