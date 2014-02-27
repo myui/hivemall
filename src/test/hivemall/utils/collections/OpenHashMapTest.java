@@ -25,7 +25,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class OpenHashTableTest {
+public class OpenHashMapTest {
 
     @Test
     public void testPutAndGet() {
