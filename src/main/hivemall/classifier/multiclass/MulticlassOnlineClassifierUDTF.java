@@ -25,8 +25,8 @@ import hivemall.common.HivemallConstants;
 import hivemall.common.Margin;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
-import hivemall.utils.collections.OpenHashTable;
-import hivemall.utils.collections.OpenHashTable.IMapIterator;
+import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.collections.OpenHashMap.IMapIterator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +61,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
     protected float bias;
     protected Object biasKey;
 
-    protected Map<Object, OpenHashTable<Object, WeightValue>> label2FeatureWeight;
+    protected Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -111,7 +111,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.label2FeatureWeight = new HashMap<Object, OpenHashTable<Object, WeightValue>>(64);
+        this.label2FeatureWeight = new HashMap<Object, OpenHashMap<Object, WeightValue>>(64);
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -182,9 +182,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         float maxScore = Float.MIN_VALUE;
         Object maxScoredLabel = null;
 
-        for(Map.Entry<Object, OpenHashTable<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashTable<Object, WeightValue> weights = label2map.getValue();
+            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
             float score = calcScore(weights, features);
             if(maxScoredLabel == null || score > maxScore) {
                 maxScore = score;
@@ -200,9 +200,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
 
-        for(Map.Entry<Object, OpenHashTable<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashTable<Object, WeightValue> weights = label2map.getValue();
+            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
             float score = calcScore(weights, features);
             if(label.equals(actual_label)) {
                 correctScore = score;
@@ -232,9 +232,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
             return new Margin(correctScore, maxAnotherLabel, maxAnotherScore).variance(var);
         }
 
-        for(Map.Entry<Object, OpenHashTable<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashTable<Object, WeightValue> weights = label2map.getValue();
+            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
             PredictionResult predicted = calcScoreAndVariance(weights, features);
             float score = predicted.getScore();
 
@@ -278,7 +278,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         return squared_norm;
     }
 
-    protected final float calcScore(final OpenHashTable<Object, WeightValue> weights, final List<?> features) {
+    protected final float calcScore(final OpenHashMap<Object, WeightValue> weights, final List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final boolean parseX = this.parseX;
 
@@ -340,7 +340,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
         return variance;
     }
 
-    protected final PredictionResult calcScoreAndVariance(final OpenHashTable<Object, WeightValue> weights, final List<?> features) {
+    protected final PredictionResult calcScoreAndVariance(final OpenHashMap<Object, WeightValue> weights, final List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final boolean parseX = this.parseX;
 
@@ -390,16 +390,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
                     + actual_label);
         }
 
-        OpenHashTable<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
+        OpenHashMap<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
         if(weightsToAdd == null) {
-            weightsToAdd = new OpenHashTable<Object, WeightValue>(8192);
+            weightsToAdd = new OpenHashMap<Object, WeightValue>(8192);
             label2FeatureWeight.put(actual_label, weightsToAdd);
         }
-        OpenHashTable<Object, WeightValue> weightsToSub = null;
+        OpenHashMap<Object, WeightValue> weightsToSub = null;
         if(missed_label != null) {
             weightsToSub = label2FeatureWeight.get(missed_label);
             if(weightsToSub == null) {
-                weightsToSub = new OpenHashTable<Object, WeightValue>(8192);
+                weightsToSub = new OpenHashMap<Object, WeightValue>(8192);
                 label2FeatureWeight.put(missed_label, weightsToSub);
             }
         }
@@ -452,14 +452,14 @@ public abstract class MulticlassOnlineClassifierUDTF extends GenericUDTF {
     public void close() throws HiveException {
         if(label2FeatureWeight != null) {
             final Object[] forwardMapObj = new Object[3];
-            for(Map.Entry<Object, OpenHashTable<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
+            for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
                 Object label = label2map.getKey();
                 forwardMapObj[0] = label;
-                OpenHashTable<Object, WeightValue> fvmap = label2map.getValue();
+                OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
                 IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
                 while(fvmapItor.next() != -1) {
-                    Object k = fvmapItor.getAndFreeKey();
-                    WeightValue v = fvmapItor.getAndFreeValue();
+                    Object k = fvmapItor.unsafeGetAndFreeKey();
+                    WeightValue v = fvmapItor.unsafeGetAndFreeValue();
                     FloatWritable fv = new FloatWritable(v.getValue());
                     forwardMapObj[1] = k;
                     forwardMapObj[2] = fv;
