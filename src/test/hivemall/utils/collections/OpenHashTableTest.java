@@ -63,4 +63,25 @@ public class OpenHashTableTest {
         Assert.assertEquals(-1, itor.next());
     }
 
+    @Test
+    public void testIteratorGetAndFree() {
+        OpenHashTable<String, Integer> map = new OpenHashTable<String, Integer>(100);
+        IMapIterator<String, Integer> itor = map.entries();
+        Assert.assertFalse(itor.hasNext());
+
+        final int numEntries = 10000;
+        for(int i = 0; i < numEntries; i++) {
+            map.put(Integer.toString(i), i);
+        }
+
+        itor = map.entries();
+        Assert.assertTrue(itor.hasNext());
+        while(itor.hasNext()) {
+            Assert.assertFalse(itor.next() == -1);
+            String k = itor.getAndFreeKey();
+            Integer v = itor.getAndFreeValue();
+            Assert.assertEquals(Integer.valueOf(k), v);
+        }
+        Assert.assertEquals(-1, itor.next());
+    }
 }

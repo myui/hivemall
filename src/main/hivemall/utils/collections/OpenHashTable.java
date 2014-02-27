@@ -20,7 +20,6 @@
  */
 package hivemall.utils.collections;
 
-
 import hivemall.utils.math.Primes;
 
 import java.util.Arrays;
@@ -310,6 +309,10 @@ public class OpenHashTable<K, V> {
 
         public V getValue();
 
+        public K getAndFreeKey();
+
+        public V getAndFreeValue();
+
     }
 
     private final class MapIterator implements IMapIterator<K, V> {
@@ -355,6 +358,20 @@ public class OpenHashTable<K, V> {
                 throw new IllegalStateException();
             }
             return _values[lastEntry];
+        }
+
+        @Override
+        public K getAndFreeKey() {
+            K k = _keys[lastEntry];
+            _keys[lastEntry] = null;
+            return k;
+        }
+
+        @Override
+        public V getAndFreeValue() {
+            V v = _values[lastEntry];
+            _values[lastEntry] = null;
+            return v;
         }
     }
 }
