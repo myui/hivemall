@@ -24,12 +24,12 @@ import hivemall.common.FeatureValue;
 import hivemall.common.HivemallConstants;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.utils.collections.OpenHashTable;
+import hivemall.utils.collections.OpenHashTable.IMapIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -61,7 +61,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     protected float bias;
     protected Object biasKey;
 
-    protected Map<Object, WeightValue> weights;
+    protected OpenHashTable<Object, WeightValue> weights;
     protected int count;
 
     @Override
@@ -96,7 +96,7 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new HashMap<Object, WeightValue>(8192);
+        this.weights = new OpenHashTable<Object, WeightValue>(8192);
         this.count = 1;
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -339,9 +339,10 @@ public abstract class OnlineRegressionUDTF extends GenericUDTF {
     public void close() throws HiveException {
         if(weights != null) {
             final Object[] forwardMapObj = new Object[2];
-            for(Map.Entry<Object, WeightValue> e : weights.entrySet()) {
-                Object k = e.getKey();
-                WeightValue v = e.getValue();
+            IMapIterator<Object, WeightValue> itor = weights.entries();
+            while(itor.next() != -1) {
+                Object k = itor.getAndFreeKey();
+                WeightValue v = itor.getAndFreeValue();
                 FloatWritable fv = new FloatWritable(v.get());
                 forwardMapObj[0] = k;
                 forwardMapObj[1] = fv;

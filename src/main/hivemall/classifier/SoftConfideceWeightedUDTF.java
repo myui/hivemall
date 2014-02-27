@@ -23,7 +23,8 @@ package hivemall.classifier;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
-import hivemall.utils.StatsUtils;
+import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.utils.math.StatsUtils;
 
 import java.util.List;
 
@@ -272,6 +273,6 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
         float new_w = old_v + (y * alpha * cv);
         float new_cov = old_cov - (beta * cv * cv);
 
-        return new WeightValue(new_w, new_cov);
+        return new WeightValueWithCovar(new_w, new_cov);
     }
 }

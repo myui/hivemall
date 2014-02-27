@@ -25,6 +25,7 @@ import hivemall.common.LossFunctions;
 import hivemall.common.OnlineVariance;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 
 import java.util.Collection;
 
@@ -143,7 +144,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         float new_w = old_w + coeff * cov_x * beta;
         float new_cov = old_cov - (beta * cov_x * cov_x);
 
-        return new WeightValue(new_w, new_cov);
+        return new WeightValueWithCovar(new_w, new_cov);
     }
 
     public static class AROWe extends AROWRegressionUDTF {

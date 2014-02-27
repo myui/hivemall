@@ -22,28 +22,36 @@ package hivemall.common;
 
 public class WeightValue {
 
-    private final float value;
-    private float covariance;
+    protected final float value;
 
     public WeightValue(float weight) {
         this.value = weight;
     }
 
-    public WeightValue(float weight, float covariance) {
-        this.value = weight;
-        this.covariance = covariance;
-    }
-
     public float get() {
         return value;
     }
-    
+
     public float getValue() {
         return value;
     }
 
     public float getCovariance() {
-        return covariance;
+        throw new UnsupportedOperationException();
+    }
+
+    public static final class WeightValueWithCovar extends WeightValue {
+
+        final float covariance;
+
+        public WeightValueWithCovar(float weight, float covariance) {
+            super(weight);
+            this.covariance = covariance;
+        }
+
+        public float getCovariance() {
+            return covariance;
+        }
     }
 
 }
