@@ -21,6 +21,9 @@
 package hivemall.utils.collections;
 
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
+
+import java.util.Map;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -29,8 +32,8 @@ public class OpenHashMapTest {
 
     @Test
     public void testPutAndGet() {
-        OpenHashMap<Object, Object> map = new OpenHashMap<Object, Object>(10);
-        final int numEntries = 1000000;
+        Map<Object, Object> map = new OpenHashMap<Object, Object>(16384);
+        final int numEntries = 10000000;
         for(int i = 0; i < numEntries; i++) {
             map.put(Integer.toString(i), i);
         }
@@ -43,7 +46,7 @@ public class OpenHashMapTest {
 
     @Test
     public void testIterator() {
-        OpenHashMap<String, Integer> map = new OpenHashMap<String, Integer>(100);
+        OpenHashMap<String, Integer> map = new OpenHashMap<String, Integer>(1000);
         IMapIterator<String, Integer> itor = map.entries();
         Assert.assertFalse(itor.hasNext());
 
