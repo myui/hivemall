@@ -20,6 +20,8 @@
  */
 package hivemall.utils;
 
+import hivemall.utils.math.MathUtils;
+
 public final class StatsUtils {
 
     /**
