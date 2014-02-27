@@ -101,7 +101,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
-        this.weights = new OpenHashMap<Object, WeightValue>(8192);
+        this.weights = new OpenHashMap<Object, WeightValue>(16384);
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
