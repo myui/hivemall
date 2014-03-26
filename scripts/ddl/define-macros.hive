@@ -41,5 +41,5 @@ create temporary macro SST(actual FLOAT, mean_actual FLOAT)
 sum(pow(actual-mean_actual,2.0));
 
 -- coefficient of determination (R^2)
-create temporary macro R2(predicted FLOAT, actural FLOAT, mean_actual FLOAT)
+create temporary macro R2(predicted FLOAT, actual FLOAT, mean_actual FLOAT)
 1 - (SSE(predicted, actual) / SST(actual, mean_actual));
