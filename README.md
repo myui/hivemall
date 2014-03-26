@@ -101,7 +101,7 @@ Put the above copyrights for the services/softwares that use Hivemall.
 Support
 -------
 
-We are evaluating [Gitter](https://gitter.im/myui/hivemall) beta service for a moment.
+Support is through the [issue list](https://github.com/myui/hivemall/issues).
 
 References
 ----------
