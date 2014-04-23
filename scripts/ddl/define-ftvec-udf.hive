@@ -35,6 +35,13 @@ create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleFeatureVa
 drop temporary function zscore;
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 
+------------------------
+-- distance functions --
+------------------------
+
+drop temporary function cosine_sim;
+create temporary function cosine_sim as 'hivemall.ftvec.distance.CosineSimilalityUDF';
+
 --------------------
 -- misc functions --
 --------------------
