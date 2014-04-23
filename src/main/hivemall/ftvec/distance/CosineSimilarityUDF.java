@@ -28,7 +28,7 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 
-public final class CosineSimilalityUDF extends UDF {
+public final class CosineSimilarityUDF extends UDF {
 
     public float evaluate(List<String> ftvec1, List<String> ftvec2) {
         if(ftvec1 == null || ftvec2 == null) {
@@ -38,17 +38,18 @@ public final class CosineSimilalityUDF extends UDF {
         final Map<String, Float> map1 = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         double score1 = 0.d;
         for(String ft : ftvec1) {
-            FeatureValue fv = FeatureValue.parse(ft);
+            FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
             float v = fv.getValue();
             score1 += (v * v);
-            map1.put(fv.<String> getFeature(), v);
+            String f = fv.getFeature();
+            map1.put(f, v);
         }
         double l1norm1 = Math.sqrt(score1);
 
         float dotp = 0.f;
         double score2 = 0.d;
         for(String ft : ftvec2) {
-            FeatureValue fv = FeatureValue.parse(ft);
+            FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
             float v2 = fv.getValue();
             score2 += (v2 * v2);
             String f2 = fv.getFeature();
@@ -59,11 +60,11 @@ public final class CosineSimilalityUDF extends UDF {
         }
         double l1norm2 = Math.sqrt(score2);
 
-        float denom = (float) (l1norm1 * l1norm2);
+        double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
             return 0.f;
         } else {
-            return dotp / denom;
+            return (float) (dotp / denom);
         }
     }
 

@@ -40,7 +40,7 @@ create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 ------------------------
 
 drop temporary function cosine_sim;
-create temporary function cosine_sim as 'hivemall.ftvec.distance.CosineSimilalityUDF';
+create temporary function cosine_sim as 'hivemall.ftvec.distance.CosineSimilarityUDF';
 
 --------------------
 -- misc functions --
