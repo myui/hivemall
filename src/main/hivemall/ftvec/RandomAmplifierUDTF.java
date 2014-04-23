@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec;
 
-import hivemall.common.HivemallConstants;
+import hivemall.HivemallConstants;
 import hivemall.common.RandomDropoutAmplifier;
 import hivemall.common.RandomDropoutAmplifier.DropoutListener;
 
