@@ -21,8 +21,8 @@
 package hivemall.ftvec;
 
 import hivemall.HivemallConstants;
-import hivemall.common.RandomDropoutAmplifier;
-import hivemall.common.RandomDropoutAmplifier.DropoutListener;
+import hivemall.common.RandomizedAmplifier;
+import hivemall.common.RandomizedAmplifier.DropoutListener;
 
 import java.util.ArrayList;
 
@@ -40,7 +40,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
 
     private transient ObjectInspector[] argOIs;
 
-    private transient RandomDropoutAmplifier<Object[]> amplifier;
+    private transient RandomizedAmplifier<Object[]> amplifier;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -75,7 +75,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         }
         this.argOIs = argOIs;
 
-        this.amplifier = new RandomDropoutAmplifier<Object[]>(numBuffers, xtimes);
+        this.amplifier = new RandomizedAmplifier<Object[]>(numBuffers, xtimes);
         amplifier.setDropoutListener(this);
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
