@@ -4,14 +4,16 @@ import hivemall.utils.math.MathUtils;
 
 public final class MurmurHash3 {
 
+    public static final int DEFAULT_NUM_FEATURES = 16777216;
+
     /**
      * @return hash value of range from 0 to 2^24 (16777216).
      */
     public static int murmurhash3(final String data) {
         int h = murmurhash3_x86_32(data, 0, data.length(), 0x9747b28c);
-        int r = MathUtils.moduloPowerOfTwo(h, 16777216);
+        int r = MathUtils.moduloPowerOfTwo(h, DEFAULT_NUM_FEATURES);
         if(r < 0) {
-            r += 16777216;
+            r += DEFAULT_NUM_FEATURES;
         }
         return r;
     }

@@ -20,6 +20,8 @@
  */
 package hivemall.ftvec.hashing;
 
+import hivemall.utils.hashing.MurmurHash3;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class ArrayPrefixedHashValuesUDF extends UDF {
             prefix = "";
         }
 
-        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES);
         final int len = hashValues.size();
         final String[] stringValues = new String[len];
         for(int i = 0; i < len; i++) {
