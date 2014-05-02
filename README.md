@@ -101,7 +101,7 @@ I and my institute are ready to provide a commercial license with an additional 
 Copyright
 ---------
 
-Copyright (C) 2013 National Institute of Advanced Industrial Science and Technology (AIST)  
+Copyright (C) 2013-2014 National Institute of Advanced Industrial Science and Technology (AIST)  
 Registration Number: [H25PRO-1520]
 
 Put the above copyrights for the services/softwares that use Hivemall.
