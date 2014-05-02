@@ -33,6 +33,14 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * AROW regression
 
+## Clustering
+
+* Minhash (LSH with jaccard index)
+
+## Recommendation
+
+* Minhash (LSH with jaccard index)
+
 ## Ensemble
 
 * Bagging
@@ -108,11 +116,14 @@ References
 
 Please refer the following paper for research uses:
 
+* Makoto Yui. ``Hivemall: Scalable Machine Learning Library for Apache Hive'', 
+  [2014 Hadoop Summit](http://hadoopsummit.org/san-jose/), June 2014. (to appear)
+
 * Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo paper), 
-NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows, Dec 2013.
+  NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows, Dec 2013.
 
 * Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'',  
- Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
+  Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
 
 Acknowledgment
 --------------
