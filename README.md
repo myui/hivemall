@@ -120,7 +120,7 @@ Please refer the following paper for research uses:
   [2014 Hadoop Summit](http://hadoopsummit.org/san-jose/), June 2014. (to appear)
 
 * Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo paper), 
-  NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows, Dec 2013.
+  [NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows](https://mloss.org/workshop/nips13/), Dec 2013.
 
 * Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'',  
   Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
