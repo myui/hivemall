@@ -12,3 +12,10 @@
 
 drop temporary function cosine_sim;
 create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSimilarityUDF';
+
+-------------------
+-- LSH functions --
+-------------------
+
+drop temporary function minhash;
+create temporary function minhash as 'hivemall.neighborhood.lsh.MinhashUDTF';
