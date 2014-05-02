@@ -20,8 +20,9 @@
  */
 package hivemall.classifier;
 
+import hivemall.HivemallConstants;
+import hivemall.UDTFWithOptions;
 import hivemall.common.FeatureValue;
-import hivemall.common.HivemallConstants;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 import hivemall.utils.collections.OpenHashMap;
@@ -30,14 +31,11 @@ import hivemall.utils.collections.OpenHashMap.IMapIterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -49,7 +47,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantS
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
-public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
+public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
 
     protected ListObjectInspector featureListOI;
     protected IntObjectInspector labelOI;
@@ -106,6 +104,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
+    @Override
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
@@ -113,21 +112,7 @@ public abstract class BinaryOnlineClassifierUDTF extends GenericUDTF {
         return opts;
     }
 
-    protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
-        String[] args = optionValue.split("\\s+");
-
-        Options opts = getOptions();
-
-        BasicParser parser = new BasicParser();
-        final CommandLine cl;
-        try {
-            cl = parser.parse(opts, args);
-        } catch (ParseException e) {
-            throw new UDFArgumentException(e);
-        }
-        return cl;
-    }
-
+    @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
         float bias = 0.f;

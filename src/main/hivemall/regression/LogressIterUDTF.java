@@ -20,7 +20,7 @@
  */
 package hivemall.regression;
 
-import hivemall.common.HivemallConstants;
+import hivemall.HivemallConstants;
 import hivemall.common.WeightValue;
 
 import java.util.Map;

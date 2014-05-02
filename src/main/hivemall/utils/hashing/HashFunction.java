@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2013
+ * Copyright (C) 2013-2014
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
  *
@@ -18,32 +18,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.ftvec.hashing;
+package hivemall.utils.hashing;
 
-import hivemall.utils.hashing.MurmurHash3;
+public abstract class HashFunction {
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.hadoop.hive.ql.exec.UDF;
-
-public class ArrayPrefixedHashValuesUDF extends UDF {
-
-    public List<String> evaluate(List<String> values, String prefix) {
-        if(values == null) {
-            return null;
-        }
-        if(prefix == null) {
-            prefix = "";
-        }
-
-        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES);
-        final int len = hashValues.size();
-        final String[] stringValues = new String[len];
-        for(int i = 0; i < len; i++) {
-            Integer v = hashValues.get(i);
-            stringValues[i] = prefix + v.toString();
-        }
-        return Arrays.asList(stringValues);
+    public int hash(Object data) {
+        String s = data.toString();
+        return hash(s);
     }
+
+    public abstract int hash(String data);
+
 }

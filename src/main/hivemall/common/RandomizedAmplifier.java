@@ -26,7 +26,7 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
-public class RandomDropoutAmplifier<T> {
+public class RandomizedAmplifier<T> {
 
     private final int numBuffers;
     private final int xtimes;
@@ -39,7 +39,7 @@ public class RandomDropoutAmplifier<T> {
     private DropoutListener<T> listener = null;
 
     @SuppressWarnings("unchecked")
-    public RandomDropoutAmplifier(int numBuffers, int xtimes) {
+    public RandomizedAmplifier(int numBuffers, int xtimes) {
         if(numBuffers < 1) {
             throw new IllegalArgumentException("numBuffers must be greater than 0: " + numBuffers);
         }

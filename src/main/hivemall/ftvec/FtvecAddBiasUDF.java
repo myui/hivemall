@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec;
 
-import hivemall.common.HivemallConstants;
+import hivemall.HivemallConstants;
 
 import java.util.Arrays;
 import java.util.List;

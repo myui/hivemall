@@ -20,6 +20,8 @@
  */
 package hivemall.ftvec.hashing;
 
+import hivemall.utils.hashing.MurmurHash3;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -29,11 +31,11 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 public class ArrayHashValuesUDF extends UDF {
 
     public List<Integer> evaluate(List<String> values) {
-        return evaluate(values, null, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+        return evaluate(values, null, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
     public List<Integer> evaluate(List<String> values, String prefix) {
-        return evaluate(values, prefix, MurmurHash3UDF.DEFAULT_NUM_FEATURES);
+        return evaluate(values, prefix, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
     public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
@@ -55,7 +57,7 @@ public class ArrayHashValuesUDF extends UDF {
                 ary[i] = null;
             } else {
                 String data = (prefix == null) ? (i + ':' + v) : (prefix + i + ':' + v);
-                ary[i] = MurmurHash3UDF.murmurhash3(data, numFeatures);
+                ary[i] = MurmurHash3.murmurhash3(data, numFeatures);
             }
         }
         return Arrays.asList(ary);

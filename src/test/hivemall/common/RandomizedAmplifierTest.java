@@ -20,7 +20,7 @@
  */
 package hivemall.common;
 
-import hivemall.common.RandomDropoutAmplifier.DropoutListener;
+import hivemall.common.RandomizedAmplifier.DropoutListener;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -31,7 +31,7 @@ import junit.framework.Assert;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
 
-public class RandomDropoutAmplifierTest {
+public class RandomizedAmplifierTest {
 
     @Test
     public void test() throws HiveException {
@@ -42,7 +42,7 @@ public class RandomDropoutAmplifierTest {
         }
 
         int xtimes = 3;
-        RandomDropoutAmplifier<Integer> amplifier = new RandomDropoutAmplifier<Integer>(1000, xtimes);
+        RandomizedAmplifier<Integer> amplifier = new RandomizedAmplifier<Integer>(1000, xtimes);
         DropoutCollector collector = new DropoutCollector();
         amplifier.setDropoutListener(collector);
         for(Integer obj : numlist) {
@@ -64,7 +64,7 @@ public class RandomDropoutAmplifierTest {
 
         @Override
         public void onDrop(Integer droppped) {
-            //System.out.println(droppped);
+            System.out.println(droppped);
             numset.add(droppped);
             count++;
         }

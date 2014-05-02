@@ -20,7 +20,7 @@
  */
 package hivemall.common;
 
-import hivemall.ftvec.hashing.MurmurHash3UDF;
+import hivemall.utils.hashing.MurmurHash3;
 
 import org.apache.hadoop.io.Text;
 
@@ -49,10 +49,25 @@ public final class FeatureValue {
         }
         String s = o.toString();
         if(feature_hashing) {
-            int hashval = MurmurHash3UDF.murmurhash3(s);
+            int hashval = MurmurHash3.murmurhash3(s);
             return new FeatureValue(Integer.valueOf(hashval), 1.f);
         }
         return parse(s);
+    }
+
+    public static FeatureValue parseFeatureAsString(String s) {
+        if(s == null) {
+            return null;
+        }
+        if(s.indexOf(':') == -1) {
+            return new FeatureValue(s, 1.f);
+        }
+        String[] fv = s.split(":");
+        if(fv.length != 1 && fv.length != 2) {
+            throw new IllegalArgumentException("Invalid feature value representation: " + s);
+        }
+        float v = (fv.length == 1) ? 1.f : Float.parseFloat(fv[1]);
+        return new FeatureValue(fv[0], v);
     }
 
     public static FeatureValue parse(String s) {

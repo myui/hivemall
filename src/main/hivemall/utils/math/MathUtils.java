@@ -181,4 +181,8 @@ public final class MathUtils {
         return p * x;
     }
 
+    public static int moduloPowerOfTwo(final int x, final int powerOfTwoY) {
+        return x & (powerOfTwoY - 1);
+    }
+
 }
