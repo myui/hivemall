@@ -202,7 +202,7 @@ public final class MinhashUDTF extends UDTFWithOptions {
             int nextmin = candidates.poll();
             result = (31 * result) + nextmin;
         }
-        return result;
+        return result & 0x7FFFFFFF;
     }
 
     @Override
