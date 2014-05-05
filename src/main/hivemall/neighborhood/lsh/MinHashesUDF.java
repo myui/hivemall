@@ -52,7 +52,7 @@ public class MinHashesUDF extends UDF {
         return evaluate(features, 5, 2);
     }
 
-    public List<Integer> evaluate(List<Integer> features, int numHashes, final int keyGroups)
+    public List<Integer> evaluate(List<Integer> features, int numHashes, int keyGroups)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features);
@@ -63,7 +63,7 @@ public class MinHashesUDF extends UDF {
         return evaluate(features, 5, 2, noWeight);
     }
 
-    public List<Integer> evaluate(List<String> features, int numHashes, final int keyGroups, boolean noWeight)
+    public List<Integer> evaluate(List<String> features, int numHashes, int keyGroups, boolean noWeight)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
