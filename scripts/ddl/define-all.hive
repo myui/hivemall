@@ -75,6 +75,9 @@ create temporary function train_multiclass_scw2 as 'hivemall.classifier.multicla
 drop temporary function cosine_sim;
 create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSimilarityUDF';
 
+drop temporary function popcnt;
+create temporary function popcnt as 'hivemall.neighborhood.distance.PopcountUDF';
+
 -------------------
 -- LSH functions --
 -------------------
@@ -84,6 +87,9 @@ create temporary function minhashes as 'hivemall.neighborhood.lsh.MinHashesUDF';
 
 drop temporary function minhash;
 create temporary function minhash as 'hivemall.neighborhood.lsh.MinHashUDTF';
+
+drop temporary function bbit_minhash;
+create temporary function bbit_minhash as 'hivemall.neighborhood.lsh.bBitMinHashUDF';
 
 ----------------------
 -- voting functions --
