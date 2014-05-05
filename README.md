@@ -41,6 +41,8 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Minhash (LSH with jaccard index)
 
+* b-Bit minhash
+
 * Brute-force search using cosine similarity
 
 ## Ensemble
