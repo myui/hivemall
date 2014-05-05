@@ -2,7 +2,11 @@ Version 0.2-beta1 - to appear
 -----------------------------
 
 * Enhancement
-    * 
+    * Amplifiers
+    * kNN search using Minhash
+    * kNN search using b-Bit Minhash
+    * kNN search using cosine similarity
+    * Recommendation by Minhash
 * Bugfix
     * 
 
