@@ -33,10 +33,6 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * AROW regression
 
-## Clustering
-
-* Minhash (LSH with jaccard index)
-
 ## Recommendation
 
 * Minhash (LSH with jaccard index)
