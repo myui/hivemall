@@ -22,6 +22,7 @@ package hivemall.neighborhood.distance;
 
 import hivemall.common.FeatureValue;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 
 public final class CosineSimilarityUDF extends UDF {
 
-    public float evaluate(List<String> ftvec1, List<String> ftvec2) {
+    public float evaluate(List<String> ftvec1, List<String> ftvec2, boolean noWeight) {
         if(ftvec1 == null || ftvec2 == null) {
             return 0.f;
         }
@@ -38,27 +39,64 @@ public final class CosineSimilarityUDF extends UDF {
         final Map<String, Float> map1 = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         double score1 = 0.d;
         for(String ft : ftvec1) {
-            FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
-            float v = fv.getValue();
-            score1 += (v * v);
-            String f = fv.getFeature();
-            map1.put(f, v);
+            if(noWeight) {
+                score1++;
+                map1.put(ft, 1.f);
+            } else {
+                FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
+                float v = fv.getValue();
+                score1 += (v * v);
+                String f = fv.getFeature();
+                map1.put(f, v);
+            }
         }
         double l1norm1 = Math.sqrt(score1);
 
         float dotp = 0.f;
         double score2 = 0.d;
         for(String ft : ftvec2) {
-            FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
-            float v2 = fv.getValue();
-            score2 += (v2 * v2);
-            String f2 = fv.getFeature();
-            Float v1 = map1.get(f2);
-            if(v1 != null) {
-                dotp += (v1.floatValue() * v2);
+            if(noWeight) {
+                score2++;
+                if(map1.containsKey(ft)) {
+                    dotp++;
+                }
+            } else {
+                FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
+                float v2 = fv.getValue();
+                score2 += (v2 * v2);
+                String f2 = fv.getFeature();
+                Float v1 = map1.get(f2);
+                if(v1 != null) {
+                    dotp += (v1.floatValue() * v2);
+                }
             }
         }
         double l1norm2 = Math.sqrt(score2);
+
+        double denom = (l1norm1 * l1norm2);
+        if(denom <= 0.f) {
+            return 0.f;
+        } else {
+            return (float) (dotp / denom);
+        }
+    }
+
+    public float evaluate(List<Integer> ftvec1, List<Integer> ftvec2) {
+        if(ftvec1 == null || ftvec2 == null) {
+            return 0.f;
+        }
+
+        Collections.sort(ftvec1);
+
+        double dotp = 0.f;
+        for(Integer f : ftvec2) {
+            if(Collections.binarySearch(ftvec1, f) >= 0) {
+                dotp++;
+            }
+        }
+
+        double l1norm1 = Math.sqrt(ftvec1.size());
+        double l1norm2 = Math.sqrt(ftvec2.size());
 
         double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
