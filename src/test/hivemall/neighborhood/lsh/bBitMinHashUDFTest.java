@@ -20,26 +20,32 @@
  */
 package hivemall.neighborhood.lsh;
 
+import hivemall.neighborhood.distance.PopcountUDF;
+
 import java.util.Arrays;
 
-import junit.framework.Assert;
-
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class MinHashUDFTest {
+public class bBitMinHashUDFTest {
 
     @Test
-    public void testEvaluate() throws HiveException {
-        MinHashesUDF minhash = new MinHashesUDF();
+    public void test() throws HiveException {
+        bBitMinHashUDF bbminhash = new bBitMinHashUDF();
+        PopcountUDF popcnt = new PopcountUDF();
 
-        Assert.assertEquals(5, minhash.evaluate(Arrays.asList(1, 2, 3, 4)).size());
-        Assert.assertEquals(9, minhash.evaluate(Arrays.asList(1, 2, 3, 4), 9, 2).size());
+        Long a1 = bbminhash.evaluate(Arrays.asList("a", "b", "c"), false);
+        Long a2 = bbminhash.evaluate(Arrays.asList("a", "b"), false);
+        Assert.assertTrue(popcnt.evaluate(a1, a2) > 0);
 
-        Assert.assertEquals(minhash.evaluate(Arrays.asList(1, 2, 3, 4)), minhash.evaluate(Arrays.asList(1, 2, 3, 4), 5, 2));
+        Long b1 = bbminhash.evaluate(Arrays.asList("a"), false);
+        Long b2 = bbminhash.evaluate(Arrays.asList("b", "c"), false);
+        Assert.assertTrue(popcnt.evaluate(a1, a2) > popcnt.evaluate(b1, b2));
 
-        Assert.assertEquals(minhash.evaluate(Arrays.asList(1, 2, 3, 4)), minhash.evaluate(Arrays.asList("1", "2", "3", "4"), true));
-
-        Assert.assertEquals(minhash.evaluate(Arrays.asList(1, 2, 3, 4)), minhash.evaluate(Arrays.asList("1:1.0", "2:1.0", "3:1.0", "4:1.0"), false));
+        Long c1 = bbminhash.evaluate(Arrays.asList("a", "b", "c", "d", "e"), false);
+        Long c2 = bbminhash.evaluate(Arrays.asList("b", "c", "e", "d"), false);
+        Assert.assertTrue(popcnt.evaluate(c1, c2) > popcnt.evaluate(a1, a2));
     }
+
 }

@@ -23,15 +23,13 @@ import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Random;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
-public class MinHashesUDF extends UDF {
+public class bBitMinHashUDF extends UDF {
 
     private int[] _seeds = null;
 
@@ -48,26 +46,25 @@ public class MinHashesUDF extends UDF {
         return seeds;
     }
 
-    public List<Integer> evaluate(List<Integer> features) throws HiveException {
-        return evaluate(features, 5, 2);
+    public Long evaluate(List<Integer> features) throws HiveException {
+        return evaluate(features, 128);
     }
 
-    public List<Integer> evaluate(List<Integer> features, int numHashes, int keyGroups)
-            throws HiveException {
+    public Long evaluate(List<Integer> features, int numHashes) throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features);
-        return computeSignatures(featureList, numHashes, keyGroups, seeds);
+        return computeSignatures(featureList, numHashes, seeds);
     }
 
-    public List<Integer> evaluate(List<String> features, boolean noWeight) throws HiveException {
-        return evaluate(features, 5, 2, noWeight);
+    public Long evaluate(List<String> features, boolean noWeight) throws HiveException {
+        return evaluate(features, 128, noWeight);
     }
 
-    public List<Integer> evaluate(List<String> features, int numHashes, int keyGroups, boolean noWeight)
+    public Long evaluate(List<String> features, int numHashes, boolean noWeight)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
-        return computeSignatures(featureList, numHashes, keyGroups, seeds);
+        return computeSignatures(featureList, numHashes, seeds);
     }
 
     private static List<FeatureValue> parseFeatures(final List<Integer> features) {
@@ -98,10 +95,13 @@ public class MinHashesUDF extends UDF {
         return ftvec;
     }
 
-    private static List<Integer> computeSignatures(final List<FeatureValue> features, final int numHashes, final int keyGroups, final int[] seeds)
+    private static long computeSignatures(final List<FeatureValue> features, final int numHashes, final int[] seeds)
             throws HiveException {
-        final Integer[] hashes = new Integer[numHashes];
-        final PriorityQueue<Integer> minhashes = new PriorityQueue<Integer>();
+        if(numHashes <= 0 || numHashes > 512) {
+            throw new HiveException("The number of hash function must be in range (0,512]: "
+                    + numHashes);
+        }
+        final int[] hashes = new int[numHashes];
         // Compute N sets K minhash values
         for(int i = 0; i < numHashes; i++) {
             float weightedMinHashValues = Float.MAX_VALUE;
@@ -114,15 +114,17 @@ public class MinHashesUDF extends UDF {
                 float hashValue = calcWeightedHashValue(hashIndex, w);
                 if(hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;
-                    minhashes.offer(hashIndex);
+                    hashes[i] = hashIndex;
                 }
             }
-
-            hashes[i] = getSignature(minhashes, keyGroups);
-            minhashes.clear();
         }
-
-        return Arrays.asList(hashes);
+        long value = 0L;
+        for(int i = 0; i < numHashes; i++) {
+            if((hashes[i] & 1) == 1) {
+                value += (1L << i);
+            }
+        }
+        return value;
     }
 
     /**
@@ -138,20 +140,5 @@ public class MinHashesUDF extends UDF {
         } else {
             return hashIndex / w;
         }
-    }
-
-    private static int getSignature(PriorityQueue<Integer> candidates, int keyGroups) {
-        final int numCandidates = candidates.size();
-        if(numCandidates == 0) {
-            return 0;
-        }
-
-        final int size = Math.min(numCandidates, keyGroups);
-        int result = 1;
-        for(int i = 0; i < size; i++) {
-            int nextmin = candidates.poll();
-            result = (31 * result) + nextmin;
-        }
-        return result & 0x7FFFFFFF;
     }
 }
