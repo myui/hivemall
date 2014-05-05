@@ -37,6 +37,12 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Minhash (LSH with jaccard index)
 
+## k-Nearest Neighbor Search
+
+* Minhash (LSH with jaccard index)
+
+* Brute-force search using cosine similarity
+
 ## Ensemble
 
 * Bagging
