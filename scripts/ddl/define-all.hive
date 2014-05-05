@@ -79,8 +79,11 @@ create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSi
 -- LSH functions --
 -------------------
 
+drop temporary function minhashes;
+create temporary function minhashes as 'hivemall.neighborhood.lsh.MinHashesUDF';
+
 drop temporary function minhash;
-create temporary function minhash as 'hivemall.neighborhood.lsh.MinhashUDTF';
+create temporary function minhash as 'hivemall.neighborhood.lsh.MinHashUDTF';
 
 ----------------------
 -- voting functions --

@@ -46,7 +46,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantS
 /**
  * A Minhash implementation that outputs n different k-depth Signatures.
  */
-public final class MinhashUDTF extends UDTFWithOptions {
+public final class MinHashUDTF extends UDTFWithOptions {
 
     private ObjectInspector itemOI;
     private ListObjectInspector featureListOI;
