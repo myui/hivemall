@@ -75,6 +75,12 @@ create temporary function train_multiclass_scw2 as 'hivemall.classifier.multicla
 drop temporary function cosine_sim;
 create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSimilarityUDF';
 
+drop temporary function hamming_distance;
+create temporary function hamming_distance as 'hivemall.neighborhood.distance.HammingDistanceUDF';
+
+drop temporary function jaccard;
+create temporary function jaccard as 'hivemall.neighborhood.distance.JaccardIndexUDF';
+
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.neighborhood.distance.PopcountUDF';
 
