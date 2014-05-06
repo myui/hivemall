@@ -1,13 +1,22 @@
-Version 0.2-alpha1 - to appear
------------------------------
+Version 0.2-alpha2 - to appear
+-------------------------------
+
+* Enhancement
+    *
+* Bugfix
+    *
+
+Version 0.2-alpha1 - 2014/05/07
+-------------------------------
 
 * Enhancement
     * kNN search using Minhash
     * kNN search using b-Bit Minhash
     * kNN search using cosine similarity
-    * Recommendation by Minhash
+    * Introduced a recommendation scheme using Minhash
+    * Modified to use OpenHashTable instead of HashMap for reducing memory [9698972]
 * Bugfix
-    * 
+    * Fixed a bug in rand_amplify() [0962c07]
 
 Version 0.2-beta1 - 2013/11/22
 -----------------------------
