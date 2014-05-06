@@ -26,7 +26,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 
 public class HammingDistanceUDF extends UDF {
 
-    public int evaluate(Long a, Long b) {
+    public int evaluate(long a, long b) {
         return hammingDistance(a, b);
     }
 
@@ -48,17 +48,16 @@ public class HammingDistanceUDF extends UDF {
 
         int result = 0;
         for(int i = 0; i < min; i++) {
-            result += hammingDistance(a.get(i), b.get(i));
+            result += hammingDistance(a.get(i).longValue(), b.get(i).longValue());
         }
         for(int j = min; j < max; j++) {
-            result += hammingDistance(0L, r.get(j));
+            result += hammingDistance(0L, r.get(j).longValue());
         }
         return result;
     }
 
-    private static int hammingDistance(final Long a, final Long b) {
-        long xor = a.longValue() ^ b.longValue();
-        return Long.bitCount(xor);
+    public static int hammingDistance(final long a, final long b) {
+        return Long.bitCount(a ^ b);
     }
 
 }
