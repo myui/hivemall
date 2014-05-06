@@ -1,14 +1,22 @@
-Version 0.2-beta1 - to appear
+Version 0.2-alpha1 - to appear
 -----------------------------
 
 * Enhancement
-    * Amplifiers
     * kNN search using Minhash
     * kNN search using b-Bit Minhash
     * kNN search using cosine similarity
     * Recommendation by Minhash
 * Bugfix
     * 
+
+Version 0.2-beta1 - 2013/11/22
+-----------------------------
+* Enhancement
+  * Added rand_amplify() [538d866, 23b4f3b]
+  * Added EMR bootstrap for hivemall [2a834e8]
+  * Added AROW with a hinge loss [ae5c100]
+* Bugfix
+  * Fixed a bug in maven pom.xml [0d33ed7]
 
 Version 0.1     - 2013/10/25
 ----------------------------
