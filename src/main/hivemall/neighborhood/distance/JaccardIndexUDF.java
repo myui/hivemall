@@ -20,6 +20,8 @@
  */
 package hivemall.neighborhood.distance;
 
+import java.math.BigInteger;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
 
 public final class JaccardIndexUDF extends UDF {
@@ -34,4 +36,15 @@ public final class JaccardIndexUDF extends UDF {
         return 2.f * (jaccard - 0.5f);
     }
 
+    public float evaluate(String a, String b) {
+        return evaluate(a, b, 128);
+    }
+
+    public float evaluate(String a, String b, int k) {
+        BigInteger ai = new BigInteger(a);
+        BigInteger bi = new BigInteger(b);
+        int countMatches = k - HammingDistanceUDF.hammingDistance(ai, bi);
+        float jaccard = countMatches / (float) k;
+        return 2.f * (jaccard - 0.5f);
+    }
 }

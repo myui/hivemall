@@ -20,6 +20,7 @@
  */
 package hivemall.neighborhood.distance;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
@@ -28,6 +29,12 @@ public class HammingDistanceUDF extends UDF {
 
     public int evaluate(long a, long b) {
         return hammingDistance(a, b);
+    }
+
+    public int evaluate(String a, String b) {
+        BigInteger ai = new BigInteger(a);
+        BigInteger bi = new BigInteger(b);
+        return hammingDistance(ai, bi);
     }
 
     public int evaluate(List<Long> a, List<Long> b) {
@@ -58,6 +65,11 @@ public class HammingDistanceUDF extends UDF {
 
     public static int hammingDistance(final long a, final long b) {
         return Long.bitCount(a ^ b);
+    }
+
+    public static int hammingDistance(final BigInteger a, final BigInteger b) {
+        BigInteger xor = a.xor(b);
+        return xor.bitCount();
     }
 
 }

@@ -20,6 +20,7 @@
  */
 package hivemall.neighborhood.distance;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
@@ -28,6 +29,11 @@ public final class PopcountUDF extends UDF {
 
     public int evaluate(long a) {
         return Long.bitCount(a);
+    }
+
+    public int evaluate(String a) {
+        BigInteger ai = new BigInteger(a);
+        return ai.bitCount();
     }
 
     public int evaluate(List<Long> a) {
@@ -45,6 +51,16 @@ public final class PopcountUDF extends UDF {
     public int evaluate(long a, long b) {
         long innerProduct = a & b;
         return Long.bitCount(innerProduct);
+    }
+
+    /**
+     * Count bits that both bits are 1.
+     */
+    public int evaluate(String a, String b) {
+        BigInteger ai = new BigInteger(a);
+        BigInteger bi = new BigInteger(b);
+        BigInteger innerProduct = ai.and(bi);
+        return innerProduct.bitCount();
     }
 
     /**
