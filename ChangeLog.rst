@@ -14,7 +14,7 @@ Version 0.2-alpha1 - 2014/05/07
     * kNN search using b-Bit Minhash
     * kNN search using cosine similarity
     * Introduced a recommendation scheme using Minhash
-    * Modified to use OpenHashTable instead of HashMap for reducing memory [9698972]
+    * Modified to use OpenHashTable instead of HashMap for reducing memory consumption [9698972]
 * Bugfix
     * Fixed a bug in rand_amplify() [0962c07]
 
