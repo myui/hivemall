@@ -37,7 +37,7 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Minhash (LSH with jaccard index)
 
-## k-Nearest Neighbor Search
+## k-Nearest Neighbor
 
 * Minhash (LSH with jaccard index)
 
