@@ -20,14 +20,20 @@
  */
 package hivemall.neighborhood.distance;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 
 public final class PopcountUDF extends UDF {
 
-    public int evaluate(Long a) {
-        return Long.bitCount(a.longValue());
+    public int evaluate(long a) {
+        return Long.bitCount(a);
+    }
+
+    public int evaluate(String a) {
+        BigInteger ai = new BigInteger(a);
+        return ai.bitCount();
     }
 
     public int evaluate(List<Long> a) {
@@ -39,17 +45,33 @@ public final class PopcountUDF extends UDF {
         return result;
     }
 
-    public int evaluate(Long a, Long b) {
-        long x = a.longValue() & b.longValue();
-        return Long.bitCount(x);
+    /**
+     * Count bits that both bits are 1.
+     */
+    public int evaluate(long a, long b) {
+        long innerProduct = a & b;
+        return Long.bitCount(innerProduct);
     }
 
+    /**
+     * Count bits that both bits are 1.
+     */
+    public int evaluate(String a, String b) {
+        BigInteger ai = new BigInteger(a);
+        BigInteger bi = new BigInteger(b);
+        BigInteger innerProduct = ai.and(bi);
+        return innerProduct.bitCount();
+    }
+
+    /**
+     * Count bits that both bits are 1.
+     */
     public int evaluate(List<Long> a, List<Long> b) {
         final int min = Math.min(a.size(), b.size());
         int result = 0;
         for(int i = 0; i < min; i++) {
-            long x = a.get(i).longValue() & b.get(i).longValue();
-            result += Long.bitCount(x);
+            long innerProduct = a.get(i).longValue() & b.get(i).longValue();
+            result += Long.bitCount(innerProduct);
         }
         return result;
     }

@@ -22,6 +22,7 @@ package hivemall.neighborhood.lsh;
 
 import hivemall.neighborhood.distance.PopcountUDF;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -35,17 +36,29 @@ public class bBitMinHashUDFTest {
         bBitMinHashUDF bbminhash = new bBitMinHashUDF();
         PopcountUDF popcnt = new PopcountUDF();
 
-        Long a1 = bbminhash.evaluate(Arrays.asList("a", "b", "c"), false);
-        Long a2 = bbminhash.evaluate(Arrays.asList("a", "b"), false);
+        String a1 = bbminhash.evaluate(Arrays.asList("a", "b", "c"), false);
+        String a2 = bbminhash.evaluate(Arrays.asList("a", "b"), false);
+        Assert.assertFalse("a1: " + a1, bigint(a1).compareTo(bigint(0L)) < 0);
+        Assert.assertFalse("a2: " + a2, bigint(a2).compareTo(bigint(0L)) < 0);
         Assert.assertTrue(popcnt.evaluate(a1, a2) > 0);
 
-        Long b1 = bbminhash.evaluate(Arrays.asList("a"), false);
-        Long b2 = bbminhash.evaluate(Arrays.asList("b", "c"), false);
+        String b1 = bbminhash.evaluate(Arrays.asList("a"), false);
+        String b2 = bbminhash.evaluate(Arrays.asList("b", "c"), false);
+        Assert.assertFalse("b1: " + b1, bigint(b1).compareTo(bigint(0L)) < 0);
+        Assert.assertFalse("b2: " + b2, bigint(b2).compareTo(bigint(0L)) < 0);
         Assert.assertTrue(popcnt.evaluate(a1, a2) > popcnt.evaluate(b1, b2));
 
-        Long c1 = bbminhash.evaluate(Arrays.asList("a", "b", "c", "d", "e"), false);
-        Long c2 = bbminhash.evaluate(Arrays.asList("b", "c", "e", "d"), false);
+        String c1 = bbminhash.evaluate(Arrays.asList("a", "b", "c", "d", "e"), false);
+        String c2 = bbminhash.evaluate(Arrays.asList("b", "c", "e", "d"), false);
         Assert.assertTrue(popcnt.evaluate(c1, c2) > popcnt.evaluate(a1, a2));
+    }
+
+    private static BigInteger bigint(long l) {
+        return BigInteger.valueOf(l);
+    }
+
+    private static BigInteger bigint(String s) {
+        return new BigInteger(s);
     }
 
 }

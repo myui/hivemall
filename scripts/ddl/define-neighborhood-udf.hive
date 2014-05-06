@@ -16,6 +16,9 @@ create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSi
 drop temporary function hamming_distance;
 create temporary function hamming_distance as 'hivemall.neighborhood.distance.HammingDistanceUDF';
 
+drop temporary function jaccard;
+create temporary function jaccard as 'hivemall.neighborhood.distance.JaccardIndexUDF';
+
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.neighborhood.distance.PopcountUDF';
 

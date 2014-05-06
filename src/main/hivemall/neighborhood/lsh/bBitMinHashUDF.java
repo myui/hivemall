@@ -22,6 +22,7 @@
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -46,21 +47,21 @@ public class bBitMinHashUDF extends UDF {
         return seeds;
     }
 
-    public Long evaluate(List<Integer> features) throws HiveException {
+    public String evaluate(List<Integer> features) throws HiveException {
         return evaluate(features, 128);
     }
 
-    public Long evaluate(List<Integer> features, int numHashes) throws HiveException {
+    public String evaluate(List<Integer> features, int numHashes) throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features);
         return computeSignatures(featureList, numHashes, seeds);
     }
 
-    public Long evaluate(List<String> features, boolean noWeight) throws HiveException {
+    public String evaluate(List<String> features, boolean noWeight) throws HiveException {
         return evaluate(features, 128, noWeight);
     }
 
-    public Long evaluate(List<String> features, int numHashes, boolean noWeight)
+    public String evaluate(List<String> features, int numHashes, boolean noWeight)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
@@ -95,7 +96,7 @@ public class bBitMinHashUDF extends UDF {
         return ftvec;
     }
 
-    private static long computeSignatures(final List<FeatureValue> features, final int numHashes, final int[] seeds)
+    private static String computeSignatures(final List<FeatureValue> features, final int numHashes, final int[] seeds)
             throws HiveException {
         if(numHashes <= 0 || numHashes > 512) {
             throw new HiveException("The number of hash function must be in range (0,512]: "
@@ -118,13 +119,13 @@ public class bBitMinHashUDF extends UDF {
                 }
             }
         }
-        long value = 0L;
+        BigInteger value = BigInteger.valueOf(0L);
         for(int i = 0; i < numHashes; i++) {
             if((hashes[i] & 1) == 1) {
-                value += (1L << i);
+                value = value.setBit(i);
             }
         }
-        return value;
+        return value.toString();
     }
 
     /**
