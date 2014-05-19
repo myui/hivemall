@@ -45,13 +45,6 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Brute-force search using cosine similarity
 
-## Ensemble
-
-* Bagging
-
-## Loss functions
-
-* SquaredLoss, LogisticLoss, HingeLoss, SquaredHingeLoss, QuantileLoss, EpsilonInsensitiveLoss
 
 ## Feature engineering
   
