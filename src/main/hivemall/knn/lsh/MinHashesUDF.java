@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */package hivemall.neighborhood.lsh;
+ */package hivemall.knn.lsh;
 
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;

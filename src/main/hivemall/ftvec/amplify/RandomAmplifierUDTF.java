@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.amplify;
 
-import hivemall.HivemallConstants;
+import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import hivemall.common.RandomizedAmplifier;
 import hivemall.common.RandomizedAmplifier.DropoutListener;
 
@@ -49,7 +49,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
             throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
-        if(argOIs[0].getTypeName() != HivemallConstants.INT_TYPE_NAME) {
+        if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
             throw new UDFArgumentException("First argument must be int: " + argOIs[0].getTypeName());
         }
         if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {
@@ -61,7 +61,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         // num_buffers
-        if(argOIs[1].getTypeName() != HivemallConstants.INT_TYPE_NAME) {
+        if(!INT_TYPE_NAME.equals(argOIs[1].getTypeName())) {
             throw new UDFArgumentException("Second argument must be int: "
                     + argOIs[1].getTypeName());
         }

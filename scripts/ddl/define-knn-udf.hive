@@ -11,26 +11,26 @@
 ------------------------
 
 drop temporary function cosine_sim;
-create temporary function cosine_sim as 'hivemall.neighborhood.distance.CosineSimilarityUDF';
+create temporary function cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF';
 
 drop temporary function hamming_distance;
-create temporary function hamming_distance as 'hivemall.neighborhood.distance.HammingDistanceUDF';
+create temporary function hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF';
 
 drop temporary function jaccard;
-create temporary function jaccard as 'hivemall.neighborhood.distance.JaccardIndexUDF';
+create temporary function jaccard as 'hivemall.knn.distance.JaccardIndexUDF';
 
 drop temporary function popcnt;
-create temporary function popcnt as 'hivemall.neighborhood.distance.PopcountUDF';
+create temporary function popcnt as 'hivemall.knn.distance.PopcountUDF';
 
 -------------------
 -- LSH functions --
 -------------------
 
 drop temporary function minhashes;
-create temporary function minhashes as 'hivemall.neighborhood.lsh.MinHashesUDF';
+create temporary function minhashes as 'hivemall.knn.lsh.MinHashesUDF';
 
 drop temporary function minhash;
-create temporary function minhash as 'hivemall.neighborhood.lsh.MinHashUDTF';
+create temporary function minhash as 'hivemall.knn.lsh.MinHashUDTF';
 
 drop temporary function bbit_minhash;
-create temporary function bbit_minhash as 'hivemall.neighborhood.lsh.bBitMinHashUDF';
+create temporary function bbit_minhash as 'hivemall.knn.lsh.bBitMinHashUDF';
