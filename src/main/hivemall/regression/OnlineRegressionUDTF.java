@@ -83,7 +83,7 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         }
 
         if(bias != 0.f) {
-            this.biasKey = (featureOutputOI.getTypeName() == INT_TYPE_NAME) ? BIAS_CLAUSE_INT
+            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
                     : new Text(BIAS_CLAUSE);
         } else {
             this.biasKey = null;
@@ -109,12 +109,12 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(keyTypeName != STRING_TYPE_NAME && keyTypeName != INT_TYPE_NAME
-                && keyTypeName != BIGINT_TYPE_NAME) {
+        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+                && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
             throw new UDFArgumentTypeException(0, "1st argument must be List of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = (keyTypeName == STRING_TYPE_NAME);
+        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
         return featureRawOI;
     }
 
