@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.amplify;
 
-import hivemall.HivemallConstants;
+import static hivemall.HivemallConstants.INT_TYPE_NAME;
 
 import java.util.ArrayList;
 
@@ -42,7 +42,7 @@ public class AmplifierUDTF extends GenericUDTF {
         if(!(argOIs.length >= 2)) {
             throw new UDFArgumentException("amplifier(int xtimes, *) takes at least two arguments");
         }
-        if(argOIs[0].getTypeName() != HivemallConstants.INT_TYPE_NAME) {
+        if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
             throw new UDFArgumentException("first argument must be int: " + argOIs[0].getTypeName());
         }
         if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {

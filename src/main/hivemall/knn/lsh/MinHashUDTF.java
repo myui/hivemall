@@ -20,7 +20,9 @@
  */
 package hivemall.knn.lsh;
 
-import hivemall.HivemallConstants;
+import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
+import static hivemall.HivemallConstants.INT_TYPE_NAME;
+import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.UDTFWithOptions;
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.HashFunction;
@@ -68,13 +70,12 @@ public final class MinHashUDTF extends UDTFWithOptions {
         this.featureListOI = (ListObjectInspector) argOIs[1];
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(keyTypeName != HivemallConstants.STRING_TYPE_NAME
-                && keyTypeName != HivemallConstants.INT_TYPE_NAME
-                && keyTypeName != HivemallConstants.BIGINT_TYPE_NAME) {
+        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+                && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = (keyTypeName == HivemallConstants.STRING_TYPE_NAME);
+        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
         this.forwardObjs = new Object[2];
 
         processOptions(argOIs);

@@ -20,7 +20,11 @@
  */
 package hivemall.regression;
 
-import hivemall.HivemallConstants;
+import static hivemall.HivemallConstants.BIAS_CLAUSE;
+import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
+import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
+import static hivemall.HivemallConstants.INT_TYPE_NAME;
+import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.UDTFWithOptions;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
@@ -79,8 +83,8 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         }
 
         if(bias != 0.f) {
-            this.biasKey = (featureOutputOI.getTypeName() == HivemallConstants.INT_TYPE_NAME) ? HivemallConstants.BIAS_CLAUSE_INT
-                    : new Text(HivemallConstants.BIAS_CLAUSE);
+            this.biasKey = (featureOutputOI.getTypeName() == INT_TYPE_NAME) ? BIAS_CLAUSE_INT
+                    : new Text(BIAS_CLAUSE);
         } else {
             this.biasKey = null;
         }
@@ -105,13 +109,12 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(keyTypeName != HivemallConstants.STRING_TYPE_NAME
-                && keyTypeName != HivemallConstants.INT_TYPE_NAME
-                && keyTypeName != HivemallConstants.BIGINT_TYPE_NAME) {
-            throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
+        if(keyTypeName != STRING_TYPE_NAME && keyTypeName != INT_TYPE_NAME
+                && keyTypeName != BIGINT_TYPE_NAME) {
+            throw new UDFArgumentTypeException(0, "1st argument must be List of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = (keyTypeName == HivemallConstants.STRING_TYPE_NAME);
+        this.parseX = (keyTypeName == STRING_TYPE_NAME);
         return featureRawOI;
     }
 
