@@ -77,7 +77,7 @@ FROM
 GROUP BY feature;
 ```
 
-Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/_pages).
+Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/).
 
 License
 ---------
@@ -91,15 +91,10 @@ See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) fo
 
 The LGPL does not require you to distribute source code of programs as far as just using/linking Hivemall in your application, so you can use Hivemall in closed-source apps and for most commercial uses.
 
-If you want other (commercial) licensing options, please contact me. 
-I and my institute are ready to provide a commercial license with an additional support contract.  
-[Makoto YUI](http://staff.aist.go.jp/m.yui/index_e.html) \<m.yui AT aist.go.jp\>
-
 Copyright
 ---------
 
 Copyright (C) 2013-2014 National Institute of Advanced Industrial Science and Technology (AIST)  
-Registration Number: [H25PRO-1520]
 
 Put the above copyrights for the services/softwares that use Hivemall.
 
