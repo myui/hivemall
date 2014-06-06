@@ -64,7 +64,7 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
     }
 
     protected float eta(float loss, float sqnorm) {
-        return loss / sqnorm;
+        return loss / (2.f * sqnorm);
     }
 
     public static class PA1 extends MulticlassPassiveAggressiveUDTF {
@@ -94,7 +94,7 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
 
         @Override
         protected float eta(float loss, float sqnorm) {
-            float eta = loss / sqnorm;
+            float eta = loss / (2.f * sqnorm);
             return Math.min(c, eta);
         }
 
@@ -104,7 +104,7 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
 
         @Override
         protected float eta(float loss, float sqnorm) {
-            float eta = loss / (sqnorm + (0.5f / c));
+            float eta = loss / ((2.f * sqnorm) + (0.5f / c));
             return eta;
         }
 
