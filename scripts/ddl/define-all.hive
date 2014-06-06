@@ -229,6 +229,9 @@ create temporary function collect_all as 'hivemall.tools.array.CollectAllUDAF';
 drop temporary function concat_array;
 create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
 
+drop temporary function subarray;
+create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
+
 ---------------------
 -- map functions --
 ---------------------
