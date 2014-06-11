@@ -22,6 +22,8 @@ package hivemall.ftvec.hashing;
 
 import hivemall.utils.hashing.MurmurHash3;
 
+import java.util.List;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 
@@ -53,35 +55,24 @@ public class MurmurHash3UDF extends UDF {
         return r;
     }
 
-    public int evaluate(String... words) throws UDFArgumentException {
-        if(words == null) {
-            throw new UDFArgumentException("argument must not be null");
-        }
-        if(words.length == 0) {
-            return 0;
-        }
-        final StringBuilder b = new StringBuilder();
-        b.append(words[0]);
-        for(int i = 1; i < words.length; i++) {
-            b.append('\t');
-            b.append(words[i]);
-        }
-        String s = b.toString();
-        return evaluate(s);
+    public int evaluate(List<String> words) throws UDFArgumentException {
+        return evaluate(words, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public int evaluate(String[] words, int numFeatures) throws UDFArgumentException {
+    public int evaluate(List<String> words, int numFeatures) throws UDFArgumentException {
         if(words == null) {
             throw new UDFArgumentException("argument must not be null");
         }
-        if(words.length == 0) {
+        final int size = words.size();
+        if(size == 0) {
             return 0;
         }
         final StringBuilder b = new StringBuilder();
-        b.append(words[0]);
-        for(int i = 1; i < words.length; i++) {
+        b.append(words.get(0));
+        for(int i = 1; i < size; i++) {
             b.append('\t');
-            b.append(words[i]);
+            String v = words.get(i);
+            b.append(v);
         }
         String s = b.toString();
         return evaluate(s, numFeatures);
