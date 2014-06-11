@@ -30,6 +30,10 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 public class ArrayPrefixedHashValuesUDF extends UDF {
 
     public List<String> evaluate(List<String> values, String prefix) {
+        return evaluate(values, prefix, false);
+    }
+
+    public List<String> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
         if(values == null) {
             return null;
         }
@@ -37,7 +41,7 @@ public class ArrayPrefixedHashValuesUDF extends UDF {
             prefix = "";
         }
 
-        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES);
+        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
         final int len = hashValues.size();
         final String[] stringValues = new String[len];
         for(int i = 0; i < len; i++) {

@@ -38,11 +38,19 @@ public class ArrayHashValuesUDF extends UDF {
         return evaluate(values, prefix, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
-        return hashValues(values, prefix, numFeatures);
+    public List<Integer> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
+        return evaluate(values, prefix, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
     }
 
-    static List<Integer> hashValues(List<String> values, String prefix, int numFeatures) {
+    public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
+        return evaluate(values, prefix, numFeatures, false);
+    }
+
+    public List<Integer> evaluate(List<String> values, String prefix, int numFeatures, boolean useIndexAsPrefix) {
+        return hashValues(values, prefix, numFeatures, useIndexAsPrefix);
+    }
+
+    static List<Integer> hashValues(List<String> values, String prefix, int numFeatures, boolean useIndexAsPrefix) {
         if(values == null) {
             return null;
         }
@@ -56,7 +64,10 @@ public class ArrayHashValuesUDF extends UDF {
             if(v == null) {
                 ary[i] = null;
             } else {
-                String data = (prefix == null) ? (i + ':' + v) : (prefix + i + ':' + v);
+                if(useIndexAsPrefix) {
+                    v = i + ':' + v;
+                }
+                String data = (prefix == null) ? v : (prefix + v);
                 ary[i] = MurmurHash3.murmurhash3(data, numFeatures);
             }
         }
