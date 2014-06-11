@@ -38,6 +38,10 @@ public class ArrayHashValuesUDF extends UDF {
         return evaluate(values, prefix, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
+    public List<Integer> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
+        return evaluate(values, prefix, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
+    }
+
     public List<Integer> evaluate(List<String> values, String prefix, int numFeatures) {
         return evaluate(values, prefix, numFeatures, false);
     }
