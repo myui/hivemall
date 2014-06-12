@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 
-public class FtvecAddBiasUDF extends UDF {
+public class AddBiasUDF extends UDF {
 
     public List<String> evaluate(List<String> ftvec) {
         String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
