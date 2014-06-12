@@ -23,21 +23,23 @@ package hivemall.tools.array;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 
 public class SubarrayEndWithUDF extends UDF {
 
-    public List<Integer> evaluate(List<Integer> original, int key) {
+    public List<IntWritable> evaluate(List<IntWritable> original, IntWritable key) {
         if(original == null) {
             return null;
         }
-        int toIndex = original.lastIndexOf(Integer.valueOf(key));
+        int toIndex = original.lastIndexOf(key);
         if(toIndex == -1) {
             return null;
         }
         return original.subList(0, toIndex + 1);
     }
 
-    public List<String> evaluate(List<String> original, String key) {
+    public List<Text> evaluate(List<Text> original, Text key) {
         if(original == null) {
             return null;
         }

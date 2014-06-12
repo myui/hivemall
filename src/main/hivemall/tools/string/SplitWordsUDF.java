@@ -20,23 +20,25 @@
  */
 package hivemall.tools.string;
 
-import java.util.Arrays;
+import hivemall.utils.WritableUtils;
+
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.Text;
 
 public class SplitWordsUDF extends UDF {
 
-    public List<String> evaluate(String query) {
+    public List<Text> evaluate(String query) {
         return evaluate(query, "[\\s ]+");
     }
 
-    public List<String> evaluate(String query, String regex) {
+    public List<Text> evaluate(String query, String regex) {
         if(query == null) {
             return null;
         }
         String[] words = query.split(regex, -1);
-        return Arrays.asList(words);
+        return WritableUtils.val(words);
     }
 
 }

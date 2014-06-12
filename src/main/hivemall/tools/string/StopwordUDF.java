@@ -20,9 +20,12 @@
  */
 package hivemall.tools.string;
 
+import static hivemall.utils.WritableUtils.val;
+
 import java.util.Arrays;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.BooleanWritable;
 
 /**
  * This class uses Stopwords Corpus obtained from PostgreSQL.
@@ -48,8 +51,8 @@ public class StopwordUDF extends UDF {
         Arrays.sort(stopwords);
     }
 
-    public boolean evaluate(String word) {
-        return Arrays.binarySearch(stopwords, word) != -1;
+    public BooleanWritable evaluate(String word) {
+        return val(Arrays.binarySearch(stopwords, word) != -1);
     }
 
 }

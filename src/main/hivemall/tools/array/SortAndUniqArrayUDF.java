@@ -26,12 +26,13 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
 
 public class SortAndUniqArrayUDF extends UDF {
 
-    public List<Integer> evaluate(List<Integer> ary) {
-        Set<Integer> s = new TreeSet<Integer>(ary);
-        return new ArrayList<Integer>(s);
+    public List<IntWritable> evaluate(List<IntWritable> ary) {
+        Set<IntWritable> s = new TreeSet<IntWritable>(ary);
+        return new ArrayList<IntWritable>(s);
     }
 
 }

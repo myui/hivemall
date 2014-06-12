@@ -20,16 +20,20 @@
  */
 package hivemall.tools.macros;
 
+import static hivemall.utils.WritableUtils.val;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 public class SigmodUDF extends UDF {
 
-    public float evaluate(float x) {
-        return 1.0f / (1.0f + (float) Math.exp(-x));
+    public FloatWritable evaluate(float x) {
+        return val(1.0f / (1.0f + (float) Math.exp(-x)));
     }
 
-    public float evaluate(double x) {
-        return (float) (1.0 / (1.0 + Math.exp(-x)));
+    public FloatWritable evaluate(double x) {
+        float v = (float) (1.0 / (1.0 + Math.exp(-x)));
+        return val(v);
     }
 
 }

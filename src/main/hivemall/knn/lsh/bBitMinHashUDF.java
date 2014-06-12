@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */package hivemall.knn.lsh;
 
+import static hivemall.utils.WritableUtils.val;
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 
@@ -29,6 +30,7 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.io.Text;
 
 public class bBitMinHashUDF extends UDF {
 
@@ -47,25 +49,25 @@ public class bBitMinHashUDF extends UDF {
         return seeds;
     }
 
-    public String evaluate(List<Integer> features) throws HiveException {
+    public Text evaluate(List<Integer> features) throws HiveException {
         return evaluate(features, 128);
     }
 
-    public String evaluate(List<Integer> features, int numHashes) throws HiveException {
+    public Text evaluate(List<Integer> features, int numHashes) throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features);
-        return computeSignatures(featureList, numHashes, seeds);
+        return val(computeSignatures(featureList, numHashes, seeds));
     }
 
-    public String evaluate(List<String> features, boolean noWeight) throws HiveException {
+    public Text evaluate(List<String> features, boolean noWeight) throws HiveException {
         return evaluate(features, 128, noWeight);
     }
 
-    public String evaluate(List<String> features, int numHashes, boolean noWeight)
+    public Text evaluate(List<String> features, int numHashes, boolean noWeight)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
-        return computeSignatures(featureList, numHashes, seeds);
+        return val(computeSignatures(featureList, numHashes, seeds));
     }
 
     private static List<FeatureValue> parseFeatures(final List<Integer> features) {

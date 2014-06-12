@@ -26,12 +26,13 @@ import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
+import org.apache.hadoop.io.FloatWritable;
 
 public class ConvertToDenseModelUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
 
-        private List<Float> partial;
+        private List<FloatWritable> partial;
 
         @Override
         public void init() {
@@ -40,28 +41,28 @@ public class ConvertToDenseModelUDAF extends UDAF {
 
         public boolean iterate(int feature, float weight, int nDims) {
             if(partial == null) {
-                Float[] array = new Float[nDims];
+                FloatWritable[] array = new FloatWritable[nDims];
                 this.partial = Arrays.asList(array);
             }
-            partial.set(feature, new Float(weight));
+            partial.set(feature, new FloatWritable(weight));
             return true;
         }
 
-        public List<Float> terminatePartial() {
+        public List<FloatWritable> terminatePartial() {
             return partial;
         }
 
-        public boolean merge(List<Float> other) {
+        public boolean merge(List<FloatWritable> other) {
             if(other == null) {
                 return true;
             }
             if(partial == null) {
-                this.partial = new ArrayList<Float>(other);
+                this.partial = new ArrayList<FloatWritable>(other);
                 return true;
             }
             final int nDims = other.size();
             for(int i = 0; i < nDims; i++) {
-                Float x = other.set(i, null);
+                FloatWritable x = other.set(i, null);
                 if(x != null) {
                     partial.set(i, x);
                 }
@@ -69,7 +70,7 @@ public class ConvertToDenseModelUDAF extends UDAF {
             return true;
         }
 
-        public List<Float> terminate() {
+        public List<FloatWritable> terminate() {
             if(partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }

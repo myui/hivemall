@@ -20,22 +20,26 @@
  */
 package hivemall.ftvec.scaling;
 
+import static hivemall.utils.WritableUtils.val;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.Text;
 
 public class RescaleFeatureValueUDF extends UDF {
 
-    public String evaluate(String s, double min, double max) {
+    public Text evaluate(String s, double min, double max) {
         return evaluate(s, (float) min, (float) max);
     }
 
-    public String evaluate(String s, float min, float max) {
+    public Text evaluate(String s, float min, float max) {
         String[] fv = s.split(":");
         if(fv.length != 2) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
         float v = Float.parseFloat(fv[1]);
         float scaled_v = RescaleUDF.min_max_normalization(v, min, max);
-        return fv[0] + ':' + Float.toString(scaled_v);
+        String ret = fv[0] + ':' + Float.toString(scaled_v);
+        return val(ret);
     }
 
 }

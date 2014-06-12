@@ -20,6 +20,7 @@
  */
 package hivemall.knn.distance;
 
+import static hivemall.utils.WritableUtils.val;
 import hivemall.common.FeatureValue;
 
 import java.util.Collections;
@@ -28,12 +29,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 public final class CosineSimilarityUDF extends UDF {
 
-    public float evaluate(List<String> ftvec1, List<String> ftvec2, boolean noWeight) {
+    public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2, boolean noWeight) {
         if(ftvec1 == null || ftvec2 == null) {
-            return 0.f;
+            return val(0.f);
         }
 
         final Map<String, Float> map1 = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
@@ -73,17 +75,17 @@ public final class CosineSimilarityUDF extends UDF {
         }
         double l1norm2 = Math.sqrt(score2);
 
-        double denom = (l1norm1 * l1norm2);
+        final double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
-            return 0.f;
+            return val(0.f);
         } else {
-            return (float) (dotp / denom);
+            return val((float) (dotp / denom));
         }
     }
 
-    public float evaluate(List<Integer> ftvec1, List<Integer> ftvec2) {
+    public FloatWritable evaluate(List<Integer> ftvec1, List<Integer> ftvec2) {
         if(ftvec1 == null || ftvec2 == null) {
-            return 0.f;
+            return val(0.f);
         }
 
         Collections.sort(ftvec1);
@@ -98,11 +100,11 @@ public final class CosineSimilarityUDF extends UDF {
         double l1norm1 = Math.sqrt(ftvec1.size());
         double l1norm2 = Math.sqrt(ftvec2.size());
 
-        double denom = (l1norm1 * l1norm2);
+        final double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
-            return 0.f;
+            return val(0.f);
         } else {
-            return (float) (dotp / denom);
+            return val((float) (dotp / denom));
         }
     }
 

@@ -21,30 +21,31 @@
 package hivemall.ftvec;
 
 import hivemall.HivemallConstants;
+import hivemall.utils.WritableUtils;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.Text;
 
 public class AddBiasUDF extends UDF {
 
-    public List<String> evaluate(List<String> ftvec) {
+    public List<Text> evaluate(List<String> ftvec) {
         String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
         return evaluate(ftvec, biasClause);
     }
 
-    public List<String> evaluate(List<String> ftvec, String biasClause) {
+    public List<Text> evaluate(List<String> ftvec, String biasClause) {
         float biasValue = 1.f;
         return evaluate(ftvec, biasClause, biasValue);
     }
 
-    public List<String> evaluate(List<String> ftvec, String biasClause, float biasValue) {
+    public List<Text> evaluate(List<String> ftvec, String biasClause, float biasValue) {
         int size = ftvec.size();
         String[] newvec = new String[size + 1];
         ftvec.toArray(newvec);
         newvec[size] = biasClause + ":" + Float.toString(biasValue);
-        return Arrays.asList(newvec);
+        return WritableUtils.val(newvec);
     }
 
 }

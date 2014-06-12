@@ -24,11 +24,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 
 public class SortByFeatureUDF extends UDF {
 
-    public Map<Integer, Float> evaluate(Map<Integer, Float> arg) {
-        Map<Integer, Float> ret = new TreeMap<Integer, Float>();
+    public Map<IntWritable, FloatWritable> evaluate(Map<IntWritable, FloatWritable> arg) {
+        Map<IntWritable, FloatWritable> ret = new TreeMap<IntWritable, FloatWritable>();
         ret.putAll(arg);
         return ret;
     }

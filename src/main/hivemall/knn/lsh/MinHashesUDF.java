@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */package hivemall.knn.lsh;
 
+import static hivemall.utils.WritableUtils.val;
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 
@@ -30,6 +31,7 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.io.IntWritable;
 
 public class MinHashesUDF extends UDF {
 
@@ -48,22 +50,22 @@ public class MinHashesUDF extends UDF {
         return seeds;
     }
 
-    public List<Integer> evaluate(List<Integer> features) throws HiveException {
+    public List<IntWritable> evaluate(List<Integer> features) throws HiveException {
         return evaluate(features, 5, 2);
     }
 
-    public List<Integer> evaluate(List<Integer> features, int numHashes, int keyGroups)
+    public List<IntWritable> evaluate(List<Integer> features, int numHashes, int keyGroups)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features);
         return computeSignatures(featureList, numHashes, keyGroups, seeds);
     }
 
-    public List<Integer> evaluate(List<String> features, boolean noWeight) throws HiveException {
+    public List<IntWritable> evaluate(List<String> features, boolean noWeight) throws HiveException {
         return evaluate(features, 5, 2, noWeight);
     }
 
-    public List<Integer> evaluate(List<String> features, int numHashes, int keyGroups, boolean noWeight)
+    public List<IntWritable> evaluate(List<String> features, int numHashes, int keyGroups, boolean noWeight)
             throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
@@ -98,9 +100,9 @@ public class MinHashesUDF extends UDF {
         return ftvec;
     }
 
-    private static List<Integer> computeSignatures(final List<FeatureValue> features, final int numHashes, final int keyGroups, final int[] seeds)
+    private static List<IntWritable> computeSignatures(final List<FeatureValue> features, final int numHashes, final int keyGroups, final int[] seeds)
             throws HiveException {
-        final Integer[] hashes = new Integer[numHashes];
+        final IntWritable[] hashes = new IntWritable[numHashes];
         final PriorityQueue<Integer> minhashes = new PriorityQueue<Integer>();
         // Compute N sets K minhash values
         for(int i = 0; i < numHashes; i++) {
@@ -118,7 +120,7 @@ public class MinHashesUDF extends UDF {
                 }
             }
 
-            hashes[i] = getSignature(minhashes, keyGroups);
+            hashes[i] = val(getSignature(minhashes, keyGroups));
             minhashes.clear();
         }
 

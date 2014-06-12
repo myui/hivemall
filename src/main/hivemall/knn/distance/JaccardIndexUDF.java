@@ -20,31 +20,34 @@
  */
 package hivemall.knn.distance;
 
+import static hivemall.utils.WritableUtils.val;
+
 import java.math.BigInteger;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 public final class JaccardIndexUDF extends UDF {
 
-    public float evaluate(long a, long b) {
+    public FloatWritable evaluate(long a, long b) {
         return evaluate(a, b, 128);
     }
 
-    public float evaluate(long a, long b, int k) {
+    public FloatWritable evaluate(long a, long b, int k) {
         int countMatches = k - HammingDistanceUDF.hammingDistance(a, b);
         float jaccard = countMatches / k;
-        return 2.f * (jaccard - 0.5f);
+        return val(2.f * (jaccard - 0.5f));
     }
 
-    public float evaluate(String a, String b) {
+    public FloatWritable evaluate(String a, String b) {
         return evaluate(a, b, 128);
     }
 
-    public float evaluate(String a, String b, int k) {
+    public FloatWritable evaluate(String a, String b, int k) {
         BigInteger ai = new BigInteger(a);
         BigInteger bi = new BigInteger(b);
         int countMatches = k - HammingDistanceUDF.hammingDistance(ai, bi);
         float jaccard = countMatches / (float) k;
-        return 2.f * (jaccard - 0.5f);
+        return val(2.f * (jaccard - 0.5f));
     }
 }

@@ -23,15 +23,16 @@ package hivemall.tools.array;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
 
 public class ArrayRemoveUDF extends UDF {
 
-    public List<Integer> evaluate(List<Integer> original, Integer target) {
+    public List<IntWritable> evaluate(List<IntWritable> original, IntWritable target) {
         original.remove(target);
         return original;
     }
 
-    public List<Integer> evaluate(List<Integer> original, List<Integer> targets) {
+    public List<IntWritable> evaluate(List<IntWritable> original, List<IntWritable> targets) {
         original.removeAll(targets);
         return original;
     }

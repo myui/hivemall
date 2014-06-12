@@ -23,10 +23,11 @@ package hivemall.tools.array;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
 
 public class SubarrayUDF extends UDF {
 
-    public List<Integer> evaluate(List<Integer> array, int fromIndex, int toIndex) {
+    public List<IntWritable> evaluate(List<IntWritable> array, int fromIndex, int toIndex) {
         if(array == null) {
             return null;
         }

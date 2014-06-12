@@ -20,19 +20,22 @@
  */
 package hivemall.ftvec.scaling;
 
+import static hivemall.utils.WritableUtils.val;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 /**
  * @see http://en.wikipedia.org/wiki/Standard_score
  */
 public class ZScoreUDF extends UDF {
 
-    public float evaluate(float value, double mean, double stddev) {
+    public FloatWritable evaluate(float value, double mean, double stddev) {
         return evaluate(value, (float) mean, (float) stddev);
     }
 
-    public float evaluate(float value, float mean, float stddev) {
-        return (value - mean) / stddev;
+    public FloatWritable evaluate(float value, float mean, float stddev) {
+        return val((value - mean) / stddev);
     }
 
 }
