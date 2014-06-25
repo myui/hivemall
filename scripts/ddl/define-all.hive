@@ -277,6 +277,23 @@ create temporary function to_map as 'hivemall.tools.map.UDAFToMap';
 drop temporary function to_ordered_map;
 create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap';
 
+---------------------
+-- Math functions --
+---------------------
+
+drop temporary function sigmoid;
+create temporary function sigmoid as 'hivemall.tools.math.SigmodUDF';
+
+----------------------
+-- mapred functions --
+----------------------
+
+drop temporary function taskid;
+create temporary function taskid as 'hivemall.tools.mapred.TaskIdUDF';
+
+drop temporary function rowid;
+create temporary function rowid as 'hivemall.tools.mapred.RowIdUDF';
+
 ----------------------
 -- string functions --
 ----------------------
@@ -287,9 +304,3 @@ create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
 drop temporary function split_words;
 create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 
----------------------
--- macro functions --
----------------------
-
-drop temporary function sigmoid;
-create temporary function sigmoid as 'hivemall.tools.macros.SigmodUDF';
