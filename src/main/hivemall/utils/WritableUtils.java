@@ -27,12 +27,17 @@ import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
 public final class WritableUtils {
 
     public static IntWritable val(final int v) {
         return new IntWritable(v);
+    }
+
+    public static LongWritable val(final long v) {
+        return new LongWritable(v);
     }
 
     public static FloatWritable val(final float v) {
