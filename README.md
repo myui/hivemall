@@ -61,7 +61,7 @@ through UDFs/UDAFs/UDTFs of Hive.
 System requirements
 --------------------
 
-* Hive 0.9 and later (Tested for v0.9 - v0.12)
+* Hive 0.12 and later
 
 * Hadoop 0.20.x (CDH3 is our target)
 
