@@ -64,7 +64,7 @@ public class RandomizedAmplifierTest {
 
         @Override
         public void onDrop(Integer droppped) {
-            System.out.println(droppped);
+            //System.out.println(droppped);
             numset.add(droppped);
             count++;
         }
