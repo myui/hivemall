@@ -23,14 +23,16 @@ package hivemall.tools.array;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 
 public class SubarrayStartWithUDF extends UDF {
 
-    public List<Integer> evaluate(List<Integer> original, int key) {
+    public List<IntWritable> evaluate(List<IntWritable> original, IntWritable key) {
         if(original == null) {
             return null;
         }
-        int fromIndex = original.indexOf(Integer.valueOf(key));
+        int fromIndex = original.indexOf(key);
         if(fromIndex == -1) {
             return null;
         }
@@ -38,7 +40,7 @@ public class SubarrayStartWithUDF extends UDF {
         return original.subList(fromIndex, toIndex);
     }
 
-    public List<String> evaluate(List<String> original, String key) {
+    public List<Text> evaluate(List<Text> original, Text key) {
         if(original == null) {
             return null;
         }

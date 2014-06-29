@@ -20,31 +20,33 @@
  */
 package hivemall.ftvec.hashing;
 
+import static hivemall.utils.WritableUtils.val;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.io.IntWritable;
 
 public class MurmurHash3UDF extends UDF {
 
-    public int evaluate(String word) throws UDFArgumentException {
+    public IntWritable evaluate(String word) throws UDFArgumentException {
         return evaluate(word, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public int evaluate(String word, boolean rawValue) throws UDFArgumentException {
+    public IntWritable evaluate(String word, boolean rawValue) throws UDFArgumentException {
         if(rawValue) {
             if(word == null) {
                 throw new UDFArgumentException("argument must not be null");
             }
-            return MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c);
+            return val(MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c));
         } else {
             return evaluate(word, MurmurHash3.DEFAULT_NUM_FEATURES);
         }
     }
 
-    public int evaluate(String word, int numFeatures) throws UDFArgumentException {
+    public IntWritable evaluate(String word, int numFeatures) throws UDFArgumentException {
         if(word == null) {
             throw new UDFArgumentException("argument must not be null");
         }
@@ -52,20 +54,20 @@ public class MurmurHash3UDF extends UDF {
         if(r < 0) {
             r += numFeatures;
         }
-        return r;
+        return val(r);
     }
 
-    public int evaluate(List<String> words) throws UDFArgumentException {
+    public IntWritable evaluate(List<String> words) throws UDFArgumentException {
         return evaluate(words, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public int evaluate(List<String> words, int numFeatures) throws UDFArgumentException {
+    public IntWritable evaluate(List<String> words, int numFeatures) throws UDFArgumentException {
         if(words == null) {
             throw new UDFArgumentException("argument must not be null");
         }
         final int size = words.size();
         if(size == 0) {
-            return 0;
+            return val(0);
         }
         final StringBuilder b = new StringBuilder();
         b.append(words.get(0));

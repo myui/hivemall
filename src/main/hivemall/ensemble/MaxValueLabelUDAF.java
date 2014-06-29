@@ -20,8 +20,11 @@
  */
 package hivemall.ensemble;
 
+import hivemall.utils.WritableUtils;
+
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
+import org.apache.hadoop.io.Text;
 
 public class MaxValueLabelUDAF extends UDAF {
 
@@ -81,11 +84,11 @@ public class MaxValueLabelUDAF extends UDAF {
             return true;
         }
 
-        public String terminate() {
+        public Text terminate() {
             if(partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }
-            return partial.label;
+            return WritableUtils.val(partial.label);
         }
     }
 }

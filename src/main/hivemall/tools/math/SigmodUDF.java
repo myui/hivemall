@@ -18,33 +18,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.ftvec;
+package hivemall.tools.math;
 
-import hivemall.HivemallConstants;
-
-import java.util.Arrays;
-import java.util.List;
+import static hivemall.utils.WritableUtils.val;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
-public class FtvecAddBiasUDF extends UDF {
+public class SigmodUDF extends UDF {
 
-    public List<String> evaluate(List<String> ftvec) {
-        String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
-        return evaluate(ftvec, biasClause);
+    public FloatWritable evaluate(float x) {
+        return val(1.0f / (1.0f + (float) Math.exp(-x)));
     }
 
-    public List<String> evaluate(List<String> ftvec, String biasClause) {
-        float biasValue = 1.f;
-        return evaluate(ftvec, biasClause, biasValue);
-    }
-
-    public List<String> evaluate(List<String> ftvec, String biasClause, float biasValue) {
-        int size = ftvec.size();
-        String[] newvec = new String[size + 1];
-        ftvec.toArray(newvec);
-        newvec[size] = biasClause + ":" + Float.toString(biasValue);
-        return Arrays.asList(newvec);
+    public FloatWritable evaluate(double x) {
+        float v = (float) (1.0 / (1.0 + Math.exp(-x)));
+        return val(v);
     }
 
 }

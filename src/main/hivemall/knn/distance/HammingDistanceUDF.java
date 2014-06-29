@@ -20,29 +20,33 @@
  */
 package hivemall.knn.distance;
 
+import static hivemall.utils.WritableUtils.val;
+
 import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 
 public class HammingDistanceUDF extends UDF {
 
-    public int evaluate(long a, long b) {
-        return hammingDistance(a, b);
+    public IntWritable evaluate(long a, long b) {
+        return val(hammingDistance(a, b));
     }
 
-    public int evaluate(String a, String b) {
+    public IntWritable evaluate(String a, String b) {
         BigInteger ai = new BigInteger(a);
         BigInteger bi = new BigInteger(b);
-        return hammingDistance(ai, bi);
+        return val(hammingDistance(ai, bi));
     }
 
-    public int evaluate(List<Long> a, List<Long> b) {
+    public IntWritable evaluate(List<LongWritable> a, List<LongWritable> b) {
         int alen = a.size();
         int blen = b.size();
 
         final int min, max;
-        final List<Long> r;
+        final List<LongWritable> r;
         if(alen < blen) {
             min = alen;
             max = blen;
@@ -55,12 +59,12 @@ public class HammingDistanceUDF extends UDF {
 
         int result = 0;
         for(int i = 0; i < min; i++) {
-            result += hammingDistance(a.get(i).longValue(), b.get(i).longValue());
+            result += hammingDistance(a.get(i).get(), b.get(i).get());
         }
         for(int j = min; j < max; j++) {
-            result += hammingDistance(0L, r.get(j).longValue());
+            result += hammingDistance(0L, r.get(j).get());
         }
-        return result;
+        return val(result);
     }
 
     public static int hammingDistance(final long a, final long b) {

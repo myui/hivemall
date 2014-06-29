@@ -24,10 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 public class AllocFloatArrayUDF extends UDF {
 
-    public List<Float> evaluate(int nDims) {
-        return new ArrayList<Float>(nDims);
+    public List<FloatWritable> evaluate(int nDims) {
+        return new ArrayList<FloatWritable>(nDims);
     }
 }

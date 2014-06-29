@@ -20,7 +20,10 @@
  */
 package hivemall.ftvec.scaling;
 
+import static hivemall.utils.WritableUtils.val;
+
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.FloatWritable;
 
 /**
  * Min-Max normalization 
@@ -32,12 +35,12 @@ public class RescaleUDF extends UDF {
     /**
      * min-max normalization
      */
-    public float evaluate(float value, float min, float max) {
-        return min_max_normalization(value, min, max);
+    public FloatWritable evaluate(float value, float min, float max) {
+        return val(min_max_normalization(value, min, max));
     }
 
-    public float evaluate(float value, double min, double max) {
-        return min_max_normalization(value, (float) min, (float) max);
+    public FloatWritable evaluate(float value, double min, double max) {
+        return val(min_max_normalization(value, (float) min, (float) max));
     }
 
     public static float min_max_normalization(final float value, final float min, final float max) {

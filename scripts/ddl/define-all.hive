@@ -16,6 +16,10 @@
 drop temporary function perceptron;
 create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
 
+-- alias
+drop temporary function train_perceptron;
+create temporary function train_perceptron as 'hivemall.classifier.PerceptronUDTF';
+
 drop temporary function train_pa;
 create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
 
@@ -164,7 +168,7 @@ drop temporary function conv2dense;
 create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
 
 drop temporary function addBias;
-create temporary function addBias as 'hivemall.ftvec.FtvecAddBiasUDF';
+create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
 
 drop temporary function sortByFeature;
 create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
@@ -172,6 +176,35 @@ create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
 --------------------------
 -- Regression functions --
 --------------------------
+
+drop temporary function train_logregr;
+create temporary function train_logregr as 'hivemall.regression.LogressUDTF';
+
+drop temporary function train_logregr_iter;
+create temporary function train_logregr_iter as 'hivemall.regression.LogressIterUDTF';
+
+drop temporary function train_pa1_regr;
+create temporary function train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+drop temporary function train_pa1a_regr;
+create temporary function train_pa1a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
+drop temporary function train_pa2_regr;
+create temporary function train_pa2_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+drop temporary function train_pa2a_regr;
+create temporary function train_pa2a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
+drop temporary function train_arow_regr;
+create temporary function train_arow_regr as 'hivemall.regression.AROWRegressionUDTF';
+
+drop temporary function train_arowe_regr;
+create temporary function train_arowe_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe';
+
+drop temporary function train_arowe2_regr;
+create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
+-- alias for backward compatibility
 
 drop temporary function logress;
 create temporary function logress as 'hivemall.regression.LogressUDTF';
@@ -196,10 +229,6 @@ create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDT
 
 drop temporary function arowe_regress;
 create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
-
--- for backward compatibility
-drop temporary function arowh_regress;
-create temporary function arowh_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
 
 drop temporary function arowe2_regress;
 create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
@@ -248,6 +277,23 @@ create temporary function to_map as 'hivemall.tools.map.UDAFToMap';
 drop temporary function to_ordered_map;
 create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap';
 
+---------------------
+-- Math functions --
+---------------------
+
+drop temporary function sigmoid;
+create temporary function sigmoid as 'hivemall.tools.math.SigmodUDF';
+
+----------------------
+-- mapred functions --
+----------------------
+
+drop temporary function taskid;
+create temporary function taskid as 'hivemall.tools.mapred.TaskIdUDF';
+
+drop temporary function rowid;
+create temporary function rowid as 'hivemall.tools.mapred.RowIdUDF';
+
 ----------------------
 -- string functions --
 ----------------------
@@ -258,9 +304,3 @@ create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
 drop temporary function split_words;
 create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 
----------------------
--- macro functions --
----------------------
-
-drop temporary function sigmoid;
-create temporary function sigmoid as 'hivemall.tools.macros.SigmodUDF';

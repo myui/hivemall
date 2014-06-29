@@ -49,7 +49,7 @@ drop temporary function conv2dense;
 create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
 
 drop temporary function addBias;
-create temporary function addBias as 'hivemall.ftvec.FtvecAddBiasUDF';
+create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
 
 drop temporary function sortByFeature;
 create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';

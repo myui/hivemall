@@ -21,7 +21,6 @@
 package hivemall.knn.lsh;
 
 import hivemall.knn.distance.PopcountUDF;
-import hivemall.knn.lsh.bBitMinHashUDF;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -37,21 +36,21 @@ public class bBitMinHashUDFTest {
         bBitMinHashUDF bbminhash = new bBitMinHashUDF();
         PopcountUDF popcnt = new PopcountUDF();
 
-        String a1 = bbminhash.evaluate(Arrays.asList("a", "b", "c"), false);
-        String a2 = bbminhash.evaluate(Arrays.asList("a", "b"), false);
+        String a1 = bbminhash.evaluate(Arrays.asList("a", "b", "c"), false).toString();
+        String a2 = bbminhash.evaluate(Arrays.asList("a", "b"), false).toString();
         Assert.assertFalse("a1: " + a1, bigint(a1).compareTo(bigint(0L)) < 0);
         Assert.assertFalse("a2: " + a2, bigint(a2).compareTo(bigint(0L)) < 0);
-        Assert.assertTrue(popcnt.evaluate(a1, a2) > 0);
+        Assert.assertTrue(popcnt.evaluate(a1, a2).get() > 0);
 
-        String b1 = bbminhash.evaluate(Arrays.asList("a"), false);
-        String b2 = bbminhash.evaluate(Arrays.asList("b", "c"), false);
+        String b1 = bbminhash.evaluate(Arrays.asList("a"), false).toString();
+        String b2 = bbminhash.evaluate(Arrays.asList("b", "c"), false).toString();
         Assert.assertFalse("b1: " + b1, bigint(b1).compareTo(bigint(0L)) < 0);
         Assert.assertFalse("b2: " + b2, bigint(b2).compareTo(bigint(0L)) < 0);
-        Assert.assertTrue(popcnt.evaluate(a1, a2) > popcnt.evaluate(b1, b2));
+        Assert.assertTrue(popcnt.evaluate(a1, a2).get() > popcnt.evaluate(b1, b2).get());
 
-        String c1 = bbminhash.evaluate(Arrays.asList("a", "b", "c", "d", "e"), false);
-        String c2 = bbminhash.evaluate(Arrays.asList("b", "c", "e", "d"), false);
-        Assert.assertTrue(popcnt.evaluate(c1, c2) > popcnt.evaluate(a1, a2));
+        String c1 = bbminhash.evaluate(Arrays.asList("a", "b", "c", "d", "e"), false).toString();
+        String c2 = bbminhash.evaluate(Arrays.asList("b", "c", "e", "d"), false).toString();
+        Assert.assertTrue(popcnt.evaluate(c1, c2).get() > popcnt.evaluate(a1, a2).get());
     }
 
     private static BigInteger bigint(long l) {

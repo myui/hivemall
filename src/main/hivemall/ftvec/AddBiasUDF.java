@@ -18,8 +18,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.tools.string;
+package hivemall.ftvec;
 
+import hivemall.HivemallConstants;
 import hivemall.utils.WritableUtils;
 
 import java.util.List;
@@ -27,18 +28,24 @@ import java.util.List;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.Text;
 
-public class SplitWordsUDF extends UDF {
+public class AddBiasUDF extends UDF {
 
-    public List<Text> evaluate(String query) {
-        return evaluate(query, "[\\s ]+");
+    public List<Text> evaluate(List<String> ftvec) {
+        String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
+        return evaluate(ftvec, biasClause);
     }
 
-    public List<Text> evaluate(String query, String regex) {
-        if(query == null) {
-            return null;
-        }
-        String[] words = query.split(regex, -1);
-        return WritableUtils.val(words);
+    public List<Text> evaluate(List<String> ftvec, String biasClause) {
+        float biasValue = 1.f;
+        return evaluate(ftvec, biasClause, biasValue);
+    }
+
+    public List<Text> evaluate(List<String> ftvec, String biasClause, float biasValue) {
+        int size = ftvec.size();
+        String[] newvec = new String[size + 1];
+        ftvec.toArray(newvec);
+        newvec[size] = biasClause + ":" + Float.toString(biasValue);
+        return WritableUtils.val(newvec);
     }
 
 }

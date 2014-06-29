@@ -20,6 +20,8 @@ create temporary macro SIGMOID(x DOUBLE)
 -- Evaluation functions --
 --------------------------
 
+-- CAUTION: UDAF in macro is not yet support supported in Hive
+
 -- Root Mean Squared Error
 create temporary macro RMSE(predicted FLOAT, actual FLOAT)
 sqrt(sum(pow(predicted - actual,2.0))/count(1));

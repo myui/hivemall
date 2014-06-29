@@ -20,8 +20,11 @@
  */
 package hivemall.ensemble.bagging;
 
+import static hivemall.utils.WritableUtils.val;
+
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
 public class VotedAvgUDAF extends UDAF {
 
@@ -84,18 +87,18 @@ public class VotedAvgUDAF extends UDAF {
             return true;
         }
 
-        public Double terminate() {
+        public DoubleWritable terminate() {
             if(partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }
             if(partial.positiveCnt > partial.negativeCnt) {
-                return partial.positiveSum / partial.positiveCnt;
+                return val(partial.positiveSum / partial.positiveCnt);
             } else {
                 if(partial.negativeCnt == 0) {
                     assert (partial.negativeSum == 0d) : partial.negativeSum;
-                    return 0.d;
+                    return val(0.d);
                 }
-                return partial.negativeSum / partial.negativeCnt;
+                return val(partial.negativeSum / partial.negativeCnt);
             }
         }
     }

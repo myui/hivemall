@@ -20,10 +20,14 @@
  */
 package hivemall.ftvec.hashing;
 
+import static hivemall.utils.WritableUtils.val;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
 
 public class Sha1UDF extends UDF {
 
@@ -40,49 +44,40 @@ public class Sha1UDF extends UDF {
         }
     }
 
-    public int evaluate(String word) {
+    public IntWritable evaluate(String word) {
         return evaluate(word, DEFAULT_NUM_FEATURES);
     }
 
-    public int evaluate(String word, boolean rawValue) {
+    public IntWritable evaluate(String word, boolean rawValue) {
         if(rawValue) {
-            return sha1(word);
+            return val(sha1(word));
         } else {
             return evaluate(word, DEFAULT_NUM_FEATURES);
         }
     }
 
-    public int evaluate(String word, int numFeatures) {
+    public IntWritable evaluate(String word, int numFeatures) {
         int r = sha1(word) % numFeatures;
         if(r < 0) {
             r += numFeatures;
         }
-        return r;
+        return val(r);
     }
 
-    public int evaluate(String... words) {
-        if(words.length == 0) {
-            return 0;
-        }
-        final StringBuilder b = new StringBuilder();
-        b.append(words[0]);
-        for(int i = 1; i < words.length; i++) {
-            b.append('\t');
-            b.append(words[i]);
-        }
-        String s = b.toString();
-        return evaluate(s);
+    public IntWritable evaluate(List<String> words) {
+        return evaluate(words, DEFAULT_NUM_FEATURES);
     }
 
-    public int evaluate(String[] words, int numFeatures) {
-        if(words.length == 0) {
-            return 0;
+    public IntWritable evaluate(List<String> words, int numFeatures) {
+        int wlength = words.size();
+        if(wlength == 0) {
+            return val(0);
         }
         final StringBuilder b = new StringBuilder();
-        b.append(words[0]);
-        for(int i = 1; i < words.length; i++) {
+        b.append(words.get(0));
+        for(int i = 1; i < wlength; i++) {
             b.append('\t');
-            b.append(words[i]);
+            b.append(words.get(i));
         }
         String s = b.toString();
         return evaluate(s, numFeatures);

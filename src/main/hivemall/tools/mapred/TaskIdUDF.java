@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2013
+ * Copyright (C) 2013-2014
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
  *
@@ -18,28 +18,36 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.ftvec.scaling;
+package hivemall.tools.mapred;
 
 import static hivemall.utils.WritableUtils.val;
 
+import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.hive.ql.udf.UDFType;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.mapred.JobConf;
 
-public class RescaleFeatureValueUDF extends UDF {
+@Description(name = "taskid", value = "_FUNC_() - Returns the value of mapred.task.partition")
+@UDFType(deterministic = false, stateful = true)
+public class TaskIdUDF extends UDF {
 
-    public Text evaluate(String s, double min, double max) {
-        return evaluate(s, (float) min, (float) max);
+    /**  
+     * @since Hive 0.12.0
+     */
+    public IntWritable evaluate() {
+        return val(getTaskId());
     }
 
-    public Text evaluate(String s, float min, float max) {
-        String[] fv = s.split(":");
-        if(fv.length != 2) {
-            throw new IllegalArgumentException("Invalid feature value representation: " + s);
+    public static int getTaskId() {
+        MapredContext ctx = MapredContext.get();
+        JobConf conf = ctx.getJobConf();
+        int taskid = conf.getInt("mapred.task.partition", -1);
+        if(taskid == -1) {
+            throw new IllegalStateException("mapred.task.partition is not set");
         }
-        float v = Float.parseFloat(fv[1]);
-        float scaled_v = RescaleUDF.min_max_normalization(v, min, max);
-        String ret = fv[0] + ':' + Float.toString(scaled_v);
-        return val(ret);
+        return taskid;
     }
 
 }

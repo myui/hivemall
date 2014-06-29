@@ -13,6 +13,10 @@
 drop temporary function perceptron;
 create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
 
+-- alias
+drop temporary function train_perceptron;
+create temporary function train_perceptron as 'hivemall.classifier.PerceptronUDTF';
+
 drop temporary function train_pa;
 create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
 

@@ -20,20 +20,23 @@
  */
 package hivemall.ftvec.hashing;
 
+import static hivemall.utils.WritableUtils.val;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 
 public class ArrayPrefixedHashValuesUDF extends UDF {
 
-    public List<String> evaluate(List<String> values, String prefix) {
+    public List<Text> evaluate(List<String> values, String prefix) {
         return evaluate(values, prefix, false);
     }
 
-    public List<String> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
+    public List<Text> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
         if(values == null) {
             return null;
         }
@@ -41,12 +44,12 @@ public class ArrayPrefixedHashValuesUDF extends UDF {
             prefix = "";
         }
 
-        List<Integer> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
+        List<IntWritable> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
         final int len = hashValues.size();
-        final String[] stringValues = new String[len];
+        final Text[] stringValues = new Text[len];
         for(int i = 0; i < len; i++) {
-            Integer v = hashValues.get(i);
-            stringValues[i] = prefix + v.toString();
+            IntWritable v = hashValues.get(i);
+            stringValues[i] = val(prefix + v.toString());
         }
         return Arrays.asList(stringValues);
     }

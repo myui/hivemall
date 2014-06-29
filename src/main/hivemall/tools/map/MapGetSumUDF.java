@@ -20,22 +20,27 @@
  */
 package hivemall.tools.map;
 
+import static hivemall.utils.WritableUtils.val;
+
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 
 public class MapGetSumUDF extends UDF {
 
-    public Double evaluate(Map<Integer, Float> map, List<Integer> keys) {
+    public DoubleWritable evaluate(Map<IntWritable, FloatWritable> map, List<IntWritable> keys) {
         double sum = 0d;
-        for(Integer k : keys) {
-            Float v = map.get(k);
+        for(IntWritable k : keys) {
+            FloatWritable v = map.get(k);
             if(v != null) {
-                sum += v.doubleValue();
+                sum += (double) v.get();
             }
         }
-        return sum;
+        return val(sum);
     }
 
 }
