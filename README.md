@@ -61,9 +61,15 @@ through UDFs/UDAFs/UDTFs of Hive.
 System requirements
 --------------------
 
-* Hive 0.12 and later
+**Hivemall v0.2**
 
-* Hadoop 0.20.x (CDH3 is our target)
+* Hive 0.12 and later [Recommended]
+
+* Hive 0.9, 0.10, and 0.11 [Not supported]
+
+**Hivemall v0.1**
+
+* Hive 0.9 or later
 
 Basic Usage
 ------------
