@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2013
+ * Copyright (C) 2013-2014
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
  *
@@ -18,26 +18,24 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.utils;
+package hivemall.utils.lang;
 
-import java.util.Random;
+public final class Primitives {
 
-import junit.framework.Assert;
+    private Primitives() {}
 
-import org.junit.Test;
+    public static char[] toChars(final byte[] b) {
+        return toChars(b, 0, b.length);
+    }
 
-public class ArrayUtilsTest {
-
-    @Test
-    public void test() {
-        String[] shuffled = new String[] { "1, 2, 3", "4, 5, 6", "7, 8, 9", "10, 11, 12" };
-        String[] outcome = new String[] { "10, 11, 12", "1, 2, 3", "4, 5, 6", "7, 8, 9" };
-
-        ArrayUtils.shuffle(shuffled, new Random(0L));
-
-        for(int i = 0; i < shuffled.length; i++) {
-            Assert.assertEquals(outcome[i], shuffled[i]);
+    public static char[] toChars(final byte[] b, final int off, final int len) {
+        final int clen = len >>> 1;
+        final char[] c = new char[clen];
+        for(int i = 0; i < clen; i++) {
+            final int j = off + (i << 1);
+            c[i] = (char) ((b[j + 1] & 0xFF) + ((b[j + 0]) << 8));
         }
+        return c;
     }
 
 }
