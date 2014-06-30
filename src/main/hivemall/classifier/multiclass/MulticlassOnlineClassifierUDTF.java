@@ -20,8 +20,6 @@
  */
 package hivemall.classifier.multiclass;
 
-import static hivemall.HivemallConstants.BIAS_CLAUSE;
-import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
@@ -51,7 +49,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.Text;
 
 public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
 
@@ -60,8 +57,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
     protected ObjectInspector labelRawOI;
 
     protected boolean feature_hashing;
-    protected float bias;
-    protected Object biasKey;
 
     protected Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight;
 
@@ -92,13 +87,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
             featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         }
 
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureRawOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
@@ -120,14 +108,12 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause. [default 0.0 (disable)]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
-        float bias = 0.f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -137,15 +123,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
             if(cl.hasOption("fh")) {
                 fhashFlag = true;
             }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                bias = Float.parseFloat(biasStr);
-            }
         }
 
         this.feature_hashing = fhashFlag;
-        this.bias = bias;
         return cl;
     }
 
@@ -258,10 +238,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
             squared_norm += (v * v);
         }
 
-        if(bias != 0.f) {
-            squared_norm += (bias * bias); // REVIEWME
-        }
-
         return squared_norm;
     }
 
@@ -291,13 +267,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
             }
         }
 
-        if(bias != 0.f) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += biasWeight.getValue();
-            }
-        }
-
         return score;
     }
 
@@ -318,10 +287,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
                 v = 1.f;
             }
             variance += v * v;
-        }
-
-        if(bias != 0.f) {
-            variance += bias * bias;
         }
 
         return variance;
@@ -354,16 +319,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
             } else {
                 score += (old_w.getValue() * v);
                 variance += (old_w.getCovariance() * v * v);
-            }
-        }
-
-        if(bias != 0.f) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight == null) {
-                variance += (1.f * bias * bias);
-            } else {
-                score += (biasWeight.getValue() * bias);
-                variance += (biasWeight.getCovariance() * bias * bias);
             }
         }
 
@@ -417,20 +372,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
                 float sub_w = (old_falseclass_w == null) ? -(coeff * v)
                         : old_falseclass_w.getValue() - (coeff * v);
                 weightsToSub.put(k, new WeightValue(sub_w));
-            }
-        }
-
-        if(biasKey != null) {
-            WeightValue old_trueclass_bias = weightsToAdd.get(biasKey);
-            float add_bias = (old_trueclass_bias == null) ? coeff * bias
-                    : old_trueclass_bias.getValue() + (coeff * bias);
-            weightsToAdd.put(biasKey, new WeightValue(add_bias));
-
-            if(weightsToSub != null) {
-                WeightValue old_falseclass_bias = weightsToSub.get(biasKey);
-                float sub_bias = (old_falseclass_bias == null) ? -(coeff * bias)
-                        : old_falseclass_bias.getValue() - (coeff * bias);
-                weightsToSub.put(biasKey, new WeightValue(sub_bias));
             }
         }
     }

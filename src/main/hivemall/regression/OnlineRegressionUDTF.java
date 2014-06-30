@@ -20,8 +20,6 @@
  */
 package hivemall.regression;
 
-import static hivemall.HivemallConstants.BIAS_CLAUSE;
-import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
@@ -50,7 +48,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspec
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.Text;
 
 public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
 
@@ -60,8 +57,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
     protected boolean parseX;
 
     protected boolean feature_hashing;
-    protected float bias;
-    protected Object biasKey;
 
     protected OpenHashMap<Object, WeightValue> weights;
     protected int count;
@@ -80,13 +75,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         ObjectInspector featureOutputOI = featureInputOI;
         if(parseX && feature_hashing) {
             featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        }
-
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
         }
 
         ArrayList<String> fieldNames = new ArrayList<String>();
@@ -122,14 +110,12 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 1.0, 0.0 to disable]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
-        float biasValue = 0.f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -139,15 +125,9 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
             if(cl.hasOption("fh")) {
                 fhashFlag = true;
             }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                biasValue = Float.parseFloat(biasStr);
-            }
         }
 
         this.feature_hashing = fhashFlag;
-        this.bias = biasValue;
         return cl;
     }
 
@@ -193,13 +173,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
             }
         }
 
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += (biasWeight.get() * bias);
-            }
-        }
-
         return score;
     }
 
@@ -229,14 +202,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
                 score += (old_w.get() * v);
             }
             squared_norm += (v * v);
-        }
-
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += (biasWeight.get() * bias);
-            }
-            squared_norm += (bias * bias); // REVIEWME
         }
 
         return new PredictionResult(score).squaredNorm(squared_norm);
@@ -272,16 +237,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
             }
         }
 
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight == null) {
-                variance += (1.f * bias * bias);
-            } else {
-                score += (biasWeight.getValue() * bias);
-                variance += (biasWeight.getCovariance() * bias * bias);
-            }
-        }
-
         return new PredictionResult(score).variance(variance);
     }
 
@@ -314,12 +269,6 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
             WeightValue old_w = weights.get(x);
             float new_w = (old_w == null) ? coeff * xi : old_w.get() + (coeff * xi);
             weights.put(x, new WeightValue(new_w));
-        }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            float new_bias = (old_bias == null) ? coeff * bias : old_bias.get() + (coeff * bias);
-            weights.put(biasKey, new WeightValue(new_bias));
         }
     }
 

@@ -250,12 +250,6 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
             WeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
             weights.put(k, new_w);
         }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, y, alpha, beta);
-            weights.put(biasKey, new_bias);
-        }
     }
 
     private static WeightValue getNewWeight(final WeightValue old, final float x, final float y, final float alpha, final float beta) {

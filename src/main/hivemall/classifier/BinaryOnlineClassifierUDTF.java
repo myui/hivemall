@@ -20,8 +20,6 @@
  */
 package hivemall.classifier;
 
-import static hivemall.HivemallConstants.BIAS_CLAUSE;
-import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
@@ -49,7 +47,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspecto
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.Text;
 
 public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
 
@@ -58,10 +55,9 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
     protected boolean parseX;
 
     protected boolean feature_hashing;
-    protected float bias;
-    protected Object biasKey;
 
     protected OpenHashMap<Object, WeightValue> weights;
+    protected int count;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -86,13 +82,6 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         }
 
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureRawOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
@@ -103,6 +92,7 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
         this.weights = new OpenHashMap<Object, WeightValue>(16384);
+        this.count = 1;
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -111,14 +101,12 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
-        float bias = 0.f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -129,24 +117,22 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
                 fhashFlag = true;
             }
 
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                bias = Float.parseFloat(biasStr);
-            }
         }
 
         this.feature_hashing = fhashFlag;
-        this.bias = bias;
         return cl;
     }
 
     @Override
-    public void process(Object[] args) throws HiveException {
+    public final void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         int label = (int) labelOI.get(args[1]);
         checkLabelValue(label);
 
         train(features, label);
+
+        mix();
+        count++;
     }
 
     protected void checkLabelValue(int label) throws UDFArgumentException {
@@ -162,6 +148,8 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             update(features, y, p);
         }
     }
+
+    protected void mix() throws HiveException {}
 
     protected float predict(final List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
@@ -185,13 +173,6 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             WeightValue old_w = weights.get(k);
             if(old_w != null) {
                 score += (old_w.getValue() * v);
-            }
-        }
-
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += (biasWeight.getValue() * bias);
             }
         }
 
@@ -224,14 +205,6 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
                 score += (old_w.getValue() * v);
             }
             squared_norm += (v * v);
-        }
-
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += (biasWeight.getValue() * bias);
-            }
-            squared_norm += (bias * bias);
         }
 
         return new PredictionResult(score).squaredNorm(squared_norm);
@@ -267,16 +240,6 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             }
         }
 
-        if(biasKey != null) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight == null) {
-                variance += (1.f * bias * bias);
-            } else {
-                score += (biasWeight.getValue() * bias);
-                variance += (biasWeight.getCovariance() * bias * bias);
-            }
-        }
-
         return new PredictionResult(score).variance(variance);
     }
 
@@ -304,13 +267,6 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             WeightValue old_w = weights.get(k);
             float new_w = (old_w == null) ? coeff * v : old_w.getValue() + (coeff * v);
             weights.put(k, new WeightValue(new_w));
-        }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            float new_bias = (old_bias == null) ? coeff * bias : old_bias.getValue()
-                    + (coeff * bias);
-            weights.put(biasKey, new WeightValue(new_bias));
         }
     }
 

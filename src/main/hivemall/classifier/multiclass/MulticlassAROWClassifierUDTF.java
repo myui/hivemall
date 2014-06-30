@@ -148,18 +148,6 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
                 weightsToSub.put(k, new_wrongclass_w);
             }
         }
-
-        if(biasKey != null) {
-            WeightValue old_correctclass_bias = weightsToAdd.get(biasKey);
-            WeightValue new_correctclass_bias = getNewWeight(old_correctclass_bias, bias, alpha, beta, true);
-            weightsToAdd.put(biasKey, new_correctclass_bias);
-
-            if(weightsToSub != null) {
-                WeightValue old_wrongclass_bias = weightsToSub.get(biasKey);
-                WeightValue new_wrongclass_bias = getNewWeight(old_wrongclass_bias, bias, alpha, beta, false);
-                weightsToSub.put(biasKey, new_wrongclass_bias);
-            }
-        }
     }
 
     private static WeightValue getNewWeight(final WeightValue old, final float v, final float alpha, final float beta, final boolean positive) {

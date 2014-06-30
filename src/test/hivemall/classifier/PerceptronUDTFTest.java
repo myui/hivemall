@@ -21,7 +21,6 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import hivemall.common.FeatureValue;
 
 import java.util.ArrayList;
@@ -45,22 +44,21 @@ public class PerceptronUDTFTest {
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* test for INT_TYPE_NAME feature */
-        StructObjectInspector intListSOI = udtf.initialize(
-            new ObjectInspector[]{intListOI, intOI});
+        StructObjectInspector intListSOI = udtf.initialize(new ObjectInspector[] { intListOI, intOI });
         assertEquals("struct<feature:int,weight:float>", intListSOI.getTypeName());
 
         /* test for STRING_TYPE_NAME feature */
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        StructObjectInspector stringListSOI = udtf.initialize(
-            new ObjectInspector[]{stringListOI, intOI});
+        StructObjectInspector stringListSOI = udtf.initialize(new ObjectInspector[] { stringListOI,
+                intOI });
         assertEquals("struct<feature:string,weight:float>", stringListSOI.getTypeName());
 
         /* test for BIGINT_TYPE_NAME feature */
         ObjectInspector longOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ListObjectInspector longListOI = ObjectInspectorFactory.getStandardListObjectInspector(longOI);
-        StructObjectInspector longListSOI = udtf.initialize(
-            new ObjectInspector[]{longListOI, intOI});
+        StructObjectInspector longListSOI = udtf.initialize(new ObjectInspector[] { longListOI,
+                intOI });
         assertEquals("struct<feature:bigint,weight:float>", longListSOI.getTypeName());
     }
 
@@ -69,10 +67,8 @@ public class PerceptronUDTFTest {
         PerceptronUDTF udtf = new PerceptronUDTF();
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        udtf.initialize(new ObjectInspector[]{
-            stringListOI,
-            PrimitiveObjectInspectorFactory.javaIntObjectInspector
-        });
+        udtf.initialize(new ObjectInspector[] { stringListOI,
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector });
 
         /* update weights by List<Object> */
         List<String> features1 = new ArrayList<String>();
@@ -101,10 +97,6 @@ public class PerceptronUDTFTest {
 
         FeatureValue word4 = FeatureValue.parse(new String("opinion"), udtf.feature_hashing);
         assertEquals(0.f, udtf.weights.get(word4.getFeature()).get(), 1e-5f);
-
-        /* check bias: disabled */
-        assertEquals(0.f, udtf.bias, 1e-5f);
-        assertEquals("bias cluase is disabled by default", null, udtf.biasKey);
     }
 
     @Test
@@ -112,15 +104,9 @@ public class PerceptronUDTFTest {
         PerceptronUDTF udtf = new PerceptronUDTF();
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            new String("-b 0.1")
-        );
-        udtf.initialize(new ObjectInspector[]{
-            stringListOI,
-            PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-            param
-        });
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String(""));
+        udtf.initialize(new ObjectInspector[] { stringListOI,
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector, param });
 
         /* update weights by List<Object> */
         List<String> features1 = new ArrayList<String>();
@@ -134,11 +120,6 @@ public class PerceptronUDTFTest {
 
         FeatureValue word2 = FeatureValue.parse(new String("opinion"), udtf.feature_hashing);
         assertEquals(1.f, udtf.weights.get(word2.getFeature()).get(), 1e-5f);
-
-        /* check bias: enabled */
-        assertEquals(0.1f, udtf.bias, 1e-5f);
-        assertNotNull("bias clause is enabled", udtf.biasKey);
-        assertEquals(0.1f, udtf.weights.get(udtf.biasKey).get(), 1e-5f);
 
         /* update weights by List<Object> */
         List<String> features2 = new ArrayList<String>();
@@ -154,10 +135,5 @@ public class PerceptronUDTFTest {
 
         FeatureValue word4 = FeatureValue.parse(new String("opinion"), udtf.feature_hashing);
         assertEquals(0.f, udtf.weights.get(word4.getFeature()).get(), 1e-5f);
-
-        /* check bias: enabled */
-        assertEquals(0.1f, udtf.bias, 1e-5f);
-        assertNotNull("bias clause is enabled", udtf.biasKey);
-        assertEquals(0.f, udtf.weights.get(udtf.biasKey).get(), 1e-5f);
     }
 }

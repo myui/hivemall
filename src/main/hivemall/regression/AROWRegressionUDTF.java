@@ -121,12 +121,6 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
             WeightValue new_w = getNewWeight(old_w, v, coeff, beta);
             weights.put(k, new_w);
         }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, coeff, beta);
-            weights.put(biasKey, new_bias);
-        }
     }
 
     private static WeightValue getNewWeight(final WeightValue old, final float x, final float coeff, final float beta) {
