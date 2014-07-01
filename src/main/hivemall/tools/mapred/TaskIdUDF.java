@@ -24,6 +24,7 @@ import static hivemall.utils.WritableUtils.val;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
+import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
@@ -41,7 +42,7 @@ public class TaskIdUDF extends UDF {
     }
 
     public static int getTaskId() {
-        MapredContext ctx = MapredContext.get();
+        MapredContext ctx = MapredContextAccessor.get();
         JobConf conf = ctx.getJobConf();
         int taskid = conf.getInt("mapred.task.partition", -1);
         if(taskid == -1) {
