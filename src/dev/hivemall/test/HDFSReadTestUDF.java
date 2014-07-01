@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@UDFType(deterministic = false, stateful = true)
+@UDFType(deterministic = false)
 public class HDFSReadTestUDF extends UDF {
 
     public Integer evaluate(Text tableName) throws HiveException {
