@@ -20,10 +20,16 @@
  */
 package hivemall.utils;
 
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
@@ -73,9 +79,29 @@ public final class HiveUtils {
         return Integer.parseInt(s);
     }
 
-    public static String getConstString(ObjectInspector oi) {
+    public static String getConstString(ObjectInspector oi) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
         WritableConstantStringObjectInspector stringOI = (WritableConstantStringObjectInspector) oi;
         return stringOI.getWritableConstantValue().toString();
     }
 
+    public static Object getConstValue(ObjectInspector oi) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        return ((ConstantObjectInspector) oi).getWritableConstantValue();
+    }
+
+    public static PrimitiveObjectInspector asPrimitiveObjectInspector(ObjectInspector oi)
+            throws UDFArgumentException {
+        if(oi.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentException("Is not PrimitiveObjectInspector: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        return (PrimitiveObjectInspector) oi;
+    }
 }
