@@ -29,9 +29,9 @@ import hivemall.UDTFWithOptions;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
-import hivemall.utils.HiveUtils;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;

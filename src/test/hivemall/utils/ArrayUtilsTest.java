@@ -20,6 +20,8 @@
  */
 package hivemall.utils;
 
+import hivemall.utils.lang.ArrayUtils;
+
 import java.util.Random;
 
 import junit.framework.Assert;

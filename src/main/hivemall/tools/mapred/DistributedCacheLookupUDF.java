@@ -1,7 +1,7 @@
 package hivemall.tools.mapred;
 
-import hivemall.utils.HiveUtils;
 import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.io.BufferedReader;
 import java.io.File;

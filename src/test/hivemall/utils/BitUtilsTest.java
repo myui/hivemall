@@ -20,6 +20,8 @@
  */
 package hivemall.utils;
 
+import hivemall.utils.lang.BitUtils;
+
 import java.util.BitSet;
 import java.util.Random;
 

@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.scaling;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.FloatWritable;
