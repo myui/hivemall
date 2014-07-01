@@ -65,7 +65,7 @@ System requirements
 
 * Hive 0.11 or later [Recommended, Required for compilation]
 
-* Hive 0.9, 0.10, and 0.11 [Not supported, New features in v0.2 do not work]
+* Hive 0.9, 0.10 [Not supported, New features in v0.2 do not work]
 
 **Hivemall v0.1**
 
