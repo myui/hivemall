@@ -45,7 +45,6 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Brute-force search using cosine similarity
 
-
 ## Feature engineering
   
 * Feature hashing (MurmurHash, SHA1)
