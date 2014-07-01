@@ -20,7 +20,7 @@
  */
 package hivemall.ensemble.bagging;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;

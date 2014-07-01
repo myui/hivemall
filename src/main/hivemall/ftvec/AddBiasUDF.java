@@ -21,7 +21,7 @@
 package hivemall.ftvec;
 
 import hivemall.HivemallConstants;
-import hivemall.utils.WritableUtils;
+import hivemall.utils.hadoop.WritableUtils;
 
 import java.util.List;
 

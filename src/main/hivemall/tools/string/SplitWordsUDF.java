@@ -20,7 +20,7 @@
  */
 package hivemall.tools.string;
 
-import hivemall.utils.WritableUtils;
+import hivemall.utils.hadoop.WritableUtils;
 
 import java.util.List;
 
