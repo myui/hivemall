@@ -150,7 +150,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
     }
 
     private Object get(Object arg) throws HiveException {
-        Object key = keyOI.getPrimitiveWritableObject(arg);
+        Object key = keyOI.getPrimitiveJavaObject(arg);
         Object value = cache.get(key);
         return (value == null) ? defaultValue : value;
     }

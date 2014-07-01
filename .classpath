@@ -9,7 +9,7 @@
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/hadoop-core-0.20.2-cdh3u6.jar"/>
 	<classpathentry kind="lib" path="lib/optional/guava-r09-jarjar.jar"/>
-	<classpathentry kind="lib" path="lib/hive-exec-0.11.0.jar" sourcepath="/hive-0.12.0"/>
+	<classpathentry kind="lib" path="lib/hive-exec-0.11.0.jar"/>
 	<classpathentry kind="lib" path="lib/hive-serde-0.11.0.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
