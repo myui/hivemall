@@ -132,12 +132,14 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
     }
 
     @Override
-    public void process(Object[] args) throws HiveException {
+    public final void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         float target = targetOI.get(args[1]);
         checkTargetValue(target);
 
         train(features, target);
+
+        mix();
         count++;
     }
 
@@ -147,6 +149,8 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         float p = predict(features);
         update(features, target, p);
     }
+
+    protected void mix() throws HiveException {}
 
     protected float predict(final Collection<?> features) {
         final ObjectInspector featureInspector = this.featureInputOI;
