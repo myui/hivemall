@@ -22,12 +22,12 @@ package hivemall.utils;
 
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 public final class HiveUtils {
-
-    public static void main(String[] args) {}
 
     public static Text asText(final Object o) {
         if(o == null) {
@@ -71,6 +71,11 @@ public final class HiveUtils {
         }
         String s = o.toString();
         return Integer.parseInt(s);
+    }
+
+    public static String getConstString(ObjectInspector oi) {
+        WritableConstantStringObjectInspector stringOI = (WritableConstantStringObjectInspector) oi;
+        return stringOI.getWritableConstantValue().toString();
     }
 
 }
