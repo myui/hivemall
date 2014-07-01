@@ -20,7 +20,7 @@
  */
 package hivemall.ensemble;
 
-import hivemall.utils.WritableUtils;
+import hivemall.utils.hadoop.WritableUtils;
 
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;

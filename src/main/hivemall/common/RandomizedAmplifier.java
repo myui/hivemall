@@ -20,7 +20,7 @@
  */
 package hivemall.common;
 
-import hivemall.utils.ArrayUtils;
+import hivemall.utils.lang.ArrayUtils;
 
 import java.util.Random;
 

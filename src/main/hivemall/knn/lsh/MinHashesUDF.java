@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */package hivemall.knn.lsh;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.common.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 

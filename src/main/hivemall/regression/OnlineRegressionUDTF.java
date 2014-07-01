@@ -31,6 +31,7 @@ import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,7 +49,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
@@ -133,7 +133,7 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
-            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[2]).getWritableConstantValue().toString();
+            String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
 
             if(cl.hasOption("fh")) {

@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.hashing;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

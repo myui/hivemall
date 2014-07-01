@@ -20,7 +20,7 @@
  */
 package hivemall.knn.distance;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 
 import java.math.BigInteger;
 

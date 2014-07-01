@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.hashing;
 
-import static hivemall.utils.WritableUtils.val;
+import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.Arrays;
