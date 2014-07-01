@@ -20,6 +20,11 @@
  */
 package org.apache.hadoop.hive.ql.exec;
 
+/**
+ * An accessor to allow access to {@link MapredContext}
+ * 
+ * @link https://issues.apache.org/jira/browse/HIVE-4737
+ */
 public final class MapredContextAccessor {
 
     public static MapredContext get() {
