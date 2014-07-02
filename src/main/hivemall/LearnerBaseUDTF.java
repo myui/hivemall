@@ -57,6 +57,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return false;
     }
 
+    public boolean isFeatureHashingEnabled() {
+        return feature_hashing;
+    }
+
+    public float getBias() {
+        return bias;
+    }
+
     @Override
     protected Options getOptions() {
         Options opts = new Options();
