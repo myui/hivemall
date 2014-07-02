@@ -29,6 +29,7 @@ import hivemall.LearnerBaseUDTF;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
@@ -91,22 +92,13 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
             this.biasKey = null;
         }
 
-        ArrayList<String> fieldNames = new ArrayList<String>();
-        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-
-        fieldNames.add("feature");
-        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureOutputOI);
-        fieldOIs.add(featureOI);
-        fieldNames.add("weight");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-
         this.weights = new OpenHashMap<Object, WeightValue>(16384);
         if(preloadedModelFile != null) {
             loadPredictionModel(weights, preloadedModelFile, featureInputOI);
         }
 
         this.count = 1;
-        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+        return getReturnOI(featureOutputOI);
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
@@ -153,13 +145,29 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
             }
 
             modelfile = cl.getOptionValue("loadmodel");
-
         }
 
         this.feature_hashing = fhashFlag;
         this.bias = biasValue;
         this.preloadedModelFile = modelfile;
         return cl;
+    }
+
+    protected StructObjectInspector getReturnOI(ObjectInspector featureOutputOI) {
+        ArrayList<String> fieldNames = new ArrayList<String>();
+        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+
+        fieldNames.add("feature");
+        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureOutputOI);
+        fieldOIs.add(featureOI);
+        fieldNames.add("weight");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+        if(returnCovariance()) {
+            fieldNames.add("covar");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+        }
+
+        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
     @Override
@@ -337,15 +345,30 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     @Override
     public void close() throws HiveException {
         if(weights != null) {
-            final Object[] forwardMapObj = new Object[2];
-            IMapIterator<Object, WeightValue> itor = weights.entries();
-            while(itor.next() != -1) {
-                Object k = itor.unsafeGetAndFreeKey();
-                WeightValue v = itor.unsafeGetAndFreeValue();
-                FloatWritable fv = new FloatWritable(v.get());
-                forwardMapObj[0] = k;
-                forwardMapObj[1] = fv;
-                forward(forwardMapObj);
+            if(returnCovariance()) {
+                final Object[] forwardMapObj = new Object[3];
+                IMapIterator<Object, WeightValue> itor = weights.entries();
+                while(itor.next() != -1) {
+                    Object k = itor.unsafeGetAndFreeKey();
+                    WeightValueWithCovar v = (WeightValueWithCovar) itor.unsafeGetAndFreeValue();
+                    FloatWritable fv = new FloatWritable(v.get());
+                    FloatWritable cov = new FloatWritable(v.getCovariance());
+                    forwardMapObj[0] = k;
+                    forwardMapObj[1] = fv;
+                    forwardMapObj[2] = cov;
+                    forward(forwardMapObj);
+                }
+            } else {
+                final Object[] forwardMapObj = new Object[2];
+                IMapIterator<Object, WeightValue> itor = weights.entries();
+                while(itor.next() != -1) {
+                    Object k = itor.unsafeGetAndFreeKey();
+                    WeightValue v = itor.unsafeGetAndFreeValue();
+                    FloatWritable fv = new FloatWritable(v.get());
+                    forwardMapObj[0] = k;
+                    forwardMapObj[1] = fv;
+                    forward(forwardMapObj);
+                }
             }
             this.weights = null;
         }

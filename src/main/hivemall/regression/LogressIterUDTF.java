@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.common.WeightValue;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -35,9 +36,11 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
 
+@Deprecated
 public class LogressIterUDTF extends LogressUDTF {
 
     private MapObjectInspector featuresWithWeightOI;
@@ -50,8 +53,8 @@ public class LogressIterUDTF extends LogressUDTF {
     }
 
     @Override
-    protected ObjectInspector processFeaturesOI(ObjectInspector arg)
-            throws UDFArgumentTypeException {
+    protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
+            throws UDFArgumentException {
         MapObjectInspector featuresWithWeightOI = (MapObjectInspector) arg;
         ObjectInspector featureOI = featuresWithWeightOI.getMapKeyObjectInspector();
         String keyTypeName = featureOI.getTypeName();
@@ -65,7 +68,7 @@ public class LogressIterUDTF extends LogressUDTF {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of value type Float: "
                     + weightOI.getTypeName());
         }
-        return featureOI;
+        return HiveUtils.asPrimitiveObjectInspector(featureOI);
     }
 
     @Override

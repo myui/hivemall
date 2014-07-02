@@ -53,6 +53,11 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
+    protected boolean returnCovariance() {
+        return true;
+    }
+
+    @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("r", "regularization", true, "Regularization parameter for some r > 0 [default 0.1]");

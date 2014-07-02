@@ -30,6 +30,7 @@ import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
 
@@ -99,21 +100,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             this.biasKey = null;
         }
 
-        ArrayList<String> fieldNames = new ArrayList<String>();
-        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-
-        fieldNames.add("label");
-        ObjectInspector labelOI = ObjectInspectorUtils.getStandardObjectInspector(labelRawOI);
-        fieldOIs.add(labelOI);
-        fieldNames.add("feature");
-        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureRawOI);
-        fieldOIs.add(featureOI);
-        fieldNames.add("weight");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-
         this.label2FeatureWeight = new HashMap<Object, OpenHashMap<Object, WeightValue>>(64);
 
-        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+        return getReturnOI(labelRawOI, featureRawOI);
     }
 
     @Override
@@ -147,6 +136,26 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         this.feature_hashing = fhashFlag;
         this.bias = bias;
         return cl;
+    }
+
+    protected StructObjectInspector getReturnOI(ObjectInspector labelRawOI, ObjectInspector featureRawOI) {
+        ArrayList<String> fieldNames = new ArrayList<String>();
+        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+
+        fieldNames.add("label");
+        ObjectInspector labelOI = ObjectInspectorUtils.getStandardObjectInspector(labelRawOI);
+        fieldOIs.add(labelOI);
+        fieldNames.add("feature");
+        ObjectInspector featureOI = ObjectInspectorUtils.getStandardObjectInspector(featureRawOI);
+        fieldOIs.add(featureOI);
+        fieldNames.add("weight");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+        if(returnCovariance()) {
+            fieldNames.add("covar");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+        }
+
+        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
     @Override
@@ -438,19 +447,39 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void close() throws HiveException {
         if(label2FeatureWeight != null) {
-            final Object[] forwardMapObj = new Object[3];
-            for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
-                Object label = label2map.getKey();
-                forwardMapObj[0] = label;
-                OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
-                IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
-                while(fvmapItor.next() != -1) {
-                    Object k = fvmapItor.unsafeGetAndFreeKey();
-                    WeightValue v = fvmapItor.unsafeGetAndFreeValue();
-                    FloatWritable fv = new FloatWritable(v.getValue());
-                    forwardMapObj[1] = k;
-                    forwardMapObj[2] = fv;
-                    forward(forwardMapObj);
+            if(returnCovariance()) {
+                final Object[] forwardMapObj = new Object[4];
+                for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
+                    Object label = label2map.getKey();
+                    forwardMapObj[0] = label;
+                    OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
+                    IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
+                    while(fvmapItor.next() != -1) {
+                        Object k = fvmapItor.unsafeGetAndFreeKey();
+                        WeightValueWithCovar v = (WeightValueWithCovar) fvmapItor.unsafeGetAndFreeValue();
+                        FloatWritable fv = new FloatWritable(v.getValue());
+                        FloatWritable cov = new FloatWritable(v.getCovariance());
+                        forwardMapObj[1] = k;
+                        forwardMapObj[2] = fv;
+                        forwardMapObj[3] = cov;
+                        forward(forwardMapObj);
+                    }
+                }
+            } else {
+                final Object[] forwardMapObj = new Object[3];
+                for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
+                    Object label = label2map.getKey();
+                    forwardMapObj[0] = label;
+                    OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
+                    IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
+                    while(fvmapItor.next() != -1) {
+                        Object k = fvmapItor.unsafeGetAndFreeKey();
+                        WeightValue v = fvmapItor.unsafeGetAndFreeValue();
+                        FloatWritable fv = new FloatWritable(v.getValue());
+                        forwardMapObj[1] = k;
+                        forwardMapObj[2] = fv;
+                        forward(forwardMapObj);
+                    }
                 }
             }
             this.label2FeatureWeight = null;

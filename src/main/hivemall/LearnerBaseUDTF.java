@@ -22,6 +22,7 @@ package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -33,16 +34,17 @@ import java.util.List;
 
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObjectInspector;
 import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     protected boolean returnCovariance() {
-        return true;
+        return false;
     }
 
     protected void loadPredictionModel(OpenHashMap<Object, WeightValue> map, String filename, PrimitiveObjectInspector keyOI) {
@@ -72,6 +74,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             } else {
                 LazySimpleSerDe serde = HiveUtils.getKeyValueLineSerde(keyOI, valueOI);
                 StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
+                StructField keyRef = lineOI.getStructFieldRef("key");
+                StructField valueRef = lineOI.getStructFieldRef("value");
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
@@ -85,8 +89,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         if(f0 == null || f1 == null) {
                             continue; // avoid the case that key or value is null
                         }
-                        Object k = ObjectInspectorUtils.copyToStandardObject(f0, keyOI);
-                        float v = valueOI.get(f1);
+                        Object k = ((PrimitiveObjectInspector) keyRef.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        float v = ((FloatObjectInspector) valueRef.getFieldObjectInspector()).get(f1);
                         map.put(k, new WeightValue(v));
                     }
                 } finally {
@@ -104,11 +108,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(map, f, keyOI, valueOI);
+                    loadPredictionModel(map, f, keyOI, valueOI, covarOI);
                 }
             } else {
-                LazySimpleSerDe serde = HiveUtils.getKeyValueLineSerde(keyOI, valueOI);
+                LazySimpleSerDe serde = HiveUtils.getLineSerde(keyOI, valueOI, covarOI);
                 StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
+                StructField c1ref = lineOI.getStructFieldRef("c1");
+                StructField c2ref = lineOI.getStructFieldRef("c2");
+                StructField c3ref = lineOI.getStructFieldRef("c3");
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
@@ -119,12 +126,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
                         Object f0 = fields.get(0);
                         Object f1 = fields.get(1);
-                        if(f0 == null || f1 == null) {
-                            continue; // avoid the case that key or value is null
+                        Object f2 = fields.get(2);
+                        if(f0 == null || f1 == null || f2 == null) {
+                            continue; // avoid unexpected case
                         }
-                        Object k = ObjectInspectorUtils.copyToStandardObject(f0, keyOI);
-                        float v = valueOI.get(f1);
-                        map.put(k, new WeightValue(v));
+                        Object k = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        float v = ((FloatObjectInspector) c2ref.getFieldObjectInspector()).get(f1);
+                        float cov = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f1);
+                        map.put(k, new WeightValueWithCovar(v, cov));
                     }
                 } finally {
                     reader.close();
