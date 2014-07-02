@@ -37,8 +37,6 @@ import hivemall.utils.hadoop.HiveUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -46,6 +44,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
@@ -57,9 +56,6 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     protected ListObjectInspector featureListOI;
     protected IntObjectInspector labelOI;
     protected boolean parseX;
-
-    protected boolean feature_hashing;
-    protected float bias;
     protected Object biasKey;
 
     protected OpenHashMap<Object, WeightValue> weights;
@@ -70,7 +66,34 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
         }
-        this.featureListOI = (ListObjectInspector) argOIs[0];
+        PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
+        this.labelOI = (IntObjectInspector) argOIs[1];
+
+        processOptions(argOIs);
+
+        ObjectInspector featureOutputOI = featureInputOI;
+        if(parseX && feature_hashing) {
+            featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        }
+
+        if(bias != 0.f) {
+            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
+                    : new Text(BIAS_CLAUSE);
+        } else {
+            this.biasKey = null;
+        }
+
+        this.weights = new OpenHashMap<Object, WeightValue>(16384);
+        if(preloadedModelFile != null) {
+            loadPredictionModel(weights, preloadedModelFile, featureInputOI);
+        }
+
+        return getReturnOI(featureOutputOI);
+    }
+
+    protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
+            throws UDFArgumentException {
+        this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
         if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
@@ -79,57 +102,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                     + keyTypeName);
         }
         this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
-        this.labelOI = (IntObjectInspector) argOIs[1];
-
-        processOptions(argOIs);
-
-        if(parseX && feature_hashing) {
-            featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        }
-
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureRawOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
-        this.weights = new OpenHashMap<Object, WeightValue>(16384);
-
-        return getReturnOI(featureRawOI);
-    }
-
-    @Override
-    protected Options getOptions() {
-        Options opts = new Options();
-        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
-        return opts;
-    }
-
-    @Override
-    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        boolean fhashFlag = false;
-        float bias = 0.f;
-
-        CommandLine cl = null;
-        if(argOIs.length >= 3) {
-            String rawArgs = HiveUtils.getConstString(argOIs[2]);
-            cl = parseOptions(rawArgs);
-
-            if(cl.hasOption("fh")) {
-                fhashFlag = true;
-            }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                bias = Float.parseFloat(biasStr);
-            }
-        }
-
-        this.feature_hashing = fhashFlag;
-        this.bias = bias;
-        return cl;
+        return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 
     protected StructObjectInspector getReturnOI(ObjectInspector featureRawOI) {

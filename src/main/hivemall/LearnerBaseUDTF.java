@@ -32,8 +32,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -43,8 +47,52 @@ import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
+    protected boolean feature_hashing;
+    protected float bias;
+    protected String preloadedModelFile;
+
+    public LearnerBaseUDTF() {}
+
     protected boolean returnCovariance() {
         return false;
+    }
+
+    @Override
+    protected Options getOptions() {
+        Options opts = new Options();
+        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
+        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
+        opts.addOption("loadmodel", true, "Model file name in the distributed cache");
+        return opts;
+    }
+
+    @Override
+    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
+        boolean fhashFlag = false;
+        float biasValue = 0.f;
+        String modelfile = null;
+
+        CommandLine cl = null;
+        if(argOIs.length >= 3) {
+            String rawArgs = HiveUtils.getConstString(argOIs[2]);
+            cl = parseOptions(rawArgs);
+
+            if(cl.hasOption("fh")) {
+                fhashFlag = true;
+            }
+
+            String biasStr = cl.getOptionValue("b");
+            if(biasStr != null) {
+                biasValue = Float.parseFloat(biasStr);
+            }
+
+            modelfile = cl.getOptionValue("loadmodel");
+        }
+
+        this.feature_hashing = fhashFlag;
+        this.bias = biasValue;
+        this.preloadedModelFile = modelfile;
+        return cl;
     }
 
     protected void loadPredictionModel(OpenHashMap<Object, WeightValue> map, String filename, PrimitiveObjectInspector keyOI) {
@@ -132,7 +180,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         }
                         Object k = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
                         float v = ((FloatObjectInspector) c2ref.getFieldObjectInspector()).get(f1);
-                        float cov = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f1);
+                        float cov = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
                         map.put(k, new WeightValueWithCovar(v, cov));
                     }
                 } finally {

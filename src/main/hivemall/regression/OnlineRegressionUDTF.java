@@ -38,8 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -60,11 +58,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     protected PrimitiveObjectInspector featureInputOI;
     protected FloatObjectInspector targetOI;
     protected boolean parseX;
-
-    protected boolean feature_hashing;
-    protected float bias;
     protected Object biasKey;
-    protected String preloadedModelFile;
 
     protected OpenHashMap<Object, WeightValue> weights;
     protected int count;
@@ -113,44 +107,6 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         }
         this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
-    }
-
-    @Override
-    protected Options getOptions() {
-        Options opts = new Options();
-        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 1.0, 0.0 to disable]");
-        opts.addOption("loadmodel", true, "Model file name in the distributed cache");
-        return opts;
-    }
-
-    @Override
-    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        boolean fhashFlag = false;
-        float biasValue = 0.f;
-        String modelfile = null;
-
-        CommandLine cl = null;
-        if(argOIs.length >= 3) {
-            String rawArgs = HiveUtils.getConstString(argOIs[2]);
-            cl = parseOptions(rawArgs);
-
-            if(cl.hasOption("fh")) {
-                fhashFlag = true;
-            }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                biasValue = Float.parseFloat(biasStr);
-            }
-
-            modelfile = cl.getOptionValue("loadmodel");
-        }
-
-        this.feature_hashing = fhashFlag;
-        this.bias = biasValue;
-        this.preloadedModelFile = modelfile;
-        return cl;
     }
 
     protected StructObjectInspector getReturnOI(ObjectInspector featureOutputOI) {
