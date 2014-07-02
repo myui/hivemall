@@ -5,15 +5,21 @@ import hivemall.utils.hadoop.HiveUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
+import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
@@ -30,6 +36,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.io.compress.CompressionInputStream;
+import org.apache.hadoop.io.compress.Decompressor;
 
 @Description(name = "distcache_gets", value = "_FUNC_(filepath, key, default_value) - Returns map<key_type, value_type>|value_type")
 @UDFType(deterministic = false)
@@ -94,7 +105,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         return returnOI;
     }
 
-    private void loadValues(OpenHashMap<Object, Object> map, File file, PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI)
+    private static void loadValues(OpenHashMap<Object, Object> map, File file, PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI)
             throws IOException, SerDeException {
         if(!file.exists()) {
             return;
@@ -110,7 +121,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 StructField keyRef = lineOI.getStructFieldRef("key");
                 StructField valueRef = lineOI.getStructFieldRef("value");
 
-                final BufferedReader reader = new BufferedReader(new FileReader(file));
+                final BufferedReader reader = getBufferedReader(file);
                 try {
                     String line;
                     while((line = reader.readLine()) != null) {
@@ -125,6 +136,27 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                     reader.close();
                 }
             }
+        }
+    }
+
+    private static BufferedReader getBufferedReader(File file) throws IOException {
+        URI fileuri = file.toURI();
+        Path path = new Path(fileuri);
+
+        MapredContext context = MapredContextAccessor.get();
+        Configuration conf = context.getJobConf();
+        CompressionCodecFactory ccf = new CompressionCodecFactory(conf);
+        CompressionCodec codec = ccf.getCodec(path);
+
+        if(codec == null) {
+            return new BufferedReader(new FileReader(file));
+        } else {
+            Decompressor decompressor = CodecPool.getDecompressor(codec);
+
+            FileInputStream fis = new FileInputStream(file);
+            CompressionInputStream cis = codec.createInputStream(fis, decompressor);
+            BufferedReader br = new BufferedReader(new InputStreamReader(cis));
+            return br;
         }
     }
 
