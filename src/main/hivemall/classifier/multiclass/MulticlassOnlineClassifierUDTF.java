@@ -25,7 +25,7 @@ import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
-import hivemall.UDTFWithOptions;
+import hivemall.LearnerBaseUDTF;
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.PredictionResult;
@@ -53,7 +53,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantS
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
-public abstract class MulticlassOnlineClassifierUDTF extends UDTFWithOptions {
+public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
     protected boolean parseX;

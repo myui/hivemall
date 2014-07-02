@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+import hivemall.LearnerBaseUDTF;
 import hivemall.UDTFWithOptions;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
@@ -51,7 +52,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
-public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
+public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
     protected IntObjectInspector labelOI;

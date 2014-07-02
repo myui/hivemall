@@ -25,7 +25,7 @@ import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
-import hivemall.UDTFWithOptions;
+import hivemall.LearnerBaseUDTF;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
@@ -46,22 +46,24 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
-public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
+public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
-    protected ObjectInspector featureInputOI;
+    protected PrimitiveObjectInspector featureInputOI;
     protected FloatObjectInspector targetOI;
     protected boolean parseX;
 
     protected boolean feature_hashing;
     protected float bias;
     protected Object biasKey;
+    protected String preloadedModelFile;
 
     protected OpenHashMap<Object, WeightValue> weights;
     protected int count;
@@ -99,13 +101,16 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
 
         this.weights = new OpenHashMap<Object, WeightValue>(16384);
-        this.count = 1;
+        if(preloadedModelFile != null) {
+            loadPredictionModel(weights, preloadedModelFile, featureInputOI);
+        }
 
+        this.count = 1;
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
-    protected ObjectInspector processFeaturesOI(ObjectInspector arg)
-            throws UDFArgumentTypeException {
+    protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
+            throws UDFArgumentException {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
@@ -115,7 +120,7 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
                     + keyTypeName);
         }
         this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
-        return featureRawOI;
+        return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 
     @Override
@@ -123,6 +128,7 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("b", "bias", true, "Bias clause [default 1.0, 0.0 to disable]");
+        opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         return opts;
     }
 
@@ -130,6 +136,7 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         boolean fhashFlag = false;
         float biasValue = 0.f;
+        String modelfile = null;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -144,10 +151,14 @@ public abstract class OnlineRegressionUDTF extends UDTFWithOptions {
             if(biasStr != null) {
                 biasValue = Float.parseFloat(biasStr);
             }
+
+            modelfile = cl.getOptionValue("loadmodel");
+
         }
 
         this.feature_hashing = fhashFlag;
         this.bias = biasValue;
+        this.preloadedModelFile = modelfile;
         return cl;
     }
 
