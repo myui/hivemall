@@ -20,8 +20,13 @@
  */
 package hivemall.utils.hadoop;
 
+import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
+import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -103,5 +108,40 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         return (PrimitiveObjectInspector) oi;
+    }
+
+    public static LazySimpleSerDe getKeyValueLineSerde(PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI)
+            throws SerDeException {
+        LazySimpleSerDe serde = new LazySimpleSerDe();
+        Configuration conf = new Configuration();
+        Properties tbl = new Properties();
+        tbl.setProperty("columns", "key,value");
+        tbl.setProperty("columns.types", keyOI.getTypeName() + "," + valueOI.getTypeName());
+        serde.initialize(conf, tbl);
+        return serde;
+    }
+
+    public static LazySimpleSerDe getLineSerde(PrimitiveObjectInspector... OIs)
+            throws SerDeException {
+        if(OIs.length == 0) {
+            throw new IllegalArgumentException("OIs must be specified");
+        }
+        LazySimpleSerDe serde = new LazySimpleSerDe();
+        Configuration conf = new Configuration();
+        Properties tbl = new Properties();
+
+        StringBuilder columnNames = new StringBuilder();
+        StringBuilder columnTypes = new StringBuilder();
+        for(int i = 0; i < OIs.length; i++) {
+            columnNames.append('c').append(i + 1).append(',');
+            columnTypes.append(OIs[i].getTypeName()).append(',');
+        }
+        columnNames.deleteCharAt(columnNames.length() - 1);
+        columnTypes.deleteCharAt(columnTypes.length() - 1);
+
+        tbl.setProperty("columns", columnNames.toString());
+        tbl.setProperty("columns.types", columnTypes.toString());
+        serde.initialize(conf, tbl);
+        return serde;
     }
 }
