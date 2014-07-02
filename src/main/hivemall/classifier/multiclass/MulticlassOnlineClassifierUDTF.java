@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.LearnerBaseUDTF;
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
@@ -33,24 +34,32 @@ import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.hadoop.HadoopUtils;
+import hivemall.utils.hadoop.HiveUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
@@ -58,10 +67,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
     protected boolean parseX;
-    protected ObjectInspector labelRawOI;
-
-    protected boolean feature_hashing;
-    protected float bias;
+    protected PrimitiveObjectInspector labelInputOI;
     protected Object biasKey;
 
     protected Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight;
@@ -72,7 +78,39 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 2 arguments: List<Int|BigInt|Text> features, {Int|Text} label [, constant text options]");
         }
-        this.featureListOI = (ListObjectInspector) argOIs[0];
+        PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
+        this.labelInputOI = HiveUtils.asPrimitiveObjectInspector(argOIs[1]);
+        String labelTypeName = labelInputOI.getTypeName();
+        if(!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)) {
+            throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: "
+                    + labelTypeName);
+        }
+
+        processOptions(argOIs);
+
+        ObjectInspector featureOutputOI = featureInputOI;
+        if(parseX && feature_hashing) {
+            featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        }
+
+        if(bias != 0.f) {
+            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
+                    : new Text(BIAS_CLAUSE);
+        } else {
+            this.biasKey = null;
+        }
+
+        this.label2FeatureWeight = new HashMap<Object, OpenHashMap<Object, WeightValue>>(64);
+        if(preloadedModelFile != null) {
+            loadPredictionModel(label2FeatureWeight, preloadedModelFile, labelInputOI, featureInputOI);
+        }
+
+        return getReturnOI(labelInputOI, featureOutputOI);
+    }
+
+    protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
+            throws UDFArgumentException {
+        this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
         if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
@@ -81,61 +119,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     + keyTypeName);
         }
         this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
-        this.labelRawOI = argOIs[1];
-        String labelTypeName = labelRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)) {
-            throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: " + keyTypeName);
-        }
-
-        processOptions(argOIs);
-
-        if(parseX && feature_hashing) {
-            featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        }
-
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureRawOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
-        this.label2FeatureWeight = new HashMap<Object, OpenHashMap<Object, WeightValue>>(64);
-
-        return getReturnOI(labelRawOI, featureRawOI);
-    }
-
-    @Override
-    protected Options getOptions() {
-        Options opts = new Options();
-        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause. [default 0.0 (disable)]");
-        return opts;
-    }
-
-    @Override
-    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        boolean fhashFlag = false;
-        float bias = 0.f;
-
-        CommandLine cl = null;
-        if(argOIs.length >= 3) {
-            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[2]).getWritableConstantValue().toString();
-            cl = parseOptions(rawArgs);
-
-            if(cl.hasOption("fh")) {
-                fhashFlag = true;
-            }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                bias = Float.parseFloat(biasStr);
-            }
-        }
-
-        this.feature_hashing = fhashFlag;
-        this.bias = bias;
-        return cl;
+        return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 
     protected StructObjectInspector getReturnOI(ObjectInspector labelRawOI, ObjectInspector featureRawOI) {
@@ -164,7 +148,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         if(features.isEmpty()) {
             return;
         }
-        Object label = ObjectInspectorUtils.copyToStandardObject(args[1], labelRawOI);
+        Object label = ObjectInspectorUtils.copyToStandardObject(args[1], labelInputOI);
         if(label == null) {
             throw new UDFArgumentException("label value must not be NULL");
         }
@@ -486,4 +470,114 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
     }
 
+    protected void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
+        try {
+            if(returnCovariance()) {
+                loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
+            } else {
+                loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load a model: " + filename, e);
+        } catch (SerDeException e) {
+            throw new RuntimeException("Failed to load a model: " + filename, e);
+        }
+    }
+
+    private static void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
+            throws IOException, SerDeException {
+        if(!file.exists()) {
+            return;
+        }
+        if(!file.getName().endsWith(".crc")) {
+            if(file.isDirectory()) {
+                for(File f : file.listFiles()) {
+                    loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI);
+                }
+            } else {
+                LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI);
+                StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
+                StructField c1ref = lineOI.getStructFieldRef("c1");
+                StructField c2ref = lineOI.getStructFieldRef("c2");
+                StructField c3ref = lineOI.getStructFieldRef("c3");
+
+                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                try {
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        Text lineText = new Text(line);
+                        Object lineObj = serde.deserialize(lineText);
+                        List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
+                        Object f0 = fields.get(0);
+                        Object f1 = fields.get(1);
+                        Object f2 = fields.get(2);
+                        if(f0 == null || f1 == null || f2 == null) {
+                            continue; // avoid the case that key or value is null
+                        }
+                        Object label = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
+                        if(map == null) {
+                            map = new OpenHashMap<Object, WeightValue>(8192);
+                            label2FeatureWeight.put(label, map);
+                        }
+                        Object k = ((PrimitiveObjectInspector) c2ref.getFieldObjectInspector()).getPrimitiveWritableObject(f1);
+                        float v = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
+                        map.put(k, new WeightValue(v));
+                    }
+                } finally {
+                    reader.close();
+                }
+            }
+        }
+    }
+
+    private static void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+            throws IOException, SerDeException {
+        if(!file.exists()) {
+            return;
+        }
+        if(!file.getName().endsWith(".crc")) {
+            if(file.isDirectory()) {
+                for(File f : file.listFiles()) {
+                    loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI, covarOI);
+                }
+            } else {
+                LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI, covarOI);
+                StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
+                StructField c1ref = lineOI.getStructFieldRef("c1");
+                StructField c2ref = lineOI.getStructFieldRef("c2");
+                StructField c3ref = lineOI.getStructFieldRef("c3");
+                StructField c4ref = lineOI.getStructFieldRef("c4");
+
+                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                try {
+                    String line;
+                    while((line = reader.readLine()) != null) {
+                        Text lineText = new Text(line);
+                        Object lineObj = serde.deserialize(lineText);
+                        List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
+                        Object f0 = fields.get(0);
+                        Object f1 = fields.get(1);
+                        Object f2 = fields.get(2);
+                        Object f3 = fields.get(3);
+                        if(f0 == null || f1 == null || f2 == null || f3 == null) {
+                            continue; // avoid unexpected case
+                        }
+                        Object label = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
+                        if(map == null) {
+                            map = new OpenHashMap<Object, WeightValue>(8192);
+                            label2FeatureWeight.put(label, map);
+                        }
+                        Object k = ((PrimitiveObjectInspector) c2ref.getFieldObjectInspector()).getPrimitiveWritableObject(f1);
+                        float v = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
+                        float cov = ((FloatObjectInspector) c4ref.getFieldObjectInspector()).get(f3);
+                        map.put(k, new WeightValueWithCovar(v, cov));
+                    }
+                } finally {
+                    reader.close();
+                }
+            }
+        }
+    }
 }
