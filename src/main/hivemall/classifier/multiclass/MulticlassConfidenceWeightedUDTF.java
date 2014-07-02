@@ -64,6 +64,11 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     }
 
     @Override
+    protected boolean returnCovariance() {
+        return true;
+    }
+
+    @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("phi", "confidence", true, "Confidence parameter [default 0.5]");

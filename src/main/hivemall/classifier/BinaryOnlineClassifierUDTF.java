@@ -25,10 +25,11 @@ import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
-import hivemall.UDTFWithOptions;
+import hivemall.LearnerBaseUDTF;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
+import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
@@ -36,8 +37,6 @@ import hivemall.utils.hadoop.HiveUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -45,20 +44,18 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
-public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
+public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
     protected IntObjectInspector labelOI;
     protected boolean parseX;
-
-    protected boolean feature_hashing;
-    protected float bias;
     protected Object biasKey;
 
     protected OpenHashMap<Object, WeightValue> weights;
@@ -69,7 +66,34 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
         }
-        this.featureListOI = (ListObjectInspector) argOIs[0];
+        PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
+        this.labelOI = (IntObjectInspector) argOIs[1];
+
+        processOptions(argOIs);
+
+        ObjectInspector featureOutputOI = featureInputOI;
+        if(parseX && feature_hashing) {
+            featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        }
+
+        if(bias != 0.f) {
+            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
+                    : new Text(BIAS_CLAUSE);
+        } else {
+            this.biasKey = null;
+        }
+
+        this.weights = new OpenHashMap<Object, WeightValue>(16384);
+        if(preloadedModelFile != null) {
+            loadPredictionModel(weights, preloadedModelFile, featureInputOI);
+        }
+
+        return getReturnOI(featureOutputOI);
+    }
+
+    protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
+            throws UDFArgumentException {
+        this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
         if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
@@ -78,21 +102,10 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
                     + keyTypeName);
         }
         this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
-        this.labelOI = (IntObjectInspector) argOIs[1];
+        return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
+    }
 
-        processOptions(argOIs);
-
-        if(parseX && feature_hashing) {
-            featureRawOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        }
-
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureRawOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
+    protected StructObjectInspector getReturnOI(ObjectInspector featureRawOI) {
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
@@ -101,43 +114,12 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-
-        this.weights = new OpenHashMap<Object, WeightValue>(16384);
-
-        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
-    }
-
-    @Override
-    protected Options getOptions() {
-        Options opts = new Options();
-        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
-        return opts;
-    }
-
-    @Override
-    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        boolean fhashFlag = false;
-        float bias = 0.f;
-
-        CommandLine cl = null;
-        if(argOIs.length >= 3) {
-            String rawArgs = HiveUtils.getConstString(argOIs[2]);
-            cl = parseOptions(rawArgs);
-
-            if(cl.hasOption("fh")) {
-                fhashFlag = true;
-            }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                bias = Float.parseFloat(biasStr);
-            }
+        if(returnCovariance()) {
+            fieldNames.add("covar");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
 
-        this.feature_hashing = fhashFlag;
-        this.bias = bias;
-        return cl;
+        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
     @Override
@@ -317,15 +299,30 @@ public abstract class BinaryOnlineClassifierUDTF extends UDTFWithOptions {
     @Override
     public void close() throws HiveException {
         if(weights != null) {
-            final Object[] forwardMapObj = new Object[2];
-            IMapIterator<Object, WeightValue> itor = weights.entries();
-            while(itor.next() != -1) {
-                Object k = itor.unsafeGetAndFreeKey();
-                WeightValue v = itor.unsafeGetAndFreeValue();
-                FloatWritable fv = new FloatWritable(v.getValue());
-                forwardMapObj[0] = k;
-                forwardMapObj[1] = fv;
-                forward(forwardMapObj);
+            if(returnCovariance()) {
+                final Object[] forwardMapObj = new Object[3];
+                IMapIterator<Object, WeightValue> itor = weights.entries();
+                while(itor.next() != -1) {
+                    Object k = itor.unsafeGetAndFreeKey();
+                    WeightValueWithCovar v = (WeightValueWithCovar) itor.unsafeGetAndFreeValue();
+                    FloatWritable fv = new FloatWritable(v.get());
+                    FloatWritable cov = new FloatWritable(v.getCovariance());
+                    forwardMapObj[0] = k;
+                    forwardMapObj[1] = fv;
+                    forwardMapObj[2] = cov;
+                    forward(forwardMapObj);
+                }
+            } else {
+                final Object[] forwardMapObj = new Object[2];
+                IMapIterator<Object, WeightValue> itor = weights.entries();
+                while(itor.next() != -1) {
+                    Object k = itor.unsafeGetAndFreeKey();
+                    WeightValue v = itor.unsafeGetAndFreeValue();
+                    FloatWritable fv = new FloatWritable(v.get());
+                    forwardMapObj[0] = k;
+                    forwardMapObj[1] = fv;
+                    forward(forwardMapObj);
+                }
             }
             this.weights = null;
         }

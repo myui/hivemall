@@ -63,6 +63,11 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
     }
 
     @Override
+    protected boolean returnCovariance() {
+        return true;
+    }
+
+    @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("phi", "confidence", true, "Confidence parameter [default 0.5]");
