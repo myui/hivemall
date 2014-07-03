@@ -40,6 +40,11 @@ public class WeightValue {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public String toString() {
+        return "WeightValue [value=" + value + "]";
+    }
+
     public static final class WeightValueWithCovar extends WeightValue {
 
         final float covariance;
@@ -51,6 +56,11 @@ public class WeightValue {
 
         public float getCovariance() {
             return covariance;
+        }
+
+        @Override
+        public String toString() {
+            return "WeightValueWithCovar [value=" + value + ", covariance=" + covariance + "]";
         }
     }
 
