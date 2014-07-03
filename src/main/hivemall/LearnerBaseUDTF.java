@@ -34,6 +34,8 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
@@ -46,6 +48,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObje
 import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
+
+    private static final Log logger = LogFactory.getLog("Hivemall");
 
     protected boolean feature_hashing;
     protected float bias;
@@ -115,6 +119,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
+        if(!map.isEmpty()) {
+            logger.info("Loaded " + map.size() + " features from distributed cache: " + filename);
+        }
     }
 
     private static void loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
@@ -156,7 +163,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
     }
 
-    private static void loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI, WritableFloatObjectInspector covarOI)
+    private static void loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
         if(!file.exists()) {
             return;
@@ -164,10 +171,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(map, f, keyOI, valueOI, covarOI);
+                    loadPredictionModel(map, f, featureOI, weightOI, covarOI);
                 }
             } else {
-                LazySimpleSerDe serde = HiveUtils.getLineSerde(keyOI, valueOI, covarOI);
+                LazySimpleSerDe serde = HiveUtils.getLineSerde(featureOI, weightOI, covarOI);
                 StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
                 StructField c1ref = lineOI.getStructFieldRef("c1");
                 StructField c2ref = lineOI.getStructFieldRef("c2");
