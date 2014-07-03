@@ -202,12 +202,13 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         Object f0 = fields.get(0);
                         Object f1 = fields.get(1);
                         Object f2 = fields.get(2);
-                        if(f0 == null || f1 == null || f2 == null) {
+                        if(f0 == null || f1 == null) {
                             continue; // avoid unexpected case
                         }
                         Object k = c1oi.getPrimitiveWritableObject(c1oi.copyObject(f0));
                         float v = c2oi.get(f1);
-                        float cov = c3oi.get(f2);
+                        float cov = (f2 == null) ? WeightValueWithCovar.DEFAULT_COVAR
+                                : c3oi.get(f2);
                         map.put(k, new WeightValueWithCovar(v, cov));
                     }
                 } finally {
