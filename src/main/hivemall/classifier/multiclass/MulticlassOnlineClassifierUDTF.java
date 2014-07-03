@@ -45,6 +45,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -64,6 +66,8 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
 public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
+
+    private static final Log logger = LogFactory.getLog(MulticlassOnlineClassifierUDTF.class);
 
     protected ListObjectInspector featureListOI;
     protected boolean parseX;
@@ -471,28 +475,42 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     protected void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
+        final long lines;
         try {
             if(returnCovariance()) {
-                loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
+                lines = loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
+        if(!label2FeatureWeight.isEmpty()) {
+            long totalFeatures = 0L;
+            StringBuilder statsBuf = new StringBuilder(256);
+            for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> e : label2FeatureWeight.entrySet()) {
+                Object label = e.getKey();
+                int numFeatures = e.getValue().size();
+                statsBuf.append('\n').append("Label: ").append(label).append(", Number of Features: ").append(numFeatures);
+                totalFeatures += numFeatures;
+            }
+            logger.info("Loaded total " + totalFeatures + " features from distributed cache: "
+                    + filename + " (" + lines + " lines)" + statsBuf);
+        }
     }
 
-    private static void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
+    private static long loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
             throws IOException, SerDeException {
+        long count = 0L;
         if(!file.exists()) {
-            return;
+            return count;
         }
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI);
+                    count += loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI);
@@ -500,11 +518,15 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 StructField c1ref = lineOI.getStructFieldRef("c1");
                 StructField c2ref = lineOI.getStructFieldRef("c2");
                 StructField c3ref = lineOI.getStructFieldRef("c3");
+                PrimitiveObjectInspector c1refOI = (PrimitiveObjectInspector) c1ref.getFieldObjectInspector();
+                PrimitiveObjectInspector c2refOI = (PrimitiveObjectInspector) c2ref.getFieldObjectInspector();
+                FloatObjectInspector c3refOI = (FloatObjectInspector) c3ref.getFieldObjectInspector();
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
                     String line;
                     while((line = reader.readLine()) != null) {
+                        count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
@@ -514,14 +536,14 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         if(f0 == null || f1 == null || f2 == null) {
                             continue; // avoid the case that key or value is null
                         }
-                        Object label = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
                         OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
                         if(map == null) {
                             map = new OpenHashMap<Object, WeightValue>(8192);
                             label2FeatureWeight.put(label, map);
                         }
-                        Object k = ((PrimitiveObjectInspector) c2ref.getFieldObjectInspector()).getPrimitiveWritableObject(f1);
-                        float v = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
+                        Object k = c2refOI.getPrimitiveWritableObject(c2refOI.copyObject(f1));
+                        float v = c3refOI.get(f2);
                         map.put(k, new WeightValue(v));
                     }
                 } finally {
@@ -529,17 +551,19 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 }
             }
         }
+        return count;
     }
 
-    private static void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+    private static long loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
+        long count = 0L;
         if(!file.exists()) {
-            return;
+            return count;
         }
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI, covarOI);
+                    count += loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI, covarOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI, covarOI);
@@ -548,11 +572,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 StructField c2ref = lineOI.getStructFieldRef("c2");
                 StructField c3ref = lineOI.getStructFieldRef("c3");
                 StructField c4ref = lineOI.getStructFieldRef("c4");
+                PrimitiveObjectInspector c1refOI = (PrimitiveObjectInspector) c1ref.getFieldObjectInspector();
+                PrimitiveObjectInspector c2refOI = (PrimitiveObjectInspector) c2ref.getFieldObjectInspector();
+                FloatObjectInspector c3refOI = (FloatObjectInspector) c3ref.getFieldObjectInspector();
+                FloatObjectInspector c4refOI = (FloatObjectInspector) c4ref.getFieldObjectInspector();
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
                     String line;
                     while((line = reader.readLine()) != null) {
+                        count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
@@ -560,18 +589,19 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         Object f1 = fields.get(1);
                         Object f2 = fields.get(2);
                         Object f3 = fields.get(3);
-                        if(f0 == null || f1 == null || f2 == null || f3 == null) {
+                        if(f0 == null || f1 == null || f2 == null) {
                             continue; // avoid unexpected case
                         }
-                        Object label = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
+                        Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
                         OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
                         if(map == null) {
                             map = new OpenHashMap<Object, WeightValue>(8192);
                             label2FeatureWeight.put(label, map);
                         }
-                        Object k = ((PrimitiveObjectInspector) c2ref.getFieldObjectInspector()).getPrimitiveWritableObject(f1);
-                        float v = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
-                        float cov = ((FloatObjectInspector) c4ref.getFieldObjectInspector()).get(f3);
+                        Object k = c2refOI.getPrimitiveWritableObject(c2refOI.copyObject(f1));
+                        float v = c3refOI.get(f2);
+                        float cov = (f3 == null) ? WeightValueWithCovar.DEFAULT_COVAR
+                                : c4refOI.get(f3);
                         map.put(k, new WeightValueWithCovar(v, cov));
                     }
                 } finally {
@@ -579,5 +609,6 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 }
             }
         }
+        return count;
     }
 }
