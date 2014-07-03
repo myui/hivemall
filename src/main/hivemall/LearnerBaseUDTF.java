@@ -108,11 +108,12 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     }
 
     protected void loadPredictionModel(OpenHashMap<Object, WeightValue> map, String filename, PrimitiveObjectInspector keyOI) {
+        final long lines;
         try {
             if(returnCovariance()) {
-                loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
+                lines = loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
@@ -120,19 +121,21 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
         if(!map.isEmpty()) {
-            logger.info("Loaded " + map.size() + " features from distributed cache: " + filename);
+            logger.info("Loaded " + map.size() + " features from distributed cache: " + filename
+                    + " (" + lines + " lines)");
         }
     }
 
-    private static void loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
+    private static long loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
             throws IOException, SerDeException {
+        long count = 0L;
         if(!file.exists()) {
-            return;
+            return count;
         }
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(map, f, keyOI, valueOI);
+                    count += loadPredictionModel(map, f, keyOI, valueOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getKeyValueLineSerde(keyOI, valueOI);
@@ -146,6 +149,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 try {
                     String line;
                     while((line = reader.readLine()) != null) {
+                        count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
@@ -163,17 +167,19 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 }
             }
         }
+        return count;
     }
 
-    private static void loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+    private static long loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
+        long count = 0L;
         if(!file.exists()) {
-            return;
+            return count;
         }
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    loadPredictionModel(map, f, featureOI, weightOI, covarOI);
+                    count += loadPredictionModel(map, f, featureOI, weightOI, covarOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(featureOI, weightOI, covarOI);
@@ -189,6 +195,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 try {
                     String line;
                     while((line = reader.readLine()) != null) {
+                        count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
@@ -208,5 +215,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 }
             }
         }
+        return count;
     }
 }
