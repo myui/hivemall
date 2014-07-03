@@ -49,7 +49,7 @@ import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
-    private static final Log logger = LogFactory.getLog("Hivemall");
+    private static final Log logger = LogFactory.getLog(LearnerBaseUDTF.class);
 
     protected boolean feature_hashing;
     protected float bias;
@@ -139,6 +139,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
                 StructField keyRef = lineOI.getStructFieldRef("key");
                 StructField valueRef = lineOI.getStructFieldRef("value");
+                PrimitiveObjectInspector keyRefOI = (PrimitiveObjectInspector) keyRef.getFieldObjectInspector();
+                FloatObjectInspector varRefOI = (FloatObjectInspector) valueRef.getFieldObjectInspector();
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
@@ -152,8 +154,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         if(f0 == null || f1 == null) {
                             continue; // avoid the case that key or value is null
                         }
-                        Object k = ((PrimitiveObjectInspector) keyRef.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
-                        float v = ((FloatObjectInspector) valueRef.getFieldObjectInspector()).get(f1);
+                        Object k = keyRefOI.getPrimitiveWritableObject(keyRefOI.copyObject(f0));
+                        float v = varRefOI.get(f1);
                         map.put(k, new WeightValue(v));
                     }
                 } finally {
@@ -179,6 +181,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 StructField c1ref = lineOI.getStructFieldRef("c1");
                 StructField c2ref = lineOI.getStructFieldRef("c2");
                 StructField c3ref = lineOI.getStructFieldRef("c3");
+                PrimitiveObjectInspector c1oi = (PrimitiveObjectInspector) c1ref.getFieldObjectInspector();
+                FloatObjectInspector c2oi = (FloatObjectInspector) c2ref.getFieldObjectInspector();
+                FloatObjectInspector c3oi = (FloatObjectInspector) c3ref.getFieldObjectInspector();
 
                 final BufferedReader reader = HadoopUtils.getBufferedReader(file);
                 try {
@@ -193,9 +198,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         if(f0 == null || f1 == null || f2 == null) {
                             continue; // avoid unexpected case
                         }
-                        Object k = ((PrimitiveObjectInspector) c1ref.getFieldObjectInspector()).getPrimitiveWritableObject(f0);
-                        float v = ((FloatObjectInspector) c2ref.getFieldObjectInspector()).get(f1);
-                        float cov = ((FloatObjectInspector) c3ref.getFieldObjectInspector()).get(f2);
+                        Object k = c1oi.getPrimitiveWritableObject(c1oi.copyObject(f0));
+                        float v = c2oi.get(f1);
+                        float cov = c3oi.get(f2);
                         map.put(k, new WeightValueWithCovar(v, cov));
                     }
                 } finally {
