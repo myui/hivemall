@@ -24,6 +24,7 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+import hivemall.common.FeatureValue;
 import hivemall.common.WeightValue;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -88,8 +89,16 @@ public class LogressIterUDTF extends LogressUDTF {
             if(v == 0.f) {
                 continue; // could be skipped
             }
+
+            final Object feature;
             Object k = e.getKey();
-            Object feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(k, feature_hashing);
+                feature = fv.getFeature();
+            } else {
+                feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
+            }
+
             if(!weights.containsKey(feature)) {
                 weights.put(feature, new WeightValue(v));
             }
