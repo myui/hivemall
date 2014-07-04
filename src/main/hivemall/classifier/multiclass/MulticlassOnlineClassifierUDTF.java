@@ -76,6 +76,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     protected Object biasKey;
 
     protected Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight;
+    protected int count;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -110,6 +111,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             loadPredictionModel(label2FeatureWeight, preloadedModelFile, labelInputOI, featureInputOI);
         }
 
+        this.count = 0;
         return getReturnOI(labelInputOI, featureOutputOI);
     }
 
@@ -158,6 +160,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentException("label value must not be NULL");
         }
 
+        count++;
         train(features, label);
     }
 
@@ -436,6 +439,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void close() throws HiveException {
         if(label2FeatureWeight != null) {
+            long numForwarded = 0L;
             if(returnCovariance()) {
                 final Object[] forwardMapObj = new Object[4];
                 for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
@@ -446,12 +450,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     while(fvmapItor.next() != -1) {
                         Object k = fvmapItor.unsafeGetAndFreeKey();
                         WeightValueWithCovar v = (WeightValueWithCovar) fvmapItor.unsafeGetAndFreeValue();
+                        if(skipUntouched && !v.isTouched()) {
+                            continue; // skip outputting untouched weights
+                        }
                         FloatWritable fv = new FloatWritable(v.getValue());
                         FloatWritable cov = new FloatWritable(v.getCovariance());
                         forwardMapObj[1] = k;
                         forwardMapObj[2] = fv;
                         forwardMapObj[3] = cov;
                         forward(forwardMapObj);
+                        numForwarded++;
                     }
                 }
             } else {
@@ -464,14 +472,21 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     while(fvmapItor.next() != -1) {
                         Object k = fvmapItor.unsafeGetAndFreeKey();
                         WeightValue v = fvmapItor.unsafeGetAndFreeValue();
+                        if(skipUntouched && !v.isTouched()) {
+                            continue; // skip outputting untouched weights
+                        }
                         FloatWritable fv = new FloatWritable(v.getValue());
                         forwardMapObj[1] = k;
                         forwardMapObj[2] = fv;
                         forward(forwardMapObj);
+                        numForwarded++;
                     }
                 }
             }
             this.label2FeatureWeight = null;
+            logger.info("Trained a prediction model using " + count
+                    + " training examples. Forwarded the prediction model of " + numForwarded
+                    + " rows");
         }
     }
 
@@ -546,7 +561,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         }
                         Object k = c2refOI.getPrimitiveWritableObject(c2refOI.copyObject(f1));
                         float v = c3refOI.get(f2);
-                        map.put(k, new WeightValue(v));
+                        map.put(k, new WeightValue(v, false));
                     }
                 } finally {
                     reader.close();
@@ -604,7 +619,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         float v = c3refOI.get(f2);
                         float cov = (f3 == null) ? WeightValueWithCovar.DEFAULT_COVAR
                                 : c4refOI.get(f3);
-                        map.put(k, new WeightValueWithCovar(v, cov));
+                        map.put(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
                     reader.close();

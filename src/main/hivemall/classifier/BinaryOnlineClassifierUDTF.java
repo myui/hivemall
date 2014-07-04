@@ -37,6 +37,8 @@ import hivemall.utils.hadoop.HiveUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -53,12 +55,15 @@ import org.apache.hadoop.io.Text;
 
 public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
+    private static final Log logger = LogFactory.getLog(BinaryOnlineClassifierUDTF.class);
+
     protected ListObjectInspector featureListOI;
     protected IntObjectInspector labelOI;
     protected boolean parseX;
     protected Object biasKey;
 
     protected OpenHashMap<Object, WeightValue> weights;
+    protected int count;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -88,6 +93,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             loadPredictionModel(weights, preloadedModelFile, featureInputOI);
         }
 
+        this.count = 0;
         return getReturnOI(featureOutputOI);
     }
 
@@ -125,9 +131,13 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
+        if(features.isEmpty()) {
+            return;
+        }
         int label = (int) labelOI.get(args[1]);
         checkLabelValue(label);
 
+        count++;
         train(features, label);
     }
 
@@ -299,18 +309,23 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void close() throws HiveException {
         if(weights != null) {
+            int numForwarded = 0;
             if(returnCovariance()) {
                 final Object[] forwardMapObj = new Object[3];
                 IMapIterator<Object, WeightValue> itor = weights.entries();
                 while(itor.next() != -1) {
                     Object k = itor.unsafeGetAndFreeKey();
                     WeightValueWithCovar v = (WeightValueWithCovar) itor.unsafeGetAndFreeValue();
+                    if(skipUntouched && !v.isTouched()) {
+                        continue; // skip outputting untouched weights
+                    }
                     FloatWritable fv = new FloatWritable(v.get());
                     FloatWritable cov = new FloatWritable(v.getCovariance());
                     forwardMapObj[0] = k;
                     forwardMapObj[1] = fv;
                     forwardMapObj[2] = cov;
                     forward(forwardMapObj);
+                    numForwarded++;
                 }
             } else {
                 final Object[] forwardMapObj = new Object[2];
@@ -318,13 +333,20 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                 while(itor.next() != -1) {
                     Object k = itor.unsafeGetAndFreeKey();
                     WeightValue v = itor.unsafeGetAndFreeValue();
+                    if(skipUntouched && !v.isTouched()) {
+                        continue; // skip outputting untouched weights
+                    }
                     FloatWritable fv = new FloatWritable(v.get());
                     forwardMapObj[0] = k;
                     forwardMapObj[1] = fv;
                     forward(forwardMapObj);
+                    numForwarded++;
                 }
             }
             this.weights = null;
+            logger.info("Trained a prediction model using " + count
+                    + " training examples. Forwarded the prediction model of " + numForwarded
+                    + " rows");
         }
     }
 
