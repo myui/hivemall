@@ -34,6 +34,7 @@ import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -475,6 +476,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     protected void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
+        final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
             if(returnCovariance()) {
@@ -496,8 +498,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 statsBuf.append('\n').append("Label: ").append(label).append(", Number of Features: ").append(numFeatures);
                 totalFeatures += numFeatures;
             }
-            logger.info("Loaded total " + totalFeatures + " features from distributed cache: "
-                    + filename + " (" + lines + " lines)" + statsBuf);
+            logger.info("Loaded total " + totalFeatures + " features from distributed cache '"
+                    + filename + "' (" + lines + " lines) in " + elapsed + statsBuf);
         }
     }
 
