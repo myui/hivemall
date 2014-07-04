@@ -176,6 +176,9 @@ create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
 drop temporary function extract_feature;
 create temporary function extract_feature as 'hivemall.ftvec.ExtractFeatureUDF';
 
+drop temporary function extract_weight;
+create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
+
 --------------------------
 -- Regression functions --
 --------------------------

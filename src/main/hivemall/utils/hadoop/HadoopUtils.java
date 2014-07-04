@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
@@ -58,12 +59,31 @@ public final class HadoopUtils {
             return new BufferedReader(new FileReader(file));
         } else {
             Decompressor decompressor = CodecPool.getDecompressor(codec);
-
             FileInputStream fis = new FileInputStream(file);
             CompressionInputStream cis = codec.createInputStream(fis, decompressor);
-            BufferedReader br = new BufferedReader(new InputStreamReader(cis));
+            BufferedReader br = new BufferedReaderExt(new InputStreamReader(cis), decompressor);
             return br;
         }
+    }
+
+    private static class BufferedReaderExt extends BufferedReader {
+
+        private Decompressor decompressor;
+
+        BufferedReaderExt(Reader in, Decompressor decompressor) {
+            super(in);
+            this.decompressor = decompressor;
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            if(decompressor != null) {
+                CodecPool.returnDecompressor(decompressor);
+                this.decompressor = null;
+            }
+        }
+
     }
 
 }

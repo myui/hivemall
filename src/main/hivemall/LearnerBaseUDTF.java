@@ -55,6 +55,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected boolean feature_hashing;
     protected float bias;
     protected String preloadedModelFile;
+    protected boolean skipUntouched;
 
     public LearnerBaseUDTF() {}
 
@@ -76,6 +77,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
+        opts.addOption("outputs_touched", false, "Outputs weights touched in training");
         return opts;
     }
 
@@ -84,6 +86,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean fhashFlag = false;
         float biasValue = 0.f;
         String modelfile = null;
+        boolean outputs_touched = false;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -100,11 +103,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             }
 
             modelfile = cl.getOptionValue("loadmodel");
+
+            outputs_touched = cl.hasOption("outputs_touched");
         }
 
         this.feature_hashing = fhashFlag;
         this.bias = biasValue;
         this.preloadedModelFile = modelfile;
+        this.skipUntouched = outputs_touched;
         return cl;
     }
 
@@ -162,7 +168,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         }
                         Object k = keyRefOI.getPrimitiveWritableObject(keyRefOI.copyObject(f0));
                         float v = varRefOI.get(f1);
-                        map.put(k, new WeightValue(v));
+                        map.put(k, new WeightValue(v, false));
                     }
                 } finally {
                     reader.close();
@@ -211,7 +217,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         float v = c2oi.get(f1);
                         float cov = (f2 == null) ? WeightValueWithCovar.DEFAULT_COVAR
                                 : c3oi.get(f2);
-                        map.put(k, new WeightValueWithCovar(v, cov));
+                        map.put(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
                     reader.close();

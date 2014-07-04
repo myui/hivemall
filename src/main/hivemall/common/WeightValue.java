@@ -24,8 +24,16 @@ public class WeightValue {
 
     protected final float value;
 
+    /** Is touched in training */
+    protected final boolean touched;
+
     public WeightValue(float weight) {
+        this(weight, true);
+    }
+
+    public WeightValue(float weight, boolean touched) {
         this.value = weight;
+        this.touched = touched;
     }
 
     public float get() {
@@ -40,6 +48,13 @@ public class WeightValue {
         throw new UnsupportedOperationException();
     }
 
+    /** 
+     * @return whether touched in training or not
+     */
+    public boolean isTouched() {
+        return touched;
+    }
+
     @Override
     public String toString() {
         return "WeightValue [value=" + value + "]";
@@ -47,11 +62,15 @@ public class WeightValue {
 
     public static final class WeightValueWithCovar extends WeightValue {
         public static float DEFAULT_COVAR = 1.f;
-        
+
         final float covariance;
 
         public WeightValueWithCovar(float weight, float covariance) {
-            super(weight);
+            this(weight, covariance, true);
+        }
+
+        public WeightValueWithCovar(float weight, float covariance, boolean touched) {
+            super(weight, touched);
             this.covariance = covariance;
         }
 
