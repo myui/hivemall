@@ -24,6 +24,7 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+import hivemall.common.FeatureValue;
 import hivemall.common.WeightValue;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -40,7 +41,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.FloatWritable;
 
-@Deprecated
 public class LogressIterUDTF extends LogressUDTF {
 
     private MapObjectInspector featuresWithWeightOI;
@@ -63,6 +63,7 @@ public class LogressIterUDTF extends LogressUDTF {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
+        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
         ObjectInspector weightOI = featuresWithWeightOI.getMapValueObjectInspector();
         if(!FLOAT_TYPE_NAME.equals(weightOI.getTypeName())) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of value type Float: "
@@ -84,10 +85,21 @@ public class LogressIterUDTF extends LogressUDTF {
             if(weight == null) {
                 continue;
             }
+            float v = weight.get();
+            if(v == 0.f) {
+                continue; // could be skipped
+            }
+
+            final Object feature;
             Object k = e.getKey();
-            Object feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
+            if(parseX) {
+                FeatureValue fv = FeatureValue.parse(k, feature_hashing);
+                feature = fv.getFeature();
+            } else {
+                feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
+            }
+
             if(!weights.containsKey(feature)) {
-                float v = weight.get();
                 weights.put(feature, new WeightValue(v));
             }
         }

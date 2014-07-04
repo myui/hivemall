@@ -20,6 +20,9 @@
  */
 package hivemall.utils.hadoop;
 
+import static hivemall.HivemallConstants.BOOLEAN_TYPE_NAME;
+import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -33,6 +36,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantBooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
@@ -93,6 +97,20 @@ public final class HiveUtils {
         return stringOI.getWritableConstantValue().toString();
     }
 
+    public static boolean getConstBoolean(ObjectInspector oi) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        String typeName = oi.getTypeName();
+        if(!BOOLEAN_TYPE_NAME.equals(typeName)) {
+            throw new UDFArgumentException("argument must be a boolean value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        WritableConstantBooleanObjectInspector booleanOI = (WritableConstantBooleanObjectInspector) oi;
+        return booleanOI.getWritableConstantValue().get();
+    }
+
     public static Object getConstValue(ObjectInspector oi) throws UDFArgumentException {
         if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
             throw new UDFArgumentException("argument must be a constant value: "
@@ -108,6 +126,11 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         return (PrimitiveObjectInspector) oi;
+    }
+
+    public static boolean isStringOI(ObjectInspector oi) {
+        String typeName = oi.getTypeName();
+        return STRING_TYPE_NAME.equals(typeName);
     }
 
     public static LazySimpleSerDe getKeyValueLineSerde(PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI)

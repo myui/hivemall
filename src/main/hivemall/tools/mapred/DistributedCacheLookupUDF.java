@@ -1,5 +1,6 @@
 package hivemall.tools.mapred;
 
+import hivemall.ftvec.ExtractFeatureUDF;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -30,12 +31,13 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "distcache_gets", value = "_FUNC_(filepath, key, default_value) - Returns map<key_type, value_type>|value_type")
+@Description(name = "distcache_gets", value = "_FUNC_(filepath, key, default_value [, parseKey]) - Returns map<key_type, value_type>|value_type")
 @UDFType(deterministic = false)
 public final class DistributedCacheLookupUDF extends GenericUDF {
 
     private boolean multipleKeyLookup;
     private boolean multipleDefaultValues;
+    private boolean parseKey;
     private Object defaultValue;
 
     private PrimitiveObjectInspector keyInputOI;
@@ -47,13 +49,18 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 3) {
-            throw new UDFArgumentException("Invalid number of arguments for distcache_gets(FILEPATH, KEYS, DEFAULT_VAL): "
+        if(argOIs.length != 3 && argOIs.length != 4) {
+            throw new UDFArgumentException("Invalid number of arguments for distcache_gets(FILEPATH, KEYS, DEFAULT_VAL, PARSE_KEY): "
                     + argOIs.length + getUsage());
         }
         if(!ObjectInspectorUtils.isConstantObjectInspector(argOIs[2])) {
             throw new UDFArgumentException("Third argument DEFAULT_VALUE must be a constant value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(argOIs[2]));
+        }
+        if(argOIs.length == 4) {
+            this.parseKey = HiveUtils.getConstBoolean(argOIs[3]);
+        } else {
+            this.parseKey = false;
         }
 
         String filepath = HiveUtils.getConstString(argOIs[0]);
@@ -86,6 +93,10 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 break;
             default:
                 throw new UDFArgumentException("Unexpected key type: " + argOIs[1].getTypeName());
+        }
+
+        if(parseKey && !HiveUtils.isStringOI(keyInputOI)) {
+            throw new UDFArgumentException("parseKey=true is only available for string typed key(s)");
         }
 
         final OpenHashMap<Object, Object> map = new OpenHashMap<Object, Object>(8192);
@@ -156,7 +167,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
 
     private Object get(Object arg) {
         Object key = keyInputOI.getPrimitiveJavaObject(arg);
-        Object value = cache.get(key);
+        Object value = cache.get(lookupKey(key));
         return (value == null) ? defaultValue : value;
     }
 
@@ -169,7 +180,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 continue;
             }
             Object kj = keyInputOI.getPrimitiveJavaObject(k);
-            final Object v = cache.get(kj);
+            final Object v = cache.get(lookupKey(kj));
             if(v == null) {
                 map.put(k, defaultValue);
             } else {
@@ -195,7 +206,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 continue;
             }
             Object kj = keyInputOI.getPrimitiveJavaObject(k);
-            Object v = cache.get(kj);
+            Object v = cache.get(lookupKey(kj));
             if(v == null) {
                 v = defaultValues.get(i);
                 if(v != null) {
@@ -207,6 +218,15 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         return map;
     }
 
+    private Object lookupKey(final Object key) {
+        if(parseKey) {
+            String keyStr = key.toString();
+            return ExtractFeatureUDF.extractFeature(keyStr);
+        } else {
+            return key;
+        }
+    }
+
     @Override
     public String getDisplayString(String[] args) {
         return "distcache_gets()";
@@ -214,9 +234,9 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
 
     private static String getUsage() {
         return "\nUSAGE: "
-                + "\n\tdistcache_gets(const string FILEPATH, object[] keys, const object defaultValue)::map<key_type, value_type>"
-                + "\n\tdistcache_gets(const string FILEPATH, object key, const object defaultValue)::value_type"
-                + "\n\tdistcache_gets(const string FILEPATH, object[] key, object[] defaultValues)::map<key_type, value_type>";
+                + "\n\tdistcache_gets(const string FILEPATH, object[] keys, const object defaultValue [, const boolean parseKey])::map<key_type, value_type>"
+                + "\n\tdistcache_gets(const string FILEPATH, object key, const object defaultValue [, const boolean parseKey])::value_type"
+                + "\n\tdistcache_gets(const string FILEPATH, object[] key, object[] defaultValues [, const boolean parseKey])::map<key_type, value_type>";
     }
 
 }

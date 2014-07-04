@@ -38,13 +38,7 @@ public class ExtractFeatureUDF extends UDF {
         if(featureVector == null) {
             return null;
         }
-        int pos = featureVector.indexOf(":");
-        if(pos > 0) {
-            String f = featureVector.substring(0, pos);
-            return val(f);
-        } else {
-            return val(featureVector);
-        }
+        return val(extractFeature(featureVector));
     }
 
     public List<Text> evaluate(List<String> featureVectors) {
@@ -55,15 +49,20 @@ public class ExtractFeatureUDF extends UDF {
         final Text[] output = new Text[size];
         for(int i = 0; i < size; i++) {
             String fv = featureVectors.get(i);
-            int pos = fv.indexOf(':');
-            if(pos > 0) {
-                String f = fv.substring(0, pos);
-                output[i] = new Text(f);
-            } else {
-                output[i] = new Text(fv);
+            if(fv != null) {
+                output[i] = new Text(extractFeature(fv));
             }
         }
         return Arrays.asList(output);
+    }
+
+    public static String extractFeature(final String ftvec) {
+        int pos = ftvec.indexOf(":");
+        if(pos > 0) {
+            return ftvec.substring(0, pos);
+        } else {
+            return ftvec;
+        }
     }
 
 }
