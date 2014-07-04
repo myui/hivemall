@@ -24,6 +24,7 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -108,6 +109,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     }
 
     protected void loadPredictionModel(OpenHashMap<Object, WeightValue> map, String filename, PrimitiveObjectInspector keyOI) {
+        final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
             if(returnCovariance()) {
@@ -121,8 +123,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
         if(!map.isEmpty()) {
-            logger.info("Loaded " + map.size() + " features from distributed cache: " + filename
-                    + " (" + lines + " lines)");
+            logger.info("Loaded " + map.size() + " features from distributed cache '" + filename
+                    + "' (" + lines + " lines) in " + elapsed);
         }
     }
 
