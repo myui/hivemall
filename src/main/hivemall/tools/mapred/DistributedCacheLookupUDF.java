@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Text;
 
 @Description(name = "distcache_gets", value = "_FUNC_(filepath, key, default_value [, parseKey]) - Returns map<key_type, value_type>|value_type")
-@UDFType(deterministic = false)
+@UDFType(deterministic = false, stateful = false)
 public final class DistributedCacheLookupUDF extends GenericUDF {
 
     private boolean multipleKeyLookup;

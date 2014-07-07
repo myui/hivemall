@@ -26,8 +26,10 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
+@UDFType(deterministic = true, stateful = false)
 public final class PopcountUDF extends UDF {
 
     public IntWritable evaluate(long a) {

@@ -25,8 +25,10 @@ import static hivemall.utils.hadoop.WritableUtils.val;
 import java.math.BigInteger;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@UDFType(deterministic = true, stateful = false)
 public final class JaccardIndexUDF extends UDF {
 
     public FloatWritable evaluate(long a, long b) {
