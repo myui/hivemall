@@ -21,6 +21,7 @@
 package hivemall.tools.mapred;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
+import hivemall.utils.hadoop.HadoopUtils;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
@@ -41,7 +42,7 @@ public class RowIdUDF extends UDF {
 
     public Text evaluate() {
         if(taskId == -1) {
-            this.taskId = TaskIdUDF.getTaskId() + 1;
+            this.taskId = HadoopUtils.getTaskId() + 1;
         }
         sequence++;
         String rowid = taskId + "-" + sequence;
