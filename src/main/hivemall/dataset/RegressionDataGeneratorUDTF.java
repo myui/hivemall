@@ -1,6 +1,7 @@
 package hivemall.dataset;
 
 import hivemall.UDTFWithOptions;
+import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Primitives;
 
@@ -38,7 +39,7 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
     private boolean dense;
     private boolean ordered;
 
-    private Random rnd1, rnd2;
+    private Random rnd1 = null, rnd2 = null;
 
     @Override
     protected Options getOptions() {
@@ -114,12 +115,19 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
             this.featuresArray = new String[N_BUFFERS][n_features];
         }
         this.position = 0;
-        this.rnd1 = new Random(r_seed);
-        this.rnd2 = new Random(r_seed + 1);
+        //this.rnd1 = new Random(r_seed);
+        //this.rnd2 = new Random(r_seed + 1);
     }
 
     @Override
     public void process(Object[] argOIs) throws HiveException {
+        if(rnd1 == null) {
+            assert (rnd2 == null);
+            int taskid = HadoopUtils.getTaskId();
+            int seed = r_seed + taskid;
+            this.rnd1 = new Random(seed);
+            this.rnd2 = new Random(seed + 1);
+        }
         for(int i = 0; i < n_examples; i++) {
             if(dense) {
                 generateDenseData();
