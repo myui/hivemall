@@ -21,8 +21,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-@Description(name = "regression_datagen", value = "_FUNC_(options string) - Generates a regression dataset")
-public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
+@Description(name = "lr_datagen", value = "_FUNC_(options string) - Generates a logistic regression dataset")
+public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private static final int N_BUFFERS = 1000;
 
@@ -39,7 +39,8 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
     private float prob_one;
     private int r_seed;
     private boolean dense;
-    private boolean ordered;
+    private boolean sort;
+    private boolean classification;
 
     private Random rnd1 = null, rnd2 = null;
 
@@ -54,7 +55,8 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
         opts.addOption("seed", true, "The seed value for random number generator [DEFAULT: 43]");
         opts.addOption("dense", false, "Make a dense dataset or not. If not specified, a sparse dataset is generated.\n"
                 + "For sparse, n_dims should be much larger than n_features. When disabled, n_features must be equals to n_dims ");
-        opts.addOption("ordered", false, "Sort features if specified (used only for sparse dataset)");
+        opts.addOption("sort", false, "Sort features if specified (used only for sparse dataset)");
+        opts.addOption("cl", "classification", false, "Toggle this option on to generate a classification dataset");
         return opts;
     }
 
@@ -73,7 +75,8 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
         this.prob_one = Primitives.parseFloat(cl.getOptionValue("prob_one"), 0.6f);
         this.r_seed = Primitives.parseInt(cl.getOptionValue("seed"), 43);
         this.dense = cl.hasOption("dense");
-        this.ordered = cl.hasOption("ordered");
+        this.sort = cl.hasOption("ordered");
+        this.classification = cl.hasOption("classification");
 
         if(n_features > n_dimensions) {
             throw new UDFArgumentException("n_features '" + n_features
@@ -144,11 +147,11 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private void generateSparseData() throws HiveException {
         float label = rnd1.nextFloat();
-        labels[position] = label;
+        float sign = (label >= prob_one) ? 1.f : 0.f;
+        labels[position] = classification ? sign : label;
         String[] features = featuresArray[position];
         assert (features != null);
         final BitSet used = new BitSet(n_dimensions);
-        float sign = (label >= prob_one) ? 1.f : 0.f;
         int searchClearBitsFrom = 0;
         for(int i = 0, retry = 0; i < n_features; i++) {
             int f = rnd2.nextInt(n_dimensions);
@@ -167,7 +170,7 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
             features[i] = y;
             retry = 0;
         }
-        if(ordered) {
+        if(sort) {
             Arrays.sort(features, new Comparator<String>() {
                 @Override
                 public int compare(String o1, String o2) {
@@ -181,10 +184,10 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private void generateDenseData() {
         float label = rnd1.nextFloat();
-        labels[position] = label;
+        float sign = (label >= prob_one) ? 1.f : 0.f;
+        labels[position] = classification ? sign : label;
         Float[] features = featuresFloatArray[position];
         assert (features != null);
-        float sign = (label >= prob_one) ? 1.f : 0.f;
         for(int i = 0; i < n_features; i++) {
             float w = (float) rnd2.nextGaussian() + (sign * eps);
             features[i] = Float.valueOf(w);

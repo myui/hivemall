@@ -314,6 +314,6 @@ create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 -- Dataset generator functions --
 ---------------------------------
 
-drop temporary function regression_datagen;
-create temporary function regression_datagen as 'hivemall.dataset.RegressionDataGeneratorUDTF';
+drop temporary function lr_datagen;
+create temporary function lr_datagen as 'hivemall.dataset.LogisticRegressionDataGeneratorUDTF';
 
