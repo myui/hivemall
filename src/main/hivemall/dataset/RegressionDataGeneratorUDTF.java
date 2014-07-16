@@ -48,7 +48,7 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("ne", "n_examples", true, "Number of training examples created for each task [DEFAULT: 1000]");
         opts.addOption("nf", "n_features", true, "Number of features contained for each example [DEFAULT: 10]");
-        opts.addOption("nd", "n_dims", true, "The size of feature dimensions [DEFAULT: 500]");
+        opts.addOption("nd", "n_dims", true, "The size of feature dimensions [DEFAULT: 200]");
         opts.addOption("eps", true, "eps Epsilon factor by which positive examples are scaled [DEFAULT: 3.0]");
         opts.addOption("p1", "prob_one", true, " Probability in [0, 1.0) that a label is 1 [DEFAULT: 0.6]");
         opts.addOption("seed", true, "The seed value for random number generator [DEFAULT: 43]");
@@ -68,7 +68,7 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
 
         this.n_examples = Primitives.parseInt(cl.getOptionValue("n_examples"), 1000);
         this.n_features = Primitives.parseInt(cl.getOptionValue("n_features"), 10);
-        this.n_dimensions = Primitives.parseInt(cl.getOptionValue("n_dims"), 500);
+        this.n_dimensions = Primitives.parseInt(cl.getOptionValue("n_dims"), 200);
         this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 3.f);
         this.prob_one = Primitives.parseFloat(cl.getOptionValue("prob_one"), 0.6f);
         this.r_seed = Primitives.parseInt(cl.getOptionValue("seed"), 43);
@@ -117,8 +117,6 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
             this.featuresArray = new String[N_BUFFERS][n_features];
         }
         this.position = 0;
-        //this.rnd1 = new Random(r_seed);
-        //this.rnd2 = new Random(r_seed + 1);
     }
 
     @Override
@@ -151,24 +149,23 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
         assert (features != null);
         final BitSet used = new BitSet(n_dimensions);
         float sign = (label >= prob_one) ? 1.f : 0.f;
+        int searchClearBitsFrom = 0;
         for(int i = 0, retry = 0; i < n_features; i++) {
             int f = rnd2.nextInt(n_dimensions);
             if(used.get(f)) {
-                if(retry >= 3) {
-                    throw new HiveException("Exceeded max retries. For sparse data generation, n_dims "
-                            + n_dimensions
-                            + " should be much larger than n_features "
-                            + n_features
-                            + ".");
+                if(retry < 3) {
+                    --i;
+                    ++retry;
+                    continue;
                 }
-                --i;
-                ++retry;
-                continue;
+                searchClearBitsFrom = used.nextClearBit(searchClearBitsFrom);
+                f = searchClearBitsFrom;
             }
             used.set(f);
             float w = (float) rnd2.nextGaussian() + (sign * eps);
             String y = f + ":" + w;
             features[i] = y;
+            retry = 0;
         }
         if(ordered) {
             Arrays.sort(features, new Comparator<String>() {
