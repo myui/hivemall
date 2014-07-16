@@ -7,6 +7,7 @@ import hivemall.utils.lang.Primitives;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.Random;
 
 import org.apache.commons.cli.CommandLine;
@@ -160,7 +161,14 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
             features[i] = y;
         }
         if(ordered) {
-            Arrays.sort(features);
+            Arrays.sort(features, new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    int i1 = Integer.parseInt(o1.split(":")[0]);
+                    int i2 = Integer.parseInt(o2.split(":")[0]);
+                    return Primitives.compare(i1, i2);
+                }
+            });
         }
     }
 
