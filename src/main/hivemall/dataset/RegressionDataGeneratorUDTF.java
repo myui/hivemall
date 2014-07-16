@@ -13,6 +13,7 @@ import java.util.Random;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -20,6 +21,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
+@Description(name = "regression_datagen", value = "_FUNC_(options string) - Generates a regression dataset")
 public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private static final int N_BUFFERS = 1000;
@@ -115,8 +117,6 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
             this.featuresArray = new String[N_BUFFERS][n_features];
         }
         this.position = 0;
-        //this.rnd1 = new Random(r_seed);
-        //this.rnd2 = new Random(r_seed + 1);
     }
 
     @Override
@@ -149,24 +149,23 @@ public final class RegressionDataGeneratorUDTF extends UDTFWithOptions {
         assert (features != null);
         final BitSet used = new BitSet(n_dimensions);
         float sign = (label >= prob_one) ? 1.f : 0.f;
+        int searchClearBitsFrom = 0;
         for(int i = 0, retry = 0; i < n_features; i++) {
             int f = rnd2.nextInt(n_dimensions);
             if(used.get(f)) {
-                if(retry >= 3) {
-                    throw new HiveException("Exceeded max retries. For sparse data generation, n_dims "
-                            + n_dimensions
-                            + " should be much larger than n_features "
-                            + n_features
-                            + ".");
+                if(retry < 3) {
+                    --i;
+                    ++retry;
+                    continue;
                 }
-                --i;
-                ++retry;
-                continue;
+                searchClearBitsFrom = used.nextClearBit(searchClearBitsFrom);
+                f = searchClearBitsFrom;
             }
             used.set(f);
             float w = (float) rnd2.nextGaussian() + (sign * eps);
             String y = f + ":" + w;
             features[i] = y;
+            retry = 0;
         }
         if(ordered) {
             Arrays.sort(features, new Comparator<String>() {
