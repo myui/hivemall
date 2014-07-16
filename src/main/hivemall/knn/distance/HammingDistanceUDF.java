@@ -26,9 +26,11 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 
+@UDFType(deterministic = true, stateful = false)
 public class HammingDistanceUDF extends UDF {
 
     public IntWritable evaluate(long a, long b) {

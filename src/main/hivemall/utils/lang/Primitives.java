@@ -18,34 +18,35 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.tools.mapred;
+package hivemall.utils.lang;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
-import hivemall.utils.hadoop.HadoopUtils;
+public final class Primitives {
 
-import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.UDF;
-import org.apache.hadoop.hive.ql.udf.UDFType;
-import org.apache.hadoop.io.Text;
+    private Primitives() {}
 
-@Description(name = "rowid", value = "_FUNC_() - Returns a generated row id of a form {TASK_ID}-{SEQUENCE_NUMBER}")
-@UDFType(deterministic = false, stateful = true)
-public class RowIdUDF extends UDF {
-
-    private long sequence;
-    private int taskId;
-
-    public RowIdUDF() {
-        this.sequence = 0L;
-        this.taskId = -1;
-    }
-
-    public Text evaluate() {
-        if(taskId == -1) {
-            this.taskId = HadoopUtils.getTaskId() + 1;
+    public static int parseInt(String s, int defaultValue) {
+        if(s == null) {
+            return defaultValue;
         }
-        sequence++;
-        String rowid = taskId + "-" + sequence;
-        return val(rowid);
+        return Integer.parseInt(s);
     }
+
+    public static float parseFloat(String s, float defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return Float.parseFloat(s);
+    }
+
+    public static boolean parseBoolean(String s, boolean defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(s);
+    }
+    
+    public static int compare(int x, int y) {
+        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+    }
+
 }

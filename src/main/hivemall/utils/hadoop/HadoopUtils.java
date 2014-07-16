@@ -38,6 +38,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
+import org.apache.hadoop.mapred.JobConf;
 
 public final class HadoopUtils {
 
@@ -84,6 +85,16 @@ public final class HadoopUtils {
             }
         }
 
+    }
+
+    public static int getTaskId() {
+        MapredContext ctx = MapredContextAccessor.get();
+        JobConf conf = ctx.getJobConf();
+        int taskid = conf.getInt("mapred.task.partition", -1);
+        if(taskid == -1) {
+            throw new IllegalStateException("mapred.task.partition is not set");
+        }
+        return taskid;
     }
 
 }

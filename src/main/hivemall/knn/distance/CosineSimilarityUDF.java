@@ -29,8 +29,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@UDFType(deterministic = true, stateful = false)
 public final class CosineSimilarityUDF extends UDF {
 
     public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2, boolean noWeight) {

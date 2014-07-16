@@ -23,12 +23,18 @@ package hivemall.ftvec;
 import hivemall.HivemallConstants;
 import hivemall.utils.hadoop.WritableUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-public class AddBiasUDF extends UDF {
+@Description(name = "addBias", value = "_FUNC_(feature_vector in array<string>) - Returns features with a bias in array<string>")
+@UDFType(deterministic = true, stateful = false)
+public final class AddBiasUDF extends UDF {
 
     public List<Text> evaluate(List<String> ftvec) {
         String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
@@ -46,6 +52,14 @@ public class AddBiasUDF extends UDF {
         ftvec.toArray(newvec);
         newvec[size] = biasClause + ":" + Float.toString(biasValue);
         return WritableUtils.val(newvec);
+    }
+
+    public List<IntWritable> evaluate(List<IntWritable> ftvec, IntWritable biasClause) {
+        int size = ftvec.size();
+        IntWritable[] newvec = new IntWritable[size + 1];
+        ftvec.toArray(newvec);
+        newvec[size] = biasClause;
+        return Arrays.asList(newvec);
     }
 
 }
