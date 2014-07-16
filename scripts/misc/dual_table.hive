@@ -2,4 +2,4 @@ create table dual (
   dummy int
 );
 
-load data local inpath './tmp/dual.txt' into table dual;
+INSERT INTO TABLE dual SELECT count(*) FROM dual;
