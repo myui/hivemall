@@ -32,4 +32,11 @@ public final class NumberUtils {
         }
     }
 
+    public static int parseInt(String s, int defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return parseInt(s);
+    }
+
 }

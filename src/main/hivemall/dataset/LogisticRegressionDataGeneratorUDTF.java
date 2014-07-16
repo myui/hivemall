@@ -3,6 +3,7 @@ package hivemall.dataset;
 import hivemall.UDTFWithOptions;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.util.ArrayList;
@@ -68,9 +69,9 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         String opts = HiveUtils.getConstString(argOIs[0]);
         CommandLine cl = parseOptions(opts);
 
-        this.n_examples = Primitives.parseInt(cl.getOptionValue("n_examples"), 1000);
-        this.n_features = Primitives.parseInt(cl.getOptionValue("n_features"), 10);
-        this.n_dimensions = Primitives.parseInt(cl.getOptionValue("n_dims"), 200);
+        this.n_examples = NumberUtils.parseInt(cl.getOptionValue("n_examples"), 1000);
+        this.n_features = NumberUtils.parseInt(cl.getOptionValue("n_features"), 10);
+        this.n_dimensions = NumberUtils.parseInt(cl.getOptionValue("n_dims"), 200);
         this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 3.f);
         this.prob_one = Primitives.parseFloat(cl.getOptionValue("prob_one"), 0.6f);
         this.r_seed = Primitives.parseInt(cl.getOptionValue("seed"), 43);
