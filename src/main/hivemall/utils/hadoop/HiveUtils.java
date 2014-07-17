@@ -20,8 +20,12 @@
  */
 package hivemall.utils.hadoop;
 
+import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.BOOLEAN_TYPE_NAME;
+import static hivemall.HivemallConstants.INT_TYPE_NAME;
+import static hivemall.HivemallConstants.SMALLINT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
+import static hivemall.HivemallConstants.TINYINT_TYPE_NAME;
 
 import java.util.Properties;
 
@@ -37,6 +41,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantBooleanObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantByteObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantLongObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantShortObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
@@ -109,6 +117,62 @@ public final class HiveUtils {
         }
         WritableConstantBooleanObjectInspector booleanOI = (WritableConstantBooleanObjectInspector) oi;
         return booleanOI.getWritableConstantValue().get();
+    }
+
+    public static boolean isBigInt(ObjectInspector oi) {
+        String typeName = oi.getTypeName();
+        return BIGINT_TYPE_NAME.equals(typeName);
+    }
+
+    public static int getConstInt(ObjectInspector oi) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        String typeName = oi.getTypeName();
+        if(!INT_TYPE_NAME.equals(typeName)) {
+            throw new UDFArgumentException("argument must be a int value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        WritableConstantIntObjectInspector intOI = (WritableConstantIntObjectInspector) oi;
+        return intOI.getWritableConstantValue().get();
+    }
+
+    public static long getConstLong(ObjectInspector oi) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        String typeName = oi.getTypeName();
+        if(!BIGINT_TYPE_NAME.equals(typeName)) {
+            throw new UDFArgumentException("argument must be a bigint value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        WritableConstantLongObjectInspector longOI = (WritableConstantLongObjectInspector) oi;
+        return longOI.getWritableConstantValue().get();
+    }
+
+    public static long getAsConstLong(ObjectInspector numberOI) throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(numberOI)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
+        }
+        String typeName = numberOI.getTypeName();
+        if(BIGINT_TYPE_NAME.equals(typeName)) {
+            WritableConstantLongObjectInspector longOI = (WritableConstantLongObjectInspector) numberOI;
+            return longOI.getWritableConstantValue().get();
+        } else if(INT_TYPE_NAME.equals(typeName)) {
+            WritableConstantIntObjectInspector intOI = (WritableConstantIntObjectInspector) numberOI;
+            return (long) intOI.getWritableConstantValue().get();
+        } else if(SMALLINT_TYPE_NAME.equals(typeName)) {
+            WritableConstantShortObjectInspector shortOI = (WritableConstantShortObjectInspector) numberOI;
+            return (long) shortOI.getWritableConstantValue().get();
+        } else if(TINYINT_TYPE_NAME.equals(typeName)) {
+            WritableConstantByteObjectInspector byteOI = (WritableConstantByteObjectInspector) numberOI;
+            return (long) byteOI.getWritableConstantValue().get();
+        }
+        throw new UDFArgumentException("Unexpected argument type to cast as long: "
+                + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
     }
 
     public static Object getConstValue(ObjectInspector oi) throws UDFArgumentException {
