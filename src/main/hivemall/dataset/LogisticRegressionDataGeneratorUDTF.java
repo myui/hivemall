@@ -76,7 +76,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         this.prob_one = Primitives.parseFloat(cl.getOptionValue("prob_one"), 0.6f);
         this.r_seed = Primitives.parseInt(cl.getOptionValue("seed"), 43);
         this.dense = cl.hasOption("dense");
-        this.sort = cl.hasOption("ordered");
+        this.sort = cl.hasOption("sort");
         this.classification = cl.hasOption("classification");
 
         if(n_features > n_dimensions) {
