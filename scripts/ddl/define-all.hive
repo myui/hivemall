@@ -300,6 +300,13 @@ create temporary function rowid as 'hivemall.tools.mapred.RowIdUDF';
 drop temporary function distcache_gets;
 create temporary function distcache_gets as 'hivemall.tools.mapred.DistributedCacheLookupUDF';
 
+--------------------
+-- misc functions --
+--------------------
+
+drop temporary function generate_series;
+create temporary function generate_series as 'hivemall.tools.GenerateSeriesUDTF';
+
 ----------------------
 -- string functions --
 ----------------------
