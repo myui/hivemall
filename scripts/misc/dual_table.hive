@@ -2,4 +2,4 @@ create table dual (
   dummy int
 );
 
-INSERT INTO TABLE dual SELECT count(*) FROM dual;
+INSERT INTO TABLE dual SELECT count(*)+1 FROM dual;
