@@ -77,7 +77,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
-        opts.addOption("outputs_touched", false, "Outputs weights touched in training");
+        opts.addOption("output_untouched", false, "Output feature weights not touched in the training");
         return opts;
     }
 
@@ -86,7 +86,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean fhashFlag = false;
         float biasValue = 0.f;
         String modelfile = null;
-        boolean outputs_touched = false;
+        boolean output_untouched = true; // emit every weight by the default
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -103,14 +103,15 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             }
 
             modelfile = cl.getOptionValue("loadmodel");
-
-            outputs_touched = cl.hasOption("outputs_touched");
+            if(modelfile != null) {
+                output_untouched = cl.hasOption("output_untouched");
+            }
         }
 
         this.feature_hashing = fhashFlag;
         this.bias = biasValue;
         this.preloadedModelFile = modelfile;
-        this.skipUntouched = outputs_touched;
+        this.skipUntouched = output_untouched ? false : true;
         return cl;
     }
 
