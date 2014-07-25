@@ -83,10 +83,10 @@ public class RandomizedAmplifier<T> {
                 assert (replaced2 != null);
                 if(replaced1.timestamp >= replaced2.timestamp) {// bias to hold old entry
                     dropout(replaced1.object);
-                    slot[rindex1] = new AgedObject<T>(storedObj);
+                    replaced1.set(storedObj);
                 } else {
                     dropout(replaced2.object);
-                    slot[rindex2] = new AgedObject<T>(storedObj);
+                    replaced2.set(storedObj);
                 }
             }
         }
@@ -116,11 +116,16 @@ public class RandomizedAmplifier<T> {
 
     private static final class AgedObject<T> {
 
-        private final T object;
-        private final long timestamp;
+        private T object;
+        private long timestamp;
 
         AgedObject(T obj) {
             this.object = obj;
+            this.timestamp = System.nanoTime();
+        }
+
+        void set(T object) {
+            this.object = object;
             this.timestamp = System.nanoTime();
         }
     }
