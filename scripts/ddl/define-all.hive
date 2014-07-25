@@ -155,8 +155,8 @@ create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF';
 drop temporary function zscore;
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 
-drop temporary function normalize;
-create temporary function normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
+drop temporary function norm;
+create temporary function norm as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 
 --------------------
 -- misc functions --
