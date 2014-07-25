@@ -20,8 +20,9 @@
  */
 package hivemall.utils.math;
 
-
 public final class StatsUtils {
+
+    private StatsUtils() {}
 
     /**
      * probit(p)=sqrt(2)erf^-1(2p-1)

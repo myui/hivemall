@@ -63,6 +63,8 @@ public final class Primes {
             1729249999, 1805811253, 1885761133, 1969251079, 2056437379, 2147482951,
             Integer.MAX_VALUE };
 
+    private Primes() {}
+
     /**
      * Returns from a static prime table the least prime that is greater 
      * than or equal to a specified value.

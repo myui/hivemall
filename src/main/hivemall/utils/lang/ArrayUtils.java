@@ -27,6 +27,8 @@ import java.util.Random;
 
 public final class ArrayUtils {
 
+    private ArrayUtils() {}
+
     public static double[] set(double[] src, final int index, final double value) {
         if(index >= src.length) {
             src = Arrays.copyOf(src, src.length * 2);

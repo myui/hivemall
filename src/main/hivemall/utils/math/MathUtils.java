@@ -40,6 +40,8 @@ package hivemall.utils.math;
 
 public final class MathUtils {
 
+    private MathUtils() {}
+
     /**
      * Returns a bit mask for the specified number of bits.
      */

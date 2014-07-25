@@ -42,6 +42,8 @@ import org.apache.hadoop.mapred.JobConf;
 
 public final class HadoopUtils {
 
+    private HadoopUtils() {}
+
     public static BufferedReader getBufferedReader(File file) throws IOException {
         MapredContext context = MapredContextAccessor.get();
         return getBufferedReader(file, context);
