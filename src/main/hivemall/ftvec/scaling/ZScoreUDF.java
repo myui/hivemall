@@ -22,13 +22,17 @@ package hivemall.ftvec.scaling;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
 /**
- * @see http://en.wikipedia.org/wiki/Standard_score
+ * @see <a href="http://en.wikipedia.org/wiki/Standard_score">Standard_score</a>
  */
-public class ZScoreUDF extends UDF {
+@Description(name = "zscore", value = "_FUNC_(value, mean, stddev) - Returns a standard score (zscore)")
+@UDFType(deterministic = true, stateful = false)
+public final class ZScoreUDF extends UDF {
 
     public FloatWritable evaluate(float value, double mean, double stddev) {
         return evaluate(value, (float) mean, (float) stddev);

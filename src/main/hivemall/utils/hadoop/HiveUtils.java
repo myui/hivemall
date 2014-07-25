@@ -52,6 +52,8 @@ import org.apache.hadoop.io.Text;
 
 public final class HiveUtils {
 
+    private HiveUtils() {}
+
     public static Text asText(final Object o) {
         if(o == null) {
             return null;

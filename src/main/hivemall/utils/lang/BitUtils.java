@@ -24,6 +24,8 @@ import java.util.BitSet;
 
 public final class BitUtils {
 
+    private BitUtils() {}
+
     public static BitSet toBitSet(final String s) {
         final int len = s.length();
         final BitSet result = new BitSet(len);

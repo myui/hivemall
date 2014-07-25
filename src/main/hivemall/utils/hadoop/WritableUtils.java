@@ -32,6 +32,8 @@ import org.apache.hadoop.io.Text;
 
 public final class WritableUtils {
 
+    private WritableUtils() {}
+
     public static IntWritable val(final int v) {
         return new IntWritable(v);
     }

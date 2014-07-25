@@ -40,6 +40,8 @@ package hivemall.utils.math;
 
 public final class MathUtils {
 
+    private MathUtils() {}
+
     /**
      * Returns a bit mask for the specified number of bits.
      */
@@ -183,6 +185,14 @@ public final class MathUtils {
 
     public static int moduloPowerOfTwo(final int x, final int powerOfTwoY) {
         return x & (powerOfTwoY - 1);
+    }
+
+    public static float l2norm(final float[] elements) {
+        double sqsum = 0.d;
+        for(float e : elements) {
+            sqsum += (e * e);
+        }
+        return (float) Math.sqrt(sqsum);
     }
 
 }
