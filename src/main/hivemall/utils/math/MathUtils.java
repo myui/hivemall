@@ -187,4 +187,12 @@ public final class MathUtils {
         return x & (powerOfTwoY - 1);
     }
 
+    public static float l2norm(final float[] elements) {
+        double sqsum = 0.d;
+        for(float e : elements) {
+            sqsum += (e * e);
+        }
+        return (float) Math.sqrt(sqsum);
+    }
+
 }
