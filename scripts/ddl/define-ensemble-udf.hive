@@ -29,3 +29,6 @@ create temporary function max_label as 'hivemall.ensemble.MaxValueLabelUDAF';
 
 drop temporary function maxrow;
 create temporary function maxrow as 'hivemall.ensemble.MaxRowUDAF';
+
+drop temporary function argmin_kld;
+create temporary function argmin_kld as 'hivemall.ensemble.ArgminKLDistanceUDAF';
