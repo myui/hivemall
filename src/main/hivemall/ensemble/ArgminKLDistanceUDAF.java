@@ -64,7 +64,7 @@ public class ArgminKLDistanceUDAF extends UDAF {
         }
     }
 
-    public static class CovarMeanUDAFEvaluator implements UDAFEvaluator {
+    public static class ArgminCovarUDAFEvaluator implements UDAFEvaluator {
 
         private float sum_inv_covar;
         private boolean empty;
