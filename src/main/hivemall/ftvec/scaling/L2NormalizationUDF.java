@@ -31,7 +31,7 @@ import org.apache.hadoop.io.Text;
 /**
  * @see <a href="http://mathworld.wolfram.com/NormalizedVector.html>http://mathworld.wolfram.com/NormalizedVector.html</a>
  */
-@Description(name = "norm", value = "_FUNC_(ftvec string) - Returned a L2 normalized value")
+@Description(name = "normalize", value = "_FUNC_(ftvec string) - Returned a L2 normalized value")
 @UDFType(deterministic = true, stateful = false)
 public final class L2NormalizationUDF extends UDF {
 
