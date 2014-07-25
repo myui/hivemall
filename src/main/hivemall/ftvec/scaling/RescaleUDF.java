@@ -31,7 +31,7 @@ import org.apache.hadoop.io.Text;
 /**
  * Min-Max normalization 
  * 
- * @see http://en.wikipedia.org/wiki/Feature_scaling
+ * @see <a href="http://en.wikipedia.org/wiki/Feature_scaling">Feature_scaling</a>
  */
 @Description(name = "rescale", value = "_FUNC_(value, min, max) - Returns rescaled value by min-max normalization")
 @UDFType(deterministic = true, stateful = false)
@@ -43,10 +43,6 @@ public final class RescaleUDF extends UDF {
 
     public FloatWritable evaluate(final float value, final double min, final double max) {
         return val(min_max_normalization(value, (float) min, (float) max));
-    }
-
-    public static float min_max_normalization(final float value, final float min, final float max) {
-        return (value - min) / (max - min);
     }
 
     public Text evaluate(final String s, final double min, final double max) {
@@ -62,6 +58,10 @@ public final class RescaleUDF extends UDF {
         float scaled_v = min_max_normalization(v, min, max);
         String ret = fv[0] + ':' + Float.toString(scaled_v);
         return val(ret);
+    }
+
+    private static float min_max_normalization(final float value, final float min, final float max) {
+        return (value - min) / (max - min);
     }
 
 }
