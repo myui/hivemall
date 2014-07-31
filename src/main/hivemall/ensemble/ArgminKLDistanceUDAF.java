@@ -5,7 +5,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "argmin_kld", value = "_FUNC_(mean [, covar]) - Returns mean or covar that minimize a KL-distance among distributions", extended = "The returned value is (1.0 / (sum(1.0 / covar))) * (sum(mean / covar)")
+@Description(name = "argmin_kld", value = "_FUNC_([mean,] covar) - Returns mean or covar that minimize a KL-distance among distributions", extended = "The returned value is (1.0 / (sum(1.0 / covar))) * (sum(mean / covar)")
 public class ArgminKLDistanceUDAF extends UDAF {
 
     public static class ArgminMeanUDAFEvaluator implements UDAFEvaluator {
@@ -95,7 +95,7 @@ public class ArgminKLDistanceUDAF extends UDAF {
         }
 
         public FloatWritable terminate() {
-            return empty ? null : new FloatWritable(sum_inv_covar);
+            return empty ? null : new FloatWritable(1.f / sum_inv_covar);
         }
     }
 
