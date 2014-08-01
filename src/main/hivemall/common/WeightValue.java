@@ -61,7 +61,7 @@ public class WeightValue {
     }
 
     public static final class WeightValueWithCovar extends WeightValue {
-        public static float DEFAULT_COVAR = 1.f;
+        public static final float DEFAULT_COVAR = 1.f;
 
         final float covariance;
 
