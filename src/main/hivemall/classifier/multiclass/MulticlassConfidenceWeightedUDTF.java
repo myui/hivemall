@@ -71,8 +71,8 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("phi", "confidence", true, "Confidence parameter [default 0.5]");
-        opts.addOption("eta", "hyper_c", true, "Confidence hyperparameter eta in range (0.5, 1] [default 0.7]");
+        opts.addOption("phi", "confidence", true, "Confidence parameter [default 1.0]");
+        opts.addOption("eta", "hyper_c", true, "Confidence hyperparameter eta in range (0.5, 1] [default 0.85]");
         return opts;
     }
 
@@ -80,7 +80,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         final CommandLine cl = super.processOptions(argOIs);
 
-        float phi = 0.5f;
+        float phi = 1.f;
         if(cl != null) {
             String phi_str = cl.getOptionValue("phi");
             if(phi_str == null) {
