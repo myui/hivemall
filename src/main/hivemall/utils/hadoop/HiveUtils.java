@@ -48,11 +48,31 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantS
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
 public final class HiveUtils {
 
     private HiveUtils() {}
+
+    public static int parseInt(final Object o) {
+        if(o instanceof Integer) {
+            return ((Integer) o).intValue();
+        }
+        if(o instanceof IntWritable) {
+            return ((IntWritable) o).get();
+        }
+        if(o instanceof LongWritable) {
+            long l = ((LongWritable) o).get();
+            if(l > 0x7fffffffL) {
+                throw new IllegalArgumentException("feature index must be less than "
+                        + Integer.MAX_VALUE + ", but was " + l);
+            }
+            return (int) l;
+        }
+        String s = o.toString();
+        return Integer.parseInt(s);
+    }
 
     public static Text asText(final Object o) {
         if(o == null) {
