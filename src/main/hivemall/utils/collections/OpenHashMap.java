@@ -33,6 +33,7 @@
 //   limitations under the License.
 package hivemall.utils.collections;
 
+import hivemall.utils.lang.Copyable;
 import hivemall.utils.math.MathUtils;
 
 import java.io.Externalizable;
@@ -285,25 +286,6 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
         return new MapIterator();
     }
 
-    public interface IMapIterator<K, V> {
-
-        public boolean hasNext();
-
-        /**
-         * @return -1 if not found
-         */
-        public int next();
-
-        public K getKey();
-
-        public V getValue();
-
-        public K unsafeGetAndFreeKey();
-
-        public V unsafeGetAndFreeValue();
-
-    }
-
     private final class MapIterator implements IMapIterator<K, V> {
 
         int nextEntry;
@@ -321,11 +303,14 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
             return index;
         }
 
+        @Override
         public boolean hasNext() {
             return nextEntry < keys.length;
         }
 
+        @Override
         public int next() {
+            free(lastEntry);
             if(!hasNext()) {
                 return -1;
             }
@@ -335,32 +320,27 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
             return curEntry;
         }
 
+        @Override
         public K getKey() {
-            if(lastEntry == -1) {
-                throw new IllegalStateException();
-            }
             return keys[lastEntry];
         }
 
+        @Override
         public V getValue() {
-            if(lastEntry == -1) {
-                throw new IllegalStateException();
-            }
             return values[lastEntry];
         }
 
         @Override
-        public K unsafeGetAndFreeKey() {
-            K k = keys[lastEntry];
-            keys[lastEntry] = null;
-            return k;
+        public <T extends Copyable<V>> void getValue(T probe) {
+            probe.copyTo(getValue());
         }
 
-        @Override
-        public V unsafeGetAndFreeValue() {
-            V v = values[lastEntry];
-            values[lastEntry] = null;
-            return v;
+        private void free(int index) {
+            if(index >= 0) {
+                keys[index] = null;
+                values[index] = null;
+            }
         }
+
     }
 }
