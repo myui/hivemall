@@ -80,20 +80,20 @@ public class PassiveAggressiveUDTFTest {
         udtf.train(features1, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
 
         /* train weights by Object[] */
         List<?> features2 = (List<?>) intListOI.getList(new Object[]{3, 4, 5});
         udtf.train(features2, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.5555555f, udtf.weights.get(3).get(), 1e-5f);
-        assertEquals(0.2222222f, udtf.weights.get(4).get(), 1e-5f);
-        assertEquals(0.2222222f, udtf.weights.get(5).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(0.5555555f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(0.2222222f, udtf.model.get(4).get(), 1e-5f);
+        assertEquals(0.2222222f, udtf.model.get(5).get(), 1e-5f);
     }
 
     @Test
@@ -161,9 +161,9 @@ public class PassiveAggressiveUDTFTest {
         udtf.train(features, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.weights.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
     }
 
     @Test
@@ -184,9 +184,9 @@ public class PassiveAggressiveUDTFTest {
         udtf.train(features, 1);
 
         /* check weights */
-        assertEquals(0.1000000f, udtf.weights.get(1).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.weights.get(2).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.weights.get(3).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.model.get(3).get(), 1e-5f);
     }
 
     @Test

@@ -21,7 +21,6 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import hivemall.common.FeatureValue;
 
 import java.util.ArrayList;
@@ -78,11 +77,11 @@ public class PerceptronUDTFTest {
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"), udtf.isFeatureHashingEnabled());
-        assertEquals(1.f, udtf.weights.get(word1.getFeature()).get(), 1e-5f);
+        FeatureValue word1 = FeatureValue.parse(new String("good"));
+        assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
 
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"), udtf.isFeatureHashingEnabled());
-        assertEquals(1.f, udtf.weights.get(word2.getFeature()).get(), 1e-5f);
+        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
+        assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
         List<String> features2 = new ArrayList<String>();
@@ -91,17 +90,13 @@ public class PerceptronUDTFTest {
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
-        assertEquals(1.f, udtf.weights.get(word1.getFeature()).get(), 1e-5f);
+        assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
 
-        FeatureValue word3 = FeatureValue.parse(new String("bad"), udtf.isFeatureHashingEnabled());
-        assertEquals(-1.f, udtf.weights.get(word3.getFeature()).get(), 1e-5f);
+        FeatureValue word3 = FeatureValue.parse(new String("bad"));
+        assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
 
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"), udtf.isFeatureHashingEnabled());
-        assertEquals(0.f, udtf.weights.get(word4.getFeature()).get(), 1e-5f);
-
-        /* check bias: disabled */
-        assertEquals(0.f, udtf.getBias(), 1e-5f);
-        assertEquals("bias cluase is disabled by default", null, udtf.biasKey);
+        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
+        assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 
     @Test
@@ -109,7 +104,7 @@ public class PerceptronUDTFTest {
         PerceptronUDTF udtf = new PerceptronUDTF();
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-b 0.1"));
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String(""));
         udtf.initialize(new ObjectInspector[] { stringListOI,
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector, param });
 
@@ -120,16 +115,11 @@ public class PerceptronUDTFTest {
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"), udtf.isFeatureHashingEnabled());
-        assertEquals(1.f, udtf.weights.get(word1.getFeature()).get(), 1e-5f);
+        FeatureValue word1 = FeatureValue.parse(new String("good"));
+        assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
 
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"), udtf.isFeatureHashingEnabled());
-        assertEquals(1.f, udtf.weights.get(word2.getFeature()).get(), 1e-5f);
-
-        /* check bias: enabled */
-        assertEquals(0.1f, udtf.getBias(), 1e-5f);
-        assertNotNull("bias clause is enabled", udtf.biasKey);
-        assertEquals(0.1f, udtf.weights.get(udtf.biasKey).get(), 1e-5f);
+        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
+        assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
         List<String> features2 = new ArrayList<String>();
@@ -138,17 +128,12 @@ public class PerceptronUDTFTest {
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
-        assertEquals(1.f, udtf.weights.get(word1.getFeature()).get(), 1e-5f);
+        assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
 
-        FeatureValue word3 = FeatureValue.parse(new String("bad"), udtf.isFeatureHashingEnabled());
-        assertEquals(-1.f, udtf.weights.get(word3.getFeature()).get(), 1e-5f);
+        FeatureValue word3 = FeatureValue.parse(new String("bad"));
+        assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
 
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"), udtf.isFeatureHashingEnabled());
-        assertEquals(0.f, udtf.weights.get(word4.getFeature()).get(), 1e-5f);
-
-        /* check bias: enabled */
-        assertEquals(0.1f, udtf.getBias(), 1e-5f);
-        assertNotNull("bias clause is enabled", udtf.biasKey);
-        assertEquals(0.f, udtf.weights.get(udtf.biasKey).get(), 1e-5f);
+        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
+        assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 }
