@@ -54,7 +54,7 @@ public class MurmurHash3UDF extends UDF {
         if(r < 0) {
             r += numFeatures;
         }
-        return val(r);
+        return val(r + 1);
     }
 
     public IntWritable evaluate(List<String> words) throws UDFArgumentException {

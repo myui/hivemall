@@ -61,7 +61,7 @@ public class Sha1UDF extends UDF {
         if(r < 0) {
             r += numFeatures;
         }
-        return val(r);
+        return val(r + 1);
     }
 
     public IntWritable evaluate(List<String> words) {
@@ -69,12 +69,9 @@ public class Sha1UDF extends UDF {
     }
 
     public IntWritable evaluate(List<String> words, int numFeatures) {
-        int wlength = words.size();
-        if(wlength == 0) {
-            return val(0);
-        }
         final StringBuilder b = new StringBuilder();
         b.append(words.get(0));
+        final int wlength = words.size();
         for(int i = 1; i < wlength; i++) {
             b.append('\t');
             b.append(words.get(i));
