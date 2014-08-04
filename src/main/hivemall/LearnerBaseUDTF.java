@@ -27,6 +27,7 @@ import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.Primitives;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -69,7 +70,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("output_untouched", false, "Output feature weights not touched in the training");
-        opts.addOption("dense", "densemodel", true, "The dimension of model");
+        opts.addOption("dense", "densemodel", false, "Use dense model or not");
+        opts.addOption("dims", "feature_dimensions", true, "The dimension of model");
         return opts;
     }
 
@@ -90,10 +92,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 output_untouched = cl.hasOption("output_untouched");
             }
 
-            String dimStr = cl.getOptionValue("densemodel");
-            if(dimStr != null) {
-                modelDims = Integer.parseInt(dimStr);
-                denseModel = true;
+            denseModel = cl.hasOption("densemodel");
+            if(denseModel) {
+                modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 2 ^ 24);
             }
         }
 
