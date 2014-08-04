@@ -5,7 +5,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "argmin_kld", value = "_FUNC_([mean,] covar) - Returns mean or covar that minimize a KL-distance among distributions", extended = "The returned value is (1.0 / (sum(1.0 / covar))) * (sum(mean / covar)")
+@Description(name = "argmin_kld", value = "_FUNC_(mean, covar) - Returns mean or covar that minimize a KL-distance among distributions", extended = "The returned value is (1.0 / (sum(1.0 / covar))) * (sum(mean / covar)")
 public class ArgminKLDistanceUDAF extends UDAF {
 
     public static class ArgminMeanUDAFEvaluator implements UDAFEvaluator {
@@ -61,41 +61,6 @@ public class ArgminKLDistanceUDAF extends UDAF {
             }
             float mean = (1f / partial.sum_inv_covar) * partial.sum_mean_div_covar;
             return new FloatWritable(mean);
-        }
-    }
-
-    public static class ArgminCovarUDAFEvaluator implements UDAFEvaluator {
-
-        private float sum_inv_covar;
-        private boolean empty;
-
-        public void init() {
-            this.sum_inv_covar = 0f;
-            this.empty = true;
-        }
-
-        public boolean iterate(FloatWritable covar) {
-            if(covar != null) {
-                if(empty) {
-                    sum_inv_covar = (1.f / covar.get());
-                    this.empty = false;
-                } else {
-                    sum_inv_covar += (1.f / covar.get());
-                }
-            }
-            return true;
-        }
-
-        public FloatWritable terminatePartial() {
-            return empty ? null : new FloatWritable(sum_inv_covar);
-        }
-
-        public boolean merge(FloatWritable o) {
-            return iterate(o);
-        }
-
-        public FloatWritable terminate() {
-            return empty ? null : new FloatWritable(1.f / sum_inv_covar);
         }
     }
 
