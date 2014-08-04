@@ -10,8 +10,12 @@
 -- array functions --
 ---------------------
 
+-- alias for backward compatibility
 drop temporary function AllocFloatArray;
 create temporary function AllocFloatArray as 'hivemall.tools.array.AllocFloatArrayUDF';
+
+drop temporary function float_array;
+create temporary function float_array as 'hivemall.tools.array.AllocFloatArrayUDF';
 
 drop temporary function array_remove;
 create temporary function array_remove as 'hivemall.tools.array.ArrayRemoveUDF';
@@ -74,8 +78,12 @@ create temporary function distcache_gets as 'hivemall.tools.mapred.DistributedCa
 -- string functions --
 ----------------------
 
+-- alias for backward compatibility
 drop temporary function isStopword;
 create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
+
+drop temporary function is_stopword;
+create temporary function is_stopword as 'hivemall.tools.string.StopwordUDF';
 
 drop temporary function split_words;
 create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
