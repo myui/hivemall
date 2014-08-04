@@ -33,8 +33,8 @@ public class MurmurHash3UDFTest {
     public void testEvaluate() throws UDFArgumentException {
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
-        assertEquals("hash('hive') == 1966096", 1966096, udf.evaluate("hive").get());
-        assertEquals("hash('mall') == 36970", 36970, udf.evaluate("mall").get());
+        assertEquals("hash('hive') == 1966097", 1966097, udf.evaluate("hive").get());
+        assertEquals("hash('mall') == 36971", 36971, udf.evaluate("mall").get());
     }
 
     @Test
@@ -44,11 +44,11 @@ public class MurmurHash3UDFTest {
         final int smallNumFeatures = 10;
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
-        assertEquals("hash('hive') == 1966096", 1966096, udf.evaluate("hive", numFeatures).get());
-        assertEquals("hash('mall') == 36970", 36970, udf.evaluate("mall", numFeatures).get());
+        assertEquals("hash('hive') == 1966097", 1966097, udf.evaluate("hive", numFeatures).get());
+        assertEquals("hash('mall') == 36971", 36971, udf.evaluate("mall", numFeatures).get());
 
-        assertEquals("hash('hive') == 8", 8, udf.evaluate("hive", smallNumFeatures).get());
-        assertEquals("hash('mall') == 0", 0, udf.evaluate("mall", smallNumFeatures).get());
+        assertEquals("hash('hive') == 9", 9, udf.evaluate("hive", smallNumFeatures).get());
+        assertEquals("hash('mall') == 1", 1, udf.evaluate("mall", smallNumFeatures).get());
     }
 
     @Test
@@ -59,7 +59,7 @@ public class MurmurHash3UDFTest {
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
         assertEquals(udf.evaluate("hive\tmall"), udf.evaluate(Arrays.asList(words)));
-        assertEquals(0, udf.evaluate(Arrays.asList(noWords)).get());
+        assertEquals(1, udf.evaluate(Arrays.asList(noWords)).get());
         assertEquals(udf.evaluate("hivemall"), udf.evaluate(Arrays.asList(oneWord)));
     }
 
@@ -72,7 +72,7 @@ public class MurmurHash3UDFTest {
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
         assertEquals(udf.evaluate("hive\tmall", numFeatures), udf.evaluate(Arrays.asList(words), numFeatures));
-        assertEquals(0, udf.evaluate(Arrays.asList(noWords), numFeatures).get());
+        assertEquals(1, udf.evaluate(Arrays.asList(noWords), numFeatures).get());
         assertEquals(udf.evaluate("hivemall", numFeatures), udf.evaluate(Arrays.asList(oneWord), numFeatures));
     }
 

@@ -34,8 +34,8 @@ public class Sha1UDFTest {
     public void testEvaluate() {
         Sha1UDF udf = new Sha1UDF();
 
-        assertEquals("sha1('hive') == 14489007", 14489007, udf.evaluate("hive").get());
-        assertEquals("sha1('mall') == 8556780", 8556780, udf.evaluate("mall").get());
+        assertEquals("sha1('hive') == 14489008", 14489008, udf.evaluate("hive").get());
+        assertEquals("sha1('mall') == 8556781", 8556781, udf.evaluate("mall").get());
     }
 
     @Test
@@ -43,8 +43,8 @@ public class Sha1UDFTest {
         final int numFeatures = 1 << 24;
         Sha1UDF udf = new Sha1UDF();
 
-        assertEquals("sha1('hive') == 14489007", 14489007, udf.evaluate("hive", numFeatures).get());
-        assertEquals("sha1('mall') == 8556780", 8556780, udf.evaluate("mall", numFeatures).get());
+        assertEquals("sha1('hive') == 14489008", 14489008, udf.evaluate("hive", numFeatures).get());
+        assertEquals("sha1('mall') == 8556781", 8556781, udf.evaluate("mall", numFeatures).get());
     }
 
     @Test
@@ -55,7 +55,7 @@ public class Sha1UDFTest {
         Sha1UDF udf = new Sha1UDF();
 
         assertEquals(udf.evaluate("hive\tmall"), udf.evaluate(words));
-        assertEquals(0, udf.evaluate(noWords).get());
+        assertEquals(1, udf.evaluate(noWords).get());
         assertEquals(udf.evaluate("hivemall"), udf.evaluate(oneWord));
     }
 
@@ -68,7 +68,7 @@ public class Sha1UDFTest {
         Sha1UDF udf = new Sha1UDF();
 
         assertEquals(udf.evaluate("hive\tmall", numFeatures), udf.evaluate(words, numFeatures));
-        assertEquals(0, udf.evaluate(noWords, numFeatures).get());
+        assertEquals(1, udf.evaluate(noWords, numFeatures).get());
         assertEquals(udf.evaluate("hivemall", numFeatures), udf.evaluate(oneWord, numFeatures));
     }
 }

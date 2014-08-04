@@ -67,7 +67,7 @@ public class MurmurHash3UDF extends UDF {
         }
         final int size = words.size();
         if(size == 0) {
-            return val(0);
+            return val(1);
         }
         final StringBuilder b = new StringBuilder();
         b.append(words.get(0));
