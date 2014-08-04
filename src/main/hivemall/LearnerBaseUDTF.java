@@ -71,7 +71,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("output_untouched", false, "Output feature weights not touched in the training");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
-        opts.addOption("dims", "feature_dimensions", true, "The dimension of model");
+        opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
         return opts;
     }
 
