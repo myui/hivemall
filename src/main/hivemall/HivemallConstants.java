@@ -22,8 +22,7 @@ package hivemall;
 
 public final class HivemallConstants {
 
-    public static final String BIAS_CLAUSE = "+bias";
-    public static final int BIAS_CLAUSE_INT = -1;
+    public static final String BIAS_CLAUSE = "0";
 
     // org.apache.hadoop.hive.serde.Constants (hive 0.9)
     // org.apache.hadoop.hive.serde.serdeConstants (hive 0.10 or later)
