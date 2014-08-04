@@ -24,14 +24,14 @@ import static hivemall.utils.hadoop.WritableUtils.val;
 
 import java.util.Arrays;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.BooleanWritable;
 
-/**
- * This class uses Stopwords Corpus obtained from PostgreSQL.
- * http://anoncvs.postgresql.org/cvsweb.cgi/pgsql/src/backend/snowball/stopwords/
- */
-public class StopwordUDF extends UDF {
+@Description(name = "is_stopword", value = "_FUNC_(word) - Returns whether stopword or not")
+@UDFType(deterministic = true, stateful = false)
+public final class StopwordUDF extends UDF {
 
     private static final String[] stopwords;
     static {
