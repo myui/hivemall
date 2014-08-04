@@ -20,20 +20,20 @@
  */
 package hivemall.classifier.multiclass;
 
-import static hivemall.HivemallConstants.BIAS_CLAUSE;
-import static hivemall.HivemallConstants.BIAS_CLAUSE_INT;
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.LearnerBaseUDTF;
+import hivemall.common.DenseModel;
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
+import hivemall.common.PredictionModel;
 import hivemall.common.PredictionResult;
+import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
-import hivemall.utils.collections.OpenHashMap;
-import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -67,15 +67,13 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
 public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
-
     private static final Log logger = LogFactory.getLog(MulticlassOnlineClassifierUDTF.class);
 
     protected ListObjectInspector featureListOI;
-    protected boolean parseX;
+    protected boolean parseFeature;
     protected PrimitiveObjectInspector labelInputOI;
-    protected Object biasKey;
 
-    protected Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight;
+    protected Map<Object, PredictionModel> label2model;
     protected int count;
 
     @Override
@@ -91,28 +89,19 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: "
                     + labelTypeName);
         }
-
         processOptions(argOIs);
 
-        ObjectInspector featureOutputOI = featureInputOI;
-        if(parseX && feature_hashing) {
-            featureOutputOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        }
-
-        if(bias != 0.f) {
-            this.biasKey = INT_TYPE_NAME.equals(featureOutputOI.getTypeName()) ? BIAS_CLAUSE_INT
-                    : new Text(BIAS_CLAUSE);
-        } else {
-            this.biasKey = null;
-        }
-
-        this.label2FeatureWeight = new HashMap<Object, OpenHashMap<Object, WeightValue>>(64);
+        this.label2model = new HashMap<Object, PredictionModel>(64);
         if(preloadedModelFile != null) {
-            loadPredictionModel(label2FeatureWeight, preloadedModelFile, labelInputOI, featureInputOI);
+            loadPredictionModel(label2model, preloadedModelFile, labelInputOI, featureInputOI);
         }
 
         this.count = 0;
-        return getReturnOI(labelInputOI, featureOutputOI);
+        return getReturnOI(labelInputOI, featureInputOI);
+    }
+
+    protected final PredictionModel createModel() {
+        return dense_model ? new DenseModel(model_dims) : new SparseModel(8192);
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
@@ -125,7 +114,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
+        this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 
@@ -170,10 +159,10 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         float maxScore = Float.MIN_VALUE;
         Object maxScoredLabel = null;
 
-        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
-            float score = calcScore(weights, features);
+            PredictionModel model = label2map.getValue();
+            float score = calcScore(model, features);
             if(maxScoredLabel == null || score > maxScore) {
                 maxScore = score;
                 maxScoredLabel = label;
@@ -188,10 +177,10 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
 
-        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
-            float score = calcScore(weights, features);
+            PredictionModel model = label2map.getValue();
+            float score = calcScore(model, features);
             if(label.equals(actual_label)) {
                 correctScore = score;
             } else {
@@ -215,15 +204,15 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         float maxAnotherScore = 0.f;
         float maxAnotherVariance = 0.f;
 
-        if(nonZeroVariance && label2FeatureWeight.isEmpty()) {// for initial call
+        if(nonZeroVariance && label2model.isEmpty()) {// for initial call
             float var = 2.f * calcVariance(features);
             return new Margin(correctScore, maxAnotherLabel, maxAnotherScore).variance(var);
         }
 
-        for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {// for each class
+        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
-            OpenHashMap<Object, WeightValue> weights = label2map.getValue();
-            PredictionResult predicted = calcScoreAndVariance(weights, features);
+            PredictionModel model = label2map.getValue();
+            PredictionResult predicted = calcScoreAndVariance(model, features);
             float score = predicted.getScore();
 
             if(label.equals(actual_label)) {
@@ -244,34 +233,27 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected final float squaredNorm(final List<?> features) {
         float squared_norm = 0.f;
-
         for(Object f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 v = fv.getValue();
             } else {
                 v = 1.f;
             }
             squared_norm += (v * v);
         }
-
-        if(bias != 0.f) {
-            squared_norm += (bias * bias); // REVIEWME
-        }
-
         return squared_norm;
     }
 
-    protected final float calcScore(final OpenHashMap<Object, WeightValue> weights, final List<?> features) {
+    protected final float calcScore(final PredictionModel model, final List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseX = this.parseX;
+        final boolean parseX = this.parseFeature;
 
         float score = 0.f;
-
         for(Object f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
@@ -279,58 +261,44 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             final Object k;
             final float v;
             if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = weights.get(k);
-            if(old_w != null) {
-                score += (old_w.getValue() * v);
+            float old_w = model.getWeight(k);
+            if(old_w != 0f) {
+                score += (old_w * v);
             }
         }
-
-        if(bias != 0.f) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight != null) {
-                score += biasWeight.getValue();
-            }
-        }
-
         return score;
     }
 
     protected final float calcVariance(final List<?> features) {
-        final boolean parseX = this.parseX;
+        final boolean parseX = this.parseFeature;
 
         float variance = 0.f;
-
         for(Object f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
             final float v;
             if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                FeatureValue fv = FeatureValue.parse(f);
                 v = fv.getValue();
             } else {
                 v = 1.f;
             }
             variance += v * v;
         }
-
-        if(bias != 0.f) {
-            variance += bias * bias;
-        }
-
         return variance;
     }
 
-    protected final PredictionResult calcScoreAndVariance(final OpenHashMap<Object, WeightValue> weights, final List<?> features) {
+    protected final PredictionResult calcScoreAndVariance(final PredictionModel model, final List<?> features) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseX = this.parseX;
+        final boolean parseX = this.parseFeature;
 
         float score = 0.f;
         float variance = 0.f;
@@ -342,29 +310,19 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             final Object k;
             final float v;
             if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = weights.get(k);
+            WeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
             } else {
-                score += (old_w.getValue() * v);
+                score += (old_w.get() * v);
                 variance += (old_w.getCovariance() * v * v);
-            }
-        }
-
-        if(bias != 0.f) {
-            WeightValue biasWeight = weights.get(biasKey);
-            if(biasWeight == null) {
-                variance += (1.f * bias * bias);
-            } else {
-                score += (biasWeight.getValue() * bias);
-                variance += (biasWeight.getCovariance() * bias * bias);
             }
         }
 
@@ -378,83 +336,69 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     + actual_label);
         }
 
-        OpenHashMap<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
-        if(weightsToAdd == null) {
-            weightsToAdd = new OpenHashMap<Object, WeightValue>(8192);
-            label2FeatureWeight.put(actual_label, weightsToAdd);
+        PredictionModel model2add = label2model.get(actual_label);
+        if(model2add == null) {
+            model2add = createModel();
+            label2model.put(actual_label, model2add);
         }
-        OpenHashMap<Object, WeightValue> weightsToSub = null;
+        PredictionModel model2sub = null;
         if(missed_label != null) {
-            weightsToSub = label2FeatureWeight.get(missed_label);
-            if(weightsToSub == null) {
-                weightsToSub = new OpenHashMap<Object, WeightValue>(8192);
-                label2FeatureWeight.put(missed_label, weightsToSub);
+            model2sub = label2model.get(missed_label);
+            if(model2sub == null) {
+                model2sub = createModel();
+                label2model.put(missed_label, model2sub);
             }
         }
 
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
         for(Object f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
             final Object k;
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_trueclass_w = weightsToAdd.get(k);
-            float add_w = (old_trueclass_w == null) ? coeff * v : old_trueclass_w.getValue()
-                    + (coeff * v);
-            weightsToAdd.put(k, new WeightValue(add_w));
+            float old_trueclass_w = model2add.getWeight(k);
+            float add_w = old_trueclass_w + (coeff * v);
+            model2add.set(k, new WeightValue(add_w));
 
-            if(weightsToSub != null) {
-                WeightValue old_falseclass_w = weightsToSub.get(k);
-                float sub_w = (old_falseclass_w == null) ? -(coeff * v)
-                        : old_falseclass_w.getValue() - (coeff * v);
-                weightsToSub.put(k, new WeightValue(sub_w));
-            }
-        }
-
-        if(biasKey != null) {
-            WeightValue old_trueclass_bias = weightsToAdd.get(biasKey);
-            float add_bias = (old_trueclass_bias == null) ? coeff * bias
-                    : old_trueclass_bias.getValue() + (coeff * bias);
-            weightsToAdd.put(biasKey, new WeightValue(add_bias));
-
-            if(weightsToSub != null) {
-                WeightValue old_falseclass_bias = weightsToSub.get(biasKey);
-                float sub_bias = (old_falseclass_bias == null) ? -(coeff * bias)
-                        : old_falseclass_bias.getValue() - (coeff * bias);
-                weightsToSub.put(biasKey, new WeightValue(sub_bias));
+            if(model2sub != null) {
+                float old_falseclass_w = model2sub.getWeight(k);
+                float sub_w = old_falseclass_w - (coeff * v);
+                model2sub.set(k, new WeightValue(sub_w));
             }
         }
     }
 
     @Override
     public void close() throws HiveException {
-        if(label2FeatureWeight != null) {
+        if(label2model != null) {
             long numForwarded = 0L;
             if(returnCovariance()) {
+                final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[4];
-                for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
-                    Object label = label2map.getKey();
+                final FloatWritable fv = new FloatWritable();
+                final FloatWritable cov = new FloatWritable();
+                for(Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
+                    Object label = entry.getKey();
                     forwardMapObj[0] = label;
-                    OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
-                    IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
-                    while(fvmapItor.next() != -1) {
-                        Object k = fvmapItor.unsafeGetAndFreeKey();
-                        WeightValueWithCovar v = (WeightValueWithCovar) fvmapItor.unsafeGetAndFreeValue();
-                        if(skipUntouched && !v.isTouched()) {
+                    PredictionModel model = entry.getValue();
+                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    while(itor.next() != -1) {
+                        itor.getValue(probe);
+                        if(skipUntouched && !probe.isTouched()) {
                             continue; // skip outputting untouched weights
                         }
-                        FloatWritable fv = new FloatWritable(v.getValue());
-                        FloatWritable cov = new FloatWritable(v.getCovariance());
+                        Object k = itor.getKey();
+                        fv.set(probe.get());
+                        cov.set(probe.getCovariance());
                         forwardMapObj[1] = k;
                         forwardMapObj[2] = fv;
                         forwardMapObj[3] = cov;
@@ -463,19 +407,21 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     }
                 }
             } else {
+                final WeightValue probe = new WeightValue();
                 final Object[] forwardMapObj = new Object[3];
-                for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> label2map : label2FeatureWeight.entrySet()) {
-                    Object label = label2map.getKey();
+                final FloatWritable fv = new FloatWritable();
+                for(Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
+                    Object label = entry.getKey();
                     forwardMapObj[0] = label;
-                    OpenHashMap<Object, WeightValue> fvmap = label2map.getValue();
-                    IMapIterator<Object, WeightValue> fvmapItor = fvmap.entries();
-                    while(fvmapItor.next() != -1) {
-                        Object k = fvmapItor.unsafeGetAndFreeKey();
-                        WeightValue v = fvmapItor.unsafeGetAndFreeValue();
-                        if(skipUntouched && !v.isTouched()) {
+                    PredictionModel model = entry.getValue();
+                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    while(itor.next() != -1) {
+                        itor.getValue(probe);
+                        if(skipUntouched && !probe.isTouched()) {
                             continue; // skip outputting untouched weights
                         }
-                        FloatWritable fv = new FloatWritable(v.getValue());
+                        Object k = itor.getKey();
+                        fv.set(probe.get());
                         forwardMapObj[1] = k;
                         forwardMapObj[2] = fv;
                         forward(forwardMapObj);
@@ -483,31 +429,31 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     }
                 }
             }
-            this.label2FeatureWeight = null;
+            this.label2model = null;
             logger.info("Trained a prediction model using " + count
                     + " training examples. Forwarded the prediction model of " + numForwarded
                     + " rows");
         }
     }
 
-    protected void loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
+    protected void loadPredictionModel(Map<Object, PredictionModel> label2model, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
             if(returnCovariance()) {
-                lines = loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
+                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                lines = loadPredictionModel(label2FeatureWeight, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
-        if(!label2FeatureWeight.isEmpty()) {
+        if(!label2model.isEmpty()) {
             long totalFeatures = 0L;
             StringBuilder statsBuf = new StringBuilder(256);
-            for(Map.Entry<Object, OpenHashMap<Object, WeightValue>> e : label2FeatureWeight.entrySet()) {
+            for(Map.Entry<Object, PredictionModel> e : label2model.entrySet()) {
                 Object label = e.getKey();
                 int numFeatures = e.getValue().size();
                 statsBuf.append('\n').append("Label: ").append(label).append(", Number of Features: ").append(numFeatures);
@@ -518,7 +464,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
     }
 
-    private static long loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
+    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
             throws IOException, SerDeException {
         long count = 0L;
         if(!file.exists()) {
@@ -527,7 +473,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    count += loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI);
+                    count += loadPredictionModel(label2model, f, labelOI, featureOI, weightOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI);
@@ -554,14 +500,14 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                             continue; // avoid the case that key or value is null
                         }
                         Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
-                        OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
-                        if(map == null) {
-                            map = new OpenHashMap<Object, WeightValue>(8192);
-                            label2FeatureWeight.put(label, map);
+                        PredictionModel model = label2model.get(label);
+                        if(model == null) {
+                            model = createModel();
+                            label2model.put(label, model);
                         }
                         Object k = c2refOI.getPrimitiveWritableObject(c2refOI.copyObject(f1));
                         float v = c3refOI.get(f2);
-                        map.put(k, new WeightValue(v, false));
+                        model.set(k, new WeightValue(v, false));
                     }
                 } finally {
                     reader.close();
@@ -571,7 +517,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return count;
     }
 
-    private static long loadPredictionModel(Map<Object, OpenHashMap<Object, WeightValue>> label2FeatureWeight, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
         long count = 0L;
         if(!file.exists()) {
@@ -580,7 +526,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    count += loadPredictionModel(label2FeatureWeight, f, labelOI, featureOI, weightOI, covarOI);
+                    count += loadPredictionModel(label2model, f, labelOI, featureOI, weightOI, covarOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI, covarOI);
@@ -610,16 +556,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                             continue; // avoid unexpected case
                         }
                         Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
-                        OpenHashMap<Object, WeightValue> map = label2FeatureWeight.get(label);
-                        if(map == null) {
-                            map = new OpenHashMap<Object, WeightValue>(8192);
-                            label2FeatureWeight.put(label, map);
+                        PredictionModel model = label2model.get(label);
+                        if(model == null) {
+                            model = createModel();
+                            label2model.put(label, model);
                         }
                         Object k = c2refOI.getPrimitiveWritableObject(c2refOI.copyObject(f1));
                         float v = c3refOI.get(f2);
                         float cov = (f3 == null) ? WeightValueWithCovar.DEFAULT_COVAR
                                 : c4refOI.get(f3);
-                        map.put(k, new WeightValueWithCovar(v, cov, false));
+                        model.set(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
                     reader.close();

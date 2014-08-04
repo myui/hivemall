@@ -63,7 +63,7 @@ public class LogressIterUDTF extends LogressUDTF {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
+        this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         ObjectInspector weightOI = featuresWithWeightOI.getMapValueObjectInspector();
         if(!FLOAT_TYPE_NAME.equals(weightOI.getTypeName())) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of value type Float: "
@@ -92,15 +92,15 @@ public class LogressIterUDTF extends LogressUDTF {
 
             final Object feature;
             Object k = e.getKey();
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(k, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(k);
                 feature = fv.getFeature();
             } else {
                 feature = ObjectInspectorUtils.copyToStandardObject(k, featureInspector);
             }
 
-            if(!weights.containsKey(feature)) {
-                weights.put(feature, new WeightValue(v));
+            if(!model.contains(feature)) {
+                model.set(feature, new WeightValue(v));
             }
         }
 

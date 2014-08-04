@@ -133,23 +133,17 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
             }
             final Object k;
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = weights.get(k);
+            WeightValue old_w = model.get(k);
             WeightValue new_w = getNewWeight(old_w, v, coeff, alpha, phi);
-            weights.put(k, new_w);
-        }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, coeff, alpha, phi);
-            weights.put(biasKey, new_bias);
+            model.set(k, new_w);
         }
     }
 
