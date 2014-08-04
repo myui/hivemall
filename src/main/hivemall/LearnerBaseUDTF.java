@@ -21,9 +21,9 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
+import hivemall.common.PredictionModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
-import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -52,10 +52,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     private static final Log logger = LogFactory.getLog(LearnerBaseUDTF.class);
 
-    protected boolean feature_hashing;
-    protected float bias;
     protected String preloadedModelFile;
     protected boolean skipUntouched;
+    protected boolean dense_model;
+    protected int model_dims;
 
     public LearnerBaseUDTF() {}
 
@@ -63,79 +63,68 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return false;
     }
 
-    public boolean isFeatureHashingEnabled() {
-        return feature_hashing;
-    }
-
-    public float getBias() {
-        return bias;
-    }
-
     @Override
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
-        opts.addOption("b", "bias", true, "Bias clause [default 0.0 (disable)]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("output_untouched", false, "Output feature weights not touched in the training");
+        opts.addOption("dense", "densemodel", true, "The dimension of model");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        boolean fhashFlag = false;
-        float biasValue = 0.f;
         String modelfile = null;
         boolean output_untouched = true; // emit every weight by the default
+        boolean denseModel = false;
+        int modelDims = -1;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
             String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
 
-            if(cl.hasOption("fh")) {
-                fhashFlag = true;
-            }
-
-            String biasStr = cl.getOptionValue("b");
-            if(biasStr != null) {
-                biasValue = Float.parseFloat(biasStr);
-            }
-
             modelfile = cl.getOptionValue("loadmodel");
             if(modelfile != null) {
                 output_untouched = cl.hasOption("output_untouched");
             }
+
+            String dimStr = cl.getOptionValue("densemodel");
+            if(dimStr != null) {
+                modelDims = Integer.parseInt(dimStr);
+                denseModel = true;
+            }
         }
 
-        this.feature_hashing = fhashFlag;
-        this.bias = biasValue;
         this.preloadedModelFile = modelfile;
         this.skipUntouched = output_untouched ? false : true;
+        this.dense_model = denseModel;
+        this.model_dims = modelDims;
         return cl;
     }
 
-    protected void loadPredictionModel(OpenHashMap<Object, WeightValue> map, String filename, PrimitiveObjectInspector keyOI) {
+    protected void loadPredictionModel(PredictionModel model, String filename, PrimitiveObjectInspector keyOI) {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
             if(returnCovariance()) {
-                lines = loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
+                lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                lines = loadPredictionModel(map, new File(filename), keyOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
-        if(!map.isEmpty()) {
-            logger.info("Loaded " + map.size() + " features from distributed cache '" + filename
+        if(model.size() > 0) {
+            logger.info("Loaded " + model.size() + " features from distributed cache '" + filename
                     + "' (" + lines + " lines) in " + elapsed);
         }
     }
 
-    private static long loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
+    private static long loadPredictionModel(PredictionModel model, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
             throws IOException, SerDeException {
         long count = 0L;
         if(!file.exists()) {
@@ -144,7 +133,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    count += loadPredictionModel(map, f, keyOI, valueOI);
+                    count += loadPredictionModel(model, f, keyOI, valueOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getKeyValueLineSerde(keyOI, valueOI);
@@ -169,7 +158,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         }
                         Object k = keyRefOI.getPrimitiveWritableObject(keyRefOI.copyObject(f0));
                         float v = varRefOI.get(f1);
-                        map.put(k, new WeightValue(v, false));
+                        model.set(k, new WeightValue(v, false));
                     }
                 } finally {
                     reader.close();
@@ -179,7 +168,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return count;
     }
 
-    private static long loadPredictionModel(OpenHashMap<Object, WeightValue> map, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+    private static long loadPredictionModel(PredictionModel model, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
         long count = 0L;
         if(!file.exists()) {
@@ -188,7 +177,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         if(!file.getName().endsWith(".crc")) {
             if(file.isDirectory()) {
                 for(File f : file.listFiles()) {
-                    count += loadPredictionModel(map, f, featureOI, weightOI, covarOI);
+                    count += loadPredictionModel(model, f, featureOI, weightOI, covarOI);
                 }
             } else {
                 LazySimpleSerDe serde = HiveUtils.getLineSerde(featureOI, weightOI, covarOI);
@@ -218,7 +207,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         float v = c2oi.get(f1);
                         float cov = (f2 == null) ? WeightValueWithCovar.DEFAULT_COVAR
                                 : c3oi.get(f2);
-                        map.put(k, new WeightValueWithCovar(v, cov, false));
+                        model.set(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
                     reader.close();
