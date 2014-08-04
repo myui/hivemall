@@ -24,4 +24,6 @@ public interface Copyable<T> {
 
     void copyTo(T probe);
 
+    void copyFrom(T another);
+
 }

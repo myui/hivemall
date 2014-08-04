@@ -62,6 +62,11 @@ public final class MutableInt extends Number
     }
 
     @Override
+    public void copyFrom(MutableInt another) {
+        this.value = another.value;
+    }
+
+    @Override
     public int compareTo(MutableInt other) {
         return Integer.compare(value, other.value);
     }

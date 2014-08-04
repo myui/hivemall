@@ -62,6 +62,11 @@ public final class MutableFloat extends Number
     }
 
     @Override
+    public void copyFrom(MutableFloat another) {
+        this.value = another.value;
+    }
+
+    @Override
     public int compareTo(MutableFloat other) {
         return Float.compare(value, other.value);
     }
