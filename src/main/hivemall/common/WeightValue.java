@@ -20,12 +20,16 @@
  */
 package hivemall.common;
 
-public class WeightValue {
+import hivemall.utils.lang.Copyable;
 
-    protected final float value;
+public class WeightValue implements Copyable<WeightValue> {
+
+    protected float value;
 
     /** Is touched in training */
-    protected final boolean touched;
+    protected boolean touched;
+
+    public WeightValue() {}
 
     public WeightValue(float weight) {
         this(weight, true);
@@ -40,11 +44,19 @@ public class WeightValue {
         return value;
     }
 
-    public float getValue() {
-        return value;
+    public void set(float weight) {
+        this.value = weight;
+    }
+
+    public boolean hasCovariance() {
+        return false;
     }
 
     public float getCovariance() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setCovariance(float cov) {
         throw new UnsupportedOperationException();
     }
 
@@ -56,6 +68,18 @@ public class WeightValue {
     }
 
     @Override
+    public void copyTo(WeightValue probe) {
+        probe.value = this.value;
+        probe.touched = this.touched;
+    }
+
+    @Override
+    public void copyFrom(WeightValue another) {
+        this.value = another.value;
+        this.touched = another.touched;
+    }
+
+    @Override
     public String toString() {
         return "WeightValue [value=" + value + "]";
     }
@@ -63,7 +87,11 @@ public class WeightValue {
     public static final class WeightValueWithCovar extends WeightValue {
         public static final float DEFAULT_COVAR = 1.f;
 
-        final float covariance;
+        float covariance;
+
+        public WeightValueWithCovar() {
+            super();
+        }
 
         public WeightValueWithCovar(float weight, float covariance) {
             this(weight, covariance, true);
@@ -74,8 +102,31 @@ public class WeightValue {
             this.covariance = covariance;
         }
 
+        @Override
+        public boolean hasCovariance() {
+            return true;
+        }
+
+        @Override
         public float getCovariance() {
             return covariance;
+        }
+
+        @Override
+        public void setCovariance(float cov) {
+            this.covariance = cov;
+        }
+
+        @Override
+        public void copyTo(WeightValue probe) {
+            super.copyTo(probe);
+            ((WeightValueWithCovar) probe).covariance = this.covariance;
+        }
+
+        @Override
+        public void copyFrom(WeightValue another) {
+            super.copyFrom(another);
+            this.covariance = ((WeightValueWithCovar) another).covariance;
         }
 
         @Override
