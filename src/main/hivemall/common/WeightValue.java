@@ -68,9 +68,9 @@ public class WeightValue implements Copyable<WeightValue> {
     }
 
     @Override
-    public void copyTo(WeightValue probe) {
-        probe.value = this.value;
-        probe.touched = this.touched;
+    public void copyTo(WeightValue another) {
+        another.value = this.value;
+        another.touched = this.touched;
     }
 
     @Override
@@ -118,9 +118,9 @@ public class WeightValue implements Copyable<WeightValue> {
         }
 
         @Override
-        public void copyTo(WeightValue probe) {
-            super.copyTo(probe);
-            ((WeightValueWithCovar) probe).covariance = this.covariance;
+        public void copyTo(WeightValue another) {
+            super.copyTo(another);
+            ((WeightValueWithCovar) another).covariance = this.covariance;
         }
 
         @Override

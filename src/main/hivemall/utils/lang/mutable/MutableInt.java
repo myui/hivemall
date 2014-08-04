@@ -57,8 +57,8 @@ public final class MutableInt extends Number
     }
 
     @Override
-    public void copyTo(MutableInt probe) {
-        probe.setValue(value);
+    public void copyTo(MutableInt another) {
+        another.setValue(value);
     }
 
     @Override

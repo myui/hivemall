@@ -22,7 +22,7 @@ package hivemall.utils.lang;
 
 public interface Copyable<T> {
 
-    void copyTo(T probe);
+    void copyTo(T another);
 
     void copyFrom(T another);
 

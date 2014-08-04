@@ -57,8 +57,8 @@ public final class MutableFloat extends Number
     }
 
     @Override
-    public void copyTo(MutableFloat probe) {
-        probe.setValue(value);
+    public void copyTo(MutableFloat another) {
+        another.setValue(value);
     }
 
     @Override
