@@ -52,7 +52,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
 
     private ObjectInspector itemOI;
     private ListObjectInspector featureListOI;
-    private boolean parseX;
+    private boolean parseFeature;
     private Object[] forwardObjs;
 
     private int num_hashes = 5;
@@ -75,7 +75,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
         }
-        this.parseX = STRING_TYPE_NAME.equals(keyTypeName);
+        this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         this.forwardObjs = new Object[2];
 
         processOptions(argOIs);
@@ -128,7 +128,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
         forwardObjs[1] = args[0];
         List<?> features = (List<?>) featureListOI.getList(args[1]);
         ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        List<FeatureValue> ftvec = parseFeatures(features, featureInspector, parseX);
+        List<FeatureValue> ftvec = parseFeatures(features, featureInspector, parseFeature);
 
         computeAndForwardSignatures(ftvec, forwardObjs);
     }
@@ -141,7 +141,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
             }
             final FeatureValue fv;
             if(parseX) {
-                fv = FeatureValue.parse(f, false);
+                fv = FeatureValue.parse(f);
             } else {
                 Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 fv = new FeatureValue(k, 1f);

@@ -20,8 +20,6 @@
  */
 package hivemall.common;
 
-import hivemall.utils.hashing.MurmurHash3;
-
 import org.apache.hadoop.io.Text;
 
 public final class FeatureValue {
@@ -43,15 +41,11 @@ public final class FeatureValue {
         return value;
     }
 
-    public static FeatureValue parse(Object o, boolean feature_hashing) {
+    public static FeatureValue parse(Object o) {
         if(o == null) {
             return null;
         }
         String s = o.toString();
-        if(feature_hashing) {
-            int hashval = MurmurHash3.murmurhash3(s);
-            return new FeatureValue(Integer.valueOf(hashval), 1.f);
-        }
         return parse(s);
     }
 

@@ -93,7 +93,7 @@ public class MinHashesUDF extends UDF {
             if(noWeight) {
                 fv = new FeatureValue(f, 1.f);
             } else {
-                fv = FeatureValue.parse(f, false);
+                fv = FeatureValue.parse(f);
             }
             ftvec.add(fv);
         }
