@@ -332,7 +332,7 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
 
         @Override
         public <T extends Copyable<V>> void getValue(T probe) {
-            probe.copyTo(getValue());
+            probe.copyFrom(getValue());
         }
 
         private void free(int index) {
