@@ -315,8 +315,8 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
                 return -1;
             }
             int curEntry = nextEntry;
-            this.lastEntry = nextEntry;
-            this.nextEntry = nextEntry(nextEntry + 1);
+            this.lastEntry = curEntry;
+            this.nextEntry = nextEntry(curEntry + 1);
             return curEntry;
         }
 
