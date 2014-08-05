@@ -114,7 +114,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
 
     @Override
     protected void train(List<?> features, int label) {
-        final int y = label > 0 ? 1 : -1;
+        final float y = label > 0 ? 1f : -1f;
 
         PredictionResult margin = calcScoreAndVariance(features);
         float loss = loss(margin, y);
@@ -234,7 +234,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
 
     }
 
-    protected void update(final List<?> features, final int y, final float alpha, final float beta) {
+    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
