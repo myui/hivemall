@@ -67,6 +67,10 @@ public class WeightValue implements Copyable<WeightValue> {
         return touched;
     }
 
+    public void setTouched(boolean touched) {
+        this.touched = touched;
+    }
+
     @Override
     public void copyTo(WeightValue another) {
         another.value = this.value;

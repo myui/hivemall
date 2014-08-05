@@ -148,20 +148,28 @@ public final class DenseModel implements PredictionModel {
         public WeightValue getValue() {
             if(covars == null) {
                 float w = weights[cursor];
-                return new WeightValue(w);
+                WeightValue v = new WeightValue(w);
+                v.setTouched(w != 0f);
+                return v;
             } else {
                 float w = weights[cursor];
                 float cov = covars[cursor];
-                return new WeightValueWithCovar(w, cov);
+                WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
+                v.setTouched(w != 0.f || cov != 1.f);
+                return v;
             }
         }
 
         @Override
         public <T extends Copyable<WeightValue>> void getValue(T probe) {
-            tmpWeight.value = weights[cursor];
+            float w = weights[cursor];
+            tmpWeight.value = w;
+            float cov = 1.f;
             if(covars != null) {
-                ((WeightValueWithCovar) tmpWeight).covariance = covars[cursor];
+                cov = covars[cursor];
+                ((WeightValueWithCovar) tmpWeight).covariance = cov;
             }
+            tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);
         }
 
