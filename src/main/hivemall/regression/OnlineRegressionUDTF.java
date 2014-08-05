@@ -76,14 +76,13 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
 
         processOptions(argOIs);
 
-        ObjectInspector featureOutputOI = featureInputOI;
         this.model = dense_model ? new DenseModel(model_dims) : new SparseModel();
         if(preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureInputOI);
         }
 
         this.count = 0;
-        return getReturnOI(featureOutputOI);
+        return getReturnOI(featureInputOI);
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
