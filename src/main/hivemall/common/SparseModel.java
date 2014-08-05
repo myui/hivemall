@@ -56,7 +56,7 @@ public final class SparseModel implements PredictionModel {
     @Override
     public float getCovariance(Object feature) {
         WeightValueWithCovar v = (WeightValueWithCovar) weights.get(feature);
-        return v == null ? 0.f : v.covariance;
+        return v == null ? 1.f : v.covariance;
     }
 
     @Override
