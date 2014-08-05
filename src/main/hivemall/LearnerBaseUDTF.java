@@ -54,7 +54,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(LearnerBaseUDTF.class);
 
     protected String preloadedModelFile;
-    protected boolean skipUntouched;
     protected boolean dense_model;
     protected int model_dims;
 
@@ -69,7 +68,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
-        opts.addOption("output_untouched", false, "Output feature weights not touched in the training");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
         return opts;
@@ -78,7 +76,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         String modelfile = null;
-        boolean output_untouched = true; // emit every weight by the default
         boolean denseModel = false;
         int modelDims = -1;
 
@@ -88,9 +85,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             cl = parseOptions(rawArgs);
 
             modelfile = cl.getOptionValue("loadmodel");
-            if(modelfile != null) {
-                output_untouched = cl.hasOption("output_untouched");
-            }
 
             denseModel = cl.hasOption("densemodel");
             if(denseModel) {
@@ -99,7 +93,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
 
         this.preloadedModelFile = modelfile;
-        this.skipUntouched = output_untouched ? false : true;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
         return cl;
