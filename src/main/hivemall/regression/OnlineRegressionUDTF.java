@@ -272,7 +272,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                 final IMapIterator<Object, WeightValue> itor = model.entries();
                 while(itor.next() != -1) {
                     itor.getValue(probe);
-                    if(skipUntouched && !probe.isTouched()) {
+                    if(!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();
@@ -291,7 +291,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                 final IMapIterator<Object, WeightValue> itor = model.entries();
                 while(itor.next() != -1) {
                     itor.getValue(probe);
-                    if(skipUntouched && !probe.isTouched()) {
+                    if(!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();
