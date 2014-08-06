@@ -50,10 +50,18 @@ public final class DenseModel implements PredictionModel {
         }
     }
 
+    private void checkBounds(final int index) {
+        if(index >= size) {
+            throw new ArrayIndexOutOfBoundsException("Accessed index " + index + " of array size "
+                    + size);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends WeightValue> T get(Object feature) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         if(covars == null) {
             return (T) new WeightValue(weights[i]);
         } else {
@@ -64,6 +72,7 @@ public final class DenseModel implements PredictionModel {
     @Override
     public <T extends WeightValue> void set(Object feature, T value) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         float weight = value.get();
         weights[i] = weight;
         if(value.hasCovariance()) {
@@ -75,24 +84,28 @@ public final class DenseModel implements PredictionModel {
     @Override
     public float getWeight(Object feature) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         return weights[i];
     }
 
     @Override
     public float getCovariance(Object feature) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         return covars[i];
     }
 
     @Override
     public void setValue(Object feature, float weight) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         weights[i] = weight;
     }
 
     @Override
     public void setValue(Object feature, float weight, float covar) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         weights[i] = weight;
         covars[i] = covar;
     }
@@ -105,6 +118,7 @@ public final class DenseModel implements PredictionModel {
     @Override
     public boolean contains(Object feature) {
         int i = HiveUtils.parseInt(feature);
+        checkBounds(i);
         float w = weights[i];
         return w != 0.f;
     }
