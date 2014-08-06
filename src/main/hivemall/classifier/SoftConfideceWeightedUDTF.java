@@ -62,7 +62,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

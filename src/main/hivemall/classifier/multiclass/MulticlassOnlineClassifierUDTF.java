@@ -105,7 +105,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     @Override
     protected PredictionModel createModel() {
-        return dense_model ? new DenseModel(model_dims) : new SparseModel(8192);
+        return dense_model ? new DenseModel(model_dims, useCovariance()) : new SparseModel(8192);
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
@@ -134,7 +134,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(returnCovariance()) {
+        if(useCovariance()) {
             fieldNames.add("covar");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
@@ -385,7 +385,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     public void close() throws HiveException {
         if(label2model != null) {
             long numForwarded = 0L;
-            if(returnCovariance()) {
+            if(useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[4];
                 final FloatWritable fv = new FloatWritable();
@@ -444,7 +444,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
-            if(returnCovariance()) {
+            if(useCovariance()) {
                 lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
                 lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector);

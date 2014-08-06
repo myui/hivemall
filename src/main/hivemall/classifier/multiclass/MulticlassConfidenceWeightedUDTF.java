@@ -64,7 +64,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

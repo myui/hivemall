@@ -53,7 +53,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

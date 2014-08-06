@@ -108,7 +108,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(returnCovariance()) {
+        if(useCovariance()) {
             fieldNames.add("covar");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
@@ -263,7 +263,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     public void close() throws HiveException {
         if(model != null) {
             int numForwarded = 0;
-            if(returnCovariance()) {
+            if(useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[3];
                 final FloatWritable fv = new FloatWritable();

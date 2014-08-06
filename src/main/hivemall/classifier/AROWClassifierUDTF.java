@@ -58,7 +58,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

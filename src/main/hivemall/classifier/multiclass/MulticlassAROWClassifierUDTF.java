@@ -58,7 +58,7 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

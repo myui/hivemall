@@ -63,7 +63,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 

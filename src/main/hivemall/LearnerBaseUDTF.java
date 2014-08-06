@@ -61,7 +61,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     public LearnerBaseUDTF() {}
 
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return false;
     }
 
@@ -100,14 +100,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     }
 
     protected PredictionModel createModel() {
-        return dense_model ? new DenseModel(model_dims) : new SparseModel();
+        return dense_model ? new DenseModel(model_dims, useCovariance()) : new SparseModel();
     }
 
     protected void loadPredictionModel(PredictionModel model, String filename, PrimitiveObjectInspector keyOI) {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
-            if(returnCovariance()) {
+            if(useCovariance()) {
                 lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
                 lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector);
