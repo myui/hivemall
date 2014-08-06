@@ -66,7 +66,6 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("fh", "fhash", false, "Enable feature hashing (only used when feature is TEXT type) [default: off]");
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
@@ -86,9 +85,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
             modelfile = cl.getOptionValue("loadmodel");
 
-            denseModel = cl.hasOption("densemodel");
+            denseModel = cl.hasOption("dense");
             if(denseModel) {
-                modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 2 ^ 24);
+                modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 16777216);
             }
         }
 
