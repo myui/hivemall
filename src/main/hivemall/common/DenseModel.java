@@ -24,14 +24,19 @@ import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
+import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
 
-public final class DenseModel implements PredictionModel {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-    private final int size;
-    private final float[] weights;
-    private final float[] covars;
+public final class DenseModel implements PredictionModel {
+    private static final Log logger = LogFactory.getLog(DenseModel.class);
+
+    private int size;
+    private float[] weights;
+    private float[] covars;
 
     public DenseModel(int ndims) {
         this(ndims, false);
@@ -43,17 +48,26 @@ public final class DenseModel implements PredictionModel {
         this.weights = new float[size];
         if(withCovar) {
             float[] covars = new float[size];
-            Arrays.fill(covars, 1.f);
+            Arrays.fill(covars, 1f);
             this.covars = covars;
         } else {
             this.covars = null;
         }
     }
 
-    private void checkBounds(final int index) {
+    private void ensureCapacity(final int index) {
         if(index >= size) {
-            throw new ArrayIndexOutOfBoundsException("Accessed index " + index + " of array size "
-                    + size);
+            int bits = MathUtils.bitsRequired(index);
+            int newSize = (1 << bits) + 1;
+            int oldSize = size;
+            logger.info("Expands internal array size from " + oldSize + " to " + newSize + " ("
+                    + bits + " bits)");
+            this.size = newSize;
+            this.weights = Arrays.copyOf(weights, newSize);
+            if(covars != null) {
+                this.covars = Arrays.copyOf(covars, newSize);
+                Arrays.fill(covars, oldSize, newSize, 1f);
+            }
         }
     }
 
@@ -61,7 +75,9 @@ public final class DenseModel implements PredictionModel {
     @Override
     public <T extends WeightValue> T get(Object feature) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        if(i >= size) {
+            return null;
+        }
         if(covars == null) {
             return (T) new WeightValue(weights[i]);
         } else {
@@ -72,7 +88,7 @@ public final class DenseModel implements PredictionModel {
     @Override
     public <T extends WeightValue> void set(Object feature, T value) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        ensureCapacity(i);
         float weight = value.get();
         weights[i] = weight;
         if(value.hasCovariance()) {
@@ -84,28 +100,32 @@ public final class DenseModel implements PredictionModel {
     @Override
     public float getWeight(Object feature) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        if(i >= size) {
+            return 0f;
+        }
         return weights[i];
     }
 
     @Override
     public float getCovariance(Object feature) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        if(i >= size) {
+            return 1f;
+        }
         return covars[i];
     }
 
     @Override
     public void setValue(Object feature, float weight) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        ensureCapacity(i);
         weights[i] = weight;
     }
 
     @Override
     public void setValue(Object feature, float weight, float covar) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        ensureCapacity(i);
         weights[i] = weight;
         covars[i] = covar;
     }
@@ -118,7 +138,9 @@ public final class DenseModel implements PredictionModel {
     @Override
     public boolean contains(Object feature) {
         int i = HiveUtils.parseInt(feature);
-        checkBounds(i);
+        if(i >= size) {
+            return false;
+        }
         float w = weights[i];
         return w != 0.f;
     }
@@ -126,30 +148,30 @@ public final class DenseModel implements PredictionModel {
     @SuppressWarnings("unchecked")
     @Override
     public <K, V extends WeightValue> IMapIterator<K, V> entries() {
-        return (IMapIterator<K, V>) new Itr(size);
+        return (IMapIterator<K, V>) new Itr();
     }
 
     private final class Itr implements IMapIterator<Number, WeightValue> {
 
         private int cursor;
-        private final WeightValue tmpWeight;
+        private final WeightValueWithCovar tmpWeight;
 
-        Itr(int size) {
+        private Itr() {
             this.cursor = -1;
-            this.tmpWeight = (covars == null) ? new WeightValue() : new WeightValueWithCovar();
+            this.tmpWeight = new WeightValueWithCovar();
         }
 
         @Override
         public boolean hasNext() {
-            return cursor != size;
+            return cursor < size;
         }
 
         @Override
         public int next() {
+            ++cursor;
             if(!hasNext()) {
                 return -1;
             }
-            cursor++;
             return cursor;
         }
 
@@ -181,7 +203,7 @@ public final class DenseModel implements PredictionModel {
             float cov = 1.f;
             if(covars != null) {
                 cov = covars[cursor];
-                ((WeightValueWithCovar) tmpWeight).covariance = cov;
+                tmpWeight.covariance = cov;
             }
             tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);
