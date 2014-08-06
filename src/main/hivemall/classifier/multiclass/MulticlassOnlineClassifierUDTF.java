@@ -89,18 +89,22 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: "
                     + labelTypeName);
         }
+
         processOptions(argOIs);
 
+        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
+                : featureInputOI;
         this.label2model = new HashMap<Object, PredictionModel>(64);
         if(preloadedModelFile != null) {
-            loadPredictionModel(label2model, preloadedModelFile, labelInputOI, featureInputOI);
+            loadPredictionModel(label2model, preloadedModelFile, labelInputOI, featureOutputOI);
         }
 
         this.count = 0;
-        return getReturnOI(labelInputOI, featureInputOI);
+        return getReturnOI(labelInputOI, featureOutputOI);
     }
 
-    protected final PredictionModel createModel() {
+    @Override
+    protected PredictionModel createModel() {
         return dense_model ? new DenseModel(model_dims) : new SparseModel(8192);
     }
 

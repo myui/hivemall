@@ -21,7 +21,9 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
+import hivemall.common.DenseModel;
 import hivemall.common.PredictionModel;
+import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.datetime.StopWatch;
@@ -95,6 +97,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.dense_model = denseModel;
         this.model_dims = modelDims;
         return cl;
+    }
+
+    protected PredictionModel createModel() {
+        return dense_model ? new DenseModel(model_dims) : new SparseModel();
     }
 
     protected void loadPredictionModel(PredictionModel model, String filename, PrimitiveObjectInspector keyOI) {

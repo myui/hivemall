@@ -24,11 +24,9 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.LearnerBaseUDTF;
-import hivemall.common.DenseModel;
 import hivemall.common.FeatureValue;
 import hivemall.common.PredictionModel;
 import hivemall.common.PredictionResult;
-import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
@@ -73,13 +71,15 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
         processOptions(argOIs);
 
-        this.model = dense_model ? new DenseModel(model_dims) : new SparseModel();
+        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
+                : featureInputOI;
+        this.model = createModel();
         if(preloadedModelFile != null) {
-            loadPredictionModel(model, preloadedModelFile, featureInputOI);
+            loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
 
         this.count = 0;
-        return getReturnOI(featureInputOI);
+        return getReturnOI(featureOutputOI);
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
