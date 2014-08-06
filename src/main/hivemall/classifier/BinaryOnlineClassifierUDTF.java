@@ -131,7 +131,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     protected void train(final List<?> features, final int label) {
-        final int y = label > 0 ? 1 : -1;
+        final float y = label > 0 ? 1f : -1f;
 
         final float p = predict(features);
         final float z = p * y;
@@ -231,7 +231,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(List<?> features, int y, float p) {
+    protected void update(List<?> features, float y, float p) {
         throw new IllegalStateException();
     }
 

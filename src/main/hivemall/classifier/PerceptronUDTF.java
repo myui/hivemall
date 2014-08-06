@@ -39,7 +39,7 @@ public class PerceptronUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected void update(List<?> features, int y, float p) {
+    protected void update(List<?> features, float y, float p) {
         update(features, y);
     }
 }
