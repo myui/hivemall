@@ -21,11 +21,14 @@
 package hivemall.ftvec.amplify;
 
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
+import hivemall.HivemallConstants;
 import hivemall.common.RandomizedAmplifier;
 import hivemall.common.RandomizedAmplifier.DropoutListener;
 
 import java.util.ArrayList;
 
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
@@ -35,12 +38,26 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
+import org.apache.hadoop.mapred.JobConf;
 
 public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
 
-    private transient ObjectInspector[] argOIs;
+    private boolean useSeed;
+    private long seed;
 
+    private transient ObjectInspector[] argOIs;
     private transient RandomizedAmplifier<Object[]> amplifier;
+
+    @Override
+    public void configure(MapredContext mapredContext) {
+        super.configure(mapredContext);
+        JobConf jobconf = mapredContext.getJobConf();
+        String seed = jobconf.get(HivemallConstants.CONFKEY_RAND_AMPLIFY_SEED);
+        this.useSeed = (seed != null);
+        if(useSeed) {
+            this.seed = Long.parseLong(seed);
+        }
+    }
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -75,8 +92,13 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         }
         this.argOIs = argOIs;
 
-        this.amplifier = new RandomizedAmplifier<Object[]>(numBuffers, xtimes);
+        this.amplifier = useSeed ? new RandomizedAmplifier<Object[]>(numBuffers, xtimes, seed)
+                : new RandomizedAmplifier<Object[]>(numBuffers, xtimes);
         amplifier.setDropoutListener(this);
+
+        if(useSeed) {
+            LogFactory.getLog(RandomAmplifierUDTF.class).info("rand_amplify() using seed: " + seed);
+        }
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();

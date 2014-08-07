@@ -23,6 +23,7 @@ package hivemall;
 public final class HivemallConstants {
 
     public static final String BIAS_CLAUSE = "0";
+    public static final String CONFKEY_RAND_AMPLIFY_SEED = "hivemall.amplify.seed";
 
     // org.apache.hadoop.hive.serde.Constants (hive 0.9)
     // org.apache.hadoop.hive.serde.serdeConstants (hive 0.10 or later)
