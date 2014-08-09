@@ -107,13 +107,21 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     protected PredictionModel createModel() {
         if(dense_model) {
+            boolean useCovar = useCovariance();
             if(model_dims > 16777216) {
-                return new SpaceEfficientDenseModel(model_dims, useCovariance());
+                logger.info("Build a space efficient dense model with " + model_dims
+                        + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
+                return new SpaceEfficientDenseModel(model_dims, useCovar);
             } else {
-                return new DenseModel(model_dims, useCovariance());
+                logger.info("Build a dense model with initial with " + model_dims
+                        + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
+                return new DenseModel(model_dims, useCovar);
             }
         } else {
-            return new SparseModel(getInitialModelSize());
+            int initModelSize = getInitialModelSize();
+            logger.info("Build a sparse model with initial with " + initModelSize
+                    + " initial dimensions");
+            return new SparseModel(initModelSize);
         }
     }
 
