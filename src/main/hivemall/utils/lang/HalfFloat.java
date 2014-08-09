@@ -35,6 +35,7 @@ package hivemall.utils.lang;
  */
 public final class HalfFloat {
     public static final short ZERO = 0;
+    public static final short ONE;
 
     private static final int[] mantissatable;
     private static final int[] exponenttable;
@@ -48,6 +49,7 @@ public final class HalfFloat {
         basetable = new short[512]; // 1024 bytes
         shifttable = new byte[512]; // 512 bytes
         populateTableEntries();
+        ONE = floatToHalfFloat(1f);
     }
 
     private HalfFloat() {}
