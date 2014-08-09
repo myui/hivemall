@@ -70,7 +70,8 @@ public class ArrayHashValuesUDF extends UDF {
                     v = i + ':' + v;
                 }
                 String data = (prefix == null) ? v : (prefix + v);
-                ary[i] = val(MurmurHash3.murmurhash3(data, numFeatures));
+                int h = MurmurHash3.murmurhash3(data, numFeatures);
+                ary[i] = val(h + 1);
             }
         }
         return Arrays.asList(ary);

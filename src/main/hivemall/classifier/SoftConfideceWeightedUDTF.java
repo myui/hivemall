@@ -62,7 +62,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 
@@ -114,7 +114,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
 
     @Override
     protected void train(List<?> features, int label) {
-        final int y = label > 0 ? 1 : -1;
+        final float y = label > 0 ? 1f : -1f;
 
         PredictionResult margin = calcScoreAndVariance(features);
         float loss = loss(margin, y);
@@ -234,7 +234,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
 
     }
 
-    protected void update(final List<?> features, final int y, final float alpha, final float beta) {
+    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
 
         for(Object f : features) {
@@ -243,23 +243,17 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
             }
             final Object k;
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = weights.get(k);
+            WeightValue old_w = model.get(k);
             WeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
-            weights.put(k, new_w);
-        }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, y, alpha, beta);
-            weights.put(biasKey, new_bias);
+            model.set(k, new_w);
         }
     }
 
@@ -270,7 +264,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
             old_v = 0.f;
             old_cov = 1.f;
         } else {
-            old_v = old.getValue();
+            old_v = old.get();
             old_cov = old.getCovariance();
         }
 

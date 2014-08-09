@@ -32,13 +32,12 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "addBias", value = "_FUNC_(feature_vector in array<string>) - Returns features with a bias in array<string>")
+@Description(name = "add_bias", value = "_FUNC_(feature_vector in array<string>) - Returns features with a bias in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class AddBiasUDF extends UDF {
 
     public List<Text> evaluate(List<String> ftvec) {
-        String biasClause = Integer.toString(HivemallConstants.BIAS_CLAUSE_INT);
-        return evaluate(ftvec, biasClause);
+        return evaluate(ftvec, HivemallConstants.BIAS_CLAUSE);
     }
 
     public List<Text> evaluate(List<String> ftvec, String biasClause) {

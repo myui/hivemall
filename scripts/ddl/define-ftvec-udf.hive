@@ -52,11 +52,19 @@ create temporary function rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifie
 drop temporary function conv2dense;
 create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
 
+-- for backward compatibility
 drop temporary function addBias;
 create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
 
+drop temporary function add_bias;
+create temporary function add_bias as 'hivemall.ftvec.AddBiasUDF';
+
+-- for backward compatibility
 drop temporary function sortByFeature;
 create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
+
+drop temporary function sort_by_feature;
+create temporary function sort_by_feature as 'hivemall.ftvec.SortByFeatureUDF';
 
 drop temporary function extract_feature;
 create temporary function extract_feature as 'hivemall.ftvec.ExtractFeatureUDF';

@@ -20,7 +20,7 @@
  */
 package hivemall.utils.collections;
 
-import hivemall.utils.collections.OpenHashMap.IMapIterator;
+import hivemall.utils.lang.mutable.MutableInt;
 
 import java.util.Map;
 
@@ -67,23 +67,24 @@ public class OpenHashMapTest {
     }
 
     @Test
-    public void testIteratorGetAndFree() {
-        OpenHashMap<String, Integer> map = new OpenHashMap<String, Integer>(100);
-        IMapIterator<String, Integer> itor = map.entries();
+    public void testIteratorGetProbe() {
+        OpenHashMap<String, MutableInt> map = new OpenHashMap<String, MutableInt>(100);
+        IMapIterator<String, MutableInt> itor = map.entries();
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;
         for(int i = 0; i < numEntries; i++) {
-            map.put(Integer.toString(i), i);
+            map.put(Integer.toString(i), new MutableInt(i));
         }
 
+        final MutableInt probe = new MutableInt();
         itor = map.entries();
         Assert.assertTrue(itor.hasNext());
         while(itor.hasNext()) {
             Assert.assertFalse(itor.next() == -1);
-            String k = itor.unsafeGetAndFreeKey();
-            Integer v = itor.unsafeGetAndFreeValue();
-            Assert.assertEquals(Integer.valueOf(k), v);
+            String k = itor.getKey();
+            itor.getValue(probe);
+            Assert.assertEquals(Integer.valueOf(k).intValue(), probe.intValue());
         }
         Assert.assertEquals(-1, itor.next());
     }

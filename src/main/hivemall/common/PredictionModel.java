@@ -18,28 +18,28 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.classifier;
+package hivemall.common;
 
-import java.util.List;
+import hivemall.utils.collections.IMapIterator;
 
-import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+public interface PredictionModel {
 
-public class PerceptronUDTF extends BinaryOnlineClassifierUDTF {
+    public int size();
 
-    @Override
-    public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("PerceptronUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
-        }
+    public boolean contains(Object feature);
 
-        return super.initialize(argOIs);
-    }
+    public <T extends WeightValue> T get(Object feature);
 
-    @Override
-    protected void update(List<?> features, float y, float p) {
-        update(features, y);
-    }
+    public <T extends WeightValue> void set(Object feature, T value);
+
+    public float getWeight(Object feature);
+
+    public float getCovariance(Object feature);
+
+    public void setValue(Object feature, float weight);
+
+    public void setValue(Object feature, float weight, float covar);
+
+    public <K, V extends WeightValue> IMapIterator<K, V> entries();
+
 }

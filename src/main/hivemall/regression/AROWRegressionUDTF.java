@@ -53,7 +53,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 
@@ -114,23 +114,17 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
             }
             final Object k;
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = weights.get(k);
+            WeightValue old_w = model.get(k);
             WeightValue new_w = getNewWeight(old_w, v, coeff, beta);
-            weights.put(k, new_w);
-        }
-
-        if(biasKey != null) {
-            WeightValue old_bias = weights.get(biasKey);
-            WeightValue new_bias = getNewWeight(old_bias, bias, coeff, beta);
-            weights.put(biasKey, new_bias);
+            model.set(k, new_w);
         }
     }
 
@@ -141,7 +135,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
             old_w = 0.f;
             old_cov = 1.f;
         } else {
-            old_w = old.getValue();
+            old_w = old.get();
             old_cov = old.getCovariance();
         }
 

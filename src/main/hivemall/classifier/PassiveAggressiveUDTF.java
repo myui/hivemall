@@ -25,8 +25,8 @@ import hivemall.common.PredictionResult;
 
 import java.util.List;
 
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -45,7 +45,7 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
     @Override
     protected void train(final List<?> features, final int label) {
-        final int y = label > 0 ? 1 : -1;
+        final float y = label > 0 ? 1f : -1f;
 
         PredictionResult margin = calcScoreAndNorm(features);
         float p = margin.getScore();

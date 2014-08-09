@@ -22,9 +22,9 @@ package hivemall.classifier.multiclass;
 
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
+import hivemall.common.PredictionModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
-import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.math.StatsUtils;
 
 import java.util.List;
@@ -63,7 +63,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
     }
 
     @Override
-    protected boolean returnCovariance() {
+    protected boolean useCovariance() {
         return true;
     }
 
@@ -242,56 +242,43 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
                     + actual_label);
         }
 
-        OpenHashMap<Object, WeightValue> weightsToAdd = label2FeatureWeight.get(actual_label);
-        if(weightsToAdd == null) {
-            weightsToAdd = new OpenHashMap<Object, WeightValue>(8192);
-            label2FeatureWeight.put(actual_label, weightsToAdd);
+        PredictionModel model2add = label2model.get(actual_label);
+        if(model2add == null) {
+            model2add = createModel();
+            label2model.put(actual_label, model2add);
         }
-        OpenHashMap<Object, WeightValue> weightsToSub = null;
+        PredictionModel model2sub = null;
         if(missed_label != null) {
-            weightsToSub = label2FeatureWeight.get(missed_label);
-            if(weightsToSub == null) {
-                weightsToSub = new OpenHashMap<Object, WeightValue>(8192);
-                label2FeatureWeight.put(missed_label, weightsToSub);
+            model2sub = label2model.get(missed_label);
+            if(model2sub == null) {
+                model2sub = createModel();
+                label2model.put(missed_label, model2sub);
             }
         }
 
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
         for(Object f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
             final Object k;
             final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f, feature_hashing);
+            if(parseFeature) {
+                FeatureValue fv = FeatureValue.parse(f);
                 k = fv.getFeature();
                 v = fv.getValue();
             } else {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_correctclass_w = weightsToAdd.get(k);
+            WeightValue old_correctclass_w = model2add.get(k);
             WeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, beta, true);
-            weightsToAdd.put(k, new_correctclass_w);
+            model2add.set(k, new_correctclass_w);
 
-            if(weightsToSub != null) {
-                WeightValue old_wrongclass_w = weightsToSub.get(k);
+            if(model2sub != null) {
+                WeightValue old_wrongclass_w = model2sub.get(k);
                 WeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, beta, false);
-                weightsToSub.put(k, new_wrongclass_w);
-            }
-        }
-
-        if(biasKey != null) {
-            WeightValue old_correctclass_bias = weightsToAdd.get(biasKey);
-            WeightValue new_correctclass_bias = getNewWeight(old_correctclass_bias, bias, alpha, beta, true);
-            weightsToAdd.put(biasKey, new_correctclass_bias);
-
-            if(weightsToSub != null) {
-                WeightValue old_wrongclass_bias = weightsToSub.get(biasKey);
-                WeightValue new_wrongclass_bias = getNewWeight(old_wrongclass_bias, bias, alpha, beta, false);
-                weightsToSub.put(biasKey, new_wrongclass_bias);
+                model2sub.set(k, new_wrongclass_w);
             }
         }
     }
@@ -303,7 +290,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
             old_v = 0.f;
             old_cov = 1.f;
         } else {
-            old_v = old.getValue();
+            old_v = old.get();
             old_cov = old.getCovariance();
         }
 

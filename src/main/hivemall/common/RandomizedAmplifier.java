@@ -26,7 +26,7 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
-public class RandomizedAmplifier<T> {
+public final class RandomizedAmplifier<T> {
 
     private final int numBuffers;
     private final int xtimes;
@@ -53,6 +53,24 @@ public class RandomizedAmplifier<T> {
         this.randoms = new Random[xtimes];
         for(int i = 0; i < xtimes; i++) {
             randoms[i] = new Random();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public RandomizedAmplifier(int numBuffers, int xtimes, long seed) {
+        if(numBuffers < 1) {
+            throw new IllegalArgumentException("numBuffers must be greater than 0: " + numBuffers);
+        }
+        if(xtimes < 1) {
+            throw new IllegalArgumentException("xtime must be greater than 0: " + xtimes);
+        }
+        this.numBuffers = numBuffers;
+        this.xtimes = xtimes;
+        this.slots = new AgedObject[xtimes][numBuffers];
+        this.position = 0;
+        this.randoms = new Random[xtimes];
+        for(int i = 0; i < xtimes; i++) {
+            randoms[i] = new Random(seed + i);
         }
     }
 
