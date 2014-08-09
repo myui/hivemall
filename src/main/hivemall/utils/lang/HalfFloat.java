@@ -22,6 +22,7 @@ package hivemall.utils.lang;
 
 /**
  * A utility class to deal with half-precision floating-point.
+ * The conversion is very fast because there is no conditional branch instruction in the conversion.
  * <pre>
  * |sign|       exponent          |                   mantissa                                 |
  * | 31 | 30 29 28 27 26 25 24 23 | 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 |
@@ -30,9 +31,10 @@ package hivemall.utils.lang;
  * 
  * @see http://en.wikipedia.org/wiki/Half-precision_floating-point_format
  * @see http://en.wikipedia.org/wiki/Single_precision_floating-point_format 
- * @see http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+ * @see ftp://www.fox-toolkit.org/pub/fasthalffloatconversion.pdf
  */
 public final class HalfFloat {
+    public static final short ZERO = 0;
 
     private static final int[] mantissatable;
     private static final int[] exponenttable;
@@ -50,17 +52,28 @@ public final class HalfFloat {
 
     private HalfFloat() {}
 
-    public static float toFloat(final short h) {
-        int i = h >> 10;
-        int j = (offsettable[i] + (h & 0x3FF)) & 0x7FF;
+    public static float halfFloatToFloat(final short f16) {
+        int i = ((f16 & 0xFFFF) >> 10) & 0xFF;
+        int j = (offsettable[i] + (f16 & 0x3FF)) & 0x7FF;
         int bits = mantissatable[j] + exponenttable[i];
         return Float.intBitsToFloat(bits);
     }
 
-    public static short toHalfFloat(final float f) {
-        int bits = Float.floatToRawIntBits(f);
+    public static short floatToHalfFloat(final float f32) {
+        int bits = Float.floatToRawIntBits(f32);
         int i = (bits >> 23) & 0x1FF;
         return (short) (basetable[i] + ((bits & 0x007FFFFF) >> shifttable[i]));
+    }
+
+    public static int halfFloatToFloatBits(final short f16) {
+        int i = f16 >> 10;
+        int j = offsettable[i] + (f16 & 0x3FF);
+        return mantissatable[j] + exponenttable[i];
+    }
+
+    public static short floatBitsToHalfFloat(final int f32b) {
+        int i = (f32b >> 23) & 0x1FF;
+        return (short) (basetable[i] + ((f32b & 0x007FFFFF) >> shifttable[i]));
     }
 
     private static void populateTableEntries() {
@@ -71,7 +84,7 @@ public final class HalfFloat {
         for(int i = 0; i < 256; i++) {
             final int e = i - 127;
             if(e < -24) { // Very small numbers map to zero
-                basetable[i | 0x000] = (short) 0x0000;
+                //basetable[i | 0x000] = (short) 0x0000;
                 basetable[i | 0x100] = (short) 0x8000;
                 shifttable[i | 0x000] = 24;
                 shifttable[i | 0x100] = 24;
@@ -105,7 +118,7 @@ public final class HalfFloat {
             mantissatable[i] = convertMantissa(i);
         }
         for(int i = 1024; i < 2048; i++) {
-            mantissatable[i] = 0x38000000;
+            mantissatable[i] = 0x38000000 + ((i - 1024) << 13);
         }
     }
 
