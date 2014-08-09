@@ -25,12 +25,10 @@ import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.LearnerBaseUDTF;
-import hivemall.common.DenseModel;
 import hivemall.common.FeatureValue;
 import hivemall.common.Margin;
 import hivemall.common.PredictionModel;
 import hivemall.common.PredictionResult;
-import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
@@ -104,8 +102,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    protected PredictionModel createModel() {
-        return dense_model ? new DenseModel(model_dims, useCovariance()) : new SparseModel(8192);
+    protected int getInitialModelSize() {
+        return 8192;
     }
 
     protected PrimitiveObjectInspector processFeaturesOI(ObjectInspector arg)
