@@ -26,7 +26,6 @@ package hivemall.utils.lang;
  * <pre>
  * |sign|       exponent          |                   mantissa                                 |
  * | 31 | 30 29 28 27 26 25 24 23 | 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 |
- * |    | 128 64 32 16 8  4  2  1
  * </pre>
  * 
  * @see http://en.wikipedia.org/wiki/Half-precision_floating-point_format
@@ -34,8 +33,15 @@ package hivemall.utils.lang;
  * @see ftp://www.fox-toolkit.org/pub/fasthalffloatconversion.pdf
  */
 public final class HalfFloat {
+
     public static final short ZERO = 0;
     public static final short ONE;
+    public static final float MAX_FLOAT = 65520;
+
+    /**
+     * Smallest positive e for which HalfFloat (1.0 + e) != HalfFloat (1.0)
+     */
+    public static final float EPSILON = 0.00097656f;
 
     private static final int[] mantissatable;
     private static final int[] exponenttable;
