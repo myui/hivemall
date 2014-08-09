@@ -23,6 +23,7 @@ package hivemall;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.common.DenseModel;
 import hivemall.common.PredictionModel;
+import hivemall.common.SpaceEfficientDenseModel;
 import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
@@ -52,12 +53,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObje
 import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
-
     private static final Log logger = LogFactory.getLog(LearnerBaseUDTF.class);
 
     protected String preloadedModelFile;
     protected boolean dense_model;
     protected int model_dims;
+    protected boolean disable_halffloat;
 
     public LearnerBaseUDTF() {}
 
@@ -71,6 +72,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
+        opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
         return opts;
     }
 
@@ -79,6 +81,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         String modelfile = null;
         boolean denseModel = false;
         int modelDims = -1;
+        boolean disableHalfFloat = false;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -91,16 +94,31 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             if(denseModel) {
                 modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 16777216);
             }
+
+            disableHalfFloat = cl.hasOption("disable_halffloat");
         }
 
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
+        this.disable_halffloat = disableHalfFloat;
         return cl;
     }
 
     protected PredictionModel createModel() {
-        return dense_model ? new DenseModel(model_dims, useCovariance()) : new SparseModel();
+        if(dense_model) {
+            if(model_dims > 16777216) {
+                return new SpaceEfficientDenseModel(model_dims, useCovariance());
+            } else {
+                return new DenseModel(model_dims, useCovariance());
+            }
+        } else {
+            return new SparseModel(getInitialModelSize());
+        }
+    }
+
+    protected int getInitialModelSize() {
+        return 16384;
     }
 
     protected void loadPredictionModel(PredictionModel model, String filename, PrimitiveObjectInspector keyOI) {
