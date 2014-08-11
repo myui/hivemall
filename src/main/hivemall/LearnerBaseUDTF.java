@@ -108,7 +108,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected PredictionModel createModel() {
         if(dense_model) {
             boolean useCovar = useCovariance();
-            if(model_dims > 16777216) {
+            if(disable_halffloat == false && model_dims > 16777216) {
                 logger.info("Build a space efficient dense model with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
                 return new SpaceEfficientDenseModel(model_dims, useCovar);
