@@ -18,27 +18,25 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall;
+package hivemall.utils.lang;
 
-import hivemall.utils.lang.CommandLineUtils;
-
+import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.commons.cli.ParseException;
 
-public abstract class UDTFWithOptions extends GenericUDTF {
+public final class CommandLineUtils {
 
-    protected abstract Options getOptions();
+    private CommandLineUtils() {}
 
-    protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
-        String[] args = optionValue.split("\\s+");
-        Options opts = getOptions();
-        return CommandLineUtils.parseOptions(args, opts);
+    public static CommandLine parseOptions(final String[] args, final Options opts) {
+        final BasicParser parser = new BasicParser();
+        final CommandLine cl;
+        try {
+            cl = parser.parse(opts, args);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return cl;
     }
-
-    protected abstract CommandLine processOptions(ObjectInspector[] argOIs)
-            throws UDFArgumentException;
-
 }
