@@ -27,6 +27,9 @@ import hivemall.utils.lang.Copyable;
 import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.math.MathUtils;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
@@ -234,7 +237,53 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
             tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);
         }
+    }
 
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        final int size = in.readInt();
+        this.size = size;
+        if(size <= 0) {
+            return;
+        }
+
+        final short[] weights = new short[size];
+        for(int i = 0; i < size; i++) {
+            weights[i] = in.readShort();
+        }
+        this.weights = weights;
+
+        if(in.readBoolean()) {
+            final short[] covars = new short[size];
+            for(int i = 0; i < size; i++) {
+                covars[i] = in.readShort();
+            }
+            this.covars = covars;
+        } else {
+            this.covars = null;
+        }
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        final int size = this.size;
+        out.writeInt(size);
+        if(size <= 0) {
+            return;
+        }
+        final short[] weights = this.weights;
+        for(int i = 0; i < size; i++) {
+            out.writeShort(weights[i]);
+        }
+        final short[] covars = this.covars;
+        if(covars == null) {
+            out.writeBoolean(false);
+        } else {
+            out.writeBoolean(true);
+            for(int i = 0; i < size; i++) {
+                out.writeShort(covars[i]);
+            }
+        }
     }
 
 }

@@ -22,7 +22,12 @@ package hivemall.common;
 
 import hivemall.utils.lang.Copyable;
 
-public class WeightValue implements Copyable<WeightValue> {
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+public class WeightValue implements Copyable<WeightValue>, Externalizable {
 
     protected float value;
 
@@ -88,6 +93,18 @@ public class WeightValue implements Copyable<WeightValue> {
         return "WeightValue [value=" + value + "]";
     }
 
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.value = in.readFloat();
+        this.touched = in.readBoolean();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeFloat(value);
+        out.writeBoolean(touched);
+    }
+
     public static final class WeightValueWithCovar extends WeightValue {
         public static final float DEFAULT_COVAR = 1.f;
 
@@ -136,6 +153,18 @@ public class WeightValue implements Copyable<WeightValue> {
         @Override
         public String toString() {
             return "WeightValueWithCovar [value=" + value + ", covariance=" + covariance + "]";
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
+            this.covariance = in.readFloat();
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
+            out.writeFloat(covariance);
         }
     }
 

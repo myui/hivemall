@@ -26,6 +26,9 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
 import hivemall.utils.math.MathUtils;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
@@ -209,6 +212,53 @@ public final class DenseModel implements PredictionModel {
             probe.copyFrom(tmpWeight);
         }
 
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        final int size = in.readInt();
+        this.size = size;
+        if(size <= 0) {
+            return;
+        }
+
+        final float[] weights = new float[size];
+        for(int i = 0; i < size; i++) {
+            weights[i] = in.readFloat();
+        }
+        this.weights = weights;
+
+        if(in.readBoolean()) {
+            final float[] covars = new float[size];
+            for(int i = 0; i < size; i++) {
+                covars[i] = in.readFloat();
+            }
+            this.covars = covars;
+        } else {
+            this.covars = null;
+        }
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        final int size = this.size;
+        out.writeInt(size);
+        if(size <= 0) {
+            return;
+        }
+        final float[] weights = this.weights;
+        for(int i = 0; i < size; i++) {
+            out.writeFloat(weights[i]);
+        }
+        final float[] covars = this.covars;
+        if(covars == null) {
+            out.writeBoolean(false);
+        } else {
+            out.writeBoolean(true);
+            for(int i = 0; i < size; i++) {
+                out.writeFloat(covars[i]);
+            }
+        }
     }
 
 }

@@ -22,7 +22,9 @@ package hivemall.common;
 
 import hivemall.utils.collections.IMapIterator;
 
-public interface PredictionModel {
+import org.apache.hadoop.io.Writable;
+
+public interface PredictionModel extends Writable {
 
     public int size();
 

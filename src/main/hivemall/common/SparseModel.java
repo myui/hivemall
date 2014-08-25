@@ -23,6 +23,13 @@ package hivemall.common;
 import hivemall.common.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.io.IOUtils;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public final class SparseModel implements PredictionModel {
 
@@ -83,6 +90,22 @@ public final class SparseModel implements PredictionModel {
     @Override
     public <K, V extends WeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) weights.entries();
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        ObjectInputStream ois = IOUtils.asObjectInputStream(in);
+        try {
+            weights.readExternal(ois);
+        } catch (ClassNotFoundException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        ObjectOutputStream oos = IOUtils.asObjectOutputStream(out);
+        weights.writeExternal(oos);
     }
 
 }
