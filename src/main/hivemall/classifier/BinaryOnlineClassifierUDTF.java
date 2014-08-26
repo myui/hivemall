@@ -29,9 +29,13 @@ import hivemall.common.PredictionModel;
 import hivemall.common.PredictionResult;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.mix.ModelAccumulator;
+import hivemall.mix.allreduce.AllReducer;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.IOUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +74,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         this.labelOI = (IntObjectInspector) argOIs[1];
 
         processOptions(argOIs);
+        initAllReduce(allreduce_coordinator_uri);
 
         PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
                 : featureInputOI;
@@ -114,7 +119,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    public void process(Object[] args) throws HiveException {
+    public final void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         if(features.isEmpty()) {
             return;
@@ -124,6 +129,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
         count++;
         train(features, label);
+        mix();
     }
 
     protected void checkLabelValue(int label) throws UDFArgumentException {
@@ -137,6 +143,21 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         final float z = p * y;
         if(z <= 0.f) { // miss labeled
             update(features, y, p);
+        }
+    }
+
+    protected void mix() {
+        if(allreduce_context == null) {
+            return;
+        }
+        if(count % mix_foreach_n != 0) {// TODO use fast MOD operation
+            return;
+        }
+        final AllReducer<ModelAccumulator> proc = new AllReducer<ModelAccumulator>();
+        try {
+            proc.allreduce(allreduce_context, new ModelAccumulator(model));
+        } catch (IOException e) {
+            logger.error("AllReduce communication failed", e);
         }
     }
 
@@ -304,6 +325,10 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             logger.info("Trained a prediction model using " + count
                     + " training examples. Forwarded the prediction model of " + numForwarded
                     + " rows");
+        }
+        if(allreduce_worker != null) {
+            allreduce_worker.terminate();
+            IOUtils.closeQuietly(allreduce_context);
         }
     }
 

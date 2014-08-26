@@ -27,6 +27,8 @@ import hivemall.common.SpaceEfficientDenseModel;
 import hivemall.common.SparseModel;
 import hivemall.common.WeightValue;
 import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.mix.allreduce.AllReduceContext;
+import hivemall.mix.allreduce.AllReduceWorker;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -59,6 +61,11 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected boolean dense_model;
     protected int model_dims;
     protected boolean disable_halffloat;
+    protected String allreduce_coordinator_uri;
+    protected int mix_foreach_n;
+
+    protected AllReduceContext allreduce_context;
+    protected AllReduceWorker allreduce_worker;
 
     public LearnerBaseUDTF() {}
 
@@ -73,6 +80,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
         opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
+        opts.addOption("allreduce", "allreduce_coordinator", true, "AllReduce coordinator URI. Set the coordinator URI to enable parameter mixing using AllReduce.");
+        opts.addOption("mix_freq", true, "Mix parameters for each N training example [default: 16384]");
         return opts;
     }
 
@@ -82,6 +91,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean denseModel = false;
         int modelDims = -1;
         boolean disableHalfFloat = false;
+        String allReduceCoord = null;
+        int mixForeachN = -1;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -96,13 +107,36 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             }
 
             disableHalfFloat = cl.hasOption("disable_halffloat");
+
+            allreduce_coordinator_uri = cl.getOptionValue("allreduce");
+            mixForeachN = Primitives.parseInt(cl.getOptionValue("mix_freq"), 16384);
         }
 
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
         this.disable_halffloat = disableHalfFloat;
+        this.allreduce_coordinator_uri = allReduceCoord;
+        this.mix_foreach_n = mixForeachN;
         return cl;
+    }
+
+    protected void initAllReduce(String coordinatorURI) throws UDFArgumentException {
+        if(coordinatorURI == null) {
+            return;
+        }
+        String jobId = HadoopUtils.getJobId();
+        AllReduceContext context = new AllReduceContext(coordinatorURI, jobId);
+        AllReduceWorker worker = new AllReduceWorker(context);
+        Thread bgThread = new Thread(worker);
+        bgThread.run();
+        try {
+            worker.registerNode();
+        } catch (IOException e) {
+            worker.terminate();
+        }
+        this.allreduce_context = context;
+        this.allreduce_worker = worker;
     }
 
     protected PredictionModel createModel() {
