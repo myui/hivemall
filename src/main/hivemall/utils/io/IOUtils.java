@@ -84,7 +84,7 @@ public final class IOUtils {
         return T.valueOf(enumType, name);
     }
 
-    public static void writeEnum(DataOutput out, Enum<?> enumVal) throws IOException {
+    public static void writeEnum(Enum<?> enumVal, DataOutput out) throws IOException {
         String name = enumVal.name();
         writeString(name, out);
     }

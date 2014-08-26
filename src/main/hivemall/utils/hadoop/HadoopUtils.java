@@ -99,4 +99,10 @@ public final class HadoopUtils {
         return taskid;
     }
 
+    public static String getJobId() {
+        MapredContext ctx = MapredContextAccessor.get();
+        JobConf conf = ctx.getJobConf();
+        return conf.get("mapred.job.id");
+    }
+
 }

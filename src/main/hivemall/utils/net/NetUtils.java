@@ -20,7 +20,14 @@
  */
 package hivemall.utils.net;
 
+import hivemall.utils.io.FastBufferedOutputStream;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -34,12 +41,16 @@ public final class NetUtils {
 
     private NetUtils() {}
 
-    public static Socket openSocket(String endpointURI) throws IOException {
+    public static SocketAddress getSocketAddress(String endpointURI) {
         int pos = endpointURI.indexOf(':');
         String host = endpointURI.substring(0, pos);
         String portStr = endpointURI.substring(pos + 1);
         int port = Integer.parseInt(portStr);
-        InetSocketAddress sockAddr = new InetSocketAddress(host, port);
+        return new InetSocketAddress(host, port);
+    }
+
+    public static Socket openSocket(String endpointURI) throws IOException {
+        SocketAddress sockAddr = getSocketAddress(endpointURI);
         return openSocket(sockAddr);
     }
 
@@ -94,4 +105,15 @@ public final class NetUtils {
         }
         return localHost;
     }
+
+    public static DataInputStream getDataInputStream(Socket socket) throws IOException {
+        InputStream is = socket.getInputStream();
+        return new DataInputStream(new BufferedInputStream(is));
+    }
+
+    public static DataOutputStream getDataOutputStream(Socket socket) throws IOException {
+        OutputStream os = socket.getOutputStream();
+        return new DataOutputStream(new FastBufferedOutputStream(os));
+    }
+
 }
