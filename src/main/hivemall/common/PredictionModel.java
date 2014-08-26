@@ -26,6 +26,8 @@ import org.apache.hadoop.io.Writable;
 
 public interface PredictionModel extends Writable {
 
+    public void reset();
+    
     public int size();
 
     public boolean contains(Object feature);

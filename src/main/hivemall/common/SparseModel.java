@@ -43,6 +43,11 @@ public final class SparseModel implements PredictionModel {
         this.weights = new OpenHashMap<Object, WeightValue>(size);
     }
 
+    @Override
+    public void reset() {
+        weights.clear();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends WeightValue> T get(Object feature) {

@@ -59,6 +59,14 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         }
     }
 
+    @Override
+    public void reset() {
+        Arrays.fill(weights, HalfFloat.ZERO);
+        if(covars != null) {
+            Arrays.fill(covars, HalfFloat.ONE);
+        }
+    }
+
     private float getWeight(final int i) {
         final short w = weights[i];
         return (w == HalfFloat.ZERO) ? HalfFloat.ZERO : HalfFloat.halfFloatToFloat(w);

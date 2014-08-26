@@ -58,6 +58,14 @@ public final class DenseModel implements PredictionModel {
         }
     }
 
+    @Override
+    public void reset() {
+        Arrays.fill(weights, 0f);
+        if(covars != null) {
+            Arrays.fill(covars, 1f);
+        }
+    }
+
     private void ensureCapacity(final int index) {
         if(index >= size) {
             int bits = MathUtils.bitsRequired(index);
