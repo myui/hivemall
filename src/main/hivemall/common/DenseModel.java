@@ -230,21 +230,27 @@ public final class DenseModel implements PredictionModel {
             return;
         }
 
+        final int nonZeros = in.readInt();
+        final boolean hasCovar = in.readBoolean();
+
         final float[] weights = new float[size];
-        for(int i = 0; i < size; i++) {
-            weights[i] = in.readFloat();
+        final float[] covars;
+        if(hasCovar) {
+            covars = new float[size];
+            for(int i = 0; i < nonZeros; i++) {
+                int j = in.readInt();
+                weights[j] = in.readFloat();
+                covars[j] = in.readFloat();
+            }
+        } else {
+            covars = null;
+            for(int i = 0; i < nonZeros; i++) {
+                int j = in.readInt();
+                weights[j] = in.readFloat();
+            }
         }
         this.weights = weights;
-
-        if(in.readBoolean()) {
-            final float[] covars = new float[size];
-            for(int i = 0; i < size; i++) {
-                covars[i] = in.readFloat();
-            }
-            this.covars = covars;
-        } else {
-            this.covars = null;
-        }
+        this.covars = covars;
     }
 
     @Override
@@ -255,16 +261,33 @@ public final class DenseModel implements PredictionModel {
             return;
         }
         final float[] weights = this.weights;
+        int nonZeros = 0;
         for(int i = 0; i < size; i++) {
-            out.writeFloat(weights[i]);
+            if(weights[i] != 0.f) {
+                nonZeros++;
+            }
         }
+        out.writeInt(nonZeros);
+
         final float[] covars = this.covars;
         if(covars == null) {
             out.writeBoolean(false);
+            for(int i = 0; i < size; i++) {
+                float w = weights[i];
+                if(w != 0.f) {
+                    out.writeInt(i);
+                    out.writeFloat(w);
+                }
+            }
         } else {
             out.writeBoolean(true);
             for(int i = 0; i < size; i++) {
-                out.writeFloat(covars[i]);
+                float w = weights[i];
+                if(w != 0.f) {
+                    out.writeInt(i);
+                    out.writeFloat(w);
+                    out.writeFloat(covars[i]);
+                }
             }
         }
     }

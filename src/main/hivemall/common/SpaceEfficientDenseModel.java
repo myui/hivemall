@@ -255,21 +255,27 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
             return;
         }
 
+        final int nonZeros = in.readInt();
+        final boolean hasCovar = in.readBoolean();
+
         final short[] weights = new short[size];
-        for(int i = 0; i < size; i++) {
-            weights[i] = in.readShort();
+        final short[] covars;
+        if(hasCovar) {
+            covars = new short[size];
+            for(int i = 0; i < nonZeros; i++) {
+                int j = in.readInt();
+                weights[j] = in.readShort();
+                covars[j] = in.readShort();
+            }
+        } else {
+            covars = null;
+            for(int i = 0; i < nonZeros; i++) {
+                int j = in.readInt();
+                weights[j] = in.readShort();
+            }
         }
         this.weights = weights;
-
-        if(in.readBoolean()) {
-            final short[] covars = new short[size];
-            for(int i = 0; i < size; i++) {
-                covars[i] = in.readShort();
-            }
-            this.covars = covars;
-        } else {
-            this.covars = null;
-        }
+        this.covars = covars;
     }
 
     @Override
@@ -279,17 +285,35 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         if(size <= 0) {
             return;
         }
+
         final short[] weights = this.weights;
+        int nonZeros = 0;
         for(int i = 0; i < size; i++) {
-            out.writeShort(weights[i]);
+            if(weights[i] != HalfFloat.ZERO) {
+                nonZeros++;
+            }
         }
+        out.writeInt(nonZeros);
+
         final short[] covars = this.covars;
         if(covars == null) {
             out.writeBoolean(false);
+            for(int i = 0; i < size; i++) {
+                short w = weights[i];
+                if(w != HalfFloat.ZERO) {
+                    out.writeInt(i);
+                    out.writeShort(w);
+                }
+            }
         } else {
             out.writeBoolean(true);
             for(int i = 0; i < size; i++) {
-                out.writeShort(covars[i]);
+                short w = weights[i];
+                if(w != HalfFloat.ZERO) {
+                    out.writeInt(i);
+                    out.writeShort(w);
+                    out.writeShort(covars[i]);
+                }
             }
         }
     }
