@@ -20,7 +20,7 @@
  */package hivemall.knn.lsh;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
-import hivemall.common.FeatureValue;
+import hivemall.io.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.math.BigInteger;

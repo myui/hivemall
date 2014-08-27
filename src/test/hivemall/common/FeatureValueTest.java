@@ -22,6 +22,7 @@ package hivemall.common;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import hivemall.io.FeatureValue;
 
 import org.apache.hadoop.io.Text;
 import org.junit.Test;

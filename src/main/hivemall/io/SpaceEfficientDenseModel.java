@@ -18,12 +18,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.common;
+package hivemall.io;
 
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
+import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
@@ -31,28 +32,53 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class DenseModel implements PredictionModel {
-    private static final Log logger = LogFactory.getLog(DenseModel.class);
+public final class SpaceEfficientDenseModel implements PredictionModel {
+    private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
 
     private int size;
-    private float[] weights;
-    private float[] covars;
+    private short[] weights;
+    private short[] covars;
 
-    public DenseModel(int ndims) {
+    public SpaceEfficientDenseModel(int ndims) {
         this(ndims, false);
     }
 
-    public DenseModel(int ndims, boolean withCovar) {
+    public SpaceEfficientDenseModel(int ndims, boolean withCovar) {
         int size = ndims + 1;
         this.size = size;
-        this.weights = new float[size];
+        this.weights = new short[size];
         if(withCovar) {
-            float[] covars = new float[size];
-            Arrays.fill(covars, 1f);
+            short[] covars = new short[size];
+            Arrays.fill(covars, HalfFloat.ONE);
             this.covars = covars;
         } else {
             this.covars = null;
         }
+    }
+
+    private float getWeight(final int i) {
+        final short w = weights[i];
+        return (w == HalfFloat.ZERO) ? HalfFloat.ZERO : HalfFloat.halfFloatToFloat(w);
+    }
+
+    private float getCovar(final int i) {
+        return HalfFloat.halfFloatToFloat(covars[i]);
+    }
+
+    private void setWeight(final int i, final float v) {
+        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
+            throw new IllegalArgumentException("Acceptable maximum weight is "
+                    + HalfFloat.MAX_FLOAT + ": " + v);
+        }
+        weights[i] = HalfFloat.floatToHalfFloat(v);
+    }
+
+    private void setCovar(final int i, final float v) {
+        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
+            throw new IllegalArgumentException("Acceptable maximum weight is "
+                    + HalfFloat.MAX_FLOAT + ": " + v);
+        }
+        covars[i] = HalfFloat.floatToHalfFloat(v);
     }
 
     private void ensureCapacity(final int index) {
@@ -66,7 +92,7 @@ public final class DenseModel implements PredictionModel {
             this.weights = Arrays.copyOf(weights, newSize);
             if(covars != null) {
                 this.covars = Arrays.copyOf(covars, newSize);
-                Arrays.fill(covars, oldSize, newSize, 1f);
+                Arrays.fill(covars, oldSize, newSize, HalfFloat.ONE);
             }
         }
     }
@@ -79,9 +105,9 @@ public final class DenseModel implements PredictionModel {
             return null;
         }
         if(covars == null) {
-            return (T) new WeightValue(weights[i]);
+            return (T) new WeightValue(getWeight(i));
         } else {
-            return (T) new WeightValueWithCovar(weights[i], covars[i]);
+            return (T) new WeightValueWithCovar(getWeight(i), getCovar(i));
         }
     }
 
@@ -90,10 +116,10 @@ public final class DenseModel implements PredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
-        weights[i] = weight;
+        setWeight(i, weight);
         if(value.hasCovariance()) {
             float covar = value.getCovariance();
-            covars[i] = covar;
+            setCovar(i, covar);
         }
     }
 
@@ -103,7 +129,7 @@ public final class DenseModel implements PredictionModel {
         if(i >= size) {
             return 0f;
         }
-        return weights[i];
+        return getWeight(i);
     }
 
     @Override
@@ -112,22 +138,22 @@ public final class DenseModel implements PredictionModel {
         if(i >= size) {
             return 1f;
         }
-        return covars[i];
+        return getCovar(i);
     }
 
     @Override
     public void setValue(Object feature, float weight) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
-        weights[i] = weight;
+        setWeight(i, weight);
     }
 
     @Override
     public void setValue(Object feature, float weight, float covar) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
-        weights[i] = weight;
-        covars[i] = covar;
+        setWeight(i, weight);
+        setCovar(i, covar);
     }
 
     @Override
@@ -141,7 +167,7 @@ public final class DenseModel implements PredictionModel {
         if(i >= size) {
             return false;
         }
-        float w = weights[i];
+        float w = getWeight(i);
         return w != 0.f;
     }
 
@@ -183,13 +209,13 @@ public final class DenseModel implements PredictionModel {
         @Override
         public WeightValue getValue() {
             if(covars == null) {
-                float w = weights[cursor];
+                float w = getWeight(cursor);
                 WeightValue v = new WeightValue(w);
                 v.setTouched(w != 0f);
                 return v;
             } else {
-                float w = weights[cursor];
-                float cov = covars[cursor];
+                float w = getWeight(cursor);
+                float cov = getCovar(cursor);
                 WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
                 v.setTouched(w != 0.f || cov != 1.f);
                 return v;
@@ -198,11 +224,11 @@ public final class DenseModel implements PredictionModel {
 
         @Override
         public <T extends Copyable<WeightValue>> void getValue(T probe) {
-            float w = weights[cursor];
+            float w = getWeight(cursor);
             tmpWeight.value = w;
             float cov = 1.f;
             if(covars != null) {
-                cov = covars[cursor];
+                cov = getCovar(cursor);
                 tmpWeight.covariance = cov;
             }
             tmpWeight.setTouched(w != 0.f || cov != 1.f);

@@ -18,13 +18,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.common;
+package hivemall.io;
 
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
-import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
@@ -32,53 +31,28 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpaceEfficientDenseModel implements PredictionModel {
-    private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
+public final class DenseModel implements PredictionModel {
+    private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;
-    private short[] weights;
-    private short[] covars;
+    private float[] weights;
+    private float[] covars;
 
-    public SpaceEfficientDenseModel(int ndims) {
+    public DenseModel(int ndims) {
         this(ndims, false);
     }
 
-    public SpaceEfficientDenseModel(int ndims, boolean withCovar) {
+    public DenseModel(int ndims, boolean withCovar) {
         int size = ndims + 1;
         this.size = size;
-        this.weights = new short[size];
+        this.weights = new float[size];
         if(withCovar) {
-            short[] covars = new short[size];
-            Arrays.fill(covars, HalfFloat.ONE);
+            float[] covars = new float[size];
+            Arrays.fill(covars, 1f);
             this.covars = covars;
         } else {
             this.covars = null;
         }
-    }
-
-    private float getWeight(final int i) {
-        final short w = weights[i];
-        return (w == HalfFloat.ZERO) ? HalfFloat.ZERO : HalfFloat.halfFloatToFloat(w);
-    }
-
-    private float getCovar(final int i) {
-        return HalfFloat.halfFloatToFloat(covars[i]);
-    }
-
-    private void setWeight(final int i, final float v) {
-        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
-            throw new IllegalArgumentException("Acceptable maximum weight is "
-                    + HalfFloat.MAX_FLOAT + ": " + v);
-        }
-        weights[i] = HalfFloat.floatToHalfFloat(v);
-    }
-
-    private void setCovar(final int i, final float v) {
-        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
-            throw new IllegalArgumentException("Acceptable maximum weight is "
-                    + HalfFloat.MAX_FLOAT + ": " + v);
-        }
-        covars[i] = HalfFloat.floatToHalfFloat(v);
     }
 
     private void ensureCapacity(final int index) {
@@ -92,7 +66,7 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
             this.weights = Arrays.copyOf(weights, newSize);
             if(covars != null) {
                 this.covars = Arrays.copyOf(covars, newSize);
-                Arrays.fill(covars, oldSize, newSize, HalfFloat.ONE);
+                Arrays.fill(covars, oldSize, newSize, 1f);
             }
         }
     }
@@ -105,9 +79,9 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
             return null;
         }
         if(covars == null) {
-            return (T) new WeightValue(getWeight(i));
+            return (T) new WeightValue(weights[i]);
         } else {
-            return (T) new WeightValueWithCovar(getWeight(i), getCovar(i));
+            return (T) new WeightValueWithCovar(weights[i], covars[i]);
         }
     }
 
@@ -116,10 +90,10 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
-        setWeight(i, weight);
+        weights[i] = weight;
         if(value.hasCovariance()) {
             float covar = value.getCovariance();
-            setCovar(i, covar);
+            covars[i] = covar;
         }
     }
 
@@ -129,7 +103,7 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         if(i >= size) {
             return 0f;
         }
-        return getWeight(i);
+        return weights[i];
     }
 
     @Override
@@ -138,22 +112,22 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         if(i >= size) {
             return 1f;
         }
-        return getCovar(i);
+        return covars[i];
     }
 
     @Override
     public void setValue(Object feature, float weight) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
-        setWeight(i, weight);
+        weights[i] = weight;
     }
 
     @Override
     public void setValue(Object feature, float weight, float covar) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
-        setWeight(i, weight);
-        setCovar(i, covar);
+        weights[i] = weight;
+        covars[i] = covar;
     }
 
     @Override
@@ -167,7 +141,7 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         if(i >= size) {
             return false;
         }
-        float w = getWeight(i);
+        float w = weights[i];
         return w != 0.f;
     }
 
@@ -209,13 +183,13 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         @Override
         public WeightValue getValue() {
             if(covars == null) {
-                float w = getWeight(cursor);
+                float w = weights[cursor];
                 WeightValue v = new WeightValue(w);
                 v.setTouched(w != 0f);
                 return v;
             } else {
-                float w = getWeight(cursor);
-                float cov = getCovar(cursor);
+                float w = weights[cursor];
+                float cov = covars[cursor];
                 WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
                 v.setTouched(w != 0.f || cov != 1.f);
                 return v;
@@ -224,11 +198,11 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
 
         @Override
         public <T extends Copyable<WeightValue>> void getValue(T probe) {
-            float w = getWeight(cursor);
+            float w = weights[cursor];
             tmpWeight.value = w;
             float cov = 1.f;
             if(covars != null) {
-                cov = getCovar(cursor);
+                cov = covars[cursor];
                 tmpWeight.covariance = cov;
             }
             tmpWeight.setTouched(w != 0.f || cov != 1.f);

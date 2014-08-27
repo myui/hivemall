@@ -20,7 +20,7 @@
  */
 package hivemall.classifier.multiclass;
 
-import hivemall.common.Margin;
+import hivemall.io.Margin;
 
 import java.util.List;
 

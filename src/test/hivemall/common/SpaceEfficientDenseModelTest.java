@@ -1,6 +1,9 @@
 package hivemall.common;
 
 import static junit.framework.Assert.assertEquals;
+import hivemall.io.DenseModel;
+import hivemall.io.SpaceEfficientDenseModel;
+import hivemall.io.WeightValue;
 import hivemall.utils.collections.IMapIterator;
 
 import java.util.Random;

@@ -21,7 +21,7 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import hivemall.common.FeatureValue;
+import hivemall.io.FeatureValue;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -21,7 +21,7 @@
 package hivemall.knn.distance;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
-import hivemall.common.FeatureValue;
+import hivemall.io.FeatureValue;
 
 import java.util.Collections;
 import java.util.HashMap;
