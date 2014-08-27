@@ -26,7 +26,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public final class ModelAccumulator implements Accumulatable<PredictionModel> {
+public final class ModelAccumulator implements Accumulatable {
 
     private final PredictionModel model;
 
@@ -42,16 +42,13 @@ public final class ModelAccumulator implements Accumulatable<PredictionModel> {
     @Override
     public void accumulate(DataInput in) throws IOException {
         model.readFields(in);
+        // FIXME
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
         model.write(out);
-    }
-
-    @Override
-    public PredictionModel get() {
-        return model;
+        // FIXME
     }
 
 }

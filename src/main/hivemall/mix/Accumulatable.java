@@ -24,14 +24,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public interface Accumulatable<T> {
+public interface Accumulatable {
 
     void reset();
 
     void accumulate(DataInput in) throws IOException;
 
     void write(DataOutput out) throws IOException;
-
-    T get();
 
 }
