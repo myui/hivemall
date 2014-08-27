@@ -21,12 +21,12 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
-import hivemall.common.DenseModel;
-import hivemall.common.PredictionModel;
-import hivemall.common.SpaceEfficientDenseModel;
-import hivemall.common.SparseModel;
-import hivemall.common.WeightValue;
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.DenseModel;
+import hivemall.io.PredictionModel;
+import hivemall.io.SpaceEfficientDenseModel;
+import hivemall.io.SparseModel;
+import hivemall.io.WeightValue;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;

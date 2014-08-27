@@ -24,8 +24,8 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
-import hivemall.common.FeatureValue;
-import hivemall.common.WeightValue;
+import hivemall.io.FeatureValue;
+import hivemall.io.WeightValue;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.Map;

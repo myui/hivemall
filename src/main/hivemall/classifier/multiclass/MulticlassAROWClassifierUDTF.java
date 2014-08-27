@@ -20,11 +20,11 @@
  */
 package hivemall.classifier.multiclass;
 
-import hivemall.common.FeatureValue;
-import hivemall.common.Margin;
-import hivemall.common.PredictionModel;
-import hivemall.common.WeightValue;
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.FeatureValue;
+import hivemall.io.Margin;
+import hivemall.io.PredictionModel;
+import hivemall.io.WeightValue;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 
 import java.util.List;
 

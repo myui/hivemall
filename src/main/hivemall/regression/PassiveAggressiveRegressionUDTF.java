@@ -22,7 +22,7 @@ package hivemall.regression;
 
 import hivemall.common.LossFunctions;
 import hivemall.common.OnlineVariance;
-import hivemall.common.PredictionResult;
+import hivemall.io.PredictionResult;
 
 import java.util.Collection;
 

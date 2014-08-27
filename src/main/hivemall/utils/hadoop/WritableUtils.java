@@ -25,10 +25,15 @@ import java.util.List;
 
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.ByteWritable;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
+import org.apache.hadoop.io.VLongWritable;
+import org.apache.hadoop.io.Writable;
 
 public final class WritableUtils {
 
@@ -66,4 +71,39 @@ public final class WritableUtils {
         }
         return Arrays.asList(ret);
     }
+
+    public static Writable toWritable(Object object) {
+        if(object == null) {
+            return null; //return NullWritable.get();
+        }
+        if(object instanceof Writable) {
+            return (Writable) object;
+        }
+        if(object instanceof String) {
+            return new Text((String) object);
+        }
+        if(object instanceof Long) {
+            return new VLongWritable((Long) object);
+        }
+        if(object instanceof Integer) {
+            return new VIntWritable((Integer) object);
+        }
+        if(object instanceof Byte) {
+            return new ByteWritable((Byte) object);
+        }
+        if(object instanceof Double) {
+            return new DoubleWritable((Double) object);
+        }
+        if(object instanceof Float) {
+            return new FloatWritable((Float) object);
+        }
+        if(object instanceof Boolean) {
+            return new BooleanWritable((Boolean) object);
+        }
+        if(object instanceof byte[]) {
+            return new BytesWritable((byte[]) object);
+        }
+        return new BytesWritable(object.toString().getBytes());
+    }
+
 }

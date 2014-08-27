@@ -20,7 +20,7 @@
  */
 package hivemall.classifier.multiclass;
 
-import hivemall.common.PredictionResult;
+import hivemall.io.PredictionResult;
 
 import java.util.List;
 

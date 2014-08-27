@@ -20,10 +20,10 @@
  */
 package hivemall.classifier;
 
-import hivemall.common.FeatureValue;
-import hivemall.common.PredictionResult;
-import hivemall.common.WeightValue;
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.FeatureValue;
+import hivemall.io.PredictionResult;
+import hivemall.io.WeightValue;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
 import java.util.List;

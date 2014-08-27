@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2013
+ * Copyright (C) 2013-2014
  *   National Institute of Advanced Industrial Science and Technology (AIST)
  *   Registration Number: H25PRO-1520
  *
@@ -18,25 +18,25 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.common;
+package hivemall.utils.lang;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import hivemall.io.FeatureValue;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
-import org.apache.hadoop.io.Text;
-import org.junit.Test;
+public final class CommandLineUtils {
 
-public class FeatureValueTest {
+    private CommandLineUtils() {}
 
-    @Test
-    public void testParse() {
-        String expectedFeature = "ad_url|891572";
-        FeatureValue fv = FeatureValue.parse(expectedFeature);
-        assertNotNull(fv);
-        Text actualFeature = fv.getFeature();
-        assertEquals(actualFeature.toString(), expectedFeature);
-        assertEquals(1.f, fv.getValue(), 0.f);
+    public static CommandLine parseOptions(final String[] args, final Options opts) {
+        final BasicParser parser = new BasicParser();
+        final CommandLine cl;
+        try {
+            cl = parser.parse(opts, args);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return cl;
     }
-
 }

@@ -18,9 +18,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.common;
+package hivemall.io;
 
-import hivemall.common.WeightValue.WeightValueWithCovar;
+import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
