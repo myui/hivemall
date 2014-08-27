@@ -21,19 +21,20 @@
 package hivemall.common;
 
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 
 public final class FeatureValue {
 
-    private final Object feature;
+    private final Writable feature;
     private final float value;
 
-    public FeatureValue(Object f, float v) {
+    public FeatureValue(Writable f, float v) {
         this.feature = f;
         this.value = v;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getFeature() {
+    public <T extends Writable> T getFeature() {
         return (T) feature;
     }
 
@@ -64,14 +65,14 @@ public final class FeatureValue {
 
     public static FeatureValue parseFeatureAsString(String s) {
         if(s.indexOf(':') == -1) {
-            return new FeatureValue(s, 1.f);
+            return new FeatureValue(new Text(s), 1.f);
         }
         String[] fv = s.split(":");
         if(fv.length != 1 && fv.length != 2) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
         float v = (fv.length == 1) ? 1.f : Float.parseFloat(fv[1]);
-        return new FeatureValue(fv[0], v);
+        return new FeatureValue(new Text(fv[0]), v);
     }
 
 }

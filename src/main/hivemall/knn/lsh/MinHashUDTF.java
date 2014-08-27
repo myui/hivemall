@@ -40,7 +40,6 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
@@ -131,24 +130,6 @@ public final class MinHashUDTF extends UDTFWithOptions {
         List<FeatureValue> ftvec = parseFeatures(features, featureInspector, parseFeature);
 
         computeAndForwardSignatures(ftvec, forwardObjs);
-    }
-
-    private static List<FeatureValue> parseFeatures(List<?> features, ObjectInspector featureInspector, boolean parseX) {
-        final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
-        for(Object f : features) {
-            if(f == null) {
-                continue;
-            }
-            final FeatureValue fv;
-            if(parseX) {
-                fv = FeatureValue.parse(f);
-            } else {
-                Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                fv = new FeatureValue(k, 1f);
-            }
-            ftvec.add(fv);
-        }
-        return ftvec;
     }
 
     private void computeAndForwardSignatures(List<FeatureValue> features, Object[] forwardObjs)

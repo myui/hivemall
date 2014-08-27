@@ -30,6 +30,7 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 public class bBitMinHashUDF extends UDF {
@@ -74,7 +75,7 @@ public class bBitMinHashUDF extends UDF {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
         for(Integer f : features) {
             if(f != null) {
-                FeatureValue fv = new FeatureValue(f, 1.f);
+                FeatureValue fv = new FeatureValue(new IntWritable(f.intValue()), 1.f);
                 ftvec.add(fv);
             }
         }
@@ -89,7 +90,7 @@ public class bBitMinHashUDF extends UDF {
             }
             final FeatureValue fv;
             if(noWeight) {
-                fv = new FeatureValue(f, 1.f);
+                fv = new FeatureValue(new Text(f), 1.f);
             } else {
                 fv = FeatureValue.parse(f);
             }

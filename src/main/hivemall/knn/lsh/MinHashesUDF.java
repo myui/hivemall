@@ -32,6 +32,8 @@ import java.util.Random;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 
 public class MinHashesUDF extends UDF {
 
@@ -76,7 +78,7 @@ public class MinHashesUDF extends UDF {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
         for(Integer f : features) {
             if(f != null) {
-                FeatureValue fv = new FeatureValue(f, 1.f);
+                FeatureValue fv = new FeatureValue(new IntWritable(f.intValue()), 1.f);
                 ftvec.add(fv);
             }
         }
@@ -91,7 +93,7 @@ public class MinHashesUDF extends UDF {
             }
             final FeatureValue fv;
             if(noWeight) {
-                fv = new FeatureValue(f, 1.f);
+                fv = new FeatureValue(new Text(f), 1.f);
             } else {
                 fv = FeatureValue.parse(f);
             }
@@ -108,7 +110,7 @@ public class MinHashesUDF extends UDF {
         for(int i = 0; i < numHashes; i++) {
             float weightedMinHashValues = Float.MAX_VALUE;
             for(FeatureValue fv : features) {
-                Object f = fv.getFeature();
+                Writable f = fv.getFeature();
                 assert (f != null);
                 String fs = f.toString();
                 int hashIndex = Math.abs(MurmurHash3.murmurhash3_x86_32(fs, seeds[i]));
