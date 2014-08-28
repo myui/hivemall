@@ -32,18 +32,20 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpaceEfficientDenseModel implements PredictionModel {
+public final class SpaceEfficientDenseModel extends PredictionModel {
     private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
 
     private int size;
     private short[] weights;
     private short[] covars;
+    private short[] clocks;
 
     public SpaceEfficientDenseModel(int ndims) {
         this(ndims, false);
     }
 
     public SpaceEfficientDenseModel(int ndims, boolean withCovar) {
+        super();
         int size = ndims + 1;
         this.size = size;
         this.weights = new short[size];
@@ -54,6 +56,19 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         } else {
             this.covars = null;
         }
+        this.clocks = null;
+    }
+
+    @Override
+    public void configureClock() {
+        if(clocks == null) {
+            this.clocks = new short[size];
+        }
+    }
+
+    @Override
+    public boolean hasClock() {
+        return clocks != null;
     }
 
     private float getWeight(final int i) {
@@ -94,6 +109,9 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
                 this.covars = Arrays.copyOf(covars, newSize);
                 Arrays.fill(covars, oldSize, newSize, HalfFloat.ONE);
             }
+            if(clocks != null) {
+                this.clocks = Arrays.copyOf(clocks, newSize);
+            }
         }
     }
 
@@ -117,10 +135,18 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         ensureCapacity(i);
         float weight = value.get();
         setWeight(i, weight);
+        float covar = 1.f;
         if(value.hasCovariance()) {
-            float covar = value.getCovariance();
+            covar = value.getCovariance();
             setCovar(i, covar);
         }
+        short clock = 0;
+        if(clocks != null && value.isTouched()) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, covar, clock);
     }
 
     @Override
@@ -146,6 +172,13 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         setWeight(i, weight);
+        short clock = 0;
+        if(clocks != null) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, clock);
     }
 
     @Override
@@ -154,6 +187,13 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         ensureCapacity(i);
         setWeight(i, weight);
         setCovar(i, covar);
+        short clock = 0;
+        if(clocks != null) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, covar, clock);
     }
 
     @Override
@@ -211,13 +251,13 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
             if(covars == null) {
                 float w = getWeight(cursor);
                 WeightValue v = new WeightValue(w);
-                v.setTouched(w != 0f);
+                configureClock(v, cursor, w);
                 return v;
             } else {
                 float w = getWeight(cursor);
                 float cov = getCovar(cursor);
                 WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
-                v.setTouched(w != 0.f || cov != 1.f);
+                configureClock(v, cursor, w, cov);
                 return v;
             }
         }
@@ -231,8 +271,28 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
                 cov = getCovar(cursor);
                 tmpWeight.covariance = cov;
             }
-            tmpWeight.setTouched(w != 0.f || cov != 1.f);
+            configureClock(tmpWeight, cursor, w, cov);
             probe.copyFrom(tmpWeight);
+        }
+
+        void configureClock(final WeightValue weight, final int index, final float w) {
+            if(clocks == null) {
+                if(w != 0.f) {
+                    weight.setClock((short) 1);
+                }
+            } else {
+                weight.setClock(clocks[index]);
+            }
+        }
+
+        void configureClock(final WeightValue weight, final int index, final float w, final float cov) {
+            if(clocks == null) {
+                if(w != 0.f || cov != 1.f) {
+                    weight.setClock((short) 1);
+                }
+            } else {
+                weight.setClock(clocks[index]);
+            }
         }
 
     }

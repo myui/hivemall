@@ -22,24 +22,67 @@ package hivemall.io;
 
 import hivemall.utils.collections.IMapIterator;
 
-public interface PredictionModel {
+public abstract class PredictionModel {
 
-    public int size();
+    protected ModelUpdateHandler handler;
 
-    public boolean contains(Object feature);
+    public PredictionModel() {}
 
-    public <T extends WeightValue> T get(Object feature);
+    public ModelUpdateHandler getUpdateHandler() {
+        return handler;
+    }
 
-    public <T extends WeightValue> void set(Object feature, T value);
+    public void setUpdateHandler(ModelUpdateHandler handler) {
+        this.handler = handler;
+    }
 
-    public float getWeight(Object feature);
+    protected final void onUpdate(final int feature, final float weight, final short clock) {
+        if(handler != null) {
+            handler.onUpdate(feature, weight, 1.f, clock);
+        }
+    }
 
-    public float getCovariance(Object feature);
+    protected final void onUpdate(final int feature, final float weight, final float covar, final short clock) {
+        if(handler != null) {
+            handler.onUpdate(feature, weight, covar, clock);
+        }
+    }
 
-    public void setValue(Object feature, float weight);
+    protected final void onUpdate(final Object feature, final WeightValue value) {
+        if(handler != null) {
+            float weight = value.get();
+            short clock = value.getClock();
+            if(value.hasCovariance()) {
+                float covar = value.getCovariance();
+                handler.onUpdate(feature, weight, covar, clock);
+            } else {
+                handler.onUpdate(feature, weight, 1.f, clock);
+            }
+        }
+    }
 
-    public void setValue(Object feature, float weight, float covar);
+    public abstract void configureClock();
 
-    public <K, V extends WeightValue> IMapIterator<K, V> entries();
+    public abstract boolean hasClock();
+
+    public abstract int size();
+
+    public abstract boolean contains(Object feature);
+
+    public abstract <T extends WeightValue> T get(Object feature);
+
+    public abstract <T extends WeightValue> void set(Object feature, T value);
+
+    public abstract float getWeight(Object feature);
+
+    public abstract float getCovariance(Object feature);
+
+    @Deprecated
+    public abstract void setValue(Object feature, float weight);
+
+    @Deprecated
+    public abstract void setValue(Object feature, float weight, float covar);
+
+    public abstract <K, V extends WeightValue> IMapIterator<K, V> entries();
 
 }

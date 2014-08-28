@@ -31,18 +31,20 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class DenseModel implements PredictionModel {
+public final class DenseModel extends PredictionModel {
     private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;
     private float[] weights;
     private float[] covars;
+    private short[] clocks;
 
     public DenseModel(int ndims) {
         this(ndims, false);
     }
 
     public DenseModel(int ndims, boolean withCovar) {
+        super();
         int size = ndims + 1;
         this.size = size;
         this.weights = new float[size];
@@ -53,6 +55,19 @@ public final class DenseModel implements PredictionModel {
         } else {
             this.covars = null;
         }
+        this.clocks = null;
+    }
+
+    @Override
+    public void configureClock() {
+        if(clocks == null) {
+            this.clocks = new short[size];
+        }
+    }
+
+    @Override
+    public boolean hasClock() {
+        return clocks != null;
     }
 
     private void ensureCapacity(final int index) {
@@ -67,6 +82,9 @@ public final class DenseModel implements PredictionModel {
             if(covars != null) {
                 this.covars = Arrays.copyOf(covars, newSize);
                 Arrays.fill(covars, oldSize, newSize, 1f);
+            }
+            if(clocks != null) {
+                this.clocks = Arrays.copyOf(clocks, newSize);
             }
         }
     }
@@ -91,10 +109,18 @@ public final class DenseModel implements PredictionModel {
         ensureCapacity(i);
         float weight = value.get();
         weights[i] = weight;
+        float covar = 1.f;
         if(value.hasCovariance()) {
-            float covar = value.getCovariance();
+            covar = value.getCovariance();
             covars[i] = covar;
         }
+        short clock = 0;
+        if(clocks != null && value.isTouched()) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, covar, clock);
     }
 
     @Override
@@ -120,6 +146,13 @@ public final class DenseModel implements PredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         weights[i] = weight;
+        short clock = 0;
+        if(clocks != null) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, clock);
     }
 
     @Override
@@ -128,6 +161,13 @@ public final class DenseModel implements PredictionModel {
         ensureCapacity(i);
         weights[i] = weight;
         covars[i] = covar;
+        short clock = 0;
+        if(clocks != null) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+        }
+
+        onUpdate(i, weight, covar, clock);
     }
 
     @Override
@@ -185,13 +225,13 @@ public final class DenseModel implements PredictionModel {
             if(covars == null) {
                 float w = weights[cursor];
                 WeightValue v = new WeightValue(w);
-                v.setTouched(w != 0f);
+                configureClock(v, cursor, w);
                 return v;
             } else {
                 float w = weights[cursor];
                 float cov = covars[cursor];
                 WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
-                v.setTouched(w != 0.f || cov != 1.f);
+                configureClock(v, cursor, w, cov);
                 return v;
             }
         }
@@ -205,8 +245,28 @@ public final class DenseModel implements PredictionModel {
                 cov = covars[cursor];
                 tmpWeight.covariance = cov;
             }
-            tmpWeight.setTouched(w != 0.f || cov != 1.f);
+            configureClock(tmpWeight, cursor, w, cov);
             probe.copyFrom(tmpWeight);
+        }
+
+        void configureClock(final WeightValue weight, final int index, final float w) {
+            if(clocks == null) {
+                if(w != 0.f) {
+                    weight.setClock((short) 1);
+                }
+            } else {
+                weight.setClock(clocks[index]);
+            }
+        }
+
+        void configureClock(final WeightValue weight, final int index, final float w, final float cov) {
+            if(clocks == null) {
+                if(w != 0.f || cov != 1.f) {
+                    weight.setClock((short) 1);
+                }
+            } else {
+                weight.setClock(clocks[index]);
+            }
         }
 
     }

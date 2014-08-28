@@ -24,16 +24,29 @@ import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
-public final class SparseModel implements PredictionModel {
+public final class SparseModel extends PredictionModel {
 
     private final OpenHashMap<Object, WeightValue> weights;
+    private boolean clockEnabled;
 
     public SparseModel() {
         this(16384);
     }
 
     public SparseModel(int size) {
+        super();
         this.weights = new OpenHashMap<Object, WeightValue>(size);
+        this.clockEnabled = false;
+    }
+
+    @Override
+    public void configureClock() {
+        this.clockEnabled = true;
+    }
+
+    @Override
+    public boolean hasClock() {
+        return clockEnabled;
     }
 
     @SuppressWarnings("unchecked")
@@ -44,6 +57,16 @@ public final class SparseModel implements PredictionModel {
 
     @Override
     public <T extends WeightValue> void set(Object feature, T value) {
+        assert (feature != null);
+        assert (value != null);
+
+        if(clockEnabled && value.isTouched()) {
+            WeightValue old = weights.get(feature);
+            if(old != null) {
+                short newclock = (short) (old.getClock() + value.getClock());
+                value.setClock(newclock);
+            }
+        }
         weights.put(feature, value);
     }
 
@@ -61,12 +84,12 @@ public final class SparseModel implements PredictionModel {
 
     @Override
     public void setValue(Object feature, float weight) {
-        weights.put(feature, new WeightValue(weight));
+        set(feature, new WeightValue(weight));
     }
 
     @Override
     public void setValue(Object feature, float weight, float covar) {
-        weights.put(feature, new WeightValueWithCovar(weight, covar));
+        set(feature, new WeightValueWithCovar(weight, covar));
     }
 
     @Override

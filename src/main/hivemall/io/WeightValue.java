@@ -25,9 +25,7 @@ import hivemall.utils.lang.Copyable;
 public class WeightValue implements Copyable<WeightValue> {
 
     protected float value;
-
-    /** Is touched in training */
-    protected boolean touched;
+    protected short clock;
 
     public WeightValue() {}
 
@@ -37,7 +35,7 @@ public class WeightValue implements Copyable<WeightValue> {
 
     public WeightValue(float weight, boolean touched) {
         this.value = weight;
-        this.touched = touched;
+        this.clock = touched ? (short) 1 : (short) 0;
     }
 
     public float get() {
@@ -64,23 +62,27 @@ public class WeightValue implements Copyable<WeightValue> {
      * @return whether touched in training or not
      */
     public boolean isTouched() {
-        return touched;
+        return clock > 0;
     }
 
-    public void setTouched(boolean touched) {
-        this.touched = touched;
+    public short getClock() {
+        return clock;
+    }
+
+    public void setClock(short clock) {
+        this.clock = clock;
     }
 
     @Override
     public void copyTo(WeightValue another) {
         another.value = this.value;
-        another.touched = this.touched;
+        another.clock = this.clock;
     }
 
     @Override
     public void copyFrom(WeightValue another) {
         this.value = another.value;
-        this.touched = another.touched;
+        this.clock = another.clock;
     }
 
     @Override
