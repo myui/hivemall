@@ -62,6 +62,13 @@
       <version>2.3-eb</version>
     </dependency>
 
+	<!-- required for mixing -->
+	<dependency>
+    	<groupId>io.netty</groupId>
+    	<artifactId>netty-all</artifactId>
+    	<version>4.0.23.Final</version>
+	</dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
