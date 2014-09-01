@@ -48,8 +48,14 @@ public final class MixClientInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
 
+        //LengthFieldPrepender frameEncoder = new LengthFieldPrepender(4);
+        //MixMessageEncoder encoder = new MixMessageEncoder();
+        //LengthFieldBasedFrameDecoder frameDecoder = new LengthFieldBasedFrameDecoder(8192, 0, 4, 0, 4);
+        //MixMessageDecoder decoder = new MixMessageDecoder();
+        //pipeline.addLast(frameEncoder, encoder, frameDecoder, decoder, msgHandler);
+
         ObjectEncoder encoder = new ObjectEncoder();
-        ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.weakCachingConcurrentResolver(null));
+        ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
         pipeline.addLast(encoder, decoder, msgHandler);
     }
 
