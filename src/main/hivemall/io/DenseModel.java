@@ -122,6 +122,7 @@ public final class DenseModel extends PredictionModel {
         short clock = 0;
         if(clocks != null && value.isTouched()) {
             clock = (short) (clocks[i] + 1);
+            assert (clock >= 0) : clock;
             clocks[i] = clock;
         }
 

@@ -67,6 +67,7 @@ public final class SparseModel extends PredictionModel {
             WeightValue old = weights.get(feature);
             if(old != null) {
                 short newclock = (short) (old.getClock() + value.getClock());
+                assert (newclock >= 0) : newclock;
                 value.setClock(newclock);
             }
         }
