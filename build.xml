@@ -38,7 +38,7 @@
 			<classpath location="${test.build.dir}" />
 			<batchtest todir="${test.result.dir}">
 				<fileset dir="${test.dir}">
-					<include name="**/*Test*.java"/>
+					<include name="**/*Test*.java" />
 				</fileset>
 			</batchtest>
 			<formatter type="xml" usefile="true" />
@@ -53,6 +53,7 @@
 				<attribute name="Implementation-Title" value="${jar.title}" />
 				<attribute name="Implementation-Version" value="${version}" />
 				<attribute name="Implementation-Vendor" value="${jar.vendor}" />
+				<attribute name="Main-Class" value="hivemall.mix.serve.MixServer" />
 			</manifest>
 		</jar>
 		<delete failonerror="true" dir="${build.dir}" />
@@ -66,7 +67,7 @@
 
 	<target name="clean">
 		<delete failonerror="true">
-			<fileset dir="${target.dir}" excludes=".gitignore"/>
+			<fileset dir="${target.dir}" excludes=".gitignore" />
 		</delete>
 	</target>
 
