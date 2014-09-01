@@ -43,12 +43,12 @@ public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessa
     protected void channelRead0(ChannelHandlerContext ctx, MixMessage msg) throws Exception {
         Object feature = msg.getFeature();
         float weight = msg.getWeight();
-        float covar = msg.getCovariance();
         short clock = msg.getClock();
         if(hasCovar) {
-            model._set(feature, weight, clock);
-        } else {
+            float covar = msg.getCovariance();
             model._set(feature, weight, covar, clock);
+        } else {
+            model._set(feature, weight, clock);
         }
     }
 
