@@ -380,7 +380,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    public void close() throws HiveException {
+    public final void close() throws HiveException {
+        super.close();
         if(label2model != null) {
             long numForwarded = 0L;
             if(useCovariance()) {

@@ -260,7 +260,8 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    public void close() throws HiveException {
+    public final void close() throws HiveException {
+        super.close();
         if(model != null) {
             int numForwarded = 0;
             if(useCovariance()) {
