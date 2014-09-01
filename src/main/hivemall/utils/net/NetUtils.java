@@ -20,7 +20,9 @@
  */
 package hivemall.utils.net;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 public final class NetUtils {
 
@@ -29,13 +31,27 @@ public final class NetUtils {
     public static InetSocketAddress getInetSocketAddress(String endpointURI, int defaultPort) {
         final int pos = endpointURI.indexOf(':');
         if(pos == -1) {
-            return new InetSocketAddress(endpointURI, defaultPort);
+            InetAddress addr = getInetAddress(endpointURI);
+            return new InetSocketAddress(addr, defaultPort);
         } else {
             String host = endpointURI.substring(0, pos);
+            InetAddress addr = getInetAddress(host);
             String portStr = endpointURI.substring(pos + 1);
             int port = Integer.parseInt(portStr);
-            return new InetSocketAddress(host, port);
+            return new InetSocketAddress(addr, port);
         }
+    }
+
+    public static InetAddress getInetAddress(final String addressOrName) {
+        try {
+            return InetAddress.getByName(addressOrName);
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Cannot find InetAddress: " + addressOrName);
+        }
+    }
+
+    public static boolean isIPAddress(final String ip) {
+        return ip.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
     }
 
 }
