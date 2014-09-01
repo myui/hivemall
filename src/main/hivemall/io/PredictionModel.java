@@ -26,8 +26,11 @@ public abstract class PredictionModel {
     public static final short CLOCK_ZERO = 0;
 
     protected ModelUpdateHandler handler;
+    protected int numMixed;
 
-    public PredictionModel() {}
+    public PredictionModel() {
+        this.numMixed = 0;
+    }
 
     public ModelUpdateHandler getUpdateHandler() {
         return handler;
@@ -74,6 +77,10 @@ public abstract class PredictionModel {
                 value.setClock(CLOCK_ZERO);
             }
         }
+    }
+
+    public final int getNumMixed() {
+        return numMixed;
     }
 
     public abstract boolean hasCovariance();

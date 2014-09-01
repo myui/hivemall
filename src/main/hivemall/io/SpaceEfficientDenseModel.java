@@ -184,6 +184,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
         ensureCapacity(i);
         setWeight(i, weight);
         clocks[i] = clock;
+        numMixed++;
     }
 
     @Override
@@ -193,6 +194,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
         setWeight(i, weight);
         setCovar(i, covar);
         clocks[i] = clock;
+        numMixed++;
     }
 
     @Override

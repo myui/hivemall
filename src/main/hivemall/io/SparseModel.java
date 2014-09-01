@@ -93,6 +93,7 @@ public final class SparseModel extends PredictionModel {
         WeightValue w = new WeightValue(weight);
         w.setClock(clock);
         weights.put(feature, w);
+        numMixed++;
     }
 
     @Override
@@ -100,6 +101,7 @@ public final class SparseModel extends PredictionModel {
         WeightValue w = new WeightValueWithCovar(weight, covar);
         w.setClock(clock);
         weights.put(feature, w);
+        numMixed++;
     }
 
     @Override

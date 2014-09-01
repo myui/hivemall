@@ -158,6 +158,7 @@ public final class DenseModel extends PredictionModel {
         ensureCapacity(i);
         weights[i] = weight;
         clocks[i] = clock;
+        numMixed++;
     }
 
     @Override
@@ -167,6 +168,7 @@ public final class DenseModel extends PredictionModel {
         weights[i] = weight;
         covars[i] = covar;
         clocks[i] = clock;
+        numMixed++;
     }
 
     @Override
