@@ -18,42 +18,23 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.utils.lang;
+package hivemall.utils.io;
 
-public final class Primitives {
+import java.io.Closeable;
+import java.io.IOException;
 
-    private Primitives() {}
+public final class IOUtils {
 
-    public static short parseShort(String s, short defaultValue) {
-        if(s == null) {
-            return defaultValue;
+    private IOUtils() {}
+
+    public static void closeQuietly(final Closeable channel) {
+        if(channel != null) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+                ;
+            }
         }
-        return Short.parseShort(s);
-    }
-
-    public static int parseInt(String s, int defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Integer.parseInt(s);
-    }
-
-    public static float parseFloat(String s, float defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Float.parseFloat(s);
-    }
-
-    public static boolean parseBoolean(String s, boolean defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Boolean.parseBoolean(s);
-    }
-
-    public static int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
 }

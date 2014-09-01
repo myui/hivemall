@@ -18,42 +18,24 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.utils.lang;
+package hivemall.utils.net;
 
-public final class Primitives {
+import java.net.InetSocketAddress;
 
-    private Primitives() {}
+public final class NetUtils {
 
-    public static short parseShort(String s, short defaultValue) {
-        if(s == null) {
-            return defaultValue;
+    private NetUtils() {}
+
+    public static InetSocketAddress getInetSocketAddress(String endpointURI, int defaultPort) {
+        final int pos = endpointURI.indexOf(':');
+        if(pos == -1) {
+            return new InetSocketAddress(endpointURI, defaultPort);
+        } else {
+            String host = endpointURI.substring(0, pos);
+            String portStr = endpointURI.substring(pos + 1);
+            int port = Integer.parseInt(portStr);
+            return new InetSocketAddress(host, port);
         }
-        return Short.parseShort(s);
-    }
-
-    public static int parseInt(String s, int defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Integer.parseInt(s);
-    }
-
-    public static float parseFloat(String s, float defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Float.parseFloat(s);
-    }
-
-    public static boolean parseBoolean(String s, boolean defaultValue) {
-        if(s == null) {
-            return defaultValue;
-        }
-        return Boolean.parseBoolean(s);
-    }
-
-    public static int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
 }
