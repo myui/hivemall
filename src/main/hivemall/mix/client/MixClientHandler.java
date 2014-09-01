@@ -22,9 +22,11 @@ package hivemall.mix.client;
 
 import hivemall.io.PredictionModel;
 import hivemall.mix.MixMessage;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+@Sharable
 public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessage> {
 
     private final PredictionModel model;
