@@ -27,8 +27,8 @@ public abstract class PartialResult {
 
     private final Lock lock;
 
-    protected volatile float minCovariance;
-    protected volatile short totalClock;
+    protected float minCovariance;
+    protected short totalClock;
 
     public PartialResult() {
         this.lock = new TTASLock();
@@ -60,6 +60,7 @@ public abstract class PartialResult {
 
     protected void incrClock(short clock) {
         totalClock += clock;
+        assert (totalClock >= 0) : totalClock;
     }
 
     public int diffClock(short clock) {

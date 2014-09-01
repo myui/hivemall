@@ -23,8 +23,8 @@ package hivemall.mix.server;
 public final class PartialArgminKLD extends PartialResult {
 
     private final float scale;
-    private volatile float sum_mean_div_covar;
-    private volatile float sum_inv_covar;
+    private float sum_mean_div_covar;
+    private float sum_inv_covar;
 
     public PartialArgminKLD() {
         this(1.f); // no scaling
@@ -38,7 +38,7 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     @Override
-    public synchronized void add(float localWeight, float covar, short clock) {
+    public void add(float localWeight, float covar, short clock) {
         addWeight(localWeight, covar);
         setMinCovariance(covar);
         incrClock(clock);

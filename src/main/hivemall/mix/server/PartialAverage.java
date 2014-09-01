@@ -24,7 +24,7 @@ public final class PartialAverage extends PartialResult {
     public static final float DEFAULT_SCALE = 10;
 
     private final float scale;
-    private volatile float scaledSumWeights;
+    private float scaledSumWeights;
 
     public PartialAverage() {
         this(1.f); // no scaling
@@ -37,7 +37,7 @@ public final class PartialAverage extends PartialResult {
     }
 
     @Override
-    public synchronized void add(float localWeight, float covar, short clock) {
+    public void add(float localWeight, float covar, short clock) {
         addWeight(localWeight);
         setMinCovariance(covar);
         incrClock(clock);
