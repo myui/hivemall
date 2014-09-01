@@ -51,7 +51,7 @@ public final class MixServer implements Runnable {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
         this.ssl = cl.hasOption("ssl");
         this.scale = Primitives.parseFloat(cl.getOptionValue("scale"), 1.f);
-        this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 100);
+        this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
     }
 
     public static void main(String[] args) {
@@ -59,7 +59,7 @@ public final class MixServer implements Runnable {
         opts.addOption("p", "port", true, "port number of the mix server");
         opts.addOption("ssl", false, "Use SSL for the mix communication");
         opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
-        opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 100]");
+        opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
         CommandLine cl = CommandLineUtils.parseOptions(args, opts);
         new MixServer(cl).run();
     }
