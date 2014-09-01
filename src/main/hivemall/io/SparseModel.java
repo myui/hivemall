@@ -27,16 +27,19 @@ import hivemall.utils.collections.OpenHashMap;
 public final class SparseModel extends PredictionModel {
 
     private final OpenHashMap<Object, WeightValue> weights;
+    private final boolean hasCovar;
     private boolean clockEnabled;
 
-    public SparseModel() {
-        this(16384);
-    }
-
-    public SparseModel(int size) {
+    public SparseModel(int size, boolean hasCovar) {
         super();
         this.weights = new OpenHashMap<Object, WeightValue>(size);
+        this.hasCovar = hasCovar;
         this.clockEnabled = false;
+    }
+
+    @Override
+    public boolean hasCovariance() {
+        return hasCovar;
     }
 
     @Override
@@ -68,6 +71,8 @@ public final class SparseModel extends PredictionModel {
             }
         }
         weights.put(feature, value);
+
+        onUpdate(feature, value);
     }
 
     @Override
@@ -83,13 +88,17 @@ public final class SparseModel extends PredictionModel {
     }
 
     @Override
-    public void setValue(Object feature, float weight) {
-        set(feature, new WeightValue(weight));
+    public void _set(Object feature, float weight, short clock) {
+        WeightValue w = new WeightValue(weight);
+        w.setClock(clock);
+        weights.put(feature, w);
     }
 
     @Override
-    public void setValue(Object feature, float weight, float covar) {
-        set(feature, new WeightValueWithCovar(weight, covar));
+    public void _set(Object feature, float weight, float covar, short clock) {
+        WeightValue w = new WeightValueWithCovar(weight, covar);
+        w.setClock(clock);
+        weights.put(feature, w);
     }
 
     @Override

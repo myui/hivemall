@@ -59,6 +59,11 @@ public final class DenseModel extends PredictionModel {
     }
 
     @Override
+    public boolean hasCovariance() {
+        return covars != null;
+    }
+
+    @Override
     public void configureClock() {
         if(clocks == null) {
             this.clocks = new short[size];
@@ -142,32 +147,20 @@ public final class DenseModel extends PredictionModel {
     }
 
     @Override
-    public void setValue(Object feature, float weight) {
+    public void _set(Object feature, float weight, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         weights[i] = weight;
-        short clock = 0;
-        if(clocks != null) {
-            clock = (short) (clocks[i] + 1);
-            clocks[i] = clock;
-        }
-
-        onUpdate(i, weight, clock);
+        clocks[i] = clock;
     }
 
     @Override
-    public void setValue(Object feature, float weight, float covar) {
+    public void _set(Object feature, float weight, float covar, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         weights[i] = weight;
         covars[i] = covar;
-        short clock = 0;
-        if(clocks != null) {
-            clock = (short) (clocks[i] + 1);
-            clocks[i] = clock;
-        }
-
-        onUpdate(i, weight, covar, clock);
+        clocks[i] = clock;
     }
 
     @Override

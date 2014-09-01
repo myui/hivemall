@@ -17,14 +17,16 @@ public class SpaceEfficientDenseModelTest {
         final int size = 1 << 12;
 
         final SpaceEfficientDenseModel model1 = new SpaceEfficientDenseModel(size);
+        model1.configureClock();
         final DenseModel model2 = new DenseModel(size);
+        model2.configureClock();
 
         final Random rand = new Random();
         for(int t = 0; t < 1000; t++) {
             int i = rand.nextInt(size);
             float w = 65520f * rand.nextFloat();
-            model1.setValue(i, w);
-            model2.setValue(i, w);
+            model1._set(i, w, (short) 1);
+            model2._set(i, w, (short) 1);
         }
 
         assertEquals(model2.size(), model1.size());

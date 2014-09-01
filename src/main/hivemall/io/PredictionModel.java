@@ -36,30 +36,38 @@ public abstract class PredictionModel {
         this.handler = handler;
     }
 
-    protected final void onUpdate(final int feature, final float weight, final short clock) {
-        if(handler != null) {
-            handler.onUpdate(feature, weight, 1.f, clock);
-        }
-    }
-
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock) {
         if(handler != null) {
-            handler.onUpdate(feature, weight, covar, clock);
+            try {
+                handler.onUpdate(feature, weight, covar, clock);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     protected final void onUpdate(final Object feature, final WeightValue value) {
         if(handler != null) {
-            float weight = value.get();
-            short clock = value.getClock();
+            final float weight = value.get();
+            final short clock = value.getClock();
             if(value.hasCovariance()) {
-                float covar = value.getCovariance();
-                handler.onUpdate(feature, weight, covar, clock);
+                final float covar = value.getCovariance();
+                try {
+                    handler.onUpdate(feature, weight, covar, clock);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             } else {
-                handler.onUpdate(feature, weight, 1.f, clock);
+                try {
+                    handler.onUpdate(feature, weight, 1.f, clock);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
+
+    public abstract boolean hasCovariance();
 
     public abstract void configureClock();
 
@@ -77,11 +85,9 @@ public abstract class PredictionModel {
 
     public abstract float getCovariance(Object feature);
 
-    @Deprecated
-    public abstract void setValue(Object feature, float weight);
+    public abstract void _set(Object feature, float weight, short clock);
 
-    @Deprecated
-    public abstract void setValue(Object feature, float weight, float covar);
+    public abstract void _set(Object feature, float weight, float covar, short clock);
 
     public abstract <K, V extends WeightValue> IMapIterator<K, V> entries();
 

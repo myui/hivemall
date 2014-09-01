@@ -28,14 +28,6 @@ public interface ModelUpdateHandler {
      * @param covar 1.0 by the default
      * @param clock 0 by the default
      */
-    void onUpdate(Object feature, float weight, float covar, short clock);
-
-    /**
-     * @param feature
-     * @param weight
-     * @param covar 1.0 by the default
-     * @param clock 0 by the default
-     */
-    void onUpdate(int feature, float weight, float covar, short clock);
+    void onUpdate(Object feature, float weight, float covar, short clock) throws Exception;
 
 }
