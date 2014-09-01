@@ -60,4 +60,9 @@ public final class Primitives {
         return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
+    public static void putChar(final byte[] b, final int off, final char val) {
+        b[off + 1] = (byte) (val >>> 0);
+        b[off] = (byte) (val >>> 8);
+    }
+
 }
