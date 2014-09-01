@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessage> {
     private static final short CLOCK_ZERO = 0;
+    private static final int EXPECTED_MODEL_SIZE = 16777217; /* 2^24+1=16777216+1=16777217 */
 
     private final int syncThreshold;
     private final float scale;
@@ -64,8 +65,11 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         }
         ConcurrentMap<Object, PartialResult> map = groupMap.get(groupID);
         if(map == null) {
-            map = new ConcurrentHashMap<Object, PartialResult>(16777216); /* 2^24=16777216 */
-            map = groupMap.putIfAbsent(groupID, map);
+            map = new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
+            ConcurrentMap<Object, PartialResult> existing = groupMap.putIfAbsent(groupID, map);
+            if(existing != null) {
+                map = existing;
+            }
         }
 
         Object feature = msg.getFeature();
@@ -82,7 +86,10 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
                 default:
                     throw new IllegalStateException("Unexpected event: " + event);
             }
-            partial = map.putIfAbsent(feature, partial);
+            PartialResult existing = map.putIfAbsent(feature, partial);
+            if(existing != null) {
+                partial = existing;
+            }
         }
         return partial;
     }
@@ -110,7 +117,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             partial.unlock();
         }
 
-        if(requestMsg != null) {
+        if(responseMsg != null) {
             ctx.writeAndFlush(responseMsg);
         }
     }
