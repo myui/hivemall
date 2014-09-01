@@ -38,7 +38,7 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock) {
+    public void add(float localWeight, float covar, short clock, int deltaUpdates) {
         addWeight(localWeight, covar);
         setMinCovariance(covar);
         incrClock(clock);

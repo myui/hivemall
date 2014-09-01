@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentMap;
 
 @Sharable
 public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessage> {
-    private static final short CLOCK_ZERO = 0;
     private static final int EXPECTED_MODEL_SIZE = 16777217; /* 2^24+1=16777216+1=16777217 */
 
     private final int syncThreshold;
@@ -102,18 +101,20 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         float weight = requestMsg.getWeight();
         float covar = requestMsg.getCovariance();
         short clock = requestMsg.getClock();
+        int deltaUpdates = requestMsg.getDeltaUpdates();
 
         MixMessage responseMsg = null;
         try {
             partial.lock();
 
             int diffClock = partial.diffClock(clock);
-            partial.add(weight, covar, clock);
+            partial.add(weight, covar, clock, deltaUpdates);
 
             if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
                 float averagedWeight = partial.getWeight();
                 float minCovar = partial.getMinCovariance();
-                responseMsg = new MixMessage(event, feature, averagedWeight, minCovar, CLOCK_ZERO);
+                short totalClock = partial.getClock();
+                responseMsg = new MixMessage(event, feature, averagedWeight, minCovar, totalClock, 0 /* deltaUpdates */);
             }
         } finally {
             partial.unlock();

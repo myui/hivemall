@@ -32,24 +32,29 @@ public final class MixMessage implements Externalizable {
     private float weight;
     private float covariance;
     private short clock;
+    private int deltaUpdates;
 
     private String groupID;
 
     public MixMessage() {} // for Externalizable
 
-    public MixMessage(MixEventName event, Object feature, float weight, short clock) {
-        this(event, feature, weight, 0.f, clock);
+    public MixMessage(MixEventName event, Object feature, float weight, short clock, int deltaUpdates) {
+        this(event, feature, weight, 0.f, clock, deltaUpdates);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock) {
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates) {
         if(feature == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("feature is null");
+        }
+        if(deltaUpdates < 1 || deltaUpdates > Byte.MAX_VALUE) {
+            throw new IllegalArgumentException("Illegal deletaUpdates: " + deltaUpdates);
         }
         this.event = event;
         this.feature = feature;
         this.weight = weight;
         this.covariance = covariance;
         this.clock = clock;
+        this.deltaUpdates = deltaUpdates;
     }
 
     public enum MixEventName {
@@ -97,6 +102,10 @@ public final class MixMessage implements Externalizable {
         return clock;
     }
 
+    public int getDeltaUpdates() {
+        return deltaUpdates;
+    }
+
     public String getGroupID() {
         return groupID;
     }
@@ -112,6 +121,7 @@ public final class MixMessage implements Externalizable {
         out.writeFloat(weight);
         out.writeFloat(covariance);
         out.writeShort(clock);
+        out.writeInt(deltaUpdates);
         if(groupID == null) {
             out.writeBoolean(false);
         } else {
@@ -128,6 +138,7 @@ public final class MixMessage implements Externalizable {
         this.weight = in.readFloat();
         this.covariance = in.readFloat();
         this.clock = in.readShort();
+        this.deltaUpdates = in.readInt();
         boolean hasGroupID = in.readBoolean();
         if(hasGroupID) {
             this.groupID = in.readUTF();

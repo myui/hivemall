@@ -42,7 +42,7 @@ public abstract class PartialResult {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, short clock);
+    public abstract void add(float localWeight, float covar, short clock, int deltaUpdates);
 
     public abstract float getWeight();
 
@@ -54,13 +54,12 @@ public abstract class PartialResult {
         this.minCovariance = Math.max(minCovariance, covar);
     }
 
-    public short getTotalClock() {
+    public short getClock() {
         return totalClock;
     }
 
     protected void incrClock(short clock) {
         totalClock += clock;
-        assert (totalClock >= 0) : totalClock;
     }
 
     public int diffClock(short clock) {

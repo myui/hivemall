@@ -25,6 +25,7 @@ public final class PartialAverage extends PartialResult {
 
     private final float scale;
     private float scaledSumWeights;
+    private short totalUpdates;
 
     public PartialAverage() {
         this(1.f); // no scaling
@@ -34,22 +35,25 @@ public final class PartialAverage extends PartialResult {
         super();
         this.scale = scale;
         this.scaledSumWeights = 0.f;
+        this.totalUpdates = 0;
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock) {
-        addWeight(localWeight, clock);
+    public void add(float localWeight, float covar, short clock, int deltaUpdates) {
+        addWeight(localWeight, deltaUpdates);
         setMinCovariance(covar);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, int clock) {
-        scaledSumWeights += ((localWeight / scale) * clock);
+    protected void addWeight(float localWeight, int deltaUpdates) {
+        scaledSumWeights += ((localWeight / scale) * deltaUpdates);
+        totalUpdates += deltaUpdates; // not deltaUpdates is in range (0,127]
+        assert (totalUpdates > 0) : totalUpdates;
     }
 
     @Override
     public float getWeight() {
-        return (scaledSumWeights / totalClock) * scale;
+        return (scaledSumWeights / totalUpdates) * scale;
     }
 
 }

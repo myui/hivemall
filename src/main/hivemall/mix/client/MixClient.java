@@ -63,7 +63,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }
-        if(mixThreshold < 1) {
+        if(mixThreshold < 1 || mixThreshold > Byte.MAX_VALUE) {
             throw new IllegalArgumentException("Invalid mixThreshold: " + mixThreshold);
         }
         this.event = event;
@@ -110,10 +110,10 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     @Override
-    public boolean onUpdate(Object feature, float weight, float covar, short clock)
+    public boolean onUpdate(Object feature, float weight, float covar, short clock, int deltaUpdates)
             throws Exception {
-        assert (clock >= 0) : clock;
-        if(clock < mixThreshold) {
+        assert (deltaUpdates > 0) : deltaUpdates;
+        if(deltaUpdates < mixThreshold) {
             return false; // avoid mixing
         }
 
@@ -121,7 +121,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
             initialize(); // initialize connections to mix servers
         }
 
-        MixMessage msg = new MixMessage(event, feature, weight, covar, clock);
+        MixMessage msg = new MixMessage(event, feature, weight, covar, clock, deltaUpdates);
         msg.setGroupID(groupID);
 
         NodeInfo server = router.selectNode(msg);
