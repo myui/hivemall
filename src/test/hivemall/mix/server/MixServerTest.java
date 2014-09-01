@@ -149,4 +149,59 @@ public class MixServerTest {
         IOUtils.closeQuietly(client);
     }
 
+    @Test
+    public void test2ClientsZeroOne() throws InterruptedException {
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11215",
+                "-sync_threshold", "30" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        Thread.sleep(500);// slight delay to boot a server
+
+        final ExecutorService clientsExec = Executors.newCachedThreadPool();
+        for(int i = 0; i < 2; i++) {
+            clientsExec.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        invokeClient01("test2ClientsZeroOne", 11215);
+                    } catch (InterruptedException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        clientsExec.awaitTermination(30, TimeUnit.SECONDS);
+        clientsExec.shutdown();
+        serverExec.shutdown();
+    }
+
+    private static void invokeClient01(String groupId, int serverPort) throws InterruptedException {
+        PredictionModel model = new DenseModel(100, false);
+        model.configureClock();
+        MixClient client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
+        model.setUpdateHandler(client);
+
+        final Random rand = new Random(43);
+        for(int i = 0; i < 1000000; i++) {
+            Integer feature = Integer.valueOf(rand.nextInt(100));
+            float weight = rand.nextFloat() >= 0.5f ? 1.f : 0.f;
+            model.set(feature, new WeightValue(weight));
+        }
+
+        Thread.sleep(5 * 1000);
+
+        int numMixed = model.getNumMixed();
+        //System.out.println("number of mix events: " + numMixed);
+        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+        for(int i = 0; i < 100; i++) {
+            float w = model.getWeight(i);
+            Assert.assertEquals(0.5f, w, 0.1f);
+        }
+
+        IOUtils.closeQuietly(client);
+    }
+
 }
