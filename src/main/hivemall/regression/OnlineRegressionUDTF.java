@@ -302,10 +302,11 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                     numForwarded++;
                 }
             }
+            int numMixed = model.getNumMixed();
             this.model = null;
-            logger.info("Trained a prediction model using " + count
-                    + " training examples. Forwarded the prediction model of " + numForwarded
-                    + " rows");
+            logger.info("Trained a prediction model using " + count + " training examples"
+                    + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
+            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 

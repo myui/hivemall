@@ -384,6 +384,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         super.close();
         if(label2model != null) {
             long numForwarded = 0L;
+            long numMixed = 0L;
             if(useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[4];
@@ -393,6 +394,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
+                    numMixed += model.getNumMixed();
                     IMapIterator<Object, WeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
@@ -417,6 +419,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
+                    numMixed += model.getNumMixed();
                     IMapIterator<Object, WeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
@@ -433,9 +436,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 }
             }
             this.label2model = null;
-            logger.info("Trained a prediction model using " + count
-                    + " training examples. Forwarded the prediction model of " + numForwarded
-                    + " rows");
+            logger.info("Trained a prediction model using " + count + " training examples"
+                    + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
+            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 
