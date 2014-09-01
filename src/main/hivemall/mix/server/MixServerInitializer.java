@@ -49,7 +49,7 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
         }
 
         ObjectEncoder encoder = new ObjectEncoder();
-        ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
+        ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.weakCachingConcurrentResolver(null));
         pipeline.addLast(encoder, decoder, msgHandler);
     }
 
