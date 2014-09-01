@@ -23,6 +23,7 @@ package hivemall.io;
 import hivemall.utils.collections.IMapIterator;
 
 public abstract class PredictionModel {
+    public static final short CLOCK_ZERO = 0;
 
     protected ModelUpdateHandler handler;
 
@@ -38,10 +39,14 @@ public abstract class PredictionModel {
 
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock) {
         if(handler != null) {
+            final boolean resetClock;
             try {
-                handler.onUpdate(feature, weight, covar, clock);
+                resetClock = handler.onUpdate(feature, weight, covar, clock);
             } catch (Exception e) {
                 throw new RuntimeException(e);
+            }
+            if(resetClock) {
+                setClock(feature, CLOCK_ZERO);
             }
         }
     }
@@ -50,19 +55,23 @@ public abstract class PredictionModel {
         if(handler != null) {
             final float weight = value.get();
             final short clock = value.getClock();
+            final boolean resetClock;
             if(value.hasCovariance()) {
                 final float covar = value.getCovariance();
                 try {
-                    handler.onUpdate(feature, weight, covar, clock);
+                    resetClock = handler.onUpdate(feature, weight, covar, clock);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 try {
-                    handler.onUpdate(feature, weight, 1.f, clock);
+                    resetClock = handler.onUpdate(feature, weight, 1.f, clock);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+            }
+            if(resetClock) {
+                value.setClock(CLOCK_ZERO);
             }
         }
     }
@@ -72,6 +81,10 @@ public abstract class PredictionModel {
     public abstract void configureClock();
 
     public abstract boolean hasClock();
+
+    public void setClock(int feature, short clock) {
+        throw new UnsupportedOperationException();
+    }
 
     public abstract int size();
 

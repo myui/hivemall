@@ -27,7 +27,8 @@ public interface ModelUpdateHandler {
      * @param weight
      * @param covar 1.0 by the default
      * @param clock 0 by the default
+     * @return reset the clock?
      */
-    void onUpdate(Object feature, float weight, float covar, short clock) throws Exception;
+    boolean onUpdate(Object feature, float weight, float covar, short clock) throws Exception;
 
 }

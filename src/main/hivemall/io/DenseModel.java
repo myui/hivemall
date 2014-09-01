@@ -75,6 +75,11 @@ public final class DenseModel extends PredictionModel {
         return clocks != null;
     }
 
+    @Override
+    public void setClock(int feature, short clock) {
+        clocks[feature] = clock;
+    }
+
     private void ensureCapacity(final int index) {
         if(index >= size) {
             int bits = MathUtils.bitsRequired(index);

@@ -76,6 +76,11 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
         return clocks != null;
     }
 
+    @Override
+    public void setClock(int feature, short clock) {
+        clocks[feature] = clock;
+    }
+
     private float getWeight(final int i) {
         final short w = weights[i];
         return (w == HalfFloat.ZERO) ? HalfFloat.ZERO : HalfFloat.halfFloatToFloat(w);

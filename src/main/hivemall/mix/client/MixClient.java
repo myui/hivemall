@@ -110,10 +110,11 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     @Override
-    public void onUpdate(Object feature, float weight, float covar, short clock) throws Exception {
+    public boolean onUpdate(Object feature, float weight, float covar, short clock)
+            throws Exception {
         assert (clock >= 0) : clock;
         if(clock < mixThreshold) {
-            return; // avoid mixing
+            return false; // avoid mixing
         }
 
         if(!initialized) {
@@ -131,6 +132,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         }
 
         ch.writeAndFlush(msg);
+        return true;
     }
 
     @Override
