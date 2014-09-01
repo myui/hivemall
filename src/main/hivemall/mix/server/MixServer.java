@@ -55,13 +55,18 @@ public final class MixServer implements Runnable {
     }
 
     public static void main(String[] args) {
-        Options opts = new Options();
-        opts.addOption("p", "port", true, "port number of the mix server");
-        opts.addOption("ssl", false, "Use SSL for the mix communication");
-        opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
-        opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
+        Options opts = getOptions();
         CommandLine cl = CommandLineUtils.parseOptions(args, opts);
         new MixServer(cl).run();
+    }
+
+    static Options getOptions() {
+        Options opts = new Options();
+        opts.addOption("p", "port", true, "port number of the mix server [default: 11212]");
+        opts.addOption("ssl", false, "Use SSL for the mix communication [default: false]");
+        opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
+        opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
+        return opts;
     }
 
     @Override
