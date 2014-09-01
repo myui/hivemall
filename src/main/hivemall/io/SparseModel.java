@@ -69,6 +69,9 @@ public final class SparseModel extends PredictionModel {
                 short newclock = (short) (old.getClock() + value.getClock());
                 assert (newclock >= 0) : newclock;
                 value.setClock(newclock);
+                byte newDelta = (byte) (old.getDeltaUpdates() + 1);
+                assert (newDelta > 0) : newclock;
+                value.setDeltaUpdates(newDelta);
             }
         }
         weights.put(feature, value);

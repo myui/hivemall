@@ -38,7 +38,9 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
     private int size;
     private short[] weights;
     private short[] covars;
+
     private short[] clocks;
+    private byte[] deltaUpdates;
 
     public SpaceEfficientDenseModel(int ndims) {
         this(ndims, false);
@@ -57,6 +59,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
             this.covars = null;
         }
         this.clocks = null;
+        this.deltaUpdates = null;
     }
 
     @Override
@@ -68,6 +71,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
     public void configureClock() {
         if(clocks == null) {
             this.clocks = new short[size];
+            this.deltaUpdates = new byte[size];
         }
     }
 
@@ -77,8 +81,8 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
     }
 
     @Override
-    public void setClock(int feature, short clock) {
-        clocks[feature] = clock;
+    public void resetDeltaUpdates(int feature) {
+        deltaUpdates[feature] = 0;
     }
 
     private float getWeight(final int i) {
@@ -121,6 +125,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
             }
             if(clocks != null) {
                 this.clocks = Arrays.copyOf(clocks, newSize);
+                this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
             }
         }
     }
@@ -151,13 +156,17 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
             setCovar(i, covar);
         }
         short clock = 0;
+        int delta = 0;
         if(clocks != null && value.isTouched()) {
             clock = (short) (clocks[i] + 1);
             assert (clock >= 0) : clock;
             clocks[i] = clock;
+            delta = deltaUpdates[i] + 1;
+            assert (delta > 0) : delta;
+            deltaUpdates[i] = (byte) delta;
         }
 
-        onUpdate(i, weight, covar, clock);
+        onUpdate(i, weight, covar, clock, delta);
     }
 
     @Override
@@ -184,6 +193,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
         ensureCapacity(i);
         setWeight(i, weight);
         clocks[i] = clock;
+        deltaUpdates[i] = 0;
         numMixed++;
     }
 
@@ -194,6 +204,7 @@ public final class SpaceEfficientDenseModel extends PredictionModel {
         setWeight(i, weight);
         setCovar(i, covar);
         clocks[i] = clock;
+        deltaUpdates[i] = 0;
         numMixed++;
     }
 

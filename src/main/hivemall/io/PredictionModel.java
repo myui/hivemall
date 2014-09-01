@@ -23,7 +23,7 @@ package hivemall.io;
 import hivemall.utils.collections.IMapIterator;
 
 public abstract class PredictionModel {
-    public static final short CLOCK_ZERO = 0;
+    public static final byte BYTE0 = 0;
 
     protected ModelUpdateHandler handler;
     protected int numMixed;
@@ -40,16 +40,17 @@ public abstract class PredictionModel {
         this.handler = handler;
     }
 
-    protected final void onUpdate(final int feature, final float weight, final float covar, final short clock) {
+    protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates) {
+        assert (deltaUpdates > 0) : deltaUpdates;
         if(handler != null) {
-            final boolean resetClock;
+            final boolean resetDeltaUpdates;
             try {
-                resetClock = handler.onUpdate(feature, weight, covar, clock);
+                resetDeltaUpdates = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            if(resetClock) {
-                setClock(feature, CLOCK_ZERO);
+            if(resetDeltaUpdates) {
+                resetDeltaUpdates(feature);
             }
         }
     }
@@ -58,23 +59,24 @@ public abstract class PredictionModel {
         if(handler != null) {
             final float weight = value.get();
             final short clock = value.getClock();
-            final boolean resetClock;
+            final int deltaUpdates = value.getDeltaUpdates();
+            final boolean resetDeltaUpdates;
             if(value.hasCovariance()) {
                 final float covar = value.getCovariance();
                 try {
-                    resetClock = handler.onUpdate(feature, weight, covar, clock);
+                    resetDeltaUpdates = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 try {
-                    resetClock = handler.onUpdate(feature, weight, 1.f, clock);
+                    resetDeltaUpdates = handler.onUpdate(feature, weight, 1.f, clock, deltaUpdates);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
-            if(resetClock) {
-                value.setClock(CLOCK_ZERO);
+            if(resetDeltaUpdates) {
+                value.setDeltaUpdates(BYTE0);
             }
         }
     }
@@ -89,7 +91,7 @@ public abstract class PredictionModel {
 
     public abstract boolean hasClock();
 
-    public void setClock(int feature, short clock) {
+    public void resetDeltaUpdates(int feature) {
         throw new UnsupportedOperationException();
     }
 

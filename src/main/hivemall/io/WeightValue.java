@@ -26,6 +26,7 @@ public class WeightValue implements Copyable<WeightValue> {
 
     protected float value;
     protected short clock;
+    protected byte deltaUpdates;
 
     public WeightValue() {}
 
@@ -36,13 +37,14 @@ public class WeightValue implements Copyable<WeightValue> {
     public WeightValue(float weight, boolean touched) {
         this.value = weight;
         this.clock = touched ? (short) 1 : (short) 0;
+        this.deltaUpdates = 0;
     }
 
-    public float get() {
+    public final float get() {
         return value;
     }
 
-    public void set(float weight) {
+    public final void set(float weight) {
         this.value = weight;
     }
 
@@ -61,28 +63,38 @@ public class WeightValue implements Copyable<WeightValue> {
     /** 
      * @return whether touched in training or not
      */
-    public boolean isTouched() {
+    public final boolean isTouched() {
         return clock > 0;
     }
 
-    public short getClock() {
+    public final short getClock() {
         return clock;
     }
 
-    public void setClock(short clock) {
+    public final void setClock(short clock) {
         this.clock = clock;
+    }
+
+    public final byte getDeltaUpdates() {
+        return deltaUpdates;
+    }
+
+    public final void setDeltaUpdates(byte deltaUpdates) {
+        this.deltaUpdates = deltaUpdates;
     }
 
     @Override
     public void copyTo(WeightValue another) {
         another.value = this.value;
         another.clock = this.clock;
+        another.deltaUpdates = this.deltaUpdates;
     }
 
     @Override
     public void copyFrom(WeightValue another) {
         this.value = another.value;
         this.clock = another.clock;
+        this.deltaUpdates = another.deltaUpdates;
     }
 
     @Override
