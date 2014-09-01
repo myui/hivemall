@@ -31,6 +31,7 @@ import hivemall.utils.lang.CommandLineUtils;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
@@ -49,7 +50,7 @@ public class MixServerTest {
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, "scenario1", "localhost:11212", false, 2, model);
+        MixClient client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:11212", false, 2, model);
         model.setUpdateHandler(client);
 
         final Random rand = new Random(43);
@@ -78,7 +79,7 @@ public class MixServerTest {
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, "scenario1", "localhost:11213", true, 2, model);
+        MixClient client = new MixClient(MixEventName.average, "testSSL", "localhost:11213", true, 2, model);
         model.setUpdateHandler(client);
 
         final Random rand = new Random(43);
@@ -95,6 +96,57 @@ public class MixServerTest {
 
         IOUtils.closeQuietly(client);
         serverExec.shutdown();
+    }
+
+    @Test
+    public void testMultipleClients() throws InterruptedException {
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11214",
+                "-sync_threshold", "3" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        Thread.sleep(500);// slight delay to boot a server
+
+        final int numClients = 5;
+        final ExecutorService clientsExec = Executors.newCachedThreadPool();
+        for(int i = 0; i < numClients; i++) {
+            clientsExec.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        invokeClient("testMultipleClients", 11214);
+                    } catch (InterruptedException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        clientsExec.awaitTermination(10, TimeUnit.SECONDS);
+        clientsExec.shutdown();
+        serverExec.shutdown();
+    }
+
+    private static void invokeClient(String groupId, int serverPort) throws InterruptedException {
+        PredictionModel model = new DenseModel(16777216, false);
+        model.configureClock();
+        MixClient client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 2, model);
+        model.setUpdateHandler(client);
+
+        final Random rand = new Random(43);
+        for(int i = 0; i < 100000; i++) {
+            Integer feature = Integer.valueOf(rand.nextInt(100));
+            float weight = (float) rand.nextGaussian();
+            model.set(feature, new WeightValue(weight));
+        }
+
+        Thread.sleep(5 * 1000);
+
+        int numMixed = model.getNumMixed();
+        //System.out.println("number of mix events: " + numMixed);
+        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+        IOUtils.closeQuietly(client);
     }
 
 }
