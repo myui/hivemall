@@ -38,13 +38,13 @@ public final class PartialAverage extends PartialResult {
 
     @Override
     public void add(float localWeight, float covar, short clock) {
-        addWeight(localWeight);
+        addWeight(localWeight, clock);
         setMinCovariance(covar);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight) {
-        scaledSumWeights += (localWeight / scale);
+    protected void addWeight(float localWeight, int clock) {
+        scaledSumWeights += ((localWeight / scale) * clock);
     }
 
     @Override
