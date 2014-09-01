@@ -48,6 +48,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private final MixEventName event;
     private final String groupID;
     private final boolean ssl;
+    private final int mixThreshold;
     private final MixRequestRouter router;
     private final MixClientHandler msgHandler;
     private final Map<NodeInfo, Channel> channelMap;
@@ -55,17 +56,21 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(MixEventName event, String groupID, String connectURIs, boolean ssl, PredictionModel model) {
+    public MixClient(MixEventName event, String groupID, String connectURIs, boolean ssl, int mixThreshold, PredictionModel model) {
         assert (event != null);
         assert (connectURIs != null);
         assert (model != null);
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }
+        if(mixThreshold < 1) {
+            throw new IllegalArgumentException("Invalid mixThreshold: " + mixThreshold);
+        }
         this.event = event;
         this.groupID = groupID;
         this.router = new MixRequestRouter(connectURIs);
         this.ssl = ssl;
+        this.mixThreshold = mixThreshold;
         this.msgHandler = new MixClientHandler(model);
         this.channelMap = new HashMap<NodeInfo, Channel>();
     }
@@ -106,8 +111,13 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
     @Override
     public void onUpdate(Object feature, float weight, float covar, short clock) throws Exception {
+        assert (clock >= 0) : clock;
+        if(clock < mixThreshold) {
+            return; // avoid mixing
+        }
+
         if(!initialized) {
-            initialize();
+            initialize(); // initialize connections to mix servers
         }
 
         MixMessage msg = new MixMessage(event, feature, weight, covar, clock);

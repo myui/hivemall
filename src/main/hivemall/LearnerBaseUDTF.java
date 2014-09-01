@@ -64,6 +64,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected int model_dims;
     protected boolean disable_halffloat;
     protected String mixConnectInfo;
+    protected int mixThreshold;
     protected boolean ssl;
 
     protected MixClient client;
@@ -82,6 +83,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
         opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
+        opts.addOption("mix_threshold", true, "Threshold to mix local updates [default: 2]");
         opts.addOption("ssl", false, "Use SSL for the communication with mix servers");
         return opts;
     }
@@ -93,6 +95,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         int modelDims = -1;
         boolean disableHalfFloat = false;
         String mixConnectInfo = null;
+        int mixThreshold = 2;
         boolean ssl = false;
 
         CommandLine cl = null;
@@ -110,6 +113,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             disableHalfFloat = cl.hasOption("disable_halffloat");
 
             mixConnectInfo = cl.getOptionValue("mix");
+            mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 2);
             ssl = cl.hasOption("ssl");
         }
 
@@ -118,6 +122,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.model_dims = modelDims;
         this.disable_halffloat = disableHalfFloat;
         this.mixConnectInfo = mixConnectInfo;
+        this.mixThreshold = mixThreshold;
         this.ssl = ssl;
         return cl;
     }
@@ -142,19 +147,20 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             model = new SparseModel(initModelSize, useCovar);
         }
         if(mixConnectInfo != null) {
-            MixClient client = configureMixClient(mixConnectInfo, useCovar, model);
+            model.configureClock();
+            MixClient client = configureMixClient(mixConnectInfo, model);
             model.setUpdateHandler(client);
             this.client = client;
         }
         return model;
     }
 
-    protected MixClient configureMixClient(String connectURIs, boolean ssl, PredictionModel model) {
+    protected MixClient configureMixClient(String connectURIs, PredictionModel model) {
         assert (connectURIs != null);
         assert (model != null);
         String jobId = HadoopUtils.getJobId();
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
-        MixClient client = new MixClient(event, jobId, connectURIs, ssl, model);
+        MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
         logger.info("Successfully configured mix client: " + connectURIs);
         return client;
     }
