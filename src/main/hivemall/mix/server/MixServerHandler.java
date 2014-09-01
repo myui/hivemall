@@ -22,12 +22,14 @@ package hivemall.mix.server;
 
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@Sharable
 public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessage> {
     private static final short CLOCK_ZERO = 0;
     private static final int EXPECTED_MODEL_SIZE = 16777217; /* 2^24+1=16777216+1=16777217 */
