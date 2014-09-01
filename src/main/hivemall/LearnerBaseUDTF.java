@@ -85,7 +85,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
         opts.addOption("mix_session", "mix_session_name", true, "Mix session name [default: ${mapred.job.id}]");
-        opts.addOption("mix_threshold", true, "Threshold to mix local updates [default: 3]");
+        opts.addOption("mix_threshold", true, "Threshold to mix local updates in range (0,127] [default: 3]");
         opts.addOption("ssl", false, "Use SSL for the communication with mix servers");
         return opts;
     }
@@ -98,7 +98,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean disableHalfFloat = false;
         String mixConnectInfo = null;
         String mixSessionName = null;
-        int mixThreshold = 3;
+        int mixThreshold = -1;
         boolean ssl = false;
 
         CommandLine cl = null;
@@ -117,7 +117,11 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
             mixConnectInfo = cl.getOptionValue("mix");
             mixSessionName = cl.getOptionValue("mix_session");
-            mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 2);
+            mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 3);
+            if(mixThreshold > Byte.MAX_VALUE) {
+                throw new UDFArgumentException("mix_threshold must be in range (0,127]: "
+                        + mixThreshold);
+            }
             ssl = cl.hasOption("ssl");
         }
 
