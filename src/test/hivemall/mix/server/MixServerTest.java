@@ -25,6 +25,7 @@ import hivemall.io.PredictionModel;
 import hivemall.io.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
+import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.CommandLineUtils;
 
 import java.util.Random;
@@ -39,7 +40,7 @@ import org.junit.Test;
 public class MixServerTest {
 
     @Test
-    public void testScenario1() throws InterruptedException {
+    public void testSimpleScenario() throws InterruptedException {
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11212",
                 "-sync_threshold", "3" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -58,11 +59,41 @@ public class MixServerTest {
             model.set(feature, new WeightValue(weight));
         }
 
-        Thread.sleep(10 * 1000);
+        Thread.sleep(5 * 1000);
         int numMixed = model.getNumMixed();
         //System.out.println("number of mix events: " + numMixed);
         Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
 
+        IOUtils.closeQuietly(client);
+        serverExec.shutdown();
+    }
+
+    @Test
+    public void testSSL() throws InterruptedException {
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11213",
+                "-sync_threshold", "3", "-ssl" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        PredictionModel model = new DenseModel(16777216, false);
+        model.configureClock();
+        MixClient client = new MixClient(MixEventName.average, "scenario1", "localhost:11213", true, 2, model);
+        model.setUpdateHandler(client);
+
+        final Random rand = new Random(43);
+        for(int i = 0; i < 100000; i++) {
+            Integer feature = Integer.valueOf(rand.nextInt(100));
+            float weight = (float) rand.nextGaussian();
+            model.set(feature, new WeightValue(weight));
+        }
+
+        Thread.sleep(5 * 1000);
+        int numMixed = model.getNumMixed();
+        //System.out.println("number of mix events: " + numMixed);
+        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+        IOUtils.closeQuietly(client);
         serverExec.shutdown();
     }
 
