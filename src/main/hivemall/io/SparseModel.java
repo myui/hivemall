@@ -54,22 +54,21 @@ public final class SparseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends IWeightValue> T get(Object feature) {
+    public <T extends IWeightValue> T get(final Object feature) {
         return (T) weights.get(feature);
     }
 
     @Override
-    public <T extends IWeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(final Object feature, final T value) {
         assert (feature != null);
         assert (value != null);
 
         final IWeightValue wrapperValue = wrapIfRequired(value);
 
-        if(clockEnabled && wrapperValue.isTouched()) {
+        if(clockEnabled && value.isTouched()) {
             IWeightValue old = weights.get(feature);
             if(old != null) {
-                short newclock = (short) (old.getClock() + wrapperValue.getClock());
-                assert (newclock >= 0) : newclock;
+                short newclock = (short) (old.getClock() + 1);
                 wrapperValue.setClock(newclock);
                 byte newDelta = (byte) (old.getDeltaUpdates() + 1);
                 assert (newDelta > 0) : newclock;
@@ -94,20 +93,20 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public float getWeight(Object feature) {
+    public float getWeight(final Object feature) {
         IWeightValue v = weights.get(feature);
         return v == null ? 0.f : v.get();
     }
 
     @Override
-    public float getCovariance(Object feature) {
+    public float getCovariance(final Object feature) {
         IWeightValue v = weights.get(feature);
         return v == null ? 1.f : v.getCovariance();
     }
 
     @Override
-    public void _set(Object feature, float weight, short clock) {
-        IWeightValue w = weights.get(feature);
+    public void _set(final Object feature, final float weight, final short clock) {
+        final IWeightValue w = weights.get(feature);
         if(w == null) {
             throw new IllegalStateException("Previous weight not found");
         }
@@ -118,8 +117,8 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void _set(Object feature, float weight, float covar, short clock) {
-        IWeightValue w = weights.get(feature);
+    public void _set(final Object feature, final float weight, final float covar, final short clock) {
+        final IWeightValue w = weights.get(feature);
         if(w == null) {
             throw new IllegalStateException("Previous weight not found");
         }
@@ -136,7 +135,7 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public boolean contains(Object feature) {
+    public boolean contains(final Object feature) {
         return weights.containsKey(feature);
     }
 

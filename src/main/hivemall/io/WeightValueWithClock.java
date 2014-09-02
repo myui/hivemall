@@ -28,8 +28,13 @@ public class WeightValueWithClock implements IWeightValue {
 
     public WeightValueWithClock(IWeightValue src) {
         this.value = src.get();
-        this.clock = 0;
-        this.deltaUpdates = 0;
+        if(src.isTouched()) {
+            this.clock = 1;
+            this.deltaUpdates = 1;
+        } else {
+            this.clock = 0;
+            this.deltaUpdates = 0;
+        }
     }
 
     public final float get() {
@@ -56,7 +61,7 @@ public class WeightValueWithClock implements IWeightValue {
      * @return whether touched in training or not
      */
     public final boolean isTouched() {
-        return clock > 0;
+        return deltaUpdates > 0;
     }
 
     @Override
@@ -77,6 +82,9 @@ public class WeightValueWithClock implements IWeightValue {
     }
 
     public final void setDeltaUpdates(byte deltaUpdates) {
+        if(deltaUpdates < 0) {
+            throw new IllegalArgumentException("deltaUpdates is less than 0: " + deltaUpdates);
+        }
         this.deltaUpdates = deltaUpdates;
     }
 
