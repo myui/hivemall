@@ -39,7 +39,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     public void setUpdateHandler(ModelUpdateHandler handler) {
         this.handler = handler;
     }
-    
+
     @Override
     public final int getNumMixed() {
         return numMixed;
@@ -51,7 +51,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates) {
-        assert (deltaUpdates > 0) : deltaUpdates;
+        assert (deltaUpdates >= 0) : deltaUpdates;
         if(handler != null) {
             final boolean resetDeltaUpdates;
             try {
@@ -90,6 +90,5 @@ public abstract class AbstractPredictionModel implements PredictionModel {
             }
         }
     }
-
 
 }
