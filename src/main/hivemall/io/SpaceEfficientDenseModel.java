@@ -159,7 +159,6 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         int delta = 0;
         if(clocks != null && value.isTouched()) {
             clock = (short) (clocks[i] + 1);
-            assert (clock >= 0) : clock;
             clocks[i] = clock;
             delta = deltaUpdates[i] + 1;
             assert (delta > 0) : delta;
