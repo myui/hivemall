@@ -22,6 +22,7 @@ package hivemall.mix.server;
 
 import hivemall.io.DenseModel;
 import hivemall.io.PredictionModel;
+import hivemall.io.SparseModel;
 import hivemall.io.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
@@ -150,7 +151,7 @@ public class MixServerTest {
     }
 
     @Test
-    public void test2ClientsZeroOne() throws InterruptedException {
+    public void test2ClientsZeroOneSparseModel() throws InterruptedException {
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11215",
                 "-sync_threshold", "30" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -165,7 +166,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient01("test2ClientsZeroOne", 11215);
+                        invokeClient01("test2ClientsZeroOne", 11215, false);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -177,8 +178,38 @@ public class MixServerTest {
         serverExec.shutdown();
     }
 
-    private static void invokeClient01(String groupId, int serverPort) throws InterruptedException {
-        PredictionModel model = new DenseModel(100, false);
+    @Test
+    public void test2ClientsZeroOneDenseModel() throws InterruptedException {
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11215",
+                "-sync_threshold", "30" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        Thread.sleep(500);// slight delay to boot a server
+
+        final ExecutorService clientsExec = Executors.newCachedThreadPool();
+        for(int i = 0; i < 2; i++) {
+            clientsExec.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        invokeClient01("test2ClientsZeroOne", 11215, true);
+                    } catch (InterruptedException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        clientsExec.awaitTermination(30, TimeUnit.SECONDS);
+        clientsExec.shutdown();
+        serverExec.shutdown();
+    }
+
+    private static void invokeClient01(String groupId, int serverPort, boolean denseModel)
+            throws InterruptedException {
+        PredictionModel model = denseModel ? new DenseModel(100, false)
+                : new SparseModel(100, false);
         model.configureClock();
         MixClient client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
         model.setUpdateHandler(client);
