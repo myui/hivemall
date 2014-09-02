@@ -30,14 +30,14 @@ import io.netty.handler.ssl.SslContext;
 
 public final class MixServerInitializer extends ChannelInitializer<SocketChannel> {
 
-    private final MixServerHandler msgHandler;
+    private final MixServerHandler requestHandler;
     private final SslContext sslCtx;
 
     public MixServerInitializer(MixServerHandler msgHandler, SslContext sslCtx) {
         if(msgHandler == null) {
             throw new IllegalArgumentException();
         }
-        this.msgHandler = msgHandler;
+        this.requestHandler = msgHandler;
         this.sslCtx = sslCtx;
     }
 
@@ -50,7 +50,7 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
 
         ObjectEncoder encoder = new ObjectEncoder();
         ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
-        pipeline.addLast(encoder, decoder, msgHandler);
+        pipeline.addLast(decoder, requestHandler, encoder);
     }
 
 }
