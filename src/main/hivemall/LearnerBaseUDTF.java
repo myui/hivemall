@@ -138,6 +138,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     }
 
     protected PredictionModel createModel() {
+        return createModel(null);
+    }
+
+    protected PredictionModel createModel(String label) {
         PredictionModel model;
         final boolean useCovar = useCovariance();
         if(dense_model) {
@@ -159,7 +163,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         if(mixConnectInfo != null) {
             model.configureClock();
             model = new SynchronizedModelWrapper(model);
-            MixClient client = configureMixClient(mixConnectInfo, model);
+            MixClient client = configureMixClient(mixConnectInfo, label, model);
             model.setUpdateHandler(client);
             this.mixClient = client;
         }
@@ -167,10 +171,13 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return model;
     }
 
-    protected MixClient configureMixClient(String connectURIs, PredictionModel model) {
+    protected MixClient configureMixClient(String connectURIs, String label, PredictionModel model) {
         assert (connectURIs != null);
         assert (model != null);
-        String jobId = (mixSessionName == null) ? HadoopUtils.getJobId() : mixSessionName;
+        String jobId = (mixSessionName == null) ? "DEFAULT" : mixSessionName;
+        if(label != null) {
+            jobId = jobId + '-' + label;
+        }
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
         MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
         logger.info("Successfully configured mix client: " + connectURIs);
