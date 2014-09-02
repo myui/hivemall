@@ -51,7 +51,9 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates) {
-        assert (deltaUpdates >= 0) : deltaUpdates;
+        if(deltaUpdates < 1) {
+            return;
+        }
         if(handler != null) {
             final boolean resetDeltaUpdates;
             try {
