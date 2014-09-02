@@ -145,4 +145,11 @@ public final class MixMessage implements Externalizable {
         }
     }
 
+    @Override
+    public String toString() {
+        return "MixMessage [event=" + event + ", groupID=" + groupID + ", feature=" + feature
+                + ", weight=" + weight + ", covariance=" + covariance + ", clock=" + clock
+                + ", deltaUpdates=" + deltaUpdates + "]";
+    }
+
 }
