@@ -20,12 +20,11 @@
  */
 package hivemall.mix.client;
 
+import hivemall.mix.MixMessageDecoder;
+import hivemall.mix.MixMessageEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.ssl.SslContext;
 
 public final class MixClientInitializer extends ChannelInitializer<SocketChannel> {
@@ -48,8 +47,10 @@ public final class MixClientInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
 
-        ObjectEncoder encoder = new ObjectEncoder();
-        ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
+        //ObjectEncoder encoder = new ObjectEncoder();
+        //ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
+        MixMessageEncoder encoder = new MixMessageEncoder();
+        MixMessageDecoder decoder = new MixMessageDecoder();
         pipeline.addLast(encoder, decoder, responseHandler);
     }
 
