@@ -31,7 +31,7 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class DenseModel extends PredictionModel {
+public final class DenseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;

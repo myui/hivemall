@@ -22,95 +22,38 @@ package hivemall.io;
 
 import hivemall.utils.collections.IMapIterator;
 
-public abstract class PredictionModel {
-    public static final byte BYTE0 = 0;
+public interface PredictionModel {
 
-    protected ModelUpdateHandler handler;
-    protected int numMixed;
+    ModelUpdateHandler getUpdateHandler();
 
-    public PredictionModel() {
-        this.numMixed = 0;
-    }
+    void setUpdateHandler(ModelUpdateHandler handler);
 
-    public ModelUpdateHandler getUpdateHandler() {
-        return handler;
-    }
+    int getNumMixed();
 
-    public void setUpdateHandler(ModelUpdateHandler handler) {
-        this.handler = handler;
-    }
+    boolean hasCovariance();
 
-    protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates) {
-        assert (deltaUpdates > 0) : deltaUpdates;
-        if(handler != null) {
-            final boolean resetDeltaUpdates;
-            try {
-                resetDeltaUpdates = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            if(resetDeltaUpdates) {
-                resetDeltaUpdates(feature);
-            }
-        }
-    }
+    void configureClock();
 
-    protected final void onUpdate(final Object feature, final WeightValue value) {
-        if(handler != null) {
-            final float weight = value.get();
-            final short clock = value.getClock();
-            final int deltaUpdates = value.getDeltaUpdates();
-            final boolean resetDeltaUpdates;
-            if(value.hasCovariance()) {
-                final float covar = value.getCovariance();
-                try {
-                    resetDeltaUpdates = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                try {
-                    resetDeltaUpdates = handler.onUpdate(feature, weight, 1.f, clock, deltaUpdates);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            if(resetDeltaUpdates) {
-                value.setDeltaUpdates(BYTE0);
-            }
-        }
-    }
+    boolean hasClock();
 
-    public final int getNumMixed() {
-        return numMixed;
-    }
+    void resetDeltaUpdates(int feature);
 
-    public abstract boolean hasCovariance();
+    int size();
 
-    public abstract void configureClock();
+    boolean contains(Object feature);
 
-    public abstract boolean hasClock();
+    <T extends WeightValue> T get(Object feature);
 
-    public void resetDeltaUpdates(int feature) {
-        throw new UnsupportedOperationException();
-    }
+    <T extends WeightValue> void set(Object feature, T value);
 
-    public abstract int size();
+    float getWeight(Object feature);
 
-    public abstract boolean contains(Object feature);
+    float getCovariance(Object feature);
 
-    public abstract <T extends WeightValue> T get(Object feature);
+    void _set(Object feature, float weight, short clock);
 
-    public abstract <T extends WeightValue> void set(Object feature, T value);
+    void _set(Object feature, float weight, float covar, short clock);
 
-    public abstract float getWeight(Object feature);
-
-    public abstract float getCovariance(Object feature);
-
-    public abstract void _set(Object feature, float weight, short clock);
-
-    public abstract void _set(Object feature, float weight, float covar, short clock);
-
-    public abstract <K, V extends WeightValue> IMapIterator<K, V> entries();
+    <K, V extends WeightValue> IMapIterator<K, V> entries();
 
 }

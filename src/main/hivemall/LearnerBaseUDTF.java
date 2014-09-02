@@ -25,6 +25,7 @@ import hivemall.io.DenseModel;
 import hivemall.io.PredictionModel;
 import hivemall.io.SpaceEfficientDenseModel;
 import hivemall.io.SparseModel;
+import hivemall.io.SynchronizedModelWrapper;
 import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.mix.MixMessage.MixEventName;
@@ -137,7 +138,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     }
 
     protected PredictionModel createModel() {
-        final PredictionModel model;
+        PredictionModel model;
         final boolean useCovar = useCovariance();
         if(dense_model) {
             if(disable_halffloat == false && model_dims > 16777216) {
@@ -157,10 +158,12 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
         if(mixConnectInfo != null) {
             model.configureClock();
+            model = new SynchronizedModelWrapper(model);
             MixClient client = configureMixClient(mixConnectInfo, model);
             model.setUpdateHandler(client);
             this.mixClient = client;
         }
+        assert (model != null);
         return model;
     }
 

@@ -32,7 +32,7 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpaceEfficientDenseModel extends PredictionModel {
+public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
 
     private int size;

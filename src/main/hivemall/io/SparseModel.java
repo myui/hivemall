@@ -24,7 +24,7 @@ import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
-public final class SparseModel extends PredictionModel {
+public final class SparseModel extends AbstractPredictionModel {
 
     private final OpenHashMap<Object, WeightValue> weights;
     private final boolean hasCovar;
@@ -93,17 +93,34 @@ public final class SparseModel extends PredictionModel {
 
     @Override
     public void _set(Object feature, float weight, short clock) {
-        WeightValue w = new WeightValue(weight);
-        w.setClock(clock);
-        weights.put(feature, w);
+        WeightValue w = weights.get(feature);
+        if(w == null) {
+            // throw new IllegalStateException("Previous weight not found");
+            w = new WeightValue(weight);
+            w.setClock(clock);
+            weights.put(feature, w);
+        } else {
+            w.set(weight);
+            w.setClock(clock);
+            w.setDeltaUpdates(BYTE0);
+        }
         numMixed++;
     }
 
     @Override
     public void _set(Object feature, float weight, float covar, short clock) {
-        WeightValue w = new WeightValueWithCovar(weight, covar);
-        w.setClock(clock);
-        weights.put(feature, w);
+        WeightValue w = weights.get(feature);
+        if(w == null) {
+            // throw new IllegalStateException("Previous weight not found");
+            w = new WeightValueWithCovar(weight, covar);
+            w.setClock(clock);
+            weights.put(feature, w);
+        } else {
+            w.set(weight);
+            w.setCovariance(covar);
+            w.setClock(clock);
+            w.setDeltaUpdates(BYTE0);
+        }
         numMixed++;
     }
 
