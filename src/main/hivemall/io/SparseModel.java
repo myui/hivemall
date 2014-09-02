@@ -79,8 +79,6 @@ public final class SparseModel extends AbstractPredictionModel {
             }
         }
         weights.put(feature, wrapperValue);
-        
-        logger.info(wrapperValue);
 
         onUpdate(feature, wrapperValue);
     }
