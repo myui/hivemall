@@ -20,19 +20,19 @@
  */
 package hivemall.io;
 
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
 public final class SparseModel extends AbstractPredictionModel {
 
-    private final OpenHashMap<Object, WeightValue> weights;
+    private final OpenHashMap<Object, IWeightValue> weights;
     private final boolean hasCovar;
     private boolean clockEnabled;
 
     public SparseModel(int size, boolean hasCovar) {
         super();
-        this.weights = new OpenHashMap<Object, WeightValue>(size);
+        this.weights = new OpenHashMap<Object, IWeightValue>(size);
         this.hasCovar = hasCovar;
         this.clockEnabled = false;
     }
@@ -54,73 +54,79 @@ public final class SparseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends WeightValue> T get(Object feature) {
+    public <T extends IWeightValue> T get(Object feature) {
         return (T) weights.get(feature);
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(Object feature, T value) {
         assert (feature != null);
         assert (value != null);
 
-        if(clockEnabled && value.isTouched()) {
-            WeightValue old = weights.get(feature);
+        final IWeightValue wrapperValue = wrapIfRequired(value);
+
+        if(clockEnabled && wrapperValue.isTouched()) {
+            IWeightValue old = weights.get(feature);
             if(old != null) {
-                short newclock = (short) (old.getClock() + value.getClock());
+                short newclock = (short) (old.getClock() + wrapperValue.getClock());
                 assert (newclock >= 0) : newclock;
-                value.setClock(newclock);
+                wrapperValue.setClock(newclock);
                 byte newDelta = (byte) (old.getDeltaUpdates() + 1);
                 assert (newDelta > 0) : newclock;
-                value.setDeltaUpdates(newDelta);
+                wrapperValue.setDeltaUpdates(newDelta);
             }
         }
-        weights.put(feature, value);
+        weights.put(feature, wrapperValue);
 
-        onUpdate(feature, value);
+        onUpdate(feature, wrapperValue);
+    }
+
+    private IWeightValue wrapIfRequired(final IWeightValue value) {
+        if(clockEnabled) {
+            if(value.hasCovariance()) {
+                return new WeightValueWithCovarClock(value);
+            } else {
+                return new WeightValueWithClock(value);
+            }
+        } else {
+            return value;
+        }
     }
 
     @Override
     public float getWeight(Object feature) {
-        WeightValue v = weights.get(feature);
-        return v == null ? 0.f : v.value;
+        IWeightValue v = weights.get(feature);
+        return v == null ? 0.f : v.get();
     }
 
     @Override
     public float getCovariance(Object feature) {
-        WeightValueWithCovar v = (WeightValueWithCovar) weights.get(feature);
-        return v == null ? 1.f : v.covariance;
+        IWeightValue v = weights.get(feature);
+        return v == null ? 1.f : v.getCovariance();
     }
 
     @Override
     public void _set(Object feature, float weight, short clock) {
-        WeightValue w = weights.get(feature);
+        IWeightValue w = weights.get(feature);
         if(w == null) {
-            // throw new IllegalStateException("Previous weight not found");
-            w = new WeightValue(weight);
-            w.setClock(clock);
-            weights.put(feature, w);
-        } else {
-            w.set(weight);
-            w.setClock(clock);
-            w.setDeltaUpdates(BYTE0);
+            throw new IllegalStateException("Previous weight not found");
         }
+        w.set(weight);
+        w.setClock(clock);
+        w.setDeltaUpdates(BYTE0);
         numMixed++;
     }
 
     @Override
     public void _set(Object feature, float weight, float covar, short clock) {
-        WeightValue w = weights.get(feature);
+        IWeightValue w = weights.get(feature);
         if(w == null) {
-            // throw new IllegalStateException("Previous weight not found");
-            w = new WeightValueWithCovar(weight, covar);
-            w.setClock(clock);
-            weights.put(feature, w);
-        } else {
-            w.set(weight);
-            w.setCovariance(covar);
-            w.setClock(clock);
-            w.setDeltaUpdates(BYTE0);
+            throw new IllegalStateException("Previous weight not found");
         }
+        w.set(weight);
+        w.setCovariance(covar);
+        w.setClock(clock);
+        w.setDeltaUpdates(BYTE0);
         numMixed++;
     }
 
@@ -136,7 +142,7 @@ public final class SparseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) weights.entries();
     }
 

@@ -53,7 +53,7 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return model.entries();
     }
 
@@ -91,7 +91,7 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public <T extends WeightValue> T get(Object feature) {
+    public <T extends IWeightValue> T get(Object feature) {
         try {
             lock.lock();
             return model.get(feature);
@@ -101,7 +101,7 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(Object feature, T value) {
         try {
             lock.lock();
             model.set(feature, value);

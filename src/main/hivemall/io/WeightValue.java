@@ -20,13 +20,10 @@
  */
 package hivemall.io;
 
-import hivemall.utils.lang.Copyable;
-
-public class WeightValue implements Copyable<WeightValue> {
+public class WeightValue implements IWeightValue {
 
     protected float value;
-    protected short clock;
-    protected byte deltaUpdates;
+    protected boolean touched;
 
     public WeightValue() {}
 
@@ -36,26 +33,30 @@ public class WeightValue implements Copyable<WeightValue> {
 
     public WeightValue(float weight, boolean touched) {
         this.value = weight;
-        this.clock = touched ? (short) 1 : (short) 0;
-        this.deltaUpdates = 0;
+        this.touched = touched;
     }
 
+    @Override
     public final float get() {
         return value;
     }
 
+    @Override
     public final void set(float weight) {
         this.value = weight;
     }
 
+    @Override
     public boolean hasCovariance() {
         return false;
     }
 
+    @Override
     public float getCovariance() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setCovariance(float cov) {
         throw new UnsupportedOperationException();
     }
@@ -63,38 +64,46 @@ public class WeightValue implements Copyable<WeightValue> {
     /** 
      * @return whether touched in training or not
      */
+    @Override
     public final boolean isTouched() {
-        return clock > 0;
+        return touched;
     }
 
+    @Override
+    public final void setTouched(boolean touched) {
+        this.touched = touched;
+    }
+
+    @Override
     public final short getClock() {
-        return clock;
+        throw new UnsupportedOperationException();
     }
 
+    @Override
     public final void setClock(short clock) {
-        this.clock = clock;
+        throw new UnsupportedOperationException();
     }
 
+    @Override
     public final byte getDeltaUpdates() {
-        return deltaUpdates;
+        throw new UnsupportedOperationException();
     }
 
+    @Override
     public final void setDeltaUpdates(byte deltaUpdates) {
-        this.deltaUpdates = deltaUpdates;
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void copyTo(WeightValue another) {
-        another.value = this.value;
-        another.clock = this.clock;
-        another.deltaUpdates = this.deltaUpdates;
+    public void copyTo(IWeightValue another) {
+        another.set(value);
+        another.setTouched(touched);
     }
 
     @Override
-    public void copyFrom(WeightValue another) {
-        this.value = another.value;
-        this.clock = another.clock;
-        this.deltaUpdates = another.deltaUpdates;
+    public void copyFrom(IWeightValue another) {
+        this.value = another.get();
+        this.touched = another.isTouched();
     }
 
     @Override
@@ -105,7 +114,7 @@ public class WeightValue implements Copyable<WeightValue> {
     public static final class WeightValueWithCovar extends WeightValue {
         public static final float DEFAULT_COVAR = 1.f;
 
-        float covariance;
+        private float covariance;
 
         public WeightValueWithCovar() {
             super();
@@ -136,15 +145,15 @@ public class WeightValue implements Copyable<WeightValue> {
         }
 
         @Override
-        public void copyTo(WeightValue another) {
+        public void copyTo(IWeightValue another) {
             super.copyTo(another);
-            ((WeightValueWithCovar) another).covariance = this.covariance;
+            another.setCovariance(covariance);
         }
 
         @Override
-        public void copyFrom(WeightValue another) {
+        public void copyFrom(IWeightValue another) {
             super.copyFrom(another);
-            this.covariance = ((WeightValueWithCovar) another).covariance;
+            this.covariance = another.getCovariance();
         }
 
         @Override

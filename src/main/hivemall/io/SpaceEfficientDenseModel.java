@@ -132,8 +132,8 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends WeightValue> T get(Object feature) {
-        int i = HiveUtils.parseInt(feature);
+    public <T extends IWeightValue> T get(Object feature) {
+        final int i = HiveUtils.parseInt(feature);
         if(i >= size) {
             return null;
         }
@@ -145,7 +145,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(Object feature, T value) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
@@ -225,11 +225,11 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) new Itr();
     }
 
-    private final class Itr implements IMapIterator<Number, WeightValue> {
+    private final class Itr implements IMapIterator<Number, IWeightValue> {
 
         private int cursor;
         private final WeightValueWithCovar tmpWeight;
@@ -259,7 +259,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         }
 
         @Override
-        public WeightValue getValue() {
+        public IWeightValue getValue() {
             if(covars == null) {
                 float w = getWeight(cursor);
                 WeightValue v = new WeightValue(w);
@@ -275,19 +275,19 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         }
 
         @Override
-        public <T extends Copyable<WeightValue>> void getValue(T probe) {
+        public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             float w = getWeight(cursor);
             tmpWeight.value = w;
             float cov = 1.f;
             if(covars != null) {
                 cov = getCovar(cursor);
-                tmpWeight.covariance = cov;
+                tmpWeight.setCovariance(cov);
             }
             configureClock(tmpWeight, cursor, w, cov);
             probe.copyFrom(tmpWeight);
         }
 
-        void configureClock(final WeightValue weight, final int index, final float w) {
+        void configureClock(final IWeightValue weight, final int index, final float w) {
             if(clocks == null) {
                 if(w != 0.f) {
                     weight.setClock((short) 1);
@@ -297,7 +297,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
             }
         }
 
-        void configureClock(final WeightValue weight, final int index, final float w, final float cov) {
+        void configureClock(final IWeightValue weight, final int index, final float w, final float cov) {
             if(clocks == null) {
                 if(w != 0.f || cov != 1.f) {
                     weight.setClock((short) 1);

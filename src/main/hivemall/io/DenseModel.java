@@ -106,8 +106,8 @@ public final class DenseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends WeightValue> T get(Object feature) {
-        int i = HiveUtils.parseInt(feature);
+    public <T extends IWeightValue> T get(Object feature) {
+        final int i = HiveUtils.parseInt(feature);
         if(i >= size) {
             return null;
         }
@@ -119,7 +119,7 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(Object feature, T value) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
@@ -199,11 +199,11 @@ public final class DenseModel extends AbstractPredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) new Itr();
     }
 
-    private final class Itr implements IMapIterator<Number, WeightValue> {
+    private final class Itr implements IMapIterator<Number, IWeightValue> {
 
         private int cursor;
         private final WeightValueWithCovar tmpWeight;
@@ -233,7 +233,7 @@ public final class DenseModel extends AbstractPredictionModel {
         }
 
         @Override
-        public WeightValue getValue() {
+        public IWeightValue getValue() {
             if(covars == null) {
                 float w = weights[cursor];
                 WeightValue v = new WeightValue(w);
@@ -249,19 +249,19 @@ public final class DenseModel extends AbstractPredictionModel {
         }
 
         @Override
-        public <T extends Copyable<WeightValue>> void getValue(T probe) {
+        public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             float w = weights[cursor];
             tmpWeight.value = w;
             float cov = 1.f;
             if(covars != null) {
                 cov = covars[cursor];
-                tmpWeight.covariance = cov;
+                tmpWeight.setCovariance(cov);
             }
             configureClock(tmpWeight, cursor, w, cov);
             probe.copyFrom(tmpWeight);
         }
 
-        private void configureClock(final WeightValue weight, final int index, final float w) {
+        private void configureClock(final IWeightValue weight, final int index, final float w) {
             if(clocks == null) {
                 if(w != 0.f) {
                     weight.setClock((short) 1);
@@ -271,7 +271,7 @@ public final class DenseModel extends AbstractPredictionModel {
             }
         }
 
-        private void configureClock(final WeightValue weight, final int index, final float w, final float cov) {
+        private void configureClock(final IWeightValue weight, final int index, final float w, final float cov) {
             if(clocks == null) {
                 if(w != 0.f || cov != 1.f) {
                     weight.setClock((short) 1);

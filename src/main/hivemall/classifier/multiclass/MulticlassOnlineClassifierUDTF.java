@@ -26,6 +26,7 @@ import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.LearnerBaseUDTF;
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.Margin;
 import hivemall.io.PredictionModel;
 import hivemall.io.PredictionResult;
@@ -319,7 +320,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = model.get(k);
+            IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
             } else {
@@ -395,7 +396,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
                     numMixed += model.getNumMixed();
-                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    IMapIterator<Object, IWeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
                         if(!probe.isTouched()) {
@@ -420,7 +421,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
                     numMixed += model.getNumMixed();
-                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    IMapIterator<Object, IWeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
                         if(!probe.isTouched()) {

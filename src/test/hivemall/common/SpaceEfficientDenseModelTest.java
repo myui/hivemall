@@ -2,8 +2,8 @@ package hivemall.common;
 
 import static junit.framework.Assert.assertEquals;
 import hivemall.io.DenseModel;
+import hivemall.io.IWeightValue;
 import hivemall.io.SpaceEfficientDenseModel;
-import hivemall.io.WeightValue;
 import hivemall.utils.collections.IMapIterator;
 
 import java.util.Random;
@@ -31,7 +31,7 @@ public class SpaceEfficientDenseModelTest {
 
         assertEquals(model2.size(), model1.size());
 
-        IMapIterator<Integer, WeightValue> itor = model1.entries();
+        IMapIterator<Integer, IWeightValue> itor = model1.entries();
         while(itor.next() != -1) {
             int k = itor.getKey();
             float expected = itor.getValue().get();

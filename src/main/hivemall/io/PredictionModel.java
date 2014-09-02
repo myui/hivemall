@@ -42,9 +42,9 @@ public interface PredictionModel {
 
     boolean contains(Object feature);
 
-    <T extends WeightValue> T get(Object feature);
+    <T extends IWeightValue> T get(Object feature);
 
-    <T extends WeightValue> void set(Object feature, T value);
+    <T extends IWeightValue> void set(Object feature, T value);
 
     float getWeight(Object feature);
 
@@ -54,6 +54,6 @@ public interface PredictionModel {
 
     void _set(Object feature, float weight, float covar, short clock);
 
-    <K, V extends WeightValue> IMapIterator<K, V> entries();
+    <K, V extends IWeightValue> IMapIterator<K, V> entries();
 
 }
