@@ -24,7 +24,11 @@ import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public final class SparseModel extends AbstractPredictionModel {
+    private static final Log logger = LogFactory.getLog(SparseModel.class);
 
     private final OpenHashMap<Object, IWeightValue> weights;
     private final boolean hasCovar;
@@ -68,14 +72,15 @@ public final class SparseModel extends AbstractPredictionModel {
         if(clockEnabled && value.isTouched()) {
             IWeightValue old = weights.get(feature);
             if(old != null) {
-                short newclock = (short) (old.getClock() + 1);
+                short newclock = (short) (old.getClock() + (short) 1);
                 wrapperValue.setClock(newclock);
-                byte newDelta = (byte) (old.getDeltaUpdates() + 1);
-                assert (newDelta > 0) : newclock;
-                wrapperValue.setDeltaUpdates(newDelta);
+                int newDelta = old.getDeltaUpdates() + 1;
+                wrapperValue.setDeltaUpdates((byte) newDelta);
             }
         }
         weights.put(feature, wrapperValue);
+        
+        logger.info(wrapperValue);
 
         onUpdate(feature, wrapperValue);
     }
@@ -108,7 +113,8 @@ public final class SparseModel extends AbstractPredictionModel {
     public void _set(final Object feature, final float weight, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
-            throw new IllegalStateException("Previous weight not found");
+            logger.warn("Previous weight not found: " + feature);
+            throw new IllegalStateException("Previous weight not found " + feature);
         }
         w.set(weight);
         w.setClock(clock);
@@ -120,7 +126,8 @@ public final class SparseModel extends AbstractPredictionModel {
     public void _set(final Object feature, final float weight, final float covar, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
-            throw new IllegalStateException("Previous weight not found");
+            logger.warn("Previous weight not found: " + feature);
+            throw new IllegalStateException("Previous weight not found: " + feature);
         }
         w.set(weight);
         w.setCovariance(covar);
