@@ -235,11 +235,15 @@ public final class DenseModel extends AbstractPredictionModel {
         public IWeightValue getValue() {
             if(covars == null) {
                 float w = weights[cursor];
-                return new WeightValue(w);
+                WeightValue v = new WeightValue(w);
+                v.setTouched(w != 0f);
+                return v;
             } else {
                 float w = weights[cursor];
                 float cov = covars[cursor];
-                return new WeightValueWithCovar(w, cov);
+                WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
+                v.setTouched(w != 0.f || cov != 1.f);
+                return v;
             }
         }
 
@@ -252,6 +256,7 @@ public final class DenseModel extends AbstractPredictionModel {
                 cov = covars[cursor];
                 tmpWeight.setCovariance(cov);
             }
+            tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);
         }
 

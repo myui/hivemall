@@ -261,11 +261,15 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         public IWeightValue getValue() {
             if(covars == null) {
                 float w = getWeight(cursor);
-                return new WeightValue(w);
+                WeightValue v = new WeightValue(w);
+                v.setTouched(w != 0f);
+                return v;
             } else {
                 float w = getWeight(cursor);
                 float cov = getCovar(cursor);
-                return new WeightValueWithCovar(w, cov);
+                WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
+                v.setTouched(w != 0.f || cov != 1.f);
+                return v;
             }
         }
 
@@ -278,6 +282,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
                 cov = getCovar(cursor);
                 tmpWeight.setCovariance(cov);
             }
+            tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);
         }
 
