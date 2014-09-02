@@ -33,7 +33,7 @@ public class OpenHashMapTest {
     @Test
     public void testPutAndGet() {
         Map<Object, Object> map = new OpenHashMap<Object, Object>(16384);
-        final int numEntries = 10000000;
+        final int numEntries = 1000000;
         for(int i = 0; i < numEntries; i++) {
             map.put(Integer.toString(i), i);
         }
