@@ -22,6 +22,8 @@
 	</repositories>
 
 	<dependencies>
+	
+		<!-- provided scope -->	
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
@@ -60,21 +62,27 @@
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo2-api</artifactId>
 			<version>2.3-eb</version>
+			<!-- <scope>runtime</scope> -->
+			<scope>provided</scope>
 		</dependency>
-
-		<!-- required for mixing -->
+		
+		<!-- compile scope -->		
 		<dependency>
 			<groupId>io.netty</groupId>
+			<!-- required for mixing -->
 			<artifactId>netty-all</artifactId>
 			<version>4.0.23.Final</version>
+			<scope>compile</scope>
 		</dependency>
-
+		
+		<!-- test scope -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.10</version>
 			<scope>test</scope>
 		</dependency>
+		
 	</dependencies>
 
 	<build>
@@ -98,8 +106,34 @@
 							<mainClass>hivemall.mix.serve.MixServer</mainClass>
 						</manifest>
 					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
 					<encoding>UTF-8</encoding>
 				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+				    <descriptorRefs>
+				      <descriptorRef>jar-with-dependencies</descriptorRef>
+				    </descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>hivemall.mix.serve.MixServer</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			  	<executions>
+					<execution>
+				    	<id>make-assembly</id>
+				    	<phase>package</phase>
+				    	<goals>
+				      		<goal>single</goal>
+				    	</goals>
+				  	</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

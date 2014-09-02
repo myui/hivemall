@@ -46,7 +46,7 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
-	<target name="jar" depends="test">
+	<target name="jar" depends="compile">
 		<delete failonerror="true" file="${target.dir}/hivemall.jar" />
 		<jar destfile="${target.dir}/hivemall.jar" basedir="${build.dir}">
 			<manifest>
@@ -55,6 +55,7 @@
 				<attribute name="Implementation-Vendor" value="${jar.vendor}" />
 				<attribute name="Main-Class" value="hivemall.mix.serve.MixServer" />
 			</manifest>
+			<zipfileset excludes="META-INF/*.SF" src="lib/netty-all-4.0.23.Final.jar"/>
 		</jar>
 		<delete failonerror="true" dir="${build.dir}" />
 	</target>
