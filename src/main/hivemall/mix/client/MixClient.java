@@ -131,7 +131,8 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
             ch.connect(remoteAddr).sync();
         }
 
-        ch.writeAndFlush(msg);
+        //ch.writeAndFlush(msg).sync();
+        ch.writeAndFlush(msg); // send asynchronously in the background
         return true;
     }
 
