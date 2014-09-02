@@ -121,8 +121,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         }
 
         if(responseMsg != null) {
-            ctx.writeAndFlush(responseMsg).syncUninterruptibly();
-            //ctx.writeAndFlush(responseMsg);
+            ctx.writeAndFlush(responseMsg);
         }
     }
 
