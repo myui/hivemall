@@ -262,15 +262,11 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         public IWeightValue getValue() {
             if(covars == null) {
                 float w = getWeight(cursor);
-                WeightValue v = new WeightValue(w);
-                configureClock(v, cursor, w);
-                return v;
+                return new WeightValue(w);
             } else {
                 float w = getWeight(cursor);
                 float cov = getCovar(cursor);
-                WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
-                configureClock(v, cursor, w, cov);
-                return v;
+                return new WeightValueWithCovar(w, cov);
             }
         }
 
@@ -283,28 +279,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
                 cov = getCovar(cursor);
                 tmpWeight.setCovariance(cov);
             }
-            configureClock(tmpWeight, cursor, w, cov);
             probe.copyFrom(tmpWeight);
-        }
-
-        void configureClock(final IWeightValue weight, final int index, final float w) {
-            if(clocks == null) {
-                if(w != 0.f) {
-                    weight.setClock((short) 1);
-                }
-            } else {
-                weight.setClock(clocks[index]);
-            }
-        }
-
-        void configureClock(final IWeightValue weight, final int index, final float w, final float cov) {
-            if(clocks == null) {
-                if(w != 0.f || cov != 1.f) {
-                    weight.setClock((short) 1);
-                }
-            } else {
-                weight.setClock(clocks[index]);
-            }
         }
 
     }
