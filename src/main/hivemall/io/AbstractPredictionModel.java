@@ -67,6 +67,9 @@ public abstract class AbstractPredictionModel implements PredictionModel {
 
     protected final void onUpdate(final Object feature, final IWeightValue value) {
         if(handler != null) {
+            if(!value.isTouched()) {
+                return;
+            }
             final float weight = value.get();
             final short clock = value.getClock();
             final int deltaUpdates = value.getDeltaUpdates();
