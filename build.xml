@@ -71,7 +71,7 @@
 				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
 				<attribute name="Main-Class" value="${jar.mainclass}" />
 			</manifest>
-			<zipfileset excludes="META-INF/*.SF" src="lib/netty-all-4.0.23.Final.jar" />
+			<zipfileset excludes="META-INF/*" src="lib/netty-all-4.0.23.Final.jar" />
 		</jar>
 	</target>
 
