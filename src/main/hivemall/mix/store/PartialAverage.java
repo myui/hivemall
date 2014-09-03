@@ -18,40 +18,48 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.mix.server;
+package hivemall.mix.store;
 
-public final class PartialArgminKLD extends PartialResult {
+import javax.annotation.Nonnegative;
+import javax.annotation.concurrent.GuardedBy;
+
+public final class PartialAverage extends PartialResult {
+    public static final float DEFAULT_SCALE = 10;
 
     private final float scale;
-    private float sum_mean_div_covar;
-    private float sum_inv_covar;
+    
+    @GuardedBy("lock()")
+    private float scaledSumWeights;
+    @GuardedBy("lock()")
+    private short totalUpdates;
 
-    public PartialArgminKLD() {
+    public PartialAverage() {
         this(1.f); // no scaling
     }
 
-    public PartialArgminKLD(float scale) {
+    public PartialAverage(float scale) {
         super();
         this.scale = scale;
-        this.sum_mean_div_covar = 0.f;
-        this.sum_inv_covar = 0.f;
+        this.scaledSumWeights = 0.f;
+        this.totalUpdates = 0;
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock, int deltaUpdates) {
-        addWeight(localWeight, covar);
+    public void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates) {
+        addWeight(localWeight, deltaUpdates);
         setMinCovariance(covar);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, float covar) {
-        this.sum_mean_div_covar += (localWeight / covar) / scale;
-        this.sum_inv_covar += (1.f / covar) / scale;
+    protected void addWeight(float localWeight, int deltaUpdates) {
+        scaledSumWeights += ((localWeight / scale) * deltaUpdates);
+        totalUpdates += deltaUpdates; // not deltaUpdates is in range (0,127]
+        assert (totalUpdates > 0) : totalUpdates;
     }
 
     @Override
     public float getWeight() {
-        return sum_mean_div_covar / sum_inv_covar;
+        return (scaledSumWeights / totalUpdates) * scale;
     }
 
 }

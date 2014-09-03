@@ -18,51 +18,56 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.mix.server;
+package hivemall.mix.store;
 
 import hivemall.utils.lock.Lock;
 import hivemall.utils.lock.TTASLock;
+
+import javax.annotation.Nonnegative;
+import javax.annotation.concurrent.GuardedBy;
 
 public abstract class PartialResult {
 
     private final Lock lock;
 
+    @GuardedBy("lock()")
     protected float minCovariance;
+    @GuardedBy("lock()")
     protected short totalClock;
 
     public PartialResult() {
         this.lock = new TTASLock();
     }
 
-    public void lock() {
+    public final void lock() {
         lock.lock();
     }
 
-    public void unlock() {
+    public final void unlock() {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, short clock, int deltaUpdates);
+    public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates);
 
     public abstract float getWeight();
 
-    public float getMinCovariance() {
+    public final float getMinCovariance() {
         return minCovariance;
     }
 
-    protected void setMinCovariance(float covar) {
+    protected final void setMinCovariance(float covar) {
         this.minCovariance = Math.max(minCovariance, covar);
     }
 
-    public short getClock() {
+    public final short getClock() {
         return totalClock;
     }
 
-    protected void incrClock(short clock) {
+    protected final void incrClock(short clock) {
         totalClock += clock;
     }
 
-    public int diffClock(short clock) {
+    public final int diffClock(short clock) {
         short diff = (short) (totalClock - clock);
         return diff < 0 ? -diff : diff;
     }

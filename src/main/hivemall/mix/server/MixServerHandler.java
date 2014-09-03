@@ -22,27 +22,32 @@ package hivemall.mix.server;
 
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
+import hivemall.mix.store.PartialArgminKLD;
+import hivemall.mix.store.PartialAverage;
+import hivemall.mix.store.PartialResult;
+import hivemall.mix.store.SessionStore;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 
 @Sharable
 public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessage> {
-    private static final int EXPECTED_MODEL_SIZE = 16777217; /* 2^24+1=16777216+1=16777217 */
 
+    @Nonnull
+    private final SessionStore sessionStore;
     private final int syncThreshold;
     private final float scale;
 
-    private final ConcurrentMap<String, ConcurrentMap<Object, PartialResult>> groupMap;
-
-    public MixServerHandler(int syncThreshold, float scale) {
+    public MixServerHandler(@Nonnull SessionStore sessionStore, @Nonnegative int syncThreshold, @Nonnegative float scale) {
         super();
+        this.sessionStore = sessionStore;
         this.syncThreshold = syncThreshold;
         this.scale = scale;
-        this.groupMap = new ConcurrentHashMap<String, ConcurrentMap<Object, PartialResult>>();
     }
 
     @Override
@@ -59,19 +64,13 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         }
     }
 
-    private PartialResult getPartialResult(MixMessage msg) {
+    @Nonnull
+    private PartialResult getPartialResult(@Nonnull MixMessage msg) {
         String groupID = msg.getGroupID();
         if(groupID == null) {
             throw new IllegalStateException("JobID is not set in the request message");
         }
-        ConcurrentMap<Object, PartialResult> map = groupMap.get(groupID);
-        if(map == null) {
-            map = new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
-            ConcurrentMap<Object, PartialResult> existing = groupMap.putIfAbsent(groupID, map);
-            if(existing != null) {
-                map = existing;
-            }
-        }
+        ConcurrentMap<Object, PartialResult> map = sessionStore.get(groupID);
 
         Object feature = msg.getFeature();
         PartialResult partial = map.get(feature);

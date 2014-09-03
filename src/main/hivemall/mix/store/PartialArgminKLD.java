@@ -18,42 +18,46 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.mix.server;
+package hivemall.mix.store;
 
-public final class PartialAverage extends PartialResult {
-    public static final float DEFAULT_SCALE = 10;
+import javax.annotation.Nonnegative;
+import javax.annotation.concurrent.GuardedBy;
+
+public final class PartialArgminKLD extends PartialResult {
 
     private final float scale;
-    private float scaledSumWeights;
-    private short totalUpdates;
 
-    public PartialAverage() {
+    @GuardedBy("lock()")
+    private float sum_mean_div_covar;
+    @GuardedBy("lock()")
+    private float sum_inv_covar;
+
+    public PartialArgminKLD() {
         this(1.f); // no scaling
     }
 
-    public PartialAverage(float scale) {
+    public PartialArgminKLD(@Nonnegative float scale) {
         super();
         this.scale = scale;
-        this.scaledSumWeights = 0.f;
-        this.totalUpdates = 0;
+        this.sum_mean_div_covar = 0.f;
+        this.sum_inv_covar = 0.f;
     }
 
     @Override
     public void add(float localWeight, float covar, short clock, int deltaUpdates) {
-        addWeight(localWeight, deltaUpdates);
+        addWeight(localWeight, covar);
         setMinCovariance(covar);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, int deltaUpdates) {
-        scaledSumWeights += ((localWeight / scale) * deltaUpdates);
-        totalUpdates += deltaUpdates; // not deltaUpdates is in range (0,127]
-        assert (totalUpdates > 0) : totalUpdates;
+    protected void addWeight(float localWeight, float covar) {
+        this.sum_mean_div_covar += (localWeight / covar) / scale;
+        this.sum_inv_covar += (1.f / covar) / scale;
     }
 
     @Override
     public float getWeight() {
-        return (scaledSumWeights / totalUpdates) * scale;
+        return sum_mean_div_covar / sum_inv_covar;
     }
 
 }

@@ -20,6 +20,8 @@
  */
 package hivemall.mix.server;
 
+import hivemall.mix.store.SessionStore;
+import hivemall.mix.store.SessionStore.IdleSessionSweeper;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.lang.Primitives;
 import io.netty.bootstrap.ServerBootstrap;
@@ -34,7 +36,11 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import java.security.cert.CertificateException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nonnull;
 import javax.net.ssl.SSLException;
 
 import org.apache.commons.cli.CommandLine;
@@ -47,12 +53,16 @@ public final class MixServer implements Runnable {
     private final boolean ssl;
     private final float scale;
     private final short syncThreshold;
+    private final long sessionTTLinSec;
+    private final long sweepIntervalInSec;
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
         this.ssl = cl.hasOption("ssl");
         this.scale = Primitives.parseFloat(cl.getOptionValue("scale"), 1.f);
         this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
+        this.sessionTTLinSec = Primitives.parseLong(cl.getOptionValue("ttl"), 120L);
+        this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 90L);
     }
 
     public static void main(String[] args) {
@@ -67,6 +77,8 @@ public final class MixServer implements Runnable {
         opts.addOption("ssl", false, "Use SSL for the mix communication [default: false]");
         opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
         opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
+        opts.addOption("ttl", "session_ttl", true, "The TTL in sec that an idle session lives [default: 120 sec]");
+        opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 90 sec]");
         return opts;
     }
 
@@ -93,9 +105,22 @@ public final class MixServer implements Runnable {
             sslCtx = null;
         }
 
-        MixServerHandler msgHandler = new MixServerHandler(syncThreshold, scale);
+        SessionStore sessionStore = new SessionStore();
+        MixServerHandler msgHandler = new MixServerHandler(sessionStore, syncThreshold, scale);
         MixServerInitializer initializer = new MixServerInitializer(msgHandler, sslCtx);
+        Runnable cleanSessionTask = new IdleSessionSweeper(sessionStore, sessionTTLinSec * 1000L);
 
+        final ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
+        try {
+            acceptConnections(initializer, port);
+            idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
+        } finally {
+            idleSessionChecker.shutdownNow();
+        }
+    }
+
+    private static void acceptConnections(@Nonnull MixServerInitializer initializer, int port)
+            throws InterruptedException {
         final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         final EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
