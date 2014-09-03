@@ -4,13 +4,26 @@
 
 	<groupId>hivemall</groupId>
 	<artifactId>hivemall</artifactId>
-	<version>0.2</version>
+	<version>0.3</version>
+
+	<name>Hivemall</name>
+	<description>Scalable Machine Learning Library for Apache Hive</description>
+	<url>https://github.com/myui/hivemall/</url>
+	<inceptionYear>2013</inceptionYear>
+	<organization>
+		<name>AIST, Japan.</name>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>LGPL 2.1 license</name>
+			<url>http://www.opensource.org/licenses/lgpl-2.1.php</url>
+		</license>
+	</licenses>
+
 	<packaging>jar</packaging>
-
-	<name>hivemall</name>
-	<url>http://github.com/myui/hivemall</url>
-
 	<properties>
+		<skipTests>true</skipTests>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -22,8 +35,8 @@
 	</repositories>
 
 	<dependencies>
-	
-		<!-- provided scope -->	
+
+		<!-- provided scope -->
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
@@ -59,14 +72,20 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.0.4</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo2-api</artifactId>
 			<version>2.3-eb</version>
 			<!-- <scope>runtime</scope> -->
 			<scope>provided</scope>
 		</dependency>
-		
-		<!-- compile scope -->		
+
+		<!-- compile scope -->
 		<dependency>
 			<groupId>io.netty</groupId>
 			<!-- required for mixing -->
@@ -74,7 +93,7 @@
 			<version>4.0.23.Final</version>
 			<scope>compile</scope>
 		</dependency>
-		
+
 		<!-- test scope -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -82,7 +101,7 @@
 			<version>4.10</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 	</dependencies>
 
 	<build>
@@ -96,43 +115,116 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.17</version>
+				<configuration>
+					<skipTests>${skipTests}</skipTests>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.0-alpha-2</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>read-project-properties</goal>
+						</goals>
+						<configuration>
+							<files>
+								<file>${basedir}/build.properties</file>
+							</files>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-					<archive>
-						<manifest>
-							<mainClass>hivemall.mix.serve.MixServer</mainClass>
-						</manifest>
-					</archive>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
+					<source>${javac.source}</source>
+					<target>${javac.target}</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.4.1</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.5</version>
 				<configuration>
-				    <descriptorRefs>
-				      <descriptorRef>jar-with-dependencies</descriptorRef>
-				    </descriptorRefs>
+					<finalName>${project.artifactId}-${project.version}</finalName>
 					<archive>
 						<manifest>
-							<mainClass>hivemall.mix.serve.MixServer</mainClass>
+							<mainClass>${jar.mainclass}</mainClass>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 					</archive>
 				</configuration>
-			  	<executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.3</version>
+				<executions>
 					<execution>
-				    	<id>make-assembly</id>
-				    	<phase>package</phase>
-				    	<goals>
-				      		<goal>single</goal>
-				    	</goals>
-				  	</execution>
+						<id>jar-with-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<finalName>${project.artifactId}-${project.version}-with-dependencies</finalName>
+							<minimizeJar>true</minimizeJar>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<artifactSet>
+								<includes>
+									<include>io.netty:netty-all</include>
+								</includes>
+								<excludes>
+									<exclude>junit:junit</exclude>
+								</excludes>
+							</artifactSet>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<manifestEntries>
+										<Main-Class>${app.main.class}</Main-Class>
+										<X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
+										<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
+										<Implementation-Title>${project.name}</Implementation-Title>
+										<Implementation-Version>${project.version}</Implementation-Version>
+										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+									</manifestEntries>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>jarjar-maven-plugin</artifactId>
+				<version>1.9</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jarjar</goal>
+						</goals>
+						<configuration>
+							<output>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</output>
+							<includes>
+								<include>org.apache.hadoop:hadoop-core</include>
+								<include>org.apache.hive:hive-exec</include>
+								<include>org.apache.hive:hive-serde</include>
+								<include>commons-cli:commons-cli</include>
+								<include>commons-logging:commons-logging</include>
+							</includes>
+							<rules></rules>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

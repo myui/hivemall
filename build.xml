@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="jar" name="hivemall">
+<project basedir="." default="package" name="hivemall">
 
 	<property file="build.properties" />
 
@@ -46,18 +46,51 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
-	<target name="jar" depends="compile">
-		<delete failonerror="true" file="${target.dir}/hivemall.jar" />
-		<jar destfile="${target.dir}/hivemall.jar" basedir="${build.dir}">
-			<manifest>
-				<attribute name="Implementation-Title" value="${jar.title}" />
-				<attribute name="Implementation-Version" value="${version}" />
-				<attribute name="Implementation-Vendor" value="${jar.vendor}" />
-				<attribute name="Main-Class" value="hivemall.mix.serve.MixServer" />
-			</manifest>
-			<zipfileset excludes="META-INF/*.SF" src="lib/netty-all-4.0.23.Final.jar"/>
-		</jar>
+	<target name="package" depends="jar,jar-with-dependencies,jar-all">
 		<delete failonerror="true" dir="${build.dir}" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall-${project.version}.jar" />
+		<jar destfile="${target.dir}/hivemall-${project.version}.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="jar-with-dependencies" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall-${project.version}-with-dependencies.jar" />
+		<jar destfile="${target.dir}/hivemall-${project.version}-with-dependencies.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+			</manifest>
+			<zipfileset excludes="META-INF/*.SF" src="lib/netty-all-4.0.23.Final.jar" />
+		</jar>
+	</target>
+
+	<target name="jar-all" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall-${project.version}-all.jar" />
+		<jar destfile="${target.dir}/hivemall-${project.version}-all.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+			</manifest>
+			<zipfileset src="lib/commons-cli-1.2.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/commons-logging-1.0.4.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/hadoop-core-0.20.2-cdh3u6.jar" excludes="META-INF/*,webapps/,**/*.tgz" />
+			<zipfileset src="lib/hive-exec-0.11.0.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/hive-serde-0.11.0.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/netty-all-4.0.23.Final.jar" excludes="META-INF/*" />
+		</jar>
 	</target>
 
 	<target name="javadoc" depends="compile">
