@@ -112,8 +112,8 @@ public final class MixServer implements Runnable {
 
         final ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
         try {
-            acceptConnections(initializer, port);
             idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
+            acceptConnections(initializer, port);
         } finally {
             idleSessionChecker.shutdownNow();
         }
