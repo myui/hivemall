@@ -110,9 +110,9 @@ public final class HadoopUtils {
         if(jobId == null) {
             jobId = conf.get("mapreduce.job.id");
             if(jobId == null) {
-                String appId = conf.get("mapreduce.tez.session.tokill-application-id");
-                if(appId != null) {
-                    return appId;
+                String queryId = conf.get("hive.query.id");
+                if(queryId != null) {
+                    return queryId;
                 }
                 String taskidStr = conf.get("mapred.task.id");
                 if(taskidStr == null) {
