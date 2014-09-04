@@ -25,6 +25,7 @@ import hivemall.io.PredictionModel;
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.NodeInfo;
+import hivemall.utils.hadoop.HadoopUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -41,12 +42,15 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.net.ssl.SSLException;
 
 public final class MixClient implements ModelUpdateHandler, Closeable {
+    public static final String DUMMY_JOB_ID = "__DUMMY_JOB_ID__";
 
     private final MixEventName event;
-    private final String groupID;
+    private String groupID;
     private final boolean ssl;
     private final int mixThreshold;
     private final MixRequestRouter router;
@@ -56,10 +60,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(MixEventName event, String groupID, String connectURIs, boolean ssl, int mixThreshold, PredictionModel model) {
-        assert (event != null);
-        assert (connectURIs != null);
-        assert (model != null);
+    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull PredictionModel model) {
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }
@@ -118,6 +119,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         }
 
         if(!initialized) {
+            replaceGroupIDIfRequired();
             initialize(); // initialize connections to mix servers
         }
 
@@ -134,6 +136,13 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         //ch.writeAndFlush(msg).sync();
         ch.writeAndFlush(msg); // send asynchronously in the background
         return true;
+    }
+
+    private void replaceGroupIDIfRequired() {
+        if(groupID.startsWith(DUMMY_JOB_ID)) {
+            String jobId = HadoopUtils.getJobId();
+            this.groupID = groupID.replace(DUMMY_JOB_ID, jobId);
+        }
     }
 
     @Override

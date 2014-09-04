@@ -174,7 +174,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected MixClient configureMixClient(String connectURIs, String label, PredictionModel model) {
         assert (connectURIs != null);
         assert (model != null);
-        String jobId = (mixSessionName == null) ? HadoopUtils.getJobId() : mixSessionName;
+        String jobId = (mixSessionName == null) ? MixClient.DUMMY_JOB_ID : mixSessionName;
         if(label != null) {
             jobId = jobId + '-' + label;
         }
