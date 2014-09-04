@@ -29,6 +29,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
@@ -89,18 +91,41 @@ public final class HadoopUtils {
 
     }
 
+    @Nonnull
     public static String getJobId() {
         MapredContext ctx = MapredContextAccessor.get();
+        if(ctx == null) {
+            throw new IllegalStateException("MapredContext is not set");
+        }
         JobConf conf = ctx.getJobConf();
-        return conf.get("mapred.job.id");
+        if(conf == null) {
+            throw new IllegalStateException("JobConf is not set");
+        }
+        String jobId = conf.get("mapred.job.id");
+        if(jobId == null) {
+            jobId = conf.get("mapreduce.job.id");
+            if(jobId == null) {
+                throw new IllegalStateException("Both mapred.job.id and mapreduce.job.id are not set");
+            }
+        }
+        return jobId;
     }
 
     public static int getTaskId() {
         MapredContext ctx = MapredContextAccessor.get();
+        if(ctx == null) {
+            throw new IllegalStateException("MapredContext is not set");
+        }
         JobConf conf = ctx.getJobConf();
+        if(conf == null) {
+            throw new IllegalStateException("JobConf is not set");
+        }
         int taskid = conf.getInt("mapred.task.partition", -1);
         if(taskid == -1) {
-            throw new IllegalStateException("mapred.task.partition is not set");
+            taskid = conf.getInt("mapreduce.task.partition", -1);
+            if(taskid == -1) {
+                throw new IllegalStateException("Both mapred.task.partition and mapreduce.task.partition are not set");
+            }
         }
         return taskid;
     }
