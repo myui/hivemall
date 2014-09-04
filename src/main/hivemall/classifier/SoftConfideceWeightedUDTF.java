@@ -21,8 +21,8 @@
 package hivemall.classifier;
 
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.PredictionResult;
-import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
@@ -251,13 +251,13 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = model.get(k);
-            WeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
+            IWeightValue old_w = model.get(k);
+            IWeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
             model.set(k, new_w);
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float x, final float y, final float alpha, final float beta) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float y, final float alpha, final float beta) {
         final float old_v;
         final float old_cov;
         if(old == null) {

@@ -26,6 +26,7 @@ import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
 import hivemall.LearnerBaseUDTF;
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.Margin;
 import hivemall.io.PredictionModel;
 import hivemall.io.PredictionResult;
@@ -319,7 +320,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = model.get(k);
+            IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
             } else {
@@ -380,9 +381,11 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    public void close() throws HiveException {
+    public final void close() throws HiveException {
+        super.close();
         if(label2model != null) {
             long numForwarded = 0L;
+            long numMixed = 0L;
             if(useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[4];
@@ -392,7 +395,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
-                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    numMixed += model.getNumMixed();
+                    IMapIterator<Object, IWeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
                         if(!probe.isTouched()) {
@@ -416,7 +420,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
-                    IMapIterator<Object, WeightValue> itor = model.entries();
+                    numMixed += model.getNumMixed();
+                    IMapIterator<Object, IWeightValue> itor = model.entries();
                     while(itor.next() != -1) {
                         itor.getValue(probe);
                         if(!probe.isTouched()) {
@@ -432,9 +437,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 }
             }
             this.label2model = null;
-            logger.info("Trained a prediction model using " + count
-                    + " training examples. Forwarded the prediction model of " + numForwarded
-                    + " rows");
+            logger.info("Trained a prediction model using " + count + " training examples"
+                    + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
+            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 

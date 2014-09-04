@@ -25,11 +25,15 @@ import hivemall.io.DenseModel;
 import hivemall.io.PredictionModel;
 import hivemall.io.SpaceEfficientDenseModel;
 import hivemall.io.SparseModel;
+import hivemall.io.SynchronizedModelWrapper;
 import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.mix.MixMessage.MixEventName;
+import hivemall.mix.client.MixClient;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.io.BufferedReader;
@@ -42,6 +46,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -59,6 +64,12 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected boolean dense_model;
     protected int model_dims;
     protected boolean disable_halffloat;
+    protected String mixConnectInfo;
+    protected String mixSessionName;
+    protected int mixThreshold;
+    protected boolean ssl;
+
+    protected MixClient mixClient;
 
     public LearnerBaseUDTF() {}
 
@@ -73,6 +84,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
         opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
+        opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
+        opts.addOption("mix_session", "mix_session_name", true, "Mix session name [default: ${mapred.job.id}]");
+        opts.addOption("mix_threshold", true, "Threshold to mix local updates in range (0,127] [default: 3]");
+        opts.addOption("ssl", false, "Use SSL for the communication with mix servers");
         return opts;
     }
 
@@ -82,6 +97,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean denseModel = false;
         int modelDims = -1;
         boolean disableHalfFloat = false;
+        String mixConnectInfo = null;
+        String mixSessionName = null;
+        int mixThreshold = -1;
+        boolean ssl = false;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -96,33 +115,73 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             }
 
             disableHalfFloat = cl.hasOption("disable_halffloat");
+
+            mixConnectInfo = cl.getOptionValue("mix");
+            mixSessionName = cl.getOptionValue("mix_session");
+            mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 3);
+            if(mixThreshold > Byte.MAX_VALUE) {
+                throw new UDFArgumentException("mix_threshold must be in range (0,127]: "
+                        + mixThreshold);
+            }
+            ssl = cl.hasOption("ssl");
         }
 
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
         this.disable_halffloat = disableHalfFloat;
+        this.mixConnectInfo = mixConnectInfo;
+        this.mixSessionName = mixSessionName;
+        this.mixThreshold = mixThreshold;
+        this.ssl = ssl;
         return cl;
     }
 
     protected PredictionModel createModel() {
+        return createModel(null);
+    }
+
+    protected PredictionModel createModel(String label) {
+        PredictionModel model;
+        final boolean useCovar = useCovariance();
         if(dense_model) {
-            boolean useCovar = useCovariance();
             if(disable_halffloat == false && model_dims > 16777216) {
                 logger.info("Build a space efficient dense model with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
-                return new SpaceEfficientDenseModel(model_dims, useCovar);
+                model = new SpaceEfficientDenseModel(model_dims, useCovar);
             } else {
                 logger.info("Build a dense model with initial with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
-                return new DenseModel(model_dims, useCovar);
+                model = new DenseModel(model_dims, useCovar);
             }
         } else {
             int initModelSize = getInitialModelSize();
             logger.info("Build a sparse model with initial with " + initModelSize
                     + " initial dimensions");
-            return new SparseModel(initModelSize);
+            model = new SparseModel(initModelSize, useCovar);
         }
+        if(mixConnectInfo != null) {
+            model.configureClock();
+            model = new SynchronizedModelWrapper(model);
+            MixClient client = configureMixClient(mixConnectInfo, label, model);
+            model.setUpdateHandler(client);
+            this.mixClient = client;
+        }
+        assert (model != null);
+        return model;
+    }
+
+    protected MixClient configureMixClient(String connectURIs, String label, PredictionModel model) {
+        assert (connectURIs != null);
+        assert (model != null);
+        String jobId = (mixSessionName == null) ? MixClient.DUMMY_JOB_ID : mixSessionName;
+        if(label != null) {
+            jobId = jobId + '-' + label;
+        }
+        MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
+        MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
+        logger.info("Successfully configured mix client: " + connectURIs);
+        return client;
     }
 
     protected int getInitialModelSize() {
@@ -241,4 +300,13 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
         return count;
     }
+
+    @Override
+    public void close() throws HiveException {
+        if(mixClient != null) {
+            IOUtils.closeQuietly(mixClient);
+            this.mixClient = null;
+        }
+    }
+
 }

@@ -28,6 +28,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -39,6 +44,8 @@ import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 public final class HadoopUtils {
 
@@ -69,7 +76,7 @@ public final class HadoopUtils {
         }
     }
 
-    private static class BufferedReaderExt extends BufferedReader {
+    private static final class BufferedReaderExt extends BufferedReader {
 
         private Decompressor decompressor;
 
@@ -89,14 +96,93 @@ public final class HadoopUtils {
 
     }
 
+    @Nonnull
+    public static String getJobId() {
+        MapredContext ctx = MapredContextAccessor.get();
+        if(ctx == null) {
+            throw new IllegalStateException("MapredContext is not set");
+        }
+        JobConf conf = ctx.getJobConf();
+        if(conf == null) {
+            throw new IllegalStateException("JobConf is not set");
+        }
+        String jobId = conf.get("mapred.job.id");
+        if(jobId == null) {
+            jobId = conf.get("mapreduce.job.id");
+            if(jobId == null) {
+                String queryId = conf.get("hive.query.id");
+                if(queryId != null) {
+                    return queryId;
+                }
+                String taskidStr = conf.get("mapred.task.id");
+                if(taskidStr == null) {
+                    throw new IllegalStateException("Cannot resolve jobId: " + toString(conf));
+                }
+                jobId = getJobIdFromTaskId(taskidStr);
+            }
+        }
+        return jobId;
+    }
+
+    @Nonnull
+    public static String getJobIdFromTaskId(@Nonnull String taskidStr) {
+        if(!taskidStr.startsWith("task_")) {// workaround for Tez
+            taskidStr = taskidStr.replace("task", "task_");
+            taskidStr = taskidStr.substring(0, taskidStr.lastIndexOf('_'));
+        }
+        TaskID taskId = TaskID.forName(taskidStr);
+        JobID jobId = taskId.getJobID();
+        return jobId.toString();
+    }
+
     public static int getTaskId() {
         MapredContext ctx = MapredContextAccessor.get();
-        JobConf conf = ctx.getJobConf();
-        int taskid = conf.getInt("mapred.task.partition", -1);
+        if(ctx == null) {
+            throw new IllegalStateException("MapredContext is not set");
+        }
+        JobConf jobconf = ctx.getJobConf();
+        if(jobconf == null) {
+            throw new IllegalStateException("JobConf is not set");
+        }
+        int taskid = jobconf.getInt("mapred.task.partition", -1);
         if(taskid == -1) {
-            throw new IllegalStateException("mapred.task.partition is not set");
+            taskid = jobconf.getInt("mapreduce.task.partition", -1);
+            if(taskid == -1) {
+                throw new IllegalStateException("Both mapred.task.partition and mapreduce.task.partition are not set: "
+                        + toString(jobconf));
+            }
         }
         return taskid;
     }
 
+    @Nonnull
+    public static String toString(@Nonnull JobConf jobconf) {
+        return toString(jobconf, null);
+    }
+
+    @Nonnull
+    public static String toString(@Nonnull JobConf jobconf, @Nullable String regexKey) {
+        final Iterator<Entry<String, String>> itor = jobconf.iterator();
+        boolean hasNext = itor.hasNext();
+        if(!hasNext) {
+            return "";
+        }
+        final StringBuilder buf = new StringBuilder(1024);
+        do {
+            Entry<String, String> e = itor.next();
+            hasNext = itor.hasNext();
+            String k = e.getKey();
+            if(k == null) {
+                continue;
+            }
+            if(regexKey == null || k.matches(regexKey)) {
+                String v = e.getValue();
+                buf.append(k).append('=').append(v);
+                if(hasNext) {
+                    buf.append(',');
+                }
+            }
+        } while(hasNext);
+        return buf.toString();
+    }
 }

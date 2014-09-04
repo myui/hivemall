@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="jar" name="hivemall">
+<project basedir="." default="package" name="hivemall">
 
 	<property file="build.properties" />
 
@@ -38,7 +38,7 @@
 			<classpath location="${test.build.dir}" />
 			<batchtest todir="${test.result.dir}">
 				<fileset dir="${test.dir}">
-					<include name="**/*Test*.java"/>
+					<include name="**/*Test*.java" />
 				</fileset>
 			</batchtest>
 			<formatter type="xml" usefile="true" />
@@ -46,16 +46,57 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
-	<target name="jar" depends="test">
+	<target name="package" depends="jar,jar-with-dependencies,jar-fat">
+		<delete failonerror="true" dir="${build.dir}" />
+	</target>
+
+	<!-- hivemall-xx.jar -->
+	<target name="jar" depends="compile">
 		<delete failonerror="true" file="${target.dir}/hivemall.jar" />
 		<jar destfile="${target.dir}/hivemall.jar" basedir="${build.dir}">
 			<manifest>
-				<attribute name="Implementation-Title" value="${jar.title}" />
-				<attribute name="Implementation-Version" value="${version}" />
-				<attribute name="Implementation-Vendor" value="${jar.vendor}" />
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
 			</manifest>
 		</jar>
-		<delete failonerror="true" dir="${build.dir}" />
+	</target>
+
+	<!-- hivemall-xx-thin.jar including minimum dependencies -->
+	<target name="jar-with-dependencies" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall-with-dependencies.jar" />
+		<jar destfile="${target.dir}/hivemall-with-dependencies.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+			</manifest>
+			<zipfileset src="lib/netty-all-4.0.23.Final.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/jsr305-1.3.9.jar" excludes="META-INF/*,**/*.java" />
+		</jar>
+	</target>
+
+	<!-- hivemall-xx-fat.jar including all dependencies -->
+	<target name="jar-fat" depends="compile">
+		<delete failonerror="true" file="${target.dir}/hivemall-fat.jar" />
+		<jar destfile="${target.dir}/hivemall-fat.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${project.name}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+				<attribute name="Implementation-Vendor" value="${project.organization.name}" />
+				<attribute name="Main-Class" value="${jar.mainclass}" />
+			</manifest>
+			<zipfileset src="lib/commons-cli-1.2.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/commons-logging-1.0.4.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/hadoop-core-0.20.2-cdh3u6.jar" excludes="META-INF/*,webapps/,**/*.tgz" />
+			<zipfileset src="lib/hive-exec-0.11.0.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/hive-serde-0.11.0.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/netty-all-4.0.23.Final.jar" excludes="META-INF/*" />
+			<zipfileset src="lib/jsr305-1.3.9.jar" excludes="META-INF/*,**/*.java" />
+			<zipfileset src="lib/optional/guava-r09-jarjar.jar" excludes="META-INF/*,**/*.java" />
+		</jar>
 	</target>
 
 	<target name="javadoc" depends="compile">
@@ -66,7 +107,7 @@
 
 	<target name="clean">
 		<delete failonerror="true">
-			<fileset dir="${target.dir}" excludes=".gitignore"/>
+			<fileset dir="${target.dir}" excludes=".gitignore" />
 		</delete>
 	</target>
 

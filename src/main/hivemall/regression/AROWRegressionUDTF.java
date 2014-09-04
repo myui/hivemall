@@ -23,8 +23,8 @@ package hivemall.regression;
 import hivemall.common.LossFunctions;
 import hivemall.common.OnlineVariance;
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.PredictionResult;
-import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 
 import java.util.Collection;
@@ -122,13 +122,13 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = model.get(k);
-            WeightValue new_w = getNewWeight(old_w, v, coeff, beta);
+            IWeightValue old_w = model.get(k);
+            IWeightValue new_w = getNewWeight(old_w, v, coeff, beta);
             model.set(k, new_w);
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float x, final float coeff, final float beta) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float coeff, final float beta) {
         final float old_w;
         final float old_cov;
         if(old == null) {

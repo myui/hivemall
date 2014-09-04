@@ -20,53 +20,118 @@
  */
 package hivemall.io;
 
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
-public final class SparseModel implements PredictionModel {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-    private final OpenHashMap<Object, WeightValue> weights;
+public final class SparseModel extends AbstractPredictionModel {
+    private static final Log logger = LogFactory.getLog(SparseModel.class);
 
-    public SparseModel() {
-        this(16384);
+    private final OpenHashMap<Object, IWeightValue> weights;
+    private final boolean hasCovar;
+    private boolean clockEnabled;
+
+    public SparseModel(int size, boolean hasCovar) {
+        super();
+        this.weights = new OpenHashMap<Object, IWeightValue>(size);
+        this.hasCovar = hasCovar;
+        this.clockEnabled = false;
     }
 
-    public SparseModel(int size) {
-        this.weights = new OpenHashMap<Object, WeightValue>(size);
+    @Override
+    public boolean hasCovariance() {
+        return hasCovar;
+    }
+
+    @Override
+    public void configureClock() {
+        this.clockEnabled = true;
+    }
+
+    @Override
+    public boolean hasClock() {
+        return clockEnabled;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends WeightValue> T get(Object feature) {
+    public <T extends IWeightValue> T get(final Object feature) {
         return (T) weights.get(feature);
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
-        weights.put(feature, value);
+    public <T extends IWeightValue> void set(final Object feature, final T value) {
+        assert (feature != null);
+        assert (value != null);
+
+        final IWeightValue wrapperValue = wrapIfRequired(value);
+
+        if(clockEnabled && value.isTouched()) {
+            IWeightValue old = weights.get(feature);
+            if(old != null) {
+                short newclock = (short) (old.getClock() + (short) 1);
+                wrapperValue.setClock(newclock);
+                int newDelta = old.getDeltaUpdates() + 1;
+                wrapperValue.setDeltaUpdates((byte) newDelta);
+            }
+        }
+        weights.put(feature, wrapperValue);
+
+        onUpdate(feature, wrapperValue);
+    }
+
+    private IWeightValue wrapIfRequired(final IWeightValue value) {
+        if(clockEnabled) {
+            if(value.hasCovariance()) {
+                return new WeightValueWithCovarClock(value);
+            } else {
+                return new WeightValueWithClock(value);
+            }
+        } else {
+            return value;
+        }
     }
 
     @Override
-    public float getWeight(Object feature) {
-        WeightValue v = weights.get(feature);
-        return v == null ? 0.f : v.value;
+    public float getWeight(final Object feature) {
+        IWeightValue v = weights.get(feature);
+        return v == null ? 0.f : v.get();
     }
 
     @Override
-    public float getCovariance(Object feature) {
-        WeightValueWithCovar v = (WeightValueWithCovar) weights.get(feature);
-        return v == null ? 1.f : v.covariance;
+    public float getCovariance(final Object feature) {
+        IWeightValue v = weights.get(feature);
+        return v == null ? 1.f : v.getCovariance();
     }
 
     @Override
-    public void setValue(Object feature, float weight) {
-        weights.put(feature, new WeightValue(weight));
+    public void _set(final Object feature, final float weight, final short clock) {
+        final IWeightValue w = weights.get(feature);
+        if(w == null) {
+            logger.warn("Previous weight not found: " + feature);
+            throw new IllegalStateException("Previous weight not found " + feature);
+        }
+        w.set(weight);
+        w.setClock(clock);
+        w.setDeltaUpdates(BYTE0);
+        numMixed++;
     }
 
     @Override
-    public void setValue(Object feature, float weight, float covar) {
-        weights.put(feature, new WeightValueWithCovar(weight, covar));
+    public void _set(final Object feature, final float weight, final float covar, final short clock) {
+        final IWeightValue w = weights.get(feature);
+        if(w == null) {
+            logger.warn("Previous weight not found: " + feature);
+            throw new IllegalStateException("Previous weight not found: " + feature);
+        }
+        w.set(weight);
+        w.setCovariance(covar);
+        w.setClock(clock);
+        w.setDeltaUpdates(BYTE0);
+        numMixed++;
     }
 
     @Override
@@ -75,13 +140,13 @@ public final class SparseModel implements PredictionModel {
     }
 
     @Override
-    public boolean contains(Object feature) {
+    public boolean contains(final Object feature) {
         return weights.containsKey(feature);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) weights.entries();
     }
 

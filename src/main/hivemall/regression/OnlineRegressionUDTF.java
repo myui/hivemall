@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.LearnerBaseUDTF;
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.PredictionModel;
 import hivemall.io.PredictionResult;
 import hivemall.io.WeightValue;
@@ -215,7 +216,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_w = model.get(k);
+            IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
             } else {
@@ -260,7 +261,8 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     }
 
     @Override
-    public void close() throws HiveException {
+    public final void close() throws HiveException {
+        super.close();
         if(model != null) {
             int numForwarded = 0;
             if(useCovariance()) {
@@ -268,7 +270,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                 final Object[] forwardMapObj = new Object[3];
                 final FloatWritable fv = new FloatWritable();
                 final FloatWritable cov = new FloatWritable();
-                final IMapIterator<Object, WeightValue> itor = model.entries();
+                final IMapIterator<Object, IWeightValue> itor = model.entries();
                 while(itor.next() != -1) {
                     itor.getValue(probe);
                     if(!probe.isTouched()) {
@@ -287,7 +289,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                 final WeightValue probe = new WeightValue();
                 final Object[] forwardMapObj = new Object[2];
                 final FloatWritable fv = new FloatWritable();
-                final IMapIterator<Object, WeightValue> itor = model.entries();
+                final IMapIterator<Object, IWeightValue> itor = model.entries();
                 while(itor.next() != -1) {
                     itor.getValue(probe);
                     if(!probe.isTouched()) {
@@ -301,10 +303,11 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                     numForwarded++;
                 }
             }
+            int numMixed = model.getNumMixed();
             this.model = null;
-            logger.info("Trained a prediction model using " + count
-                    + " training examples. Forwarded the prediction model of " + numForwarded
-                    + " rows");
+            logger.info("Trained a prediction model using " + count + " training examples"
+                    + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
+            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 

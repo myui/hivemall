@@ -21,9 +21,9 @@
 package hivemall.classifier.multiclass;
 
 import hivemall.io.FeatureValue;
+import hivemall.io.IWeightValue;
 import hivemall.io.Margin;
 import hivemall.io.PredictionModel;
-import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
@@ -163,19 +163,19 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
                 k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
                 v = 1.f;
             }
-            WeightValue old_correctclass_w = model2add.get(k);
-            WeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, phi, true);
+            IWeightValue old_correctclass_w = model2add.get(k);
+            IWeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, phi, true);
             model2add.set(k, new_correctclass_w);
 
             if(model2sub != null) {
-                WeightValue old_wrongclass_w = model2sub.get(k);
-                WeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, phi, false);
+                IWeightValue old_wrongclass_w = model2sub.get(k);
+                IWeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, phi, false);
                 model2sub.set(k, new_wrongclass_w);
             }
         }
     }
 
-    private static WeightValue getNewWeight(final WeightValue old, final float x, final float alpha, final float phi, final boolean positive) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float alpha, final float phi, final boolean positive) {
         final float old_w, old_cov;
         if(old == null) {
             old_w = 0.f;

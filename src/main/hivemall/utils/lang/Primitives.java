@@ -24,29 +24,52 @@ public final class Primitives {
 
     private Primitives() {}
 
-    public static int parseInt(String s, int defaultValue) {
+    public static int toUnsignedShort(final short v) {
+        return v & 0xFFFF; // convert to range 0-65535 from -32768-32767.
+    }
+
+    public static short parseShort(final String s, final short defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return Short.parseShort(s);
+    }
+
+    public static int parseInt(final String s, final int defaultValue) {
         if(s == null) {
             return defaultValue;
         }
         return Integer.parseInt(s);
     }
 
-    public static float parseFloat(String s, float defaultValue) {
+    public static long parseLong(final String s, final long defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return Long.parseLong(s);
+    }
+
+    public static float parseFloat(final String s, final float defaultValue) {
         if(s == null) {
             return defaultValue;
         }
         return Float.parseFloat(s);
     }
 
-    public static boolean parseBoolean(String s, boolean defaultValue) {
+    public static boolean parseBoolean(final String s, final boolean defaultValue) {
         if(s == null) {
             return defaultValue;
         }
         return Boolean.parseBoolean(s);
     }
-    
-    public static int compare(int x, int y) {
+
+    public static int compare(final int x, final int y) {
         return (x < y) ? -1 : ((x == y) ? 0 : 1);
+    }
+
+    public static void putChar(final byte[] b, final int off, final char val) {
+        b[off + 1] = (byte) (val >>> 0);
+        b[off] = (byte) (val >>> 8);
     }
 
 }

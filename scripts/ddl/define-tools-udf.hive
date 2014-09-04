@@ -68,11 +68,17 @@ create temporary function sigmoid as 'hivemall.tools.math.SigmodUDF';
 drop temporary function taskid;
 create temporary function taskid as 'hivemall.tools.mapred.TaskIdUDF';
 
+drop temporary function jobid;
+create temporary function jobid as 'hivemall.tools.mapred.JobIdUDF';
+
 drop temporary function rowid;
 create temporary function rowid as 'hivemall.tools.mapred.RowIdUDF';
 
 drop temporary function distcache_gets;
 create temporary function distcache_gets as 'hivemall.tools.mapred.DistributedCacheLookupUDF';
+
+drop temporary function jobconf_gets;
+create temporary function jobconf_gets as 'hivemall.tools.mapred.JobConfGetsUDF';
 
 ----------------------
 -- string functions --

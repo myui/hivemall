@@ -32,18 +32,22 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpaceEfficientDenseModel implements PredictionModel {
+public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
 
     private int size;
     private short[] weights;
     private short[] covars;
 
+    private short[] clocks;
+    private byte[] deltaUpdates;
+
     public SpaceEfficientDenseModel(int ndims) {
         this(ndims, false);
     }
 
     public SpaceEfficientDenseModel(int ndims, boolean withCovar) {
+        super();
         int size = ndims + 1;
         this.size = size;
         this.weights = new short[size];
@@ -54,6 +58,31 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         } else {
             this.covars = null;
         }
+        this.clocks = null;
+        this.deltaUpdates = null;
+    }
+
+    @Override
+    public boolean hasCovariance() {
+        return covars != null;
+    }
+
+    @Override
+    public void configureClock() {
+        if(clocks == null) {
+            this.clocks = new short[size];
+            this.deltaUpdates = new byte[size];
+        }
+    }
+
+    @Override
+    public boolean hasClock() {
+        return clocks != null;
+    }
+
+    @Override
+    public void resetDeltaUpdates(int feature) {
+        deltaUpdates[feature] = 0;
     }
 
     private float getWeight(final int i) {
@@ -94,13 +123,17 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
                 this.covars = Arrays.copyOf(covars, newSize);
                 Arrays.fill(covars, oldSize, newSize, HalfFloat.ONE);
             }
+            if(clocks != null) {
+                this.clocks = Arrays.copyOf(clocks, newSize);
+                this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
+            }
         }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends WeightValue> T get(Object feature) {
-        int i = HiveUtils.parseInt(feature);
+    public <T extends IWeightValue> T get(Object feature) {
+        final int i = HiveUtils.parseInt(feature);
         if(i >= size) {
             return null;
         }
@@ -112,15 +145,27 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
     }
 
     @Override
-    public <T extends WeightValue> void set(Object feature, T value) {
+    public <T extends IWeightValue> void set(Object feature, T value) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
         setWeight(i, weight);
+        float covar = 1.f;
         if(value.hasCovariance()) {
-            float covar = value.getCovariance();
+            covar = value.getCovariance();
             setCovar(i, covar);
         }
+        short clock = 0;
+        int delta = 0;
+        if(clocks != null && value.isTouched()) {
+            clock = (short) (clocks[i] + 1);
+            clocks[i] = clock;
+            delta = deltaUpdates[i] + 1;
+            assert (delta > 0) : delta;
+            deltaUpdates[i] = (byte) delta;
+        }
+
+        onUpdate(i, weight, covar, clock, delta);
     }
 
     @Override
@@ -142,18 +187,24 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
     }
 
     @Override
-    public void setValue(Object feature, float weight) {
+    public void _set(Object feature, float weight, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         setWeight(i, weight);
+        clocks[i] = clock;
+        deltaUpdates[i] = 0;
+        numMixed++;
     }
 
     @Override
-    public void setValue(Object feature, float weight, float covar) {
+    public void _set(Object feature, float weight, float covar, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         setWeight(i, weight);
         setCovar(i, covar);
+        clocks[i] = clock;
+        deltaUpdates[i] = 0;
+        numMixed++;
     }
 
     @Override
@@ -173,11 +224,11 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <K, V extends WeightValue> IMapIterator<K, V> entries() {
+    public <K, V extends IWeightValue> IMapIterator<K, V> entries() {
         return (IMapIterator<K, V>) new Itr();
     }
 
-    private final class Itr implements IMapIterator<Number, WeightValue> {
+    private final class Itr implements IMapIterator<Number, IWeightValue> {
 
         private int cursor;
         private final WeightValueWithCovar tmpWeight;
@@ -207,7 +258,7 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         }
 
         @Override
-        public WeightValue getValue() {
+        public IWeightValue getValue() {
             if(covars == null) {
                 float w = getWeight(cursor);
                 WeightValue v = new WeightValue(w);
@@ -223,13 +274,13 @@ public final class SpaceEfficientDenseModel implements PredictionModel {
         }
 
         @Override
-        public <T extends Copyable<WeightValue>> void getValue(T probe) {
+        public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             float w = getWeight(cursor);
             tmpWeight.value = w;
             float cov = 1.f;
             if(covars != null) {
                 cov = getCovar(cursor);
-                tmpWeight.covariance = cov;
+                tmpWeight.setCovariance(cov);
             }
             tmpWeight.setTouched(w != 0.f || cov != 1.f);
             probe.copyFrom(tmpWeight);

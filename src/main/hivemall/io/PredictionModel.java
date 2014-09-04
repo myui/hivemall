@@ -24,22 +24,36 @@ import hivemall.utils.collections.IMapIterator;
 
 public interface PredictionModel {
 
-    public int size();
+    ModelUpdateHandler getUpdateHandler();
 
-    public boolean contains(Object feature);
+    void setUpdateHandler(ModelUpdateHandler handler);
 
-    public <T extends WeightValue> T get(Object feature);
+    int getNumMixed();
 
-    public <T extends WeightValue> void set(Object feature, T value);
+    boolean hasCovariance();
 
-    public float getWeight(Object feature);
+    void configureClock();
 
-    public float getCovariance(Object feature);
+    boolean hasClock();
 
-    public void setValue(Object feature, float weight);
+    void resetDeltaUpdates(int feature);
 
-    public void setValue(Object feature, float weight, float covar);
+    int size();
 
-    public <K, V extends WeightValue> IMapIterator<K, V> entries();
+    boolean contains(Object feature);
+
+    <T extends IWeightValue> T get(Object feature);
+
+    <T extends IWeightValue> void set(Object feature, T value);
+
+    float getWeight(Object feature);
+
+    float getCovariance(Object feature);
+
+    void _set(Object feature, float weight, short clock);
+
+    void _set(Object feature, float weight, float covar, short clock);
+
+    <K, V extends IWeightValue> IMapIterator<K, V> entries();
 
 }
