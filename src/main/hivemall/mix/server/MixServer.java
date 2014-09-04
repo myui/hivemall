@@ -62,7 +62,7 @@ public final class MixServer implements Runnable {
         this.scale = Primitives.parseFloat(cl.getOptionValue("scale"), 1.f);
         this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
         this.sessionTTLinSec = Primitives.parseLong(cl.getOptionValue("ttl"), 120L);
-        this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 90L);
+        this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
     }
 
     public static void main(String[] args) {
@@ -78,7 +78,7 @@ public final class MixServer implements Runnable {
         opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
         opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
         opts.addOption("ttl", "session_ttl", true, "The TTL in sec that an idle session lives [default: 120 sec]");
-        opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 90 sec]");
+        opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 60 sec]");
         return opts;
     }
 
