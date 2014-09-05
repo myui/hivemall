@@ -61,15 +61,9 @@ through UDFs/UDAFs/UDTFs of Hive.
 System requirements
 --------------------
 
-**Hivemall v0.2**
+* Hive 0.11 or later
 
-* Hive 0.11 or later [Recommended, Required for compilation]
-
-* Hive 0.9, 0.10 [Not supported, New features in v0.2 do not work]
-
-**Hivemall v0.1**
-
-* Hive 0.9 or later
+* Hive 0.9, 0.10 [Not supported]
 
 Basic Usage
 ------------
@@ -108,6 +102,8 @@ Support
 -------
 
 Support is through the [issue list](https://github.com/myui/hivemall/issues). Put a question label to ask a question.
+
+Or, post a question with [hivemall tag in stackoverflow]([Recommended, Required for compilation]).
 
 References
 ----------
