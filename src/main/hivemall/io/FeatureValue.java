@@ -20,6 +20,9 @@
  */
 package hivemall.io;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.io.Text;
 
 public final class FeatureValue {
@@ -41,7 +44,8 @@ public final class FeatureValue {
         return value;
     }
 
-    public static FeatureValue parse(Object o) {
+    @Nullable
+    public static FeatureValue parse(final Object o) throws IllegalArgumentException {
         if(o == null) {
             return null;
         }
@@ -49,29 +53,48 @@ public final class FeatureValue {
         return parse(s);
     }
 
-    public static FeatureValue parse(String s) {
-        if(s == null) {
-            return null;
-        }
-        String[] fv = s.split(":");
-        if(fv.length != 1 && fv.length != 2) {
+    @Nullable
+    public static FeatureValue parse(@Nonnull final String s) throws IllegalArgumentException {
+        assert (s != null);
+        final int pos = s.indexOf(':');
+        if(pos == 0) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
-        Text f = new Text(fv[0]);
-        float v = (fv.length == 1) ? 1.f : Float.parseFloat(fv[1]);
-        return new FeatureValue(f, v);
+
+        final Text feature;
+        final float weight;
+        if(pos > 0) {
+            String s1 = s.substring(0, pos);
+            String s2 = s.substring(pos + 1);
+            feature = new Text(s1);
+            weight = Float.parseFloat(s2);
+        } else {
+            feature = new Text(s);
+            weight = 1.f;
+        }
+        return new FeatureValue(feature, weight);
     }
 
-    public static FeatureValue parseFeatureAsString(String s) {
-        if(s.indexOf(':') == -1) {
-            return new FeatureValue(s, 1.f);
-        }
-        String[] fv = s.split(":");
-        if(fv.length != 1 && fv.length != 2) {
+    @Nonnull
+    public static FeatureValue parseFeatureAsString(@Nonnull final String s)
+            throws IllegalArgumentException {
+        assert (s != null);
+        final int pos = s.indexOf(':');
+        if(pos == 0) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
-        float v = (fv.length == 1) ? 1.f : Float.parseFloat(fv[1]);
-        return new FeatureValue(fv[0], v);
+
+        final String feature;
+        final float weight;
+        if(pos > 0) {
+            feature = s.substring(0, pos);
+            String s2 = s.substring(pos + 1);
+            weight = Float.parseFloat(s2);
+        } else {
+            feature = s;
+            weight = 1.f;
+        }
+        return new FeatureValue(feature, weight);
     }
 
 }
