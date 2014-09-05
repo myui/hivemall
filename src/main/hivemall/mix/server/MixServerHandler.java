@@ -55,13 +55,26 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final MixEventName event = msg.getEvent();
         switch(event) {
             case average:
-            case argminKLD:
+            case argminKLD: {
                 PartialResult partial = getPartialResult(msg);
                 mix(ctx, msg, partial);
                 break;
+            }
+            case closeGroup: {
+                closeGroup(msg);
+                break;
+            }
             default:
                 throw new IllegalStateException("Unexpected event: " + event);
         }
+    }
+
+    private void closeGroup(@Nonnull MixMessage msg) {
+        String groupId = msg.getGroupID();
+        if(groupId == null) {
+            return;
+        }
+        sessionStore.remove(groupId);
     }
 
     @Nonnull

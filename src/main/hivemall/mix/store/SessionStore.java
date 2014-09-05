@@ -13,9 +13,8 @@ import org.apache.commons.logging.LogFactory;
 
 @ThreadSafe
 public final class SessionStore {
-    private static final Log logger = LogFactory.getLog(SessionStore.class);
-
     private static final int EXPECTED_MODEL_SIZE = 4194305; /* 2^22+1=4194304+1=4194305 */
+    private static final Log logger = LogFactory.getLog(SessionStore.class);
 
     private final ConcurrentMap<String, SessionObject> sessions;
 
@@ -42,6 +41,10 @@ public final class SessionStore {
         ConcurrentMap<Object, PartialResult> map = sessionObj.get();
         sessionObj.touch();
         return map;
+    }
+
+    public void remove(@Nonnull String groupID) {
+        sessions.remove(groupID);
     }
 
     @ThreadSafe
