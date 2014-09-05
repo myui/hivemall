@@ -103,7 +103,7 @@ Support
 
 Support is through the [issue list](https://github.com/myui/hivemall/issues). Put a question label to ask a question.
 
-Or, post  [a question with hivemall tag](http://stackoverflow.com/questions/tagged/hivemall) in stackoverflow.
+Or, posta [question with hivemall tag](http://stackoverflow.com/questions/tagged/hivemall) in stackoverflow.
 
 References
 ----------
