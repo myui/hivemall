@@ -93,6 +93,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
         update(features, gradient);
     }
 
+    @Override
     protected void update(Collection<?> features, float gradient) {
         final ObjectInspector featureInspector = this.featureInputOI;
         final float g_g = gradient * (gradient / scaling);
