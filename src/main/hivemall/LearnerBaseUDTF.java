@@ -41,6 +41,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
@@ -91,8 +94,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return opts;
     }
 
+    @Nullable
     @Override
-    protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
+    protected CommandLine processOptions(@Nonnull ObjectInspector[] argOIs) throws UDFArgumentException {
         String modelfile = null;
         boolean denseModel = false;
         int modelDims = -1;

@@ -229,11 +229,11 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     }
 
     protected void update(Collection<?> features, float target, float predicted) {
-        float d = dloss(target, predicted);
+        float d = computeUpdate(target, predicted);
         update(features, d);
     }
 
-    protected float dloss(float target, float predicted) {
+    protected float computeUpdate(float target, float predicted) {
         throw new IllegalStateException();
     }
 
