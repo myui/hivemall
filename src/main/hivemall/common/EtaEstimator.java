@@ -24,7 +24,7 @@ public interface EtaEstimator {
 
     public float eta(int t);
 
-    public static class SimpleEtaEstimator implements EtaEstimator {
+    public static final class SimpleEtaEstimator implements EtaEstimator {
 
         private final float eta0;
         private final float total_steps;
@@ -35,7 +35,7 @@ public interface EtaEstimator {
         }
 
         @Override
-        public float eta(int t) {
+        public float eta(final int t) {
             if(t > total_steps) {
                 return eta0 / 2.f;
             }
@@ -44,7 +44,7 @@ public interface EtaEstimator {
 
     }
 
-    public static class InvscalingEtaEstimator implements EtaEstimator {
+    public static final class InvscalingEtaEstimator implements EtaEstimator {
 
         private final float eta0;
         private final double power_t;
@@ -55,7 +55,7 @@ public interface EtaEstimator {
         }
 
         @Override
-        public float eta(int t) {
+        public float eta(final int t) {
             return eta0 / (float) Math.pow(t, power_t);
         }
 
