@@ -10,7 +10,9 @@ Supported Algorithms
 --------------------
 
 Hivemall provides machine learning functionality as well as feature engineering functions 
-through UDFs/UDAFs/UDTFs of Hive.
+through UDFs/UDAFs/UDTFs of Hive. 
+
+Additionally, Hivemall communicates with a [Parameter Mixing Server](http://www.slideshare.net/myui/hivemall-mix-internal) (external process) for the convergence of distributed learning.
 
 ## Classfication
 
@@ -27,7 +29,6 @@ through UDFs/UDAFs/UDTFs of Hive.
 ## Regression
 
 * Logistic Regression using Stochastic Gradient Descent
-  (parameter mixing and iterative parameter mixing)
 
 * AdaGrad / AdaDelta (with logistic loss)
   
@@ -46,7 +47,6 @@ through UDFs/UDAFs/UDTFs of Hive.
 * b-Bit minhash
 
 * Brute-force search using cosine similarity
-
 
 ## Feature engineering
   
