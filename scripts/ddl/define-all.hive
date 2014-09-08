@@ -198,9 +198,6 @@ create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
 drop temporary function train_logregr;
 create temporary function train_logregr as 'hivemall.regression.LogressUDTF';
 
-drop temporary function train_logregr_iter;
-create temporary function train_logregr_iter as 'hivemall.regression.LogressIterUDTF';
-
 drop temporary function train_pa1_regr;
 create temporary function train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
 
@@ -226,9 +223,6 @@ create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressi
 
 drop temporary function logress;
 create temporary function logress as 'hivemall.regression.LogressUDTF';
-
-drop temporary function logress_iter;
-create temporary function logress_iter as 'hivemall.regression.LogressIterUDTF';
 
 drop temporary function pa1_regress;
 create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
