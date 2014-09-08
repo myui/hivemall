@@ -28,6 +28,8 @@ through UDFs/UDAFs/UDTFs of Hive.
 
 * Logistic Regression using Stochastic Gradient Descent
   (parameter mixing and iterative parameter mixing)
+
+* AdaGrad / AdaDelta (with logistic loss)
   
 * Passive Aggressive Regression (PA1, PA2)
 
