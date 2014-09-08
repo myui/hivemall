@@ -20,11 +20,16 @@
  */
 package hivemall.common;
 
-public interface EtaEstimator {
+import javax.annotation.Nonnull;
 
-    public float eta(int t);
+import org.apache.commons.cli.CommandLine;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 
-    public static final class SimpleEtaEstimator implements EtaEstimator {
+public abstract class EtaEstimator {
+
+    public abstract float eta(int t);
+
+    public static final class SimpleEtaEstimator extends EtaEstimator {
 
         private final float eta0;
         private final float total_steps;
@@ -44,7 +49,7 @@ public interface EtaEstimator {
 
     }
 
-    public static final class InvscalingEtaEstimator implements EtaEstimator {
+    public static final class InvscalingEtaEstimator extends EtaEstimator {
 
         private final float eta0;
         private final double power_t;
@@ -59,6 +64,23 @@ public interface EtaEstimator {
             return eta0 / (float) Math.pow(t, power_t);
         }
 
+    }
+
+    @Nonnull
+    public static EtaEstimator get(@Nonnull CommandLine cl) throws UDFArgumentException {
+        if(cl == null) {
+            return new InvscalingEtaEstimator(0.1f, 0.1f);
+        }
+
+        float eta0 = Float.parseFloat(cl.getOptionValue("eta0", "0.1"));
+
+        if(cl.hasOption("t")) {
+            int t = Integer.parseInt(cl.getOptionValue("t"));
+            return new SimpleEtaEstimator(eta0, t);
+        }
+
+        float power_t = Float.parseFloat(cl.getOptionValue("power_t", "0.1"));
+        return new InvscalingEtaEstimator(eta0, power_t);
     }
 
 }
