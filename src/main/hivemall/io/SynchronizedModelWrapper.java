@@ -5,6 +5,8 @@ import hivemall.utils.collections.IMapIterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nonnull;
+
 public final class SynchronizedModelWrapper implements PredictionModel {
 
     private final PredictionModel model;
@@ -110,6 +112,16 @@ public final class SynchronizedModelWrapper implements PredictionModel {
         try {
             lock.lock();
             model.set(feature, value);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void delete(@Nonnull Object feature) {
+        try {
+            lock.lock();
+            model.delete(feature);
         } finally {
             lock.unlock();
         }
