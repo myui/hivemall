@@ -67,6 +67,11 @@ public class WeightValueWithClock implements IWeightValue {
         return 0.f;
     }
 
+    @Override
+    public float getSumOfSquaredDeltaX() {
+        return 0.f;
+    }
+
     /** 
      * @return whether touched in training or not
      */
@@ -137,6 +142,33 @@ public class WeightValueWithClock implements IWeightValue {
         @Override
         public float getSumOfSquaredGradients() {
             return sum_of_squared_gradients;
+        }
+
+    }
+
+    public static final class WeightValueWithGtXtClock extends WeightValueWithClock {
+        private final float sum_of_squared_gradients;
+        private final float sum_of_squared_delta_x;
+
+        public WeightValueWithGtXtClock(IWeightValue src) {
+            super(src);
+            this.sum_of_squared_gradients = src.getSumOfSquaredGradients();
+            this.sum_of_squared_delta_x = src.getSumOfSquaredGradients();
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithGtXt;
+        }
+
+        @Override
+        public float getSumOfSquaredGradients() {
+            return sum_of_squared_gradients;
+        }
+
+        @Override
+        public float getSumOfSquaredDeltaX() {
+            return sum_of_squared_delta_x;
         }
 
     }

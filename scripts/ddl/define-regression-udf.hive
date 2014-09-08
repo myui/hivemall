@@ -37,6 +37,9 @@ create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressi
 drop temporary function adagrad;
 create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
 
+drop temporary function adadelta;
+create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
+
 -- alias for backward compatibility
 
 drop temporary function logress;

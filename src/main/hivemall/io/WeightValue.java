@@ -71,6 +71,11 @@ public class WeightValue implements IWeightValue {
         return 0.f;
     }
 
+    @Override
+    public float getSumOfSquaredDeltaX() {
+        return 0.f;
+    }
+
     /** 
      * @return whether touched in training or not
      */
@@ -138,10 +143,38 @@ public class WeightValue implements IWeightValue {
         }
 
         @Override
-        public float getSumOfSquaredGradients() {
+        public final float getSumOfSquaredGradients() {
+            return sum_of_squared_gradients;
+        }
+    }
+
+    /**
+     * WeightValue with Sum of Squared Gradients
+     */
+    public static final class WeightValueWithGtXt extends WeightValue {
+        private final float sum_of_squared_gradients;
+        private final float sum_of_squared_delta_x;
+
+        public WeightValueWithGtXt(float weight, float sum_of_squared_gradients, float sum_of_squared_delta_x) {
+            super(weight);
+            this.sum_of_squared_gradients = sum_of_squared_gradients;
+            this.sum_of_squared_delta_x = sum_of_squared_delta_x;
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithGt;
+        }
+
+        @Override
+        public final float getSumOfSquaredGradients() {
             return sum_of_squared_gradients;
         }
 
+        @Override
+        public final float getSumOfSquaredDeltaX() {
+            return sum_of_squared_delta_x;
+        }
     }
 
     public static final class WeightValueWithCovar extends WeightValue {

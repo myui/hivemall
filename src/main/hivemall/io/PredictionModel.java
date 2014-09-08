@@ -35,7 +35,7 @@ public interface PredictionModel {
 
     boolean hasCovariance();
 
-    void configurParams(boolean sumOfSquaredGradients);
+    void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x);
 
     void configureClock();
 
