@@ -68,9 +68,15 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        this.eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.1f);
-        this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
-        this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
+        if(cl == null) {
+            this.eta0 = 0.1f;
+            this.eps = 1.f;
+            this.scaling = 100f;
+        } else {
+            this.eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.1f);
+            this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
+            this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
+        }
         return cl;
     }
 
