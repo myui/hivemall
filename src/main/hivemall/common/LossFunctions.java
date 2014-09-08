@@ -20,6 +20,8 @@
  */
 package hivemall.common;
 
+import hivemall.utils.math.MathUtils;
+
 /**
  * @link https://github.com/JohnLangford/vowpal_wabbit/wiki/Loss-functions
  */
@@ -319,6 +321,14 @@ public final class LossFunctions {
             return 0.f;
         }
 
+    }
+
+    public static float logisticLoss(final float target, final float predicted) {
+        if(-100.d < predicted) {
+            return target - (float) MathUtils.sigmoid(predicted);
+        } else {
+            return target;
+        }
     }
 
     public static float hingeLoss(final float p, final float y, final float threshold) {
