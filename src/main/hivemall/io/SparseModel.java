@@ -26,6 +26,8 @@ import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -86,6 +88,11 @@ public final class SparseModel extends AbstractPredictionModel {
         weights.put(feature, wrapperValue);
 
         onUpdate(feature, wrapperValue);
+    }
+
+    @Override
+    public void delete(@Nonnull Object feature) {
+        weights.remove(feature);
     }
 
     private IWeightValue wrapIfRequired(final IWeightValue value) {

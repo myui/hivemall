@@ -30,6 +30,8 @@ import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -121,7 +123,7 @@ public final class DenseModel extends AbstractPredictionModel {
             this.weights = Arrays.copyOf(weights, newSize);
             if(covars != null) {
                 this.covars = Arrays.copyOf(covars, newSize);
-                Arrays.fill(covars, oldSize, newSize, 1f);
+                Arrays.fill(covars, oldSize, newSize, 1.f);
             }
             if(sum_of_squared_gradients != null) {
                 this.sum_of_squared_gradients = Arrays.copyOf(sum_of_squared_gradients, newSize);
@@ -192,6 +194,28 @@ public final class DenseModel extends AbstractPredictionModel {
         }
 
         onUpdate(i, weight, covar, clock, delta);
+    }
+
+    @Override
+    public void delete(@Nonnull Object feature) {
+        final int i = HiveUtils.parseInt(feature);
+        if(i >= size) {
+            return;
+        }
+        weights[i] = 0.f;
+        if(covars != null) {
+            covars[i] = 1.f;
+        }
+        if(sum_of_squared_gradients != null) {
+            sum_of_squared_gradients[i] = 0.f;
+        }
+        if(sum_of_squared_delta_x != null) {
+            sum_of_squared_delta_x[i] = 0.f;
+        }
+        if(sum_of_gradients != null) {
+            sum_of_gradients[i] = 0.f;
+        }
+        // avoid clock/delta
     }
 
     @Override

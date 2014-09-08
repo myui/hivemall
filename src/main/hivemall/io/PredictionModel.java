@@ -47,10 +47,12 @@ public interface PredictionModel {
 
     boolean contains(@Nonnull Object feature);
 
+    void delete(@Nonnull Object feature);
+
     @Nullable
     <T extends IWeightValue> T get(@Nonnull Object feature);
 
-    <T extends IWeightValue> void set(@Nonnull Object feature, T value);
+    <T extends IWeightValue> void set(@Nonnull Object feature, @Nonnull T value);
 
     float getWeight(@Nonnull Object feature);
 
