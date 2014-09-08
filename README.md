@@ -63,7 +63,7 @@ System requirements
 
 * Hive 0.11 or later
 
-* Hive 0.9, 0.10 [Not supported]
+* Hive 0.9, 0.10 [out of support]
 
 Basic Usage
 ------------
@@ -101,8 +101,9 @@ Put the above copyrights for the services/softwares that use Hivemall.
 Support
 -------
 
-Support is through the [issue list](https://github.com/myui/hivemall/issues). Put a question label to ask a question.
+Support is through the [issue list](https://github.com/myui/hivemall/issues), not by direct e-mail. 
 
+Put a question label to ask a question.
 Or, post a [question with hivemall tag](http://stackoverflow.com/questions/tagged/hivemall) in stackoverflow.
 
 References
