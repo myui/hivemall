@@ -43,8 +43,8 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x) {
-        model.configurParams(sum_of_squared_gradients, sum_of_squared_delta_x);
+    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
+        model.configurParams(sum_of_squared_gradients, sum_of_squared_delta_x, sum_of_gradients);
     }
 
     @Override

@@ -20,9 +20,9 @@
  */
 package hivemall.io;
 
+import hivemall.io.WeightValue.WeightValueParamsF1;
+import hivemall.io.WeightValue.WeightValueParamsF2;
 import hivemall.io.WeightValue.WeightValueWithCovar;
-import hivemall.io.WeightValue.WeightValueWithGt;
-import hivemall.io.WeightValue.WeightValueWithGtXt;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
@@ -44,6 +44,9 @@ public final class DenseModel extends AbstractPredictionModel {
     private float[] sum_of_squared_gradients;
     // optional value for adadelta
     private float[] sum_of_squared_delta_x;
+    // optional value for adagrad+rda
+    private float[] sum_of_gradients;
+
     // optional value for MIX
     private short[] clocks;
     private byte[] deltaUpdates;
@@ -66,6 +69,7 @@ public final class DenseModel extends AbstractPredictionModel {
         }
         this.sum_of_squared_gradients = null;
         this.sum_of_squared_delta_x = null;
+        this.sum_of_gradients = null;
         this.clocks = null;
         this.deltaUpdates = null;
     }
@@ -76,12 +80,15 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x) {
+    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
         if(sum_of_squared_gradients) {
             this.sum_of_squared_gradients = new float[size];
         }
         if(sum_of_squared_delta_x) {
             this.sum_of_squared_delta_x = new float[size];
+        }
+        if(sum_of_gradients) {
+            this.sum_of_gradients = new float[size];
         }
     }
 
@@ -122,6 +129,9 @@ public final class DenseModel extends AbstractPredictionModel {
             if(sum_of_squared_delta_x != null) {
                 this.sum_of_squared_delta_x = Arrays.copyOf(sum_of_squared_delta_x, newSize);
             }
+            if(sum_of_gradients != null) {
+                this.sum_of_gradients = Arrays.copyOf(sum_of_gradients, newSize);
+            }
             if(clocks != null) {
                 this.clocks = Arrays.copyOf(clocks, newSize);
                 this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
@@ -137,10 +147,12 @@ public final class DenseModel extends AbstractPredictionModel {
             return null;
         }
         if(sum_of_squared_gradients != null) {
-            if(sum_of_squared_delta_x == null) {
-                return (T) new WeightValueWithGt(weights[i], sum_of_squared_gradients[i]);
+            if(sum_of_squared_delta_x != null) {
+                return (T) new WeightValueParamsF2(weights[i], sum_of_squared_gradients[i], sum_of_squared_delta_x[i]);
+            } else if(sum_of_gradients != null) {
+                return (T) new WeightValueParamsF2(weights[i], sum_of_squared_gradients[i], sum_of_gradients[i]);
             } else {
-                return (T) new WeightValueWithGtXt(weights[i], sum_of_squared_gradients[i], sum_of_squared_delta_x[i]);
+                return (T) new WeightValueParamsF1(weights[i], sum_of_squared_gradients[i]);
             }
         } else if(covars != null) {
             return (T) new WeightValueWithCovar(weights[i], covars[i]);
@@ -165,6 +177,9 @@ public final class DenseModel extends AbstractPredictionModel {
         }
         if(sum_of_squared_delta_x != null) {
             sum_of_squared_delta_x[i] = value.getSumOfSquaredDeltaX();
+        }
+        if(sum_of_gradients != null) {
+            sum_of_gradients[i] = value.getSumOfGradients();
         }
         short clock = 0;
         int delta = 0;

@@ -23,7 +23,7 @@ package hivemall.regression;
 import hivemall.common.LossFunctions;
 import hivemall.io.FeatureValue;
 import hivemall.io.IWeightValue;
-import hivemall.io.WeightValue.WeightValueWithGt;
+import hivemall.io.WeightValue.WeightValueParamsF1;
 import hivemall.utils.lang.Primitives;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, false);
+        model.configurParams(true, false, false);
         return oi;
     }
 
@@ -135,7 +135,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
 
         float coeff = eta(scaled_sum_sqgrad) * gradient;
         float new_w = old_w + (coeff * xi);
-        return new WeightValueWithGt(new_w, scaled_sum_sqgrad);
+        return new WeightValueParamsF1(new_w, scaled_sum_sqgrad);
     }
 
     protected float eta(final double scaledSumOfSquaredGradients) {
