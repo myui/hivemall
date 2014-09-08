@@ -37,6 +37,11 @@ public class WeightValue implements IWeightValue {
     }
 
     @Override
+    public WeightValueType getType() {
+        return WeightValueType.WeightValue;
+    }
+
+    @Override
     public final float get() {
         return value;
     }
@@ -59,6 +64,11 @@ public class WeightValue implements IWeightValue {
     @Override
     public void setCovariance(float cov) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getSumOfSquaredGradients() {
+        return 0.f;
     }
 
     /** 
@@ -111,6 +121,29 @@ public class WeightValue implements IWeightValue {
         return "WeightValue [value=" + value + "]";
     }
 
+    /**
+     * WeightValue with Sum of Squared Gradients
+     */
+    public static final class WeightValueWithGt extends WeightValue {
+        private final float sum_of_squared_gradients;
+
+        public WeightValueWithGt(float weight, float sum_of_squared_gradients) {
+            super(weight);
+            this.sum_of_squared_gradients = sum_of_squared_gradients;
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithGt;
+        }
+
+        @Override
+        public float getSumOfSquaredGradients() {
+            return sum_of_squared_gradients;
+        }
+
+    }
+
     public static final class WeightValueWithCovar extends WeightValue {
         public static final float DEFAULT_COVAR = 1.f;
 
@@ -127,6 +160,11 @@ public class WeightValue implements IWeightValue {
         public WeightValueWithCovar(float weight, float covariance, boolean touched) {
             super(weight, touched);
             this.covariance = covariance;
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithCovar;
         }
 
         @Override

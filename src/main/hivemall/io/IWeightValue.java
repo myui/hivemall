@@ -4,6 +4,12 @@ import hivemall.utils.lang.Copyable;
 
 public interface IWeightValue extends Copyable<IWeightValue> {
 
+    public enum WeightValueType {
+        WeightValue, WeightValueWithGt, WeightValueWithCovar;
+    }
+
+    WeightValueType getType();
+
     float get();
 
     void set(float weight);
@@ -14,11 +20,13 @@ public interface IWeightValue extends Copyable<IWeightValue> {
 
     void setCovariance(float cov);
 
+    float getSumOfSquaredGradients();
+
     /** 
      * @return whether touched in training or not
      */
     boolean isTouched();
-    
+
     void setTouched(boolean touched);
 
     short getClock();

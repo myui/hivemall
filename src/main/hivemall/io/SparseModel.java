@@ -21,6 +21,7 @@
 package hivemall.io;
 
 import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
+import hivemall.io.WeightValueWithClock.WeightValueWithGtClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
@@ -45,6 +46,9 @@ public final class SparseModel extends AbstractPredictionModel {
     public boolean hasCovariance() {
         return hasCovar;
     }
+
+    @Override
+    public void configurParams(boolean sumOfSquaredGradients) {}
 
     @Override
     public void configureClock() {
@@ -84,15 +88,25 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     private IWeightValue wrapIfRequired(final IWeightValue value) {
+        final IWeightValue wrapper;
         if(clockEnabled) {
-            if(value.hasCovariance()) {
-                return new WeightValueWithCovarClock(value);
-            } else {
-                return new WeightValueWithClock(value);
+            switch(value.getType()) {
+                case WeightValue:
+                    wrapper = new WeightValueWithClock(value);
+                    break;
+                case WeightValueWithCovar:
+                    wrapper = new WeightValueWithCovarClock(value);
+                    break;
+                case WeightValueWithGt:
+                    wrapper = new WeightValueWithGtClock(value);
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value type: " + value.getType());
             }
         } else {
-            return value;
+            wrapper = value;
         }
+        return wrapper;
     }
 
     @Override

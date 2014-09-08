@@ -22,6 +22,9 @@ package hivemall.io;
 
 import hivemall.utils.collections.IMapIterator;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public interface PredictionModel {
 
     ModelUpdateHandler getUpdateHandler();
@@ -32,6 +35,8 @@ public interface PredictionModel {
 
     boolean hasCovariance();
 
+    void configurParams(boolean sumOfSquaredGradients);
+
     void configureClock();
 
     boolean hasClock();
@@ -40,19 +45,20 @@ public interface PredictionModel {
 
     int size();
 
-    boolean contains(Object feature);
+    boolean contains(@Nonnull Object feature);
 
-    <T extends IWeightValue> T get(Object feature);
+    @Nullable
+    <T extends IWeightValue> T get(@Nonnull Object feature);
 
-    <T extends IWeightValue> void set(Object feature, T value);
+    <T extends IWeightValue> void set(@Nonnull Object feature, T value);
 
-    float getWeight(Object feature);
+    float getWeight(@Nonnull Object feature);
 
-    float getCovariance(Object feature);
+    float getCovariance(@Nonnull Object feature);
 
-    void _set(Object feature, float weight, short clock);
+    void _set(@Nonnull Object feature, float weight, short clock);
 
-    void _set(Object feature, float weight, float covar, short clock);
+    void _set(@Nonnull Object feature, float weight, float covar, short clock);
 
     <K, V extends IWeightValue> IMapIterator<K, V> entries();
 

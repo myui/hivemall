@@ -37,6 +37,11 @@ public class WeightValueWithClock implements IWeightValue {
         }
     }
 
+    @Override
+    public WeightValueType getType() {
+        return WeightValueType.WeightValue;
+    }
+
     public final float get() {
         return value;
     }
@@ -55,6 +60,11 @@ public class WeightValueWithClock implements IWeightValue {
 
     public void setCovariance(float cov) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getSumOfSquaredGradients() {
+        return 0.f;
     }
 
     /** 
@@ -108,6 +118,29 @@ public class WeightValueWithClock implements IWeightValue {
                 + deltaUpdates + "]";
     }
 
+    /**
+     * WeightValue with Sum of Squared Gradients
+     */
+    public static final class WeightValueWithGtClock extends WeightValueWithClock {
+        private final float sum_of_squared_gradients;
+
+        public WeightValueWithGtClock(IWeightValue src) {
+            super(src);
+            this.sum_of_squared_gradients = src.getSumOfSquaredGradients();
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithGt;
+        }
+
+        @Override
+        public float getSumOfSquaredGradients() {
+            return sum_of_squared_gradients;
+        }
+
+    }
+
     public static final class WeightValueWithCovarClock extends WeightValueWithClock {
         public static final float DEFAULT_COVAR = 1.f;
 
@@ -116,6 +149,11 @@ public class WeightValueWithClock implements IWeightValue {
         public WeightValueWithCovarClock(IWeightValue src) {
             super(src);
             this.covariance = src.getCovariance();
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.WeightValueWithCovar;
         }
 
         @Override
