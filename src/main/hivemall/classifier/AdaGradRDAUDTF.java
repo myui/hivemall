@@ -86,7 +86,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         if(loss <= 0.f) { // max(0, 1 - y * p)
             return;
         }
-        // subgradient => -y*p
+        // subgradient => -yi * W dot xi
         update(features, y, count);
     }
 
