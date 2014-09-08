@@ -28,6 +28,9 @@ import hivemall.utils.lang.Primitives;
 
 import java.util.Collection;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -52,7 +55,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true);
+        model.configurParams(true, false);
         return oi;
     }
 
@@ -113,19 +116,26 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
                 xi = 1.f;
             }
 
-            float old_w = 0.f;
-            float scaled_sum_sqgrad = 0.f;
-            IWeightValue old = model.get(x);
-            if(old != null) {
-                old_w = old.get();
-                scaled_sum_sqgrad = old.getSumOfSquaredGradients();
-            }
-            scaled_sum_sqgrad += g_g;
-
-            float coeff = eta(scaled_sum_sqgrad) * gradient;
-            float new_w = old_w + (coeff * xi);
-            model.set(x, new WeightValueWithGt(new_w, scaled_sum_sqgrad));
+            IWeightValue old_w = model.get(x);
+            IWeightValue new_w = getNewWeight(old_w, xi, gradient, g_g);
+            model.set(x, new_w);
         }
+    }
+
+    @Nonnull
+    protected IWeightValue getNewWeight(@Nullable final IWeightValue old, final float xi, final float gradient, final float g_g) {
+        float old_w = 0.f;
+        float scaled_sum_sqgrad = 0.f;
+
+        if(old != null) {
+            old_w = old.get();
+            scaled_sum_sqgrad = old.getSumOfSquaredGradients();
+        }
+        scaled_sum_sqgrad += g_g;
+
+        float coeff = eta(scaled_sum_sqgrad) * gradient;
+        float new_w = old_w + (coeff * xi);
+        return new WeightValueWithGt(new_w, scaled_sum_sqgrad);
     }
 
     protected float eta(final double scaledSumOfSquaredGradients) {
