@@ -96,7 +96,7 @@ public class LogressUDTF extends OnlineRegressionUDTF {
         return etaEstimator.eta(count);
     }
 
-    private float computeLoss(float target, float predicted) {
+    private static float computeLoss(float target, float predicted) {
         final float gradient;
         if(-100.d < predicted) {
             gradient = target - (float) MathUtils.sigmoid(predicted);
