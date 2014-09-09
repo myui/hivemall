@@ -63,8 +63,6 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
 
     @Override
     protected void doAccounting(TrafficCounter counter) {
-        super.doAccounting(counter);
-
         long currentTime = System.currentTimeMillis();
         long interval = currentTime - lastChacked.getAndSet(currentTime);
         if(interval == 0) {
@@ -90,10 +88,10 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
         TrafficCounter traffic = trafficCounter();
         final StringBuilder buf = new StringBuilder(512);
         long readThroughput = traffic.lastReadThroughput();
-        buf.append("Read Throughput: ").append(readThroughput / 1048576L).append(" MB/sec, ");
+        buf.append("Read Throughput: ").append(readThroughput / 1024L).append(" KB/sec, ");
         buf.append(lastReads).append(" msg/sec\n");
         long writeThroughput = traffic.lastWriteThroughput();
-        buf.append("Write Throughput: ").append(writeThroughput / 1048576L).append(" MB/sec\n");
+        buf.append("Write Throughput: ").append(writeThroughput / 1024).append(" KB/sec, ");
         buf.append(lastWrites).append(" msg/sec\n");
         return buf.toString();
     }
