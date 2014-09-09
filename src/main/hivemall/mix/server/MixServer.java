@@ -20,6 +20,9 @@
  */
 package hivemall.mix.server;
 
+import hivemall.mix.metrics.MetricsRegistry;
+import hivemall.mix.metrics.MixServerMetrics;
+import hivemall.mix.metrics.ThroughputCounter;
 import hivemall.mix.store.SessionStore;
 import hivemall.mix.store.SessionStore.IdleSessionSweeper;
 import hivemall.utils.lang.CommandLineUtils;
@@ -55,6 +58,7 @@ public final class MixServer implements Runnable {
     private final short syncThreshold;
     private final long sessionTTLinSec;
     private final long sweepIntervalInSec;
+    private final boolean jmx;
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
@@ -63,6 +67,7 @@ public final class MixServer implements Runnable {
         this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
         this.sessionTTLinSec = Primitives.parseLong(cl.getOptionValue("ttl"), 120L);
         this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
+        this.jmx = cl.hasOption("jmx");
     }
 
     public static void main(String[] args) {
@@ -79,6 +84,7 @@ public final class MixServer implements Runnable {
         opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
         opts.addOption("ttl", "session_ttl", true, "The TTL in sec that an idle session lives [default: 120 sec]");
         opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 60 sec]");
+        opts.addOption("jmx", "metrics", false, "Toggle this option to enable monitoring metrics using JMX [default: false]");
         return opts;
     }
 
@@ -105,17 +111,37 @@ public final class MixServer implements Runnable {
             sslCtx = null;
         }
 
+        // configure metrics
+        ThroughputCounter throughputCounter = null;
+        ScheduledExecutorService metricCollector = null;
+        if(jmx) {
+            metricCollector = Executors.newScheduledThreadPool(1);
+            MixServerMetrics metrics = new MixServerMetrics();
+            throughputCounter = new ThroughputCounter(metricCollector, 5000L, metrics);
+            // register mbean
+            MetricsRegistry.registerMBeans(metrics, port);
+        }
+
+        // configure initializer
         SessionStore sessionStore = new SessionStore();
         MixServerHandler msgHandler = new MixServerHandler(sessionStore, syncThreshold, scale);
-        MixServerInitializer initializer = new MixServerInitializer(msgHandler, sslCtx);
-        Runnable cleanSessionTask = new IdleSessionSweeper(sessionStore, sessionTTLinSec * 1000L);
+        MixServerInitializer initializer = new MixServerInitializer(msgHandler, throughputCounter, sslCtx);
 
-        final ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
+        Runnable cleanSessionTask = new IdleSessionSweeper(sessionStore, sessionTTLinSec * 1000L);
+        ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
         try {
+            // start idle session sweeper
             idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
+            // accept connections
             acceptConnections(initializer, port);
         } finally {
+            // release threads
             idleSessionChecker.shutdownNow();
+            if(jmx) {
+                // unregister mbean
+                MetricsRegistry.unregisterMBeans(port);
+                metricCollector.shutdownNow();
+            }
         }
     }
 
