@@ -26,6 +26,8 @@ Additionally, Hivemall communicates with a [Parameter Mixing Server](http://www.
 
 * Soft Confidence Weighted (SCW1, SCW2)
 
+* AdaGradRDA (with hinge loss)
+
 ## Regression
 
 * Logistic Regression using Stochastic Gradient Descent
