@@ -40,7 +40,7 @@ _My recommendation is AROW, SCW1 and AdaGradRDA, while it depends._
 
 * AROW regression
 
-_My recommendation is AdaDelta (and AdaGrad), while it depends._
+_My recommendation is AdaDelta and AdaGrad, while it depends._
 
 ## Recommendation
 
