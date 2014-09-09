@@ -50,7 +50,9 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
             throw new UDFArgumentException("AdaGradRDAUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
         }
 
-        return super.initialize(argOIs);
+        StructObjectInspector oi = super.initialize(argOIs);
+        model.configurParams(true, false, true);
+        return oi;
     }
 
     @Override
@@ -86,7 +88,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         if(loss <= 0.f) { // max(0, 1 - y * p)
             return;
         }
-        // subgradient => -yi * W dot xi
+        // subgradient => -y * W dot xi
         update(features, y, count);
     }
 
