@@ -22,21 +22,27 @@ package hivemall.mix.server;
 
 import hivemall.mix.MixMessageDecoder;
 import hivemall.mix.MixMessageEncoder;
+import hivemall.mix.metrics.ThroughputCounter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public final class MixServerInitializer extends ChannelInitializer<SocketChannel> {
 
+    @Nonnull
     private final MixServerHandler requestHandler;
+    @Nullable
+    private final ThroughputCounter throughputCounter;
+    @Nullable
     private final SslContext sslCtx;
 
-    public MixServerInitializer(MixServerHandler msgHandler, SslContext sslCtx) {
-        if(msgHandler == null) {
-            throw new IllegalArgumentException();
-        }
+    public MixServerInitializer(@Nonnull MixServerHandler msgHandler, @Nullable ThroughputCounter throughputCounter, @Nullable SslContext sslCtx) {
         this.requestHandler = msgHandler;
+        this.throughputCounter = throughputCounter;
         this.sslCtx = sslCtx;
     }
 
@@ -51,7 +57,12 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
         //ObjectDecoder decoder = new ObjectDecoder(4194304, ClassResolvers.cacheDisabled(null));
         MixMessageEncoder encoder = new MixMessageEncoder();
         MixMessageDecoder decoder = new MixMessageDecoder();
-        pipeline.addLast(decoder, encoder, requestHandler);
+
+        if(throughputCounter != null) {
+            pipeline.addLast(decoder, encoder, throughputCounter, requestHandler);
+        } else {
+            pipeline.addLast(decoder, encoder, requestHandler);
+        }
     }
 
 }
