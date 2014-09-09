@@ -23,7 +23,7 @@ package hivemall.regression;
 import hivemall.common.LossFunctions;
 import hivemall.io.FeatureValue;
 import hivemall.io.IWeightValue;
-import hivemall.io.WeightValue.WeightValueWithGt;
+import hivemall.io.WeightValue.WeightValueParamsF1;
 import hivemall.utils.lang.Primitives;
 
 import java.util.Collection;
@@ -43,7 +43,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
  */
 public final class AdaGradUDTF extends OnlineRegressionUDTF {
 
-    private float eta0;
+    private float eta;
     private float eps;
     private float scaling;
 
@@ -55,14 +55,14 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, false);
+        model.configurParams(true, false, false);
         return oi;
     }
 
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
+        opts.addOption("eta", "eta0", true, "The initial learning rate [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [100]");
         return opts;
@@ -72,11 +72,11 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
         if(cl == null) {
-            this.eta0 = 0.1f;
+            this.eta = 1.f;
             this.eps = 1.f;
             this.scaling = 100f;
         } else {
-            this.eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.1f);
+            this.eta = Primitives.parseFloat(cl.getOptionValue("eta"), 1.f);
             this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
             this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
         }
@@ -135,13 +135,13 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
 
         float coeff = eta(scaled_sum_sqgrad) * gradient;
         float new_w = old_w + (coeff * xi);
-        return new WeightValueWithGt(new_w, scaled_sum_sqgrad);
+        return new WeightValueParamsF1(new_w, scaled_sum_sqgrad);
     }
 
     protected float eta(final double scaledSumOfSquaredGradients) {
         double sumOfSquaredGradients = scaledSumOfSquaredGradients * scaling;
-        //return eta0 / (float) Math.sqrt(sumOfSquaredGradients);
-        return eta0 / (float) Math.sqrt(eps + sumOfSquaredGradients); // always less than eta0
+        //return eta / (float) Math.sqrt(sumOfSquaredGradients);
+        return eta / (float) Math.sqrt(eps + sumOfSquaredGradients); // always less than eta0
     }
 
 }

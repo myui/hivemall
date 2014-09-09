@@ -2,13 +2,17 @@ package hivemall.io;
 
 import hivemall.utils.lang.Copyable;
 
+import javax.annotation.Nonnegative;
+
 public interface IWeightValue extends Copyable<IWeightValue> {
 
     public enum WeightValueType {
-        WeightValue, WeightValueWithGt, WeightValueWithGtXt, WeightValueWithCovar;
+        NoParams, ParamsF1, ParamsF2, ParamsCovar;
     }
 
     WeightValueType getType();
+
+    float getFloatParams(@Nonnegative int i);
 
     float get();
 
@@ -23,6 +27,8 @@ public interface IWeightValue extends Copyable<IWeightValue> {
     float getSumOfSquaredGradients();
 
     float getSumOfSquaredDeltaX();
+
+    float getSumOfGradients();
 
     /** 
      * @return whether touched in training or not

@@ -20,10 +20,13 @@
  */
 package hivemall.io;
 
+import hivemall.io.WeightValueWithClock.WeightValueParamsF1Clock;
+import hivemall.io.WeightValueWithClock.WeightValueParamsF2Clock;
 import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
-import hivemall.io.WeightValueWithClock.WeightValueWithGtClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
+
+import javax.annotation.Nonnull;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,7 +51,7 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x) {}
+    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {}
 
     @Override
     public void configureClock() {
@@ -87,18 +90,26 @@ public final class SparseModel extends AbstractPredictionModel {
         onUpdate(feature, wrapperValue);
     }
 
+    @Override
+    public void delete(@Nonnull Object feature) {
+        weights.remove(feature);
+    }
+
     private IWeightValue wrapIfRequired(final IWeightValue value) {
         final IWeightValue wrapper;
         if(clockEnabled) {
             switch(value.getType()) {
-                case WeightValue:
+                case NoParams:
                     wrapper = new WeightValueWithClock(value);
                     break;
-                case WeightValueWithCovar:
+                case ParamsCovar:
                     wrapper = new WeightValueWithCovarClock(value);
                     break;
-                case WeightValueWithGt:
-                    wrapper = new WeightValueWithGtClock(value);
+                case ParamsF1:
+                    wrapper = new WeightValueParamsF1Clock(value);
+                    break;
+                case ParamsF2:
+                    wrapper = new WeightValueParamsF2Clock(value);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value type: " + value.getType());

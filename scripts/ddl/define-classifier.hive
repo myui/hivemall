@@ -41,6 +41,13 @@ create temporary function train_scw as 'hivemall.classifier.SoftConfideceWeighte
 drop temporary function train_scw2;
 create temporary function train_scw2 as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW2';
 
+drop temporary function adagrad_rda;
+create temporary function adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF';
+
+-- alias
+drop temporary function train_adagrad_rda;
+create temporary function train_adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF';
+
 -------------------------------
 -- Multiclass classification --
 -------------------------------

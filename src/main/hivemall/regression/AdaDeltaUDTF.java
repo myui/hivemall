@@ -23,7 +23,7 @@ package hivemall.regression;
 import hivemall.common.LossFunctions;
 import hivemall.io.FeatureValue;
 import hivemall.io.IWeightValue;
-import hivemall.io.WeightValue.WeightValueWithGtXt;
+import hivemall.io.WeightValue.WeightValueParamsF2;
 import hivemall.utils.lang.Primitives;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public final class AdaDeltaUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, true);
+        model.configurParams(true, true, false);
         return oi;
     }
 
@@ -140,7 +140,7 @@ public final class AdaDeltaUDTF extends OnlineRegressionUDTF {
         float new_sum_squared_delta_x = (decay * old_sum_squared_delta_x)
                 + ((1.f - decay) * dx * dx);
         float new_w = old_w + (dx * xi);
-        return new WeightValueWithGtXt(new_w, new_scaled_sum_sq_grad, new_sum_squared_delta_x);
+        return new WeightValueParamsF2(new_w, new_scaled_sum_sq_grad, new_sum_squared_delta_x);
     }
 
 }

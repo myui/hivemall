@@ -5,6 +5,8 @@ import hivemall.utils.collections.IMapIterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nonnull;
+
 public final class SynchronizedModelWrapper implements PredictionModel {
 
     private final PredictionModel model;
@@ -43,8 +45,8 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x) {
-        model.configurParams(sum_of_squared_gradients, sum_of_squared_delta_x);
+    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
+        model.configurParams(sum_of_squared_gradients, sum_of_squared_delta_x, sum_of_gradients);
     }
 
     @Override
@@ -110,6 +112,16 @@ public final class SynchronizedModelWrapper implements PredictionModel {
         try {
             lock.lock();
             model.set(feature, value);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void delete(@Nonnull Object feature) {
+        try {
+            lock.lock();
+            model.delete(feature);
         } finally {
             lock.unlock();
         }

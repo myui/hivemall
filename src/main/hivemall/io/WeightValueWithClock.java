@@ -20,6 +20,8 @@
  */
 package hivemall.io;
 
+import javax.annotation.Nonnegative;
+
 public class WeightValueWithClock implements IWeightValue {
 
     protected float value;
@@ -39,7 +41,12 @@ public class WeightValueWithClock implements IWeightValue {
 
     @Override
     public WeightValueType getType() {
-        return WeightValueType.WeightValue;
+        return WeightValueType.NoParams;
+    }
+
+    @Override
+    public float getFloatParams(@Nonnegative int i) {
+        throw new UnsupportedOperationException("getFloatParams(int) should not be called");
     }
 
     public final float get() {
@@ -69,6 +76,11 @@ public class WeightValueWithClock implements IWeightValue {
 
     @Override
     public float getSumOfSquaredDeltaX() {
+        return 0.f;
+    }
+
+    @Override
+    public float getSumOfGradients() {
         return 0.f;
     }
 
@@ -126,49 +138,72 @@ public class WeightValueWithClock implements IWeightValue {
     /**
      * WeightValue with Sum of Squared Gradients
      */
-    public static final class WeightValueWithGtClock extends WeightValueWithClock {
-        private final float sum_of_squared_gradients;
+    public static final class WeightValueParamsF1Clock extends WeightValueWithClock {
+        private final float f1;
 
-        public WeightValueWithGtClock(IWeightValue src) {
+        public WeightValueParamsF1Clock(IWeightValue src) {
             super(src);
-            this.sum_of_squared_gradients = src.getSumOfSquaredGradients();
+            this.f1 = src.getFloatParams(1);
         }
 
         @Override
         public WeightValueType getType() {
-            return WeightValueType.WeightValueWithGt;
+            return WeightValueType.ParamsF1;
+        }
+
+        @Override
+        public float getFloatParams(@Nonnegative final int i) {
+            if(i == 1) {
+                return f1;
+            }
+            throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");
         }
 
         @Override
         public float getSumOfSquaredGradients() {
-            return sum_of_squared_gradients;
+            return f1;
         }
 
     }
 
-    public static final class WeightValueWithGtXtClock extends WeightValueWithClock {
-        private final float sum_of_squared_gradients;
-        private final float sum_of_squared_delta_x;
+    public static final class WeightValueParamsF2Clock extends WeightValueWithClock {
+        private final float f1;
+        private final float f2;
 
-        public WeightValueWithGtXtClock(IWeightValue src) {
+        public WeightValueParamsF2Clock(IWeightValue src) {
             super(src);
-            this.sum_of_squared_gradients = src.getSumOfSquaredGradients();
-            this.sum_of_squared_delta_x = src.getSumOfSquaredGradients();
+            this.f1 = src.getFloatParams(1);
+            this.f2 = src.getFloatParams(2);
         }
 
         @Override
         public WeightValueType getType() {
-            return WeightValueType.WeightValueWithGtXt;
+            return WeightValueType.ParamsF2;
+        }
+
+        @Override
+        public float getFloatParams(@Nonnegative final int i) {
+            if(i == 1) {
+                return f1;
+            } else if(i == 2) {
+                return f2;
+            }
+            throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");
         }
 
         @Override
         public float getSumOfSquaredGradients() {
-            return sum_of_squared_gradients;
+            return f1;
         }
 
         @Override
         public float getSumOfSquaredDeltaX() {
-            return sum_of_squared_delta_x;
+            return f2;
+        }
+
+        @Override
+        public float getSumOfGradients() {
+            return f2;
         }
 
     }
@@ -185,7 +220,7 @@ public class WeightValueWithClock implements IWeightValue {
 
         @Override
         public WeightValueType getType() {
-            return WeightValueType.WeightValueWithCovar;
+            return WeightValueType.ParamsCovar;
         }
 
         @Override

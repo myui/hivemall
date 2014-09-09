@@ -23,9 +23,11 @@ package hivemall.tools.math;
 import static hivemall.utils.hadoop.WritableUtils.val;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
-public class SigmodUDF extends UDF {
+@UDFType(deterministic = true, stateful = false)
+public final class SigmodUDF extends UDF {
 
     public FloatWritable evaluate(float x) {
         return val(1.0f / (1.0f + (float) Math.exp(-x)));

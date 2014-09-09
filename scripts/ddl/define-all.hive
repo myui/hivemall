@@ -41,6 +41,13 @@ create temporary function train_scw as 'hivemall.classifier.SoftConfideceWeighte
 drop temporary function train_scw2;
 create temporary function train_scw2 as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW2';
 
+drop temporary function adagrad_rda;
+create temporary function adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF';
+
+-- alias
+drop temporary function train_adagrad_rda;
+create temporary function train_adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF';
+
 --------------------------------
 --  Multiclass classification --
 -------------------------------- 
@@ -219,11 +226,11 @@ create temporary function train_arowe_regr as 'hivemall.regression.AROWRegressio
 drop temporary function train_arowe2_regr;
 create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
 
-drop temporary function adagrad;
-create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
+drop temporary function train_adagrad;
+create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';
 
-drop temporary function adadelta;
-create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
+drop temporary function train_adadelta;
+create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
 
 -- alias for backward compatibility
 
@@ -250,6 +257,12 @@ create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUD
 
 drop temporary function arowe2_regress;
 create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
+drop temporary function adagrad;
+create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
+
+drop temporary function adadelta;
+create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
 
 ---------------------
 -- array functions --
@@ -331,6 +344,9 @@ create temporary function jobconf_gets as 'hivemall.tools.mapred.JobConfGetsUDF'
 
 drop temporary function generate_series;
 create temporary function generate_series as 'hivemall.tools.GenerateSeriesUDTF';
+
+drop temporary function convert_label;
+create temporary function convert_label as 'hivemall.tools.ConvertLabelUDF';
 
 ----------------------
 -- string functions --
