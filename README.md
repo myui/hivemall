@@ -28,6 +28,8 @@ Additionally, Hivemall communicates with a [Parameter Mixing Server](http://www.
 
 * AdaGradRDA (with hinge loss)
 
+_My recommendation is AROW, SCW1 and AdaGradRDA, while it depends._
+
 ## Regression
 
 * Logistic Regression using Stochastic Gradient Descent
@@ -37,6 +39,8 @@ Additionally, Hivemall communicates with a [Parameter Mixing Server](http://www.
 * Passive Aggressive Regression (PA1, PA2)
 
 * AROW regression
+
+_My recommendation is AdaDelta (and AdaGrad), while it depends._
 
 ## Recommendation
 
