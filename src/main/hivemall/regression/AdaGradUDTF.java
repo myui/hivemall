@@ -62,7 +62,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("eta", "eta0", true, "The initial learning rate [default 0.1]");
+        opts.addOption("eta", "eta0", true, "The initial learning rate [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [100]");
         return opts;
@@ -72,11 +72,11 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
         if(cl == null) {
-            this.eta = 0.1f;
+            this.eta = 1.f;
             this.eps = 1.f;
             this.scaling = 100f;
         } else {
-            this.eta = Primitives.parseFloat(cl.getOptionValue("eta"), 0.1f);
+            this.eta = Primitives.parseFloat(cl.getOptionValue("eta"), 1.f);
             this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
             this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
         }
