@@ -100,3 +100,7 @@ create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 
 drop temporary function generate_series;
 create temporary function generate_series as 'hivemall.tools.GenerateSeriesUDTF';
+
+drop temporary function convert_label;
+create temporary function convert_label as 'hivemall.tools.ConvertLabelUDF';
+

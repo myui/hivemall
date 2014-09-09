@@ -339,6 +339,9 @@ create temporary function jobconf_gets as 'hivemall.tools.mapred.JobConfGetsUDF'
 drop temporary function generate_series;
 create temporary function generate_series as 'hivemall.tools.GenerateSeriesUDTF';
 
+drop temporary function convert_label;
+create temporary function convert_label as 'hivemall.tools.ConvertLabelUDF';
+
 ----------------------
 -- string functions --
 ----------------------
