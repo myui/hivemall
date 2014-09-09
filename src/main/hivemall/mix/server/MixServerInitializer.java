@@ -59,7 +59,7 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
         MixMessageDecoder decoder = new MixMessageDecoder();
 
         if(throughputCounter != null) {
-            pipeline.addLast(decoder, encoder, throughputCounter, requestHandler);
+            pipeline.addLast(throughputCounter, decoder, encoder, requestHandler);
         } else {
             pipeline.addLast(decoder, encoder, requestHandler);
         }
