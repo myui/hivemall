@@ -25,9 +25,11 @@ import hivemall.utils.hadoop.WritableUtils;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-public class SplitWordsUDF extends UDF {
+@UDFType(deterministic = true, stateful = false)
+public final class SplitWordsUDF extends UDF {
 
     public List<Text> evaluate(String query) {
         return evaluate(query, "[\\s ]+");
