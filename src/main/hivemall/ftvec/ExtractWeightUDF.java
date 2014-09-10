@@ -31,7 +31,7 @@ import org.apache.hadoop.io.FloatWritable;
 
 @Description(name = "extract_weight", value = "_FUNC_(feature_vector in array<string>) - Returns the weights of features in array<string>")
 @UDFType(deterministic = true, stateful = false)
-public class ExtractWeightUDF extends UDF {
+public final class ExtractWeightUDF extends UDF {
 
     public FloatWritable evaluate(String featureVector) throws UDFArgumentException {
         return extractWeights(featureVector);

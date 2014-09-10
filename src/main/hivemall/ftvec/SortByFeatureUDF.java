@@ -23,11 +23,15 @@ package hivemall.ftvec;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-public class SortByFeatureUDF extends UDF {
+@Description(name = "sort_by_feature", value = "_FUNC_(map in map<int,float>) - Returns a sorted map")
+@UDFType(deterministic = true, stateful = false)
+public final class SortByFeatureUDF extends UDF {
 
     public Map<IntWritable, FloatWritable> evaluate(Map<IntWritable, FloatWritable> arg) {
         Map<IntWritable, FloatWritable> ret = new TreeMap<IntWritable, FloatWritable>();
