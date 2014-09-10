@@ -199,6 +199,16 @@ drop temporary function extract_weight;
 create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
 
 --------------------------
+-- ftvec/text functions --
+--------------------------
+
+drop temporary function tf;
+create temporary function tf as 'hivemall.ftvec.text.TermFrequencyUDAF';
+
+drop temporary function tokenize;
+create temporary function tokenize as 'hivemall.ftvec.text.TokenizeUDF';
+
+--------------------------
 -- Regression functions --
 --------------------------
 
