@@ -62,6 +62,8 @@ _My recommendation is AdaDelta and AdaGrad, while it depends._
 
 * Feature instances amplifier that reduces iterations on training
 
+* TF-IDF calculation
+
 * Bias clause
 
 * Data generator for one-vs-the-rest classifiers
