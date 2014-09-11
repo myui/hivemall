@@ -52,7 +52,7 @@ public final class StopwordUDF extends UDF {
     }
 
     public BooleanWritable evaluate(String word) {
-        return val(Arrays.binarySearch(stopwords, word) != -1);
+        return val(Arrays.binarySearch(stopwords, word) >= 0);
     }
 
 }
