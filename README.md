@@ -62,7 +62,7 @@ _My recommendation is AdaDelta and AdaGrad, while it depends._
 
 * Feature instances amplifier that reduces iterations on training
 
-* TF-IDF calculation
+* TF-IDF vectorizer
 
 * Bias clause
 
