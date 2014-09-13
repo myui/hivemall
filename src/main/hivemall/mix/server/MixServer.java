@@ -112,13 +112,10 @@ public final class MixServer implements Runnable {
         }
 
         // configure metrics
-        ThroughputCounter throughputCounter = null;
-        ScheduledExecutorService metricCollector = null;
-        if(jmx) {
-            metricCollector = Executors.newScheduledThreadPool(1);
-            MixServerMetrics metrics = new MixServerMetrics();
-            throughputCounter = new ThroughputCounter(metricCollector, 5000L, metrics);
-            // register mbean
+        ScheduledExecutorService metricCollector = Executors.newScheduledThreadPool(1);
+        MixServerMetrics metrics = new MixServerMetrics();
+        ThroughputCounter throughputCounter = new ThroughputCounter(metricCollector, 5000L, metrics);
+        if(jmx) {// register mbean
             MetricsRegistry.registerMBeans(metrics, port);
         }
 
@@ -138,10 +135,9 @@ public final class MixServer implements Runnable {
             // release threads
             idleSessionChecker.shutdownNow();
             if(jmx) {
-                // unregister mbean
                 MetricsRegistry.unregisterMBeans(port);
-                metricCollector.shutdownNow();
             }
+            metricCollector.shutdownNow();
         }
     }
 
