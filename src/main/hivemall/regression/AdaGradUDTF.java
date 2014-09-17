@@ -55,7 +55,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, false, false);
+        model.configureParams(true, false, false);
         return oi;
     }
 

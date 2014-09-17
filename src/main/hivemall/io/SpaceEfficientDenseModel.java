@@ -83,7 +83,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
+    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
         if(sum_of_squared_gradients) {
             this.sum_of_squared_gradients = new float[size];
         }
