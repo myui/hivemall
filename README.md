@@ -12,8 +12,6 @@ Supported Algorithms
 Hivemall provides machine learning functionality as well as feature engineering functions 
 through UDFs/UDAFs/UDTFs of Hive. 
 
-Additionally, Hivemall communicates with a [Parameter Mixing Server](http://www.slideshare.net/myui/hivemall-mix-internal) (external process) for the convergence of distributed learning.
-
 ## Classfication
 
 * Perceptron
