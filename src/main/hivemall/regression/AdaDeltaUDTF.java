@@ -55,7 +55,7 @@ public final class AdaDeltaUDTF extends OnlineRegressionUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, true, false);
+        model.configureParams(true, true, false);
         return oi;
     }
 

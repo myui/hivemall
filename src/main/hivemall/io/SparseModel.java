@@ -51,7 +51,7 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configurParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {}
+    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {}
 
     @Override
     public void configureClock() {

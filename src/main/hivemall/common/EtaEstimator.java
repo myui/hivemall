@@ -69,10 +69,10 @@ public abstract class EtaEstimator {
     @Nonnull
     public static EtaEstimator get(@Nonnull CommandLine cl) throws UDFArgumentException {
         if(cl == null) {
-            return new InvscalingEtaEstimator(0.1f, 0.1f);
+            return new InvscalingEtaEstimator(0.2f, 0.1f);
         }
 
-        float eta0 = Float.parseFloat(cl.getOptionValue("eta0", "0.1"));
+        float eta0 = Float.parseFloat(cl.getOptionValue("eta0", "0.2"));
 
         if(cl.hasOption("t")) {
             int t = Integer.parseInt(cl.getOptionValue("t"));

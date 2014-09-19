@@ -51,7 +51,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
-        model.configurParams(true, false, true);
+        model.configureParams(true, false, true);
         return oi;
     }
 

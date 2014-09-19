@@ -1,15 +1,3 @@
-package hivemall.mix.metrics;
-
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.traffic.GlobalTrafficShapingHandler;
-import io.netty.handler.traffic.TrafficCounter;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
-
-import javax.annotation.Nonnull;
-
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
@@ -30,8 +18,23 @@ import javax.annotation.Nonnull;
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+package hivemall.mix.metrics;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.traffic.GlobalTrafficShapingHandler;
+import io.netty.handler.traffic.TrafficCounter;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.annotation.Nonnull;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public final class ThroughputCounter extends GlobalTrafficShapingHandler {
+    private static final Log logger = LogFactory.getLog(ThroughputCounter.class);
 
     @Nonnull
     private final MixServerMetrics metrics;
@@ -81,6 +84,12 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
         long writeThroughput = traffic.lastWriteThroughput();
         metrics.setReadThroughput(readThroughput);
         metrics.setWriteThroughput(writeThroughput);
+
+        if(logger.isInfoEnabled()) {
+            if(lastReads > 0 || lastWrites > 0) {
+                logger.info(toString());
+            }
+        }
     }
 
     @Override
@@ -92,7 +101,7 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
         buf.append(lastReads).append(" msg/sec\n");
         long writeThroughput = traffic.lastWriteThroughput();
         buf.append("Write Throughput: ").append(writeThroughput / 1024).append(" KB/sec, ");
-        buf.append(lastWrites).append(" msg/sec\n");
+        buf.append(lastWrites).append(" msg/sec");
         return buf.toString();
     }
 
