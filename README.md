@@ -109,7 +109,7 @@ Put the above copyrights for the services/softwares that use Hivemall.
 Support
 -------
 
-Support is through the [issue list](https://github.com/myui/hivemall/issues), not by direct e-mail. Put a [question label](https://github.com/myui/hivemall/labels/question) to ask a question.
+Support is through the [issue list](https://github.com/myui/hivemall/issues), not by a direct e-mail. Put a [question label](https://github.com/myui/hivemall/labels/question) to ask a question.
 
 References
 ----------
