@@ -85,7 +85,7 @@ FROM
 GROUP BY feature;
 ```
 
-Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/).
+Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose).
 
 License
 ---------
