@@ -26,8 +26,8 @@ if(x<y,x,y);
 -- Statistics functions --
 --------------------------
 
-create temporary macro SIGMOID(x DOUBLE)
-1.0 / (1.0 + exp(-x));
+-- create temporary macro SIGMOID(x DOUBLE)
+-- 1.0 / (1.0 + exp(-x));
 
 create temporary macro idf(df_t INT, n_docs INT)
 (log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0);
