@@ -36,6 +36,7 @@ import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -492,8 +493,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 PrimitiveObjectInspector c2refOI = (PrimitiveObjectInspector) c2ref.getFieldObjectInspector();
                 FloatObjectInspector c3refOI = (FloatObjectInspector) c3ref.getFieldObjectInspector();
 
-                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                BufferedReader reader = null;
                 try {
+                    reader = HadoopUtils.getBufferedReader(file);
                     String line;
                     while((line = reader.readLine()) != null) {
                         count++;
@@ -517,7 +519,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         model.set(k, new WeightValue(v, false));
                     }
                 } finally {
-                    reader.close();
+                    IOUtils.closeQuietly(reader);
                 }
             }
         }
@@ -547,8 +549,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 FloatObjectInspector c3refOI = (FloatObjectInspector) c3ref.getFieldObjectInspector();
                 FloatObjectInspector c4refOI = (FloatObjectInspector) c4ref.getFieldObjectInspector();
 
-                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                BufferedReader reader = null;
                 try {
+                    reader = HadoopUtils.getBufferedReader(file);
                     String line;
                     while((line = reader.readLine()) != null) {
                         count++;
@@ -575,7 +578,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         model.set(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
-                    reader.close();
+                    IOUtils.closeQuietly(reader);
                 }
             }
         }
