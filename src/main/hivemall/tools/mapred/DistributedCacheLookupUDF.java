@@ -24,6 +24,7 @@ import hivemall.ftvec.ExtractFeatureUDF;
 import hivemall.utils.collections.OpenHashMap;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -150,8 +151,9 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 PrimitiveObjectInspector keyRefOI = (PrimitiveObjectInspector) keyRef.getFieldObjectInspector();
                 PrimitiveObjectInspector valueRefOI = (PrimitiveObjectInspector) valueRef.getFieldObjectInspector();
 
-                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                BufferedReader reader = null;
                 try {
+                    reader = HadoopUtils.getBufferedReader(file);
                     String line;
                     while((line = reader.readLine()) != null) {
                         Text lineText = new Text(line);
@@ -164,7 +166,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                         map.put(k, v);
                     }
                 } finally {
-                    reader.close();
+                    IOUtils.closeQuietly(reader);
                 }
             }
         }

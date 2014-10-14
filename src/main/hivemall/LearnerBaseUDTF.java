@@ -96,7 +96,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     @Nullable
     @Override
-    protected CommandLine processOptions(@Nonnull ObjectInspector[] argOIs) throws UDFArgumentException {
+    protected CommandLine processOptions(@Nonnull ObjectInspector[] argOIs)
+            throws UDFArgumentException {
         String modelfile = null;
         boolean denseModel = false;
         int modelDims = -1;
@@ -231,8 +232,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 PrimitiveObjectInspector keyRefOI = (PrimitiveObjectInspector) keyRef.getFieldObjectInspector();
                 FloatObjectInspector varRefOI = (FloatObjectInspector) valueRef.getFieldObjectInspector();
 
-                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                BufferedReader reader = null;
                 try {
+                    reader = HadoopUtils.getBufferedReader(file);
                     String line;
                     while((line = reader.readLine()) != null) {
                         count++;
@@ -249,7 +251,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         model.set(k, new WeightValue(v, false));
                     }
                 } finally {
-                    reader.close();
+                    IOUtils.closeQuietly(reader);
                 }
             }
         }
@@ -277,8 +279,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 FloatObjectInspector c2oi = (FloatObjectInspector) c2ref.getFieldObjectInspector();
                 FloatObjectInspector c3oi = (FloatObjectInspector) c3ref.getFieldObjectInspector();
 
-                final BufferedReader reader = HadoopUtils.getBufferedReader(file);
+                BufferedReader reader = null;
                 try {
+                    reader = HadoopUtils.getBufferedReader(file);
                     String line;
                     while((line = reader.readLine()) != null) {
                         count++;
@@ -298,7 +301,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         model.set(k, new WeightValueWithCovar(v, cov, false));
                     }
                 } finally {
-                    reader.close();
+                    IOUtils.closeQuietly(reader);
                 }
             }
         }
