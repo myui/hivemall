@@ -58,7 +58,7 @@ public final class MixRequestRouter {
         assert (msg != null);
         Object feature = msg.getFeature();
         int hashcode = feature.hashCode();
-        int index = Math.abs(hashcode) % numNodes;
+        int index = (hashcode & Integer.MAX_VALUE) % numNodes;
         return nodes[index];
     }
 

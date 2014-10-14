@@ -71,6 +71,8 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
     // the sweepmask used to create sweep zone offsets
     private int sweepmask;
 
+    public OpenHashMap() {}
+
     public OpenHashMap(int size) {
         resize(MathUtils.bitsRequired(size < 256 ? 256 : size));
     }
