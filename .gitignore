@@ -2,3 +2,6 @@
 /build
 .git
 .settings
+*.swp
+.idea
+*.iml
