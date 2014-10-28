@@ -51,23 +51,27 @@ public class MixServerTest {
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:11212", false, 2, model);
-        model.setUpdateHandler(client);
+        MixClient client = null;
+        try {
+            client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:11212", false, 2, model);
+            model.setUpdateHandler(client);
 
-        final Random rand = new Random(43);
-        for(int i = 0; i < 100000; i++) {
-            Integer feature = Integer.valueOf(rand.nextInt(100));
-            float weight = (float) rand.nextGaussian();
-            model.set(feature, new WeightValue(weight));
+            final Random rand = new Random(43);
+            for (int i = 0; i < 100000; i++) {
+                Integer feature = Integer.valueOf(rand.nextInt(100));
+                float weight = (float) rand.nextGaussian();
+                model.set(feature, new WeightValue(weight));
+            }
+
+            Thread.sleep(5 * 1000);
+            int numMixed = model.getNumMixed();
+            //System.out.println("number of mix events: " + numMixed);
+            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+            serverExec.shutdown();
+        } finally {
+            IOUtils.closeQuietly(client);
         }
-
-        Thread.sleep(5 * 1000);
-        int numMixed = model.getNumMixed();
-        //System.out.println("number of mix events: " + numMixed);
-        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
-        IOUtils.closeQuietly(client);
-        serverExec.shutdown();
     }
 
     @Test
@@ -80,23 +84,27 @@ public class MixServerTest {
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, "testSSL", "localhost:11213", true, 2, model);
-        model.setUpdateHandler(client);
+        MixClient client = null;
+        try {
+            client = new MixClient(MixEventName.average, "testSSL", "localhost:11213", true, 2, model);
+            model.setUpdateHandler(client);
 
-        final Random rand = new Random(43);
-        for(int i = 0; i < 100000; i++) {
-            Integer feature = Integer.valueOf(rand.nextInt(100));
-            float weight = (float) rand.nextGaussian();
-            model.set(feature, new WeightValue(weight));
+            final Random rand = new Random(43);
+            for (int i = 0; i < 100000; i++) {
+                Integer feature = Integer.valueOf(rand.nextInt(100));
+                float weight = (float) rand.nextGaussian();
+                model.set(feature, new WeightValue(weight));
+            }
+
+            Thread.sleep(5 * 1000);
+            int numMixed = model.getNumMixed();
+            //System.out.println("number of mix events: " + numMixed);
+            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+            serverExec.shutdown();
+        } finally {
+            IOUtils.closeQuietly(client);
         }
-
-        Thread.sleep(5 * 1000);
-        int numMixed = model.getNumMixed();
-        //System.out.println("number of mix events: " + numMixed);
-        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
-        IOUtils.closeQuietly(client);
-        serverExec.shutdown();
     }
 
     @Test
@@ -131,23 +139,27 @@ public class MixServerTest {
     private static void invokeClient(String groupId, int serverPort) throws InterruptedException {
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 2, model);
-        model.setUpdateHandler(client);
+        MixClient client = null;
+        try {
+            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 2, model);
+            model.setUpdateHandler(client);
 
-        final Random rand = new Random(43);
-        for(int i = 0; i < 100000; i++) {
-            Integer feature = Integer.valueOf(rand.nextInt(100));
-            float weight = (float) rand.nextGaussian();
-            model.set(feature, new WeightValue(weight));
+            final Random rand = new Random(43);
+            for (int i = 0; i < 100000; i++) {
+                Integer feature = Integer.valueOf(rand.nextInt(100));
+                float weight = (float) rand.nextGaussian();
+                model.set(feature, new WeightValue(weight));
+            }
+
+            Thread.sleep(5 * 1000);
+
+            int numMixed = model.getNumMixed();
+            //System.out.println("number of mix events: " + numMixed);
+            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+        } finally {
+            IOUtils.closeQuietly(client);
         }
 
-        Thread.sleep(5 * 1000);
-
-        int numMixed = model.getNumMixed();
-        //System.out.println("number of mix events: " + numMixed);
-        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
-        IOUtils.closeQuietly(client);
     }
 
     @Test
@@ -211,28 +223,31 @@ public class MixServerTest {
         PredictionModel model = denseModel ? new DenseModel(100, false)
                 : new SparseModel(100, false);
         model.configureClock();
-        MixClient client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
-        model.setUpdateHandler(client);
+        MixClient client = null;
+        try {
+            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
+            model.setUpdateHandler(client);
 
-        final Random rand = new Random(43);
-        for(int i = 0; i < 1000000; i++) {
-            Integer feature = Integer.valueOf(rand.nextInt(100));
-            float weight = rand.nextFloat() >= 0.5f ? 1.f : 0.f;
-            model.set(feature, new WeightValue(weight));
+            final Random rand = new Random(43);
+            for (int i = 0; i < 1000000; i++) {
+                Integer feature = Integer.valueOf(rand.nextInt(100));
+                float weight = rand.nextFloat() >= 0.5f ? 1.f : 0.f;
+                model.set(feature, new WeightValue(weight));
+            }
+
+            Thread.sleep(5 * 1000);
+
+            int numMixed = model.getNumMixed();
+            //System.out.println("number of mix events: " + numMixed);
+            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+
+            for (int i = 0; i < 100; i++) {
+                float w = model.getWeight(i);
+                Assert.assertEquals(0.5f, w, 0.1f);
+            }
+        } finally {
+            IOUtils.closeQuietly(client);
         }
-
-        Thread.sleep(5 * 1000);
-
-        int numMixed = model.getNumMixed();
-        //System.out.println("number of mix events: " + numMixed);
-        Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
-        for(int i = 0; i < 100; i++) {
-            float w = model.getWeight(i);
-            Assert.assertEquals(0.5f, w, 0.1f);
-        }
-
-        IOUtils.closeQuietly(client);
     }
 
 }
