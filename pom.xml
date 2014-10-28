@@ -125,6 +125,24 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.14.1</version>
+				<configuration>
+					<forkCount>1</forkCount>
+					<reuseForks>false</reuseForks>
+					<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+					<argLine>-Xmx1024m -XX:+HeapDumpOnOutOfMemoryError</argLine>
+					<environmentVariables>
+						<JAVA_HOME>${java.home}</JAVA_HOME>
+						<MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
+					</environmentVariables>
+					<systemPropertyVariables>
+						<java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>2.17</version>
 				<configuration>
