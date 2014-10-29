@@ -68,7 +68,11 @@ public final class MutableInt extends Number
 
     @Override
     public int compareTo(MutableInt other) {
-        return Integer.compare(value, other.value);
+        return compare(value, other.value);
+    }
+
+    private static int compare(final int x, final int y) {
+        return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
     @Override
