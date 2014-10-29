@@ -9,5 +9,5 @@ branches:
     - master
 notifications:
   email:
-    - m.yui@aist.go.jp
+    - yuin405+hivemall@gmail.com
     - ozawa.tsuyoshi@gmail.com
