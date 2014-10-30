@@ -49,6 +49,8 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
+        Thread.sleep(500);// slight delay to boot a server
+
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
         MixClient client = null;
@@ -57,7 +59,7 @@ public class MixServerTest {
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
-            for (int i = 0; i < 100000; i++) {
+            for(int i = 0; i < 100000; i++) {
                 Integer feature = Integer.valueOf(rand.nextInt(100));
                 float weight = (float) rand.nextGaussian();
                 model.set(feature, new WeightValue(weight));
@@ -82,6 +84,8 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
+        Thread.sleep(500);// slight delay to boot a server
+
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
         MixClient client = null;
@@ -90,7 +94,7 @@ public class MixServerTest {
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
-            for (int i = 0; i < 100000; i++) {
+            for(int i = 0; i < 100000; i++) {
                 Integer feature = Integer.valueOf(rand.nextInt(100));
                 float weight = (float) rand.nextGaussian();
                 model.set(feature, new WeightValue(weight));
@@ -145,14 +149,13 @@ public class MixServerTest {
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
-            for (int i = 0; i < 100000; i++) {
+            for(int i = 0; i < 100000; i++) {
                 Integer feature = Integer.valueOf(rand.nextInt(100));
                 float weight = (float) rand.nextGaussian();
                 model.set(feature, new WeightValue(weight));
             }
 
             Thread.sleep(5 * 1000);
-
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
@@ -229,7 +232,7 @@ public class MixServerTest {
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
-            for (int i = 0; i < 1000000; i++) {
+            for(int i = 0; i < 1000000; i++) {
                 Integer feature = Integer.valueOf(rand.nextInt(100));
                 float weight = rand.nextFloat() >= 0.5f ? 1.f : 0.f;
                 model.set(feature, new WeightValue(weight));
@@ -241,7 +244,7 @@ public class MixServerTest {
             //System.out.println("number of mix events: " + numMixed);
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
 
-            for (int i = 0; i < 100; i++) {
+            for(int i = 0; i < 100; i++) {
                 float w = model.getWeight(i);
                 Assert.assertEquals(0.5f, w, 0.1f);
             }
