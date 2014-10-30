@@ -26,10 +26,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.Assert;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
+import org.junit.Assert;
 
 public class RandomizedAmplifierTest {
 

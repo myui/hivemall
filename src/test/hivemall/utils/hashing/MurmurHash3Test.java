@@ -2,9 +2,8 @@ package hivemall.utils.hashing;
 
 import java.util.Random;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+import org.junit.Assert;
 
 public class MurmurHash3Test {
 

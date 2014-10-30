@@ -1,6 +1,6 @@
 package hivemall.utils.lang;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
@@ -120,7 +120,7 @@ public class HalfFloatTest {
     private static void exactCheck(final float f32, final float expected) {
         short hf = HalfFloat.floatToHalfFloat(f32);
         float f = HalfFloat.halfFloatToFloat(hf);
-        assertEquals(expected, f);
+        assertEquals(expected, f, 0.0);
     }
 
     private static void nonExactCheck(final float f32, float delta) {

@@ -25,9 +25,8 @@ import hivemall.utils.lang.BitUtils;
 import java.util.BitSet;
 import java.util.Random;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+import org.junit.Assert;
 
 public class BitUtilsTest {
 

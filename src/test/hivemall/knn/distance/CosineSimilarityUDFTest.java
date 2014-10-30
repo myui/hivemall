@@ -23,9 +23,8 @@ package hivemall.knn.distance;
 import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+import org.junit.Assert;
 
 public class CosineSimilarityUDFTest {
 
@@ -35,25 +34,25 @@ public class CosineSimilarityUDFTest {
 
         {
             List<String> ftvec1 = Arrays.asList("bbb:1.4", "aaa:0.9", "ccc");
-            Assert.assertEquals(1.f, cosine.evaluate(ftvec1, ftvec1, false).get());
+            Assert.assertEquals(1.f, cosine.evaluate(ftvec1, ftvec1, false).get(), 0.0);
         }
 
-        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList("a", "b", "c"), Arrays.asList("d", "e"), true).get());
-        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList("a", "b", "c"), Arrays.asList("d", "e"), false).get());
+        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList("a", "b", "c"), Arrays.asList("d", "e"), true).get(),  0.0);
+        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList("a", "b", "c"), Arrays.asList("d", "e"), false).get(), 0.0);
 
-        Assert.assertEquals(1.f, cosine.evaluate(Arrays.asList("a", "b"), Arrays.asList("a", "b"), true).get());
+        Assert.assertEquals(1.f, cosine.evaluate(Arrays.asList("a", "b"), Arrays.asList("a", "b"), true).get(), 0.0);
 
-        Assert.assertEquals(0.5f, cosine.evaluate(Arrays.asList("a", "b"), Arrays.asList("a", "c"), true).get());
+        Assert.assertEquals(0.5f, cosine.evaluate(Arrays.asList("a", "b"), Arrays.asList("a", "c"), true).get(), 0.0);
 
-        Assert.assertEquals(-1.f, cosine.evaluate(Arrays.asList("a:1.0"), Arrays.asList("a:-1.0"), false).get());
+        Assert.assertEquals(-1.f, cosine.evaluate(Arrays.asList("a:1.0"), Arrays.asList("a:-1.0"), false).get(), 0.0);
 
         Assert.assertTrue(cosine.evaluate(Arrays.asList("apple", "orange"), Arrays.asList("banana", "apple"), true).get() > 0.f);
         Assert.assertTrue(cosine.evaluate(Arrays.asList("apple", "orange"), Arrays.asList("banana", "apple"), false).get() > 0.f);
 
         Assert.assertTrue((cosine.evaluate(Arrays.asList("apple", "orange"), Arrays.asList("banana", "orange", "apple"), true)).get() > (cosine.evaluate(Arrays.asList("apple", "orange"), Arrays.asList("banana", "orange"), true)).get());
 
-        Assert.assertEquals(1.0f, cosine.evaluate(Arrays.asList("This is a sentence with seven tokens".split(" ")), Arrays.<String> asList("This is a sentence with seven tokens".split(" ")), true).get());
-        Assert.assertEquals(1.0f, cosine.evaluate(Arrays.asList("This is a sentence with seven tokens".split(" ")), Arrays.<String> asList("This is a sentence with seven tokens".split(" ")), false).get());
+        Assert.assertEquals(1.0f, cosine.evaluate(Arrays.asList("This is a sentence with seven tokens".split(" ")), Arrays.<String> asList("This is a sentence with seven tokens".split(" ")), true).get(), 0.0);
+        Assert.assertEquals(1.0f, cosine.evaluate(Arrays.asList("This is a sentence with seven tokens".split(" ")), Arrays.<String> asList("This is a sentence with seven tokens".split(" ")), false).get(), 0.0);
 
         {
             List<String> tokens1 = Arrays.asList("1:1,2:1,3:1,4:1,5:0,6:1,7:1,8:1,9:0,10:1,11:1".split(","));
@@ -72,7 +71,7 @@ public class CosineSimilarityUDFTest {
             Assert.assertEquals(dotp / norm, cosine.evaluate(Arrays.asList(1, 2, 3, 4, 6, 7, 8, 10, 11), Arrays.asList(1, 2, 4, 5, 6, 7, 9, 10, 11)).get(), 0.00001f);
         }
 
-        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList(1, 2, 3), Arrays.asList(4, 5)).get());
-        Assert.assertEquals(1.f, cosine.evaluate(Arrays.asList(1, 2), Arrays.asList(1, 2)).get());
+        Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList(1, 2, 3), Arrays.asList(4, 5)).get(), 0.0);
+        Assert.assertEquals(1.f, cosine.evaluate(Arrays.asList(1, 2), Arrays.asList(1, 2)).get(), 0.0);
     }
 }
