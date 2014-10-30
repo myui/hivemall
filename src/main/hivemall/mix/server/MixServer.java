@@ -20,6 +20,7 @@
  */
 package hivemall.mix.server;
 
+import com.google.common.annotations.VisibleForTesting;
 import hivemall.mix.metrics.MetricsRegistry;
 import hivemall.mix.metrics.MixServerMetrics;
 import hivemall.mix.metrics.ThroughputCounter;
@@ -59,6 +60,7 @@ public final class MixServer implements Runnable {
     private final long sessionTTLinSec;
     private final long sweepIntervalInSec;
     private final boolean jmx;
+    private volatile ServerState state;
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
@@ -68,6 +70,7 @@ public final class MixServer implements Runnable {
         this.sessionTTLinSec = Primitives.parseLong(cl.getOptionValue("ttl"), 120L);
         this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
         this.jmx = cl.hasOption("jmx");
+        this.state = ServerState.INITIALIZING;
     }
 
     public static void main(String[] args) {
@@ -141,7 +144,7 @@ public final class MixServer implements Runnable {
         }
     }
 
-    private static void acceptConnections(@Nonnull MixServerInitializer initializer, int port)
+    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port)
             throws InterruptedException {
         final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         final EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -155,6 +158,7 @@ public final class MixServer implements Runnable {
 
             // Bind and start to accept incoming connections.
             ChannelFuture f = b.bind(port).sync();
+            this.state = ServerState.RUNNING;
 
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
@@ -164,6 +168,11 @@ public final class MixServer implements Runnable {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
+    }
+
+    @VisibleForTesting
+    public ServerState getState() {
+        return state;
     }
 
 }
