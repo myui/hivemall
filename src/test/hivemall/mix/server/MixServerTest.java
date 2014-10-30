@@ -34,10 +34,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
-
 import org.apache.commons.cli.CommandLine;
+
 import org.junit.Test;
+import org.junit.Assert;
 
 public class MixServerTest {
 
@@ -254,9 +254,12 @@ public class MixServerTest {
     }
 
     private void waitForState(MixServer server, ServerState expected) throws InterruptedException {
-        while (server.getState() != expected) {
+        int retry = 0;
+        while (server.getState() != expected && retry < 30) {
             Thread.sleep(100);
+            retry++;
         }
+        Assert.assertEquals("MixServer state is not correct (timedout)", expected, server.getState());
     }
 
 }
