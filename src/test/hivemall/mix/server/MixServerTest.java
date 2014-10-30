@@ -68,7 +68,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -105,7 +105,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -147,7 +147,7 @@ public class MixServerTest {
         serverExec.shutdown();
     }
 
-    private static void invokeClient(String groupId, int serverPort) throws InterruptedException {
+    private void invokeClient(String groupId, int serverPort) throws InterruptedException {
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
         MixClient client = null;
@@ -162,7 +162,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -231,7 +231,7 @@ public class MixServerTest {
         serverExec.shutdown();
     }
 
-    private static void invokeClient01(String groupId, int serverPort, boolean denseModel)
+    private void invokeClient01(String groupId, int serverPort, boolean denseModel)
             throws InterruptedException {
         PredictionModel model = denseModel ? new DenseModel(100, false)
                 : new SparseModel(100, false);
@@ -248,7 +248,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -263,7 +263,7 @@ public class MixServerTest {
         }
     }
 
-    private static void waitForState(MixServer server, ServerState expected)
+    private void waitForState(MixServer server, ServerState expected)
             throws InterruptedException {
         int retry = 0;
         while(server.getState() != expected && retry < 50) {
@@ -273,4 +273,14 @@ public class MixServerTest {
         Assert.assertEquals("MixServer state is not correct (timed out)", expected, server.getState());
     }
 
+    void waitForMixed(PredictionModel model) throws InterruptedException {
+        int retry = 0;
+        while(model.getNumMixed() == 0) {
+            if (retry > 50) {
+                Assert.fail("timed out.");
+            }
+            retry++;
+            Thread.sleep(100);
+        }
+    }
 }
