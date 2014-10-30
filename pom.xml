@@ -56,6 +56,14 @@
 					<groupId>javax.jdo</groupId>
 					<artifactId>jdo2-api</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>asm-parent</groupId>
+					<artifactId>asm-parent</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>asm</groupId>
+					<artifactId>asm</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
