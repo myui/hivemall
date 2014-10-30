@@ -23,3 +23,7 @@
 
 * Jiro Nishiguchi
 	- Fixed a bug in pom.xml
+
+* Tsuyoshi Ozawa
+	- TravisCI integration
+	- Fixes on MixServerTest
