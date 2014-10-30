@@ -68,7 +68,7 @@ public final class NetUtils {
         }
     }
 
-    public static int getAvialablePort(final int basePort) {
+    public static int getAvailablePort(final int basePort) {
         if(basePort == 0) {
             return getAvailablePort();
         }
