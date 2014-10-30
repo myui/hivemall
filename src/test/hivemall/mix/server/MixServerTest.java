@@ -49,7 +49,7 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
@@ -84,7 +84,7 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
@@ -119,7 +119,7 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final int numClients = 5;
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
@@ -173,7 +173,7 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
         for(int i = 0; i < 2; i++) {
@@ -201,7 +201,7 @@ public class MixServerTest {
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
         for(int i = 0; i < 2; i++) {
@@ -250,6 +250,12 @@ public class MixServerTest {
             }
         } finally {
             IOUtils.closeQuietly(client);
+        }
+    }
+
+    private void waitForState(MixServer server, ServerState expected) throws InterruptedException {
+        while (server.getState() != expected) {
+            Thread.sleep(100);
         }
     }
 
