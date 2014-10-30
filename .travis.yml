@@ -8,6 +8,4 @@ branches:
   only:
     - master
 notifications:
-  email:
-    - yuin405+hivemall@gmail.com
-    - ozawa.tsuyoshi@gmail.com
+  email: false
