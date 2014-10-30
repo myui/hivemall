@@ -266,7 +266,7 @@ public class MixServerTest {
     private static void waitForState(MixServer server, ServerState expected)
             throws InterruptedException {
         int retry = 0;
-        while(server.getState() != expected && retry < 30) {
+        while(server.getState() != expected && retry < 50) {
             Thread.sleep(100);
             retry++;
         }
