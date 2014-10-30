@@ -45,7 +45,7 @@ public class MixServerTest {
 
     @Test
     public void testSimpleScenario() throws InterruptedException {
-        int port = NetUtils.getAvialablePort(11212);
+        int port = NetUtils.getAvailablePort();
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
                 Integer.toString(port), "-sync_threshold", "3" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -82,7 +82,7 @@ public class MixServerTest {
 
     @Test
     public void testSSL() throws InterruptedException {
-        int port = NetUtils.getAvialablePort(11213);
+        int port = NetUtils.getAvailablePort();
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
                 Integer.toString(port), "-sync_threshold", "3", "-ssl" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -119,7 +119,7 @@ public class MixServerTest {
 
     @Test
     public void testMultipleClients() throws InterruptedException {
-        final int port = NetUtils.getAvialablePort(11214);
+        final int port = NetUtils.getAvailablePort();
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
                 Integer.toString(port), "-sync_threshold", "3" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -175,7 +175,7 @@ public class MixServerTest {
 
     @Test
     public void test2ClientsZeroOneSparseModel() throws InterruptedException {
-        final int port = NetUtils.getAvialablePort(11215);
+        final int port = NetUtils.getAvailablePort();
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
                 Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
@@ -204,7 +204,7 @@ public class MixServerTest {
 
     @Test
     public void test2ClientsZeroOneDenseModel() throws InterruptedException {
-        final int port = NetUtils.getAvialablePort(11216);
+        final int port = NetUtils.getAvailablePort();
         CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
                 Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
