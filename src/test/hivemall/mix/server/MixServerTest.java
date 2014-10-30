@@ -26,8 +26,10 @@ import hivemall.io.SparseModel;
 import hivemall.io.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
+import hivemall.mix.server.MixServer.ServerState;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.CommandLineUtils;
+import hivemall.utils.net.NetUtils;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -43,19 +45,20 @@ public class MixServerTest {
 
     @Test
     public void testSimpleScenario() throws InterruptedException {
-        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11212",
-                "-sync_threshold", "3" }, MixServer.getOptions());
+        int port = NetUtils.getAvialablePort(11212);
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "3" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:11212", false, 2, model);
+            client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:" + port, false, 2, model);
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
@@ -65,7 +68,8 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
@@ -78,19 +82,20 @@ public class MixServerTest {
 
     @Test
     public void testSSL() throws InterruptedException {
-        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11213",
-                "-sync_threshold", "3", "-ssl" }, MixServer.getOptions());
+        int port = NetUtils.getAvialablePort(11213);
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "3", "-ssl" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         PredictionModel model = new DenseModel(16777216, false);
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, "testSSL", "localhost:11213", true, 2, model);
+            client = new MixClient(MixEventName.average, "testSSL", "localhost:" + port, true, 2, model);
             model.setUpdateHandler(client);
 
             final Random rand = new Random(43);
@@ -100,7 +105,8 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
@@ -113,13 +119,14 @@ public class MixServerTest {
 
     @Test
     public void testMultipleClients() throws InterruptedException {
-        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11214",
-                "-sync_threshold", "3" }, MixServer.getOptions());
+        final int port = NetUtils.getAvialablePort(11214);
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "3" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final int numClients = 5;
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
@@ -128,7 +135,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient("testMultipleClients", 11214);
+                        invokeClient("testMultipleClients", port);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -155,7 +162,8 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
@@ -167,13 +175,14 @@ public class MixServerTest {
 
     @Test
     public void test2ClientsZeroOneSparseModel() throws InterruptedException {
-        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11215",
-                "-sync_threshold", "30" }, MixServer.getOptions());
+        final int port = NetUtils.getAvialablePort(11215);
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
         for(int i = 0; i < 2; i++) {
@@ -181,7 +190,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient01("test2ClientsZeroOne", 11215, false);
+                        invokeClient01("test2ClientsZeroOne", port, false);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -195,13 +204,14 @@ public class MixServerTest {
 
     @Test
     public void test2ClientsZeroOneDenseModel() throws InterruptedException {
-        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port", "11215",
-                "-sync_threshold", "30" }, MixServer.getOptions());
+        final int port = NetUtils.getAvialablePort(11216);
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
         MixServer server = new MixServer(cl);
         ExecutorService serverExec = Executors.newSingleThreadExecutor();
         serverExec.submit(server);
 
-        Thread.sleep(500);// slight delay to boot a server
+        waitForState(server, ServerState.RUNNING);
 
         final ExecutorService clientsExec = Executors.newCachedThreadPool();
         for(int i = 0; i < 2; i++) {
@@ -209,7 +219,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient01("test2ClientsZeroOne", 11215, true);
+                        invokeClient01("test2ClientsZeroOne", port, true);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -238,7 +248,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -251,6 +261,16 @@ public class MixServerTest {
         } finally {
             IOUtils.closeQuietly(client);
         }
+    }
+
+    private static void waitForState(MixServer server, ServerState expected)
+            throws InterruptedException {
+        int retry = 0;
+        while(server.getState() != expected && retry < 30) {
+            Thread.sleep(100);
+            retry++;
+        }
+        Assert.assertEquals("MixServer state is not correct (timed out)", expected, server.getState());
     }
 
 }
