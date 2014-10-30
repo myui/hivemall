@@ -20,9 +20,12 @@
  */
 package hivemall.utils.net;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.NoSuchElementException;
 
 public final class NetUtils {
 
@@ -54,4 +57,49 @@ public final class NetUtils {
         return ip.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
     }
 
+    public static int getAvailablePort() {
+        try {
+            ServerSocket s = new ServerSocket(0);
+            s.setReuseAddress(true);
+            s.close();
+            return s.getLocalPort();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to find an available port", e);
+        }
+    }
+
+    public static int getAvialablePort(final int basePort) {
+        if(basePort == 0) {
+            return getAvailablePort();
+        }
+        if(basePort < 0 || basePort > 65535) {
+            throw new IllegalArgumentException("Illegal port number: " + basePort);
+        }
+        for(int i = basePort; i <= 65535; i++) {
+            if(isPortAvailable(i)) {
+                return i;
+            }
+        }
+        throw new NoSuchElementException("Could not find available port greater than or equals to "
+                + basePort);
+    }
+
+    public static boolean isPortAvailable(final int port) {
+        ServerSocket s = null;
+        try {
+            s = new ServerSocket(port);
+            s.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if(s != null) {
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    ;
+                }
+            }
+        }
+    }
 }
