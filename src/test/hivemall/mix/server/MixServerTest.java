@@ -36,10 +36,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
-
 import org.apache.commons.cli.CommandLine;
 import org.junit.Test;
+import org.junit.Assert;
 
 public class MixServerTest {
 

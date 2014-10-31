@@ -24,10 +24,10 @@ import hivemall.knn.lsh.MinHashesUDF;
 
 import java.util.Arrays;
 
-import junit.framework.Assert;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
+import org.junit.Assert;
 
 public class MinHashUDFTest {
 

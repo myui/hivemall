@@ -20,9 +20,8 @@
  */
 package hivemall.utils.hadoop;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
+import org.junit.Assert;
 
 public class HadoopUtilsTest {
 

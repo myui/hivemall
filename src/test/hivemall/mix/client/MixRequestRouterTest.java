@@ -21,9 +21,9 @@
 package hivemall.mix.client;
 
 import hivemall.mix.NodeInfo;
-import junit.framework.Assert;
 
 import org.junit.Test;
+import org.junit.Assert;
 
 public class MixRequestRouterTest {
 

@@ -1,11 +1,11 @@
 package hivemall.io;
 
-import static junit.framework.Assert.assertEquals;
 import hivemall.utils.collections.IMapIterator;
 
 import java.util.Random;
 
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class SpaceEfficientDenseModelTest {
 
