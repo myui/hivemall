@@ -36,9 +36,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nonnegative;
+
 import org.apache.commons.cli.CommandLine;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class MixServerTest {
 
@@ -67,7 +69,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model, 48000, 10000L);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -104,7 +106,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model, 48000, 10000L);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -161,7 +163,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model, 48000, 10000L);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -247,7 +249,7 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            Thread.sleep(5 * 1000); // slight delay to wait for async callbacks
+            waitForMixed(model, 100000, 10000L);
 
             int numMixed = model.getNumMixed();
             //System.out.println("number of mix events: " + numMixed);
@@ -270,6 +272,22 @@ public class MixServerTest {
             retry++;
         }
         Assert.assertEquals("MixServer state is not correct (timed out)", expected, server.getState());
+    }
+
+    private static void waitForMixed(PredictionModel model, @Nonnegative int minMixed, @Nonnegative long maxWaitInMillis)
+            throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+        while(true) {
+            int numMixed = model.getNumMixed();
+            if(numMixed >= minMixed) {
+                break;
+            }
+            Thread.sleep(500L);
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            if(elapsedTime > maxWaitInMillis) {
+                Assert.fail("Timeout. numMixed = " + numMixed);
+            }
+        }
     }
 
 }
