@@ -24,6 +24,8 @@
 	<packaging>jar</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<protobuf.version>2.5.0</protobuf.version>
+		<protoc.path>${env.PROTOC_PATH}</protoc.path>
 	</properties>
 
 	<repositories>
@@ -127,8 +129,6 @@
 		<outputDirectory>target/classes</outputDirectory>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<testOutputDirectory>target/test-classes</testOutputDirectory>
-		<sourceDirectory>src/main</sourceDirectory>
-		<testSourceDirectory>src/test</testSourceDirectory>
 
 		<plugins>
 			<plugin>
