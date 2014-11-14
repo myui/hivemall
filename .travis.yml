@@ -9,3 +9,5 @@ branches:
     - master
 notifications:
   email: false
+after_success:
+  - mvn clean cobertura:cobertura coveralls:report

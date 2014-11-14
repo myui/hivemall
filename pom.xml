@@ -273,6 +273,27 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- start coveralls -->
+			<plugin>
+			    <groupId>org.eluder.coveralls</groupId>
+			    <artifactId>coveralls-maven-plugin</artifactId>
+			    <version>3.0.1</version>
+			    <configuration>
+			        <repoToken>RXTKmDWUmWX7lko5x3CRvGSacryzNIYiT</repoToken>
+			    </configuration>
+			</plugin>
+			<plugin>
+			    <groupId>org.codehaus.mojo</groupId>
+			    <artifactId>cobertura-maven-plugin</artifactId>
+			    <version>2.6</version>
+			    <configuration>
+			        <format>xml</format>
+			        <maxmem>256m</maxmem>
+			        <!-- aggregated reports for multi-module projects -->
+			        <aggregate>true</aggregate>
+			    </configuration>
+			</plugin>
+			<!-- end overalls -->
 		</plugins>
 	</build>
 
