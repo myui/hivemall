@@ -1,7 +1,7 @@
 Hivemall: Hive scalable machine learning library
 =================================================
 [![Build Status](https://travis-ci.org/myui/hivemall.svg?branch=master)](https://travis-ci.org/myui/hivemall)
-[![Coverage Status](https://coveralls.io/repos/myui/hivemall/badge.png)](https://coveralls.io/r/myui/hivemall)
+[![Coverage Status](https://coveralls.io/repos/myui/hivemall/badge.png?branch=master)](https://coveralls.io/r/myui/hivemall)
 
 Hivemall is a scalable machine learning library that runs on Apache Hive, licensed under the LGPL 2.1.
 Hivemall is designed to be scalable to the number of training instances as well as the number of training features.
