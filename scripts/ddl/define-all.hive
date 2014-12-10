@@ -379,3 +379,10 @@ create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 drop temporary function lr_datagen;
 create temporary function lr_datagen as 'hivemall.dataset.LogisticRegressionDataGeneratorUDTF';
 
+--------------------------
+-- Evaluating functions --
+--------------------------
+
+drop temporary function f1score;
+create temporary function f1score as 'hivemall.evaluation.FMeasureUDAF';
+
