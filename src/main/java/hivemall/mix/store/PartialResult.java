@@ -31,11 +31,10 @@ public abstract class PartialResult {
     private final Lock lock;
 
     @GuardedBy("lock()")
-    protected float minCovariance;
-    @GuardedBy("lock()")
     protected short totalClock;
 
     public PartialResult() {
+        this.totalClock = 0;
         this.lock = new TTASLock();
     }
 
@@ -47,17 +46,11 @@ public abstract class PartialResult {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates);
+    public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale);
 
-    public abstract float getWeight();
+    public abstract float getWeight(float scale);
 
-    public final float getMinCovariance() {
-        return minCovariance;
-    }
-
-    protected final void setMinCovariance(float covar) {
-        this.minCovariance = Math.max(minCovariance, covar);
-    }
+    public abstract float getCovariance(float scale);
 
     public final short getClock() {
         return totalClock;

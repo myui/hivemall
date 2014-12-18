@@ -148,22 +148,13 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public void _set(Object feature, float weight, short clock) {
+    public void set(@Nonnull Object feature, float weight, float covar, short clock) {
         try {
             lock.lock();
-            model._set(feature, weight, clock);
+            model.set(feature, weight, covar, clock);
         } finally {
             lock.unlock();
         }
     }
 
-    @Override
-    public void _set(Object feature, float weight, float covar, short clock) {
-        try {
-            lock.lock();
-            model._set(feature, weight, covar, clock);
-        } finally {
-            lock.unlock();
-        }
-    }
 }

@@ -20,12 +20,13 @@
  */
 package hivemall.io;
 
+import hivemall.mix.MixedModel;
 import hivemall.utils.collections.IMapIterator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public interface PredictionModel {
+public interface PredictionModel extends MixedModel {
 
     ModelUpdateHandler getUpdateHandler();
 
@@ -57,10 +58,6 @@ public interface PredictionModel {
     float getWeight(@Nonnull Object feature);
 
     float getCovariance(@Nonnull Object feature);
-
-    void _set(@Nonnull Object feature, float weight, short clock);
-
-    void _set(@Nonnull Object feature, float weight, float covar, short clock);
 
     <K, V extends IWeightValue> IMapIterator<K, V> entries();
 

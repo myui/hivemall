@@ -20,8 +20,8 @@
  */
 package hivemall.mix.client;
 
-import hivemall.io.PredictionModel;
 import hivemall.mix.MixMessage;
+import hivemall.mix.MixedModel;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -29,16 +29,14 @@ import io.netty.channel.SimpleChannelInboundHandler;
 @Sharable
 public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessage> {
 
-    private final PredictionModel model;
-    private final boolean hasCovar;
+    private final MixedModel model;
 
-    public MixClientHandler(PredictionModel model) {
+    public MixClientHandler(MixedModel model) {
         super();
         if(model == null) {
             throw new IllegalArgumentException("model is null");
         }
         this.model = model;
-        this.hasCovar = model.hasCovariance();
     }
 
     @Override
@@ -46,12 +44,8 @@ public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessa
         Object feature = msg.getFeature();
         float weight = msg.getWeight();
         short clock = msg.getClock();
-        if(hasCovar) {
-            float covar = msg.getCovariance();
-            model._set(feature, weight, covar, clock);
-        } else {
-            model._set(feature, weight, clock);
-        }
+        float covar = msg.getCovariance();
+        model.set(feature, weight, covar, clock);
     }
 
 }

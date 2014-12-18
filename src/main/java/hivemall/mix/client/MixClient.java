@@ -21,9 +21,9 @@
 package hivemall.mix.client;
 
 import hivemall.io.ModelUpdateHandler;
-import hivemall.io.PredictionModel;
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
+import hivemall.mix.MixedModel;
 import hivemall.mix.NodeInfo;
 import hivemall.utils.hadoop.HadoopUtils;
 import io.netty.bootstrap.Bootstrap;
@@ -60,7 +60,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull PredictionModel model) {
+    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }

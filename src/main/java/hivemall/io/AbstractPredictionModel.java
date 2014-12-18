@@ -20,6 +20,8 @@
  */
 package hivemall.io;
 
+import javax.annotation.Nonnull;
+
 public abstract class AbstractPredictionModel implements PredictionModel {
     public static final byte BYTE0 = 0;
 
@@ -95,5 +97,18 @@ public abstract class AbstractPredictionModel implements PredictionModel {
             }
         }
     }
+
+    @Override
+    public void set(@Nonnull Object feature, float weight, float covar, short clock) {
+        if(hasCovariance()) {
+            _set(feature, weight, covar, clock);
+        } else {
+            _set(feature, weight, clock);
+        }
+    }
+
+    protected abstract void _set(@Nonnull Object feature, float weight, short clock);
+
+    protected abstract void _set(@Nonnull Object feature, float weight, float covar, short clock);
 
 }
