@@ -133,7 +133,7 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void _set(final Object feature, final float weight, final short clock) {
+    protected void _set(final Object feature, final float weight, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
             logger.warn("Previous weight not found: " + feature);
@@ -146,7 +146,7 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void _set(final Object feature, final float weight, final float covar, final short clock) {
+    protected void _set(final Object feature, final float weight, final float covar, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
             logger.warn("Previous weight not found: " + feature);

@@ -237,7 +237,7 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void _set(Object feature, float weight, short clock) {
+    protected void _set(Object feature, float weight, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         weights[i] = weight;
@@ -247,7 +247,7 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void _set(Object feature, float weight, float covar, short clock) {
+    protected void _set(Object feature, float weight, float covar, short clock) {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         weights[i] = weight;
