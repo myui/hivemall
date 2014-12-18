@@ -24,42 +24,39 @@ import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.GuardedBy;
 
 public final class PartialAverage extends PartialResult {
-    public static final float DEFAULT_SCALE = 10;
 
-    private final float scale;
-    
     @GuardedBy("lock()")
-    private float scaledSumWeights;
+    private double scaledSumWeights;
     @GuardedBy("lock()")
-    private short totalUpdates;
+    private int totalUpdates;
 
     public PartialAverage() {
-        this(1.f); // no scaling
-    }
-
-    public PartialAverage(float scale) {
         super();
-        this.scale = scale;
-        this.scaledSumWeights = 0.f;
+        this.scaledSumWeights = 0.d;
         this.totalUpdates = 0;
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates) {
-        addWeight(localWeight, deltaUpdates);
-        setMinCovariance(covar);
+    public float getCovariance(float scale) {
+        return 1.f;
+    }
+
+    @Override
+    public void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale) {
+        addWeight(localWeight, deltaUpdates, scale);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, int deltaUpdates) {
+    protected void addWeight(float localWeight, int deltaUpdates, float scale) {
+        assert (deltaUpdates > 0) : deltaUpdates;
         scaledSumWeights += ((localWeight / scale) * deltaUpdates);
-        totalUpdates += deltaUpdates; // not deltaUpdates is in range (0,127]
+        totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
         assert (totalUpdates > 0) : totalUpdates;
     }
 
     @Override
-    public float getWeight() {
-        return (scaledSumWeights / totalUpdates) * scale;
+    public float getWeight(float scale) {
+        return (float) (scaledSumWeights / totalUpdates) * scale;
     }
 
 }

@@ -91,10 +91,10 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             final MixEventName event = msg.getEvent();
             switch(event) {
                 case average:
-                    partial = new PartialAverage(scale);
+                    partial = new PartialAverage();
                     break;
                 case argminKLD:
-                    partial = new PartialArgminKLD(scale);
+                    partial = new PartialArgminKLD();
                     break;
                 default:
                     throw new IllegalStateException("Unexpected event: " + event);
@@ -120,13 +120,13 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             partial.lock();
 
             int diffClock = partial.diffClock(clock);
-            partial.add(weight, covar, clock, deltaUpdates);
+            partial.add(weight, covar, clock, deltaUpdates, scale);
 
             if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
-                float averagedWeight = partial.getWeight();
-                float minCovar = partial.getMinCovariance();
+                float averagedWeight = partial.getWeight(scale);
+                float meanCovar = partial.getCovariance(scale);
                 short totalClock = partial.getClock();
-                responseMsg = new MixMessage(event, feature, averagedWeight, minCovar, totalClock, 0 /* deltaUpdates */);
+                responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, totalClock, 0 /* deltaUpdates */);
             }
         } finally {
             partial.unlock();
