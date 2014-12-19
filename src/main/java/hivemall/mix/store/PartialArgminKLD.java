@@ -28,20 +28,16 @@ public final class PartialArgminKLD extends PartialResult {
     private double sum_mean_div_covar;
     @GuardedBy("lock()")
     private float sum_inv_covar;
-    @GuardedBy("lock()")
-    private int num_updates;
 
     public PartialArgminKLD() {
         super();
         this.sum_mean_div_covar = 0.f;
         this.sum_inv_covar = 0.f;
-        this.num_updates = 0;
     }
 
     @Override
     public float getCovariance(float scale) {
-        assert (num_updates > 0) : num_updates;
-        return (sum_inv_covar * scale) * num_updates; // Harmonic mean
+        return 1.f / (sum_inv_covar * scale);
     }
 
     @Override
@@ -55,7 +51,6 @@ public final class PartialArgminKLD extends PartialResult {
         assert (covar != 0.f);
         this.sum_mean_div_covar += (localWeight / covar) / scale;
         this.sum_inv_covar += (1.f / covar) / scale;
-        num_updates++;
     }
 
     @Override

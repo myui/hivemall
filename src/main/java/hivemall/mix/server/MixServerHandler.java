@@ -25,6 +25,7 @@ import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.store.PartialArgminKLD;
 import hivemall.mix.store.PartialAverage;
 import hivemall.mix.store.PartialResult;
+import hivemall.mix.store.SessionObject;
 import hivemall.mix.store.SessionStore;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -56,8 +57,9 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         switch(event) {
             case average:
             case argminKLD: {
-                PartialResult partial = getPartialResult(msg);
-                mix(ctx, msg, partial);
+                SessionObject session = getSession(msg);
+                PartialResult partial = getPartialResult(msg, session);
+                mix(ctx, msg, partial, session);
                 break;
             }
             case closeGroup: {
@@ -78,12 +80,19 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
     }
 
     @Nonnull
-    private PartialResult getPartialResult(@Nonnull MixMessage msg) {
+    private SessionObject getSession(@Nonnull MixMessage msg) {
         String groupID = msg.getGroupID();
         if(groupID == null) {
             throw new IllegalStateException("JobID is not set in the request message");
         }
-        ConcurrentMap<Object, PartialResult> map = sessionStore.get(groupID);
+        SessionObject session = sessionStore.get(groupID);
+        session.incrRequest();
+        return session;
+    }
+
+    @Nonnull
+    private PartialResult getPartialResult(@Nonnull MixMessage msg, @Nonnull SessionObject session) {
+        final ConcurrentMap<Object, PartialResult> map = session.get();
 
         Object feature = msg.getFeature();
         PartialResult partial = map.get(feature);
@@ -107,7 +116,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         return partial;
     }
 
-    private void mix(final ChannelHandlerContext ctx, final MixMessage requestMsg, final PartialResult partial) {
+    private void mix(final ChannelHandlerContext ctx, final MixMessage requestMsg, final PartialResult partial, final SessionObject session) {
         MixEventName event = requestMsg.getEvent();
         Object feature = requestMsg.getFeature();
         float weight = requestMsg.getWeight();
@@ -133,6 +142,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         }
 
         if(responseMsg != null) {
+            session.incrResponse();
             ctx.writeAndFlush(responseMsg);
         }
     }
