@@ -21,6 +21,7 @@
 package hivemall.mix.store;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
@@ -32,11 +33,16 @@ public final class SessionObject {
     private final ConcurrentMap<Object, PartialResult> object;
     private volatile long lastAccessed; // being accessed by multiple threads
 
+    private final AtomicLong num_requests;
+    private final AtomicLong num_responses;
+
     public SessionObject(@Nonnull ConcurrentMap<Object, PartialResult> obj) {
         if(obj == null) {
             throw new IllegalArgumentException("obj is null");
         }
         this.object = obj;
+        this.num_requests = new AtomicLong(0L);
+        this.num_responses = new AtomicLong(0L);
     }
 
     @Nonnull
@@ -51,8 +57,29 @@ public final class SessionObject {
         return lastAccessed;
     }
 
-    public void touch() {
+    public void incrRequest() {
         this.lastAccessed = System.currentTimeMillis();
+        num_requests.getAndIncrement();
+    }
+
+    public void incrResponse() {
+        num_responses.getAndIncrement();
+    }
+
+    public long getRequests() {
+        return num_requests.get();
+    }
+
+    public long getResponses() {
+        return num_responses.get();
+    }
+
+    public String getSessionInfo() {
+        long requests = num_requests.get();
+        long responses = num_responses.get();
+        float percentage = ((float) ((double) responses / requests)) * 100.f;
+        return "#requests: " + requests + ", #responses: " + responses + " ("
+                + String.format("%,.2f", percentage) + "%)";
     }
 
 }

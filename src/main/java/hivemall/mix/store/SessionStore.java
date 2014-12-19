@@ -48,7 +48,7 @@ public final class SessionStore {
     }
 
     @Nonnull
-    public ConcurrentMap<Object, PartialResult> get(@Nonnull String groupID) {
+    public SessionObject get(@Nonnull String groupID) {
         SessionObject sessionObj = sessions.get(groupID);
         if(sessionObj == null) {
             ConcurrentMap<Object, PartialResult> map = new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
@@ -58,13 +58,15 @@ public final class SessionStore {
                 sessionObj = existing;
             }
         }
-        ConcurrentMap<Object, PartialResult> map = sessionObj.get();
-        sessionObj.touch();
-        return map;
+        return sessionObj;
     }
 
     public void remove(@Nonnull String groupID) {
-        sessions.remove(groupID);
+        SessionObject removedSession = sessions.remove(groupID);
+        if(removedSession != null) {
+            logger.info("Removed an idle session group: " + groupID + "\t"
+                    + removedSession.getSessionInfo());
+        }
     }
 
     @ThreadSafe
@@ -86,8 +88,11 @@ public final class SessionStore {
                 if(elapsedTime > ttl) {
                     String key = e.getKey();
                     assert (key != null);
-                    sessions.remove(key);
-                    logger.info("Removed an idle session group: " + key);
+                    SessionObject removedSession = sessions.remove(key);
+                    if(removedSession != null) {
+                        logger.info("Removed an idle session group: " + key + "\t"
+                                + removedSession.getSessionInfo());
+                    }
                 }
             }
 
