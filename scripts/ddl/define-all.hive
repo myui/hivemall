@@ -92,6 +92,9 @@ create temporary function jaccard as 'hivemall.knn.distance.JaccardIndexUDF';
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.knn.distance.PopcountUDF';
 
+drop temporary function kld;
+create temporary function kld as 'hivemall.knn.distance.KLDivergenceUDF';
+
 -------------------
 -- LSH functions --
 -------------------
