@@ -20,12 +20,13 @@
  */
 package hivemall.knn.distance;
 
+import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 
 @UDFType(deterministic = true, stateful = false)
-public final class KLDivergenceUDF {
+public final class KLDivergenceUDF extends UDF {
 
     public DoubleWritable evaluate(double mu1, double sigma1, double mu2, double sigma2) {
         double d = kld(mu1, sigma1, mu2, sigma2);
