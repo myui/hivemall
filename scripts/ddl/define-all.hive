@@ -392,6 +392,15 @@ create temporary function lr_datagen as 'hivemall.dataset.LogisticRegressionData
 drop temporary function f1score;
 create temporary function f1score as 'hivemall.evaluation.FMeasureUDAF';
 
+drop temporary function mae;
+create temporary function mae as 'hivemall.evaluation.MeanAbsoluteErrorUDAF';
+
+drop temporary function mse;
+create temporary function mse as 'hivemall.evaluation.MeanSquaredErrorUDAF';
+
+drop temporary function rmse;
+create temporary function rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF';
+
 --------------------------
 -- Matrix Factorization --
 --------------------------
@@ -401,3 +410,32 @@ create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
 
 drop temporary function train_mf_sgd;
 create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
+
+
+--------------------------------------------------------------------------------------------------
+-- macros available from hive 0.12.0
+-- see https://issues.apache.org/jira/browse/HIVE-2655
+
+--------------------
+-- General Macros --
+--------------------
+
+create temporary macro java_min(x INT, y INT)
+reflect("java.lang.Math", "java_min", x, y);
+
+create temporary macro max2(x INT, y INT)
+if(x>y,x,y);
+
+create temporary macro min2(x INT, y INT)
+if(x<y,x,y);
+
+--------------------------
+-- Statistics functions --
+--------------------------
+
+create temporary macro idf(df_t INT, n_docs INT)
+(log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0);
+
+create temporary macro tfidf(tf FLOAT, df_t INT, n_docs INT)
+tf * (log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0);
+

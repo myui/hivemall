@@ -390,6 +390,22 @@ DROP FUNCTION IF EXISTS lr_datagen;
 CREATE FUNCTION lr_datagen as 'hivemall.dataset.LogisticRegressionDataGeneratorUDTF' USING JAR '${hivemall_jar}';
 
 --------------------------
+-- Evaluating functions --
+--------------------------
+
+DROP FUNCTION IF EXISTS f1score;
+CREATE FUNCTION f1score as 'hivemall.evaluation.FMeasureUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS mae;
+CREATE FUNCTION mae as 'hivemall.evaluation.MeanAbsoluteErrorUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS mse;
+CREATE FUNCTION mse as 'hivemall.evaluation.MeanSquaredErrorUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS rmse;
+CREATE FUNCTION rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF' USING JAR '${hivemall_jar}';
+
+--------------------------
 -- Matrix Factorization --
 --------------------------
 
