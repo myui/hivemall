@@ -7,7 +7,7 @@ jdk:
 branches:
   only:
     - master
-    - dev
+    - /^dev\/.*$/
 notifications:
   email: false
 after_success:
