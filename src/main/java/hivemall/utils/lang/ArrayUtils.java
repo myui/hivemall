@@ -55,6 +55,32 @@ public final class ArrayUtils {
         return ary;
     }
 
+    public static Integer[] toObject(final int[] array) {
+        final Integer[] result = new Integer[array.length];
+        for(int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public static List<Integer> toList(final int[] array) {
+        Integer[] v = toObject(array);
+        return Arrays.asList(v);
+    }
+
+    public static Long[] toObject(final long[] array) {
+        final Long[] result = new Long[array.length];
+        for(int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public static List<Long> toList(final long[] array) {
+        Long[] v = toObject(array);
+        return Arrays.asList(v);
+    }
+
     public static Float[] toObject(final float[] array) {
         final Float[] result = new Float[array.length];
         for(int i = 0; i < array.length; i++) {
@@ -65,6 +91,19 @@ public final class ArrayUtils {
 
     public static List<Float> toList(final float[] array) {
         Float[] v = toObject(array);
+        return Arrays.asList(v);
+    }
+
+    public static Double[] toObject(final double[] array) {
+        final Double[] result = new Double[array.length];
+        for(int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public static List<Double> toList(final double[] array) {
+        Double[] v = toObject(array);
         return Arrays.asList(v);
     }
 
@@ -117,6 +156,12 @@ public final class ArrayUtils {
         Object[] subarray = (Object[]) Array.newInstance(type, newSize);
         System.arraycopy(array, startIndexInclusive, subarray, 0, newSize);
         return subarray;
+    }
+
+    public static void fill(final float[] a, final Random rand) {
+        for(int i = 0, len = a.length; i < len; i++) {
+            a[i] = rand.nextFloat();
+        }
     }
 
 }

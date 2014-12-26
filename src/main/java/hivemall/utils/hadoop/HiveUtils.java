@@ -29,8 +29,11 @@ import static hivemall.HivemallConstants.TINYINT_TYPE_NAME;
 
 import java.util.Properties;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
@@ -40,6 +43,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantBooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantByteObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
@@ -47,6 +51,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantL
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantShortObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -253,4 +258,46 @@ public final class HiveUtils {
         serde.initialize(conf, tbl);
         return serde;
     }
+
+    public static IntObjectInspector asIntOI(@Nonnull ObjectInspector argOI)
+            throws UDFArgumentException {
+        if(!INT_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be INT: " + argOI.getTypeName());
+        }
+        return (IntObjectInspector) argOI;
+    }
+
+    public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if(argOI.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
+                    + argOI.getTypeName() + " is passed.");
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch(oi.getPrimitiveCategory()) {
+            case BYTE:
+            case SHORT:
+            case INT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+            case STRING:
+            case TIMESTAMP:
+                break;
+            default:
+                throw new UDFArgumentTypeException(0, "Only numeric or string type arguments are accepted but "
+                        + argOI.getTypeName() + " is passed.");
+        }
+        return oi;
+    }
+
+    @Nonnull
+    public static FloatWritable[] newFloatArray(final int size, final float defaultVal) {
+        final FloatWritable[] array = new FloatWritable[size];
+        for(int i = 0; i < size; i++) {
+            array[i] = new FloatWritable(defaultVal);
+        }
+        return array;
+    }
+
 }
