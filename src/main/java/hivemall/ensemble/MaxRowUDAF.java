@@ -44,7 +44,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
  * This code is based on https://github.com/scribd/hive-udaf-maxrow
  */
 @Description(name = "maxrow", value = "_FUNC_(expr) - Returns the maximum value of expr and values of associated columns as a struct")
-public class MaxRowUDAF extends AbstractGenericUDAFResolver {
+public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
 
     @Override
     public GenericUDAFEvaluator getEvaluator(TypeInfo[] parameters) throws SemanticException {

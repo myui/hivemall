@@ -26,7 +26,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.Text;
 
-public class MaxValueLabelUDAF extends UDAF {
+public final class MaxValueLabelUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
 
