@@ -24,8 +24,8 @@ import hivemall.utils.lang.mutable.MutableInt;
 
 import java.util.Map;
 
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class OpenHashMapTest {
 
@@ -41,6 +41,9 @@ public class OpenHashMapTest {
             Object v = map.get(Integer.toString(i));
             Assert.assertEquals(i, v);
         }
+        map.put(Integer.toString(1), Integer.MAX_VALUE);
+        Assert.assertEquals(Integer.MAX_VALUE, map.get(Integer.toString(1)));
+        Assert.assertEquals(numEntries, map.size());
     }
 
     @Test
