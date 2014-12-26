@@ -24,6 +24,10 @@ public final class MutableFloat extends Number
         this.value = value.floatValue();
     }
 
+    public void addValue(float o) {
+        value += o;
+    }
+
     public float getValue() {
         return value;
     }

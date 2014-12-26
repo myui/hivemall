@@ -28,6 +28,12 @@ public class WeightValueWithClock implements IWeightValue {
     protected short clock;
     protected byte deltaUpdates;
 
+    public WeightValueWithClock(float value) {
+        this.value = value;
+        this.clock = 0;
+        this.deltaUpdates = 0;
+    }
+
     public WeightValueWithClock(IWeightValue src) {
         this.value = src.get();
         if(src.isTouched()) {
@@ -141,6 +147,11 @@ public class WeightValueWithClock implements IWeightValue {
     public static final class WeightValueParamsF1Clock extends WeightValueWithClock {
         private final float f1;
 
+        public WeightValueParamsF1Clock(float value, float f1) {
+            super(value);
+            this.f1 = f1;
+        }
+
         public WeightValueParamsF1Clock(IWeightValue src) {
             super(src);
             this.f1 = src.getFloatParams(1);
@@ -169,6 +180,12 @@ public class WeightValueWithClock implements IWeightValue {
     public static final class WeightValueParamsF2Clock extends WeightValueWithClock {
         private final float f1;
         private final float f2;
+
+        public WeightValueParamsF2Clock(float value, float f1, float f2) {
+            super(value);
+            this.f1 = f1;
+            this.f2 = f2;
+        }
 
         public WeightValueParamsF2Clock(IWeightValue src) {
             super(src);
@@ -212,6 +229,11 @@ public class WeightValueWithClock implements IWeightValue {
         public static final float DEFAULT_COVAR = 1.f;
 
         private float covariance;
+
+        public WeightValueWithCovarClock(float value, float covar) {
+            super(value);
+            this.covariance = covar;
+        }
 
         public WeightValueWithCovarClock(IWeightValue src) {
             super(src);

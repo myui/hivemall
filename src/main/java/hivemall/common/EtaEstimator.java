@@ -29,6 +29,21 @@ public abstract class EtaEstimator {
 
     public abstract float eta(int t);
 
+    public static final class FixedEtaEstimator extends EtaEstimator {
+
+        private final float eta;
+
+        public FixedEtaEstimator(float eta) {
+            this.eta = eta;
+        }
+
+        @Override
+        public float eta(int t) {
+            return eta;
+        }
+
+    }
+
     public static final class SimpleEtaEstimator extends EtaEstimator {
 
         private final float eta0;
@@ -72,8 +87,13 @@ public abstract class EtaEstimator {
             return new InvscalingEtaEstimator(0.2f, 0.1f);
         }
 
-        float eta0 = Float.parseFloat(cl.getOptionValue("eta0", "0.2"));
+        String etaValue = cl.getOptionValue("eta");
+        if(etaValue != null) {
+            float eta = Float.parseFloat(etaValue);
+            return new FixedEtaEstimator(eta);
+        }
 
+        float eta0 = Float.parseFloat(cl.getOptionValue("eta0", "0.2"));
         if(cl.hasOption("t")) {
             int t = Integer.parseInt(cl.getOptionValue("t"));
             return new SimpleEtaEstimator(eta0, t);

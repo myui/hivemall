@@ -26,7 +26,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-public class WeightVotedAvgUDAF extends UDAF {
+public final class WeightVotedAvgUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
 

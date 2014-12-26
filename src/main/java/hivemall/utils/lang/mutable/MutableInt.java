@@ -24,6 +24,10 @@ public final class MutableInt extends Number
         this.value = value.intValue();
     }
 
+    public void addValue(int o) {
+        value += o;
+    }
+
     public int getValue() {
         return value;
     }
