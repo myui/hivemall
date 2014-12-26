@@ -22,6 +22,12 @@ if(x>y,x,y);
 create temporary macro min2(x INT, y INT)
 if(x<y,x,y);
 
+create temporary macro rand_gid(k INT)
+floor(rand()*k);
+
+create temporary macro rand_gid2(k INT, seed INT)
+floor(rand(seed)*k);
+
 --------------------------
 -- Statistics functions --
 --------------------------
