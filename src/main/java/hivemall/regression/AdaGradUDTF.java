@@ -62,7 +62,7 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("eta0", true, "The initial learning rate [default 1.0]");
+        opts.addOption("eta", "eta0", true, "The initial learning rate [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [100]");
         return opts;
