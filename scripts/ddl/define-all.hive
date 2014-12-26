@@ -309,6 +309,9 @@ create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
 drop temporary function subarray;
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 
+drop temporary function array_avg;
+create temporary function array_avg as 'hivemall.tools.array.ArrayAvgUDAF';
+
 ---------------------
 -- map functions --
 ---------------------
@@ -389,3 +392,12 @@ create temporary function lr_datagen as 'hivemall.dataset.LogisticRegressionData
 drop temporary function f1score;
 create temporary function f1score as 'hivemall.evaluation.FMeasureUDAF';
 
+--------------------------
+-- Matrix Factorization --
+--------------------------
+
+drop temporary function mf_predict;
+create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
+
+drop temporary function train_mf_sgd;
+create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
