@@ -53,10 +53,10 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates) {
-        if(deltaUpdates < 1) {
-            return;
-        }
         if(handler != null) {
+            if(deltaUpdates < 1) {
+                return;
+            }
             final boolean resetDeltaUpdates;
             try {
                 resetDeltaUpdates = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
