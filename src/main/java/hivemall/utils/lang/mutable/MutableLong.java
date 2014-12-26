@@ -4,45 +4,45 @@ import hivemall.utils.lang.Copyable;
 
 import java.io.Serializable;
 
-public final class MutableInt extends Number
-        implements Copyable<MutableInt>, Comparable<MutableInt>, Serializable {
-    private static final long serialVersionUID = -3289272606407100628L;
+public final class MutableLong extends Number
+        implements Copyable<MutableLong>, Comparable<MutableLong>, Serializable {
+    private static final long serialVersionUID = 4215176730382645660L;
 
-    private int value;
+    private long value;
 
-    public MutableInt() {
+    public MutableLong() {
         super();
     }
 
-    public MutableInt(int value) {
+    public MutableLong(long value) {
         super();
         this.value = value;
     }
 
-    public MutableInt(Number value) {
+    public MutableLong(Number value) {
         super();
-        this.value = value.intValue();
+        this.value = value.longValue();
     }
 
-    public void addValue(int o) {
+    public void addValue(long o) {
         value += o;
     }
 
-    public int getValue() {
+    public long getValue() {
         return value;
     }
 
-    public void setValue(int value) {
+    public void setValue(long value) {
         this.value = value;
     }
 
     public void setValue(Number value) {
-        this.value = value.intValue();
+        this.value = value.longValue();
     }
 
     @Override
     public int intValue() {
-        return value;
+        return (int) value;
     }
 
     @Override
@@ -61,35 +61,35 @@ public final class MutableInt extends Number
     }
 
     @Override
-    public void copyTo(MutableInt another) {
+    public void copyTo(MutableLong another) {
         another.setValue(value);
     }
 
     @Override
-    public void copyFrom(MutableInt another) {
+    public void copyFrom(MutableLong another) {
         this.value = another.value;
     }
 
     @Override
-    public int compareTo(MutableInt other) {
+    public int compareTo(MutableLong other) {
         return compare(value, other.value);
     }
 
-    private static int compare(final int x, final int y) {
+    private static int compare(final long x, final long y) {
         return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof MutableInt) {
-            return value == ((MutableInt) obj).intValue();
+        if(obj instanceof MutableLong) {
+            return value == ((MutableLong) obj).longValue();
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return value;
+        return (int) (value ^ (value >>> 32));
     }
 
     @Override
