@@ -21,6 +21,7 @@
 package hivemall.mf;
 
 import hivemall.UDTFWithOptions;
+import hivemall.common.RatingInitilizer;
 import hivemall.io.FactorizedModel;
 import hivemall.io.Rating;
 import hivemall.utils.hadoop.HiveUtils;
@@ -46,7 +47,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
+public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
+        implements RatingInitilizer {
     private static final Log logger = LogFactory.getLog(OnlineMatrixFactorizationUDTF.class);
 
     /** The number of latent factors */
@@ -57,6 +59,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
     protected float meanRating;
     /** Whether update (and return) the mean rating or not */
     protected boolean updateMeanRating;
+
+    /** Perform random initialization of rank matrix */
+    protected boolean randInit;
+    /** The maximum initial value in the rank matrix */
+    protected float maxInitValue;
+    /** The standard deviation of initial rank matrix */
+    protected double initStdDev;
 
     protected FactorizedModel model;
 
@@ -76,6 +85,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
         this.lambda = 0.02f;
         this.meanRating = 0.f;
         this.updateMeanRating = false;
+        this.maxInitValue = 1.f;
     }
 
     @Override
@@ -83,8 +93,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("k", "factor", true, "The number of latent factor [default: 10]");
         opts.addOption("r", "lambda", true, "The regularization factor [default: 0.02]");
-        opts.addOption("mean", "mean_rating", true, "The mean rating [default: 0.0]");
-        opts.addOption("vmean", "update_mean", false, "Whether update (and return) the mean rating or not");
+        opts.addOption("mu", "mean_rating", true, "The mean rating [default: 0.0]");
+        opts.addOption("update_mean", false, "Whether update (and return) the mean rating or not");
+        opts.addOption("rand_init", false, "Perform random initialization of rank matrix [default: false]");
+        opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the rank matrix [default: 1.0]");
+        opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial rank matrix [default: 0.1]");
         return opts;
     }
 
@@ -96,9 +109,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
             cl = parseOptions(rawArgs);
             this.factor = Primitives.parseInt(cl.getOptionValue("factor"), 10);
             this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), 0.02f);
-            this.meanRating = Primitives.parseFloat(cl.getOptionValue("mean"), 0.f);
+            this.meanRating = Primitives.parseFloat(cl.getOptionValue("mu"), 0.f);
             this.updateMeanRating = cl.hasOption("update_mean");
+            this.randInit = cl.hasOption("rand_init");
+            this.maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
+            this.initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
         }
+        this.initStdDev = Math.max(initStdDev, 1.0d / factor);
         return cl;
     }
 
@@ -132,12 +149,17 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions {
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
 
-        this.model = new FactorizedModel(factor, meanRating, true, 136861);
+        this.model = new FactorizedModel(this, factor, meanRating, randInit, maxInitValue, initStdDev);
         this.count = 0;
         this.cumulativeLoss = 0.d;
         this.userProbe = new float[factor];
         this.itemProbe = new float[factor];
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+    }
+
+    @Override
+    public Rating newRating(float v) {
+        return new Rating(v);
     }
 
     @Override

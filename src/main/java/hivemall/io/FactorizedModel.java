@@ -20,38 +20,59 @@
  */
 package hivemall.io;
 
+import hivemall.common.RatingInitilizer;
 import hivemall.utils.collections.IntOpenHashMap;
+import hivemall.utils.math.MathUtils;
 
 import java.util.Random;
 
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 public final class FactorizedModel {
 
+    @Nonnull
+    private final RatingInitilizer ratingInitializer;
+    @Nonnegative
     private final int factor;
+
+    // rank matrix initialization
     private final boolean randInit;
+    @Nonnegative
+    private final float maxInitValue;
+    @Nonnegative
+    private final double initStdDev;
 
     private int minIndex, maxIndex;
-    private float meanRating;
+    @Nonnull
+    private Rating meanRating;
     private IntOpenHashMap<Rating[]> users;
     private IntOpenHashMap<Rating[]> items;
-    private SparseFloatVector userBias;
-    private SparseFloatVector itemBias;
+    private IntOpenHashMap<Rating> userBias;
+    private IntOpenHashMap<Rating> itemBias;
 
     private final Random randU, randI;
 
-    public FactorizedModel(int factor, float meanRating, boolean randInit, int expectedSize) {
+    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, boolean randInit, @Nonnegative float maxInitValue, @Nonnegative double initStdDev) {
+        this(ratingInitializer, factor, meanRating, randInit, maxInitValue, initStdDev, 136861);
+    }
+
+    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, boolean randInit, @Nonnegative float maxInitValue, @Nonnegative double initStdDev, int expectedSize) {
+        this.ratingInitializer = ratingInitializer;
         this.factor = factor;
+        this.randInit = randInit;
+        this.maxInitValue = maxInitValue;
+        this.initStdDev = initStdDev;
         this.minIndex = 0;
         this.maxIndex = 0;
-        this.meanRating = meanRating;
+        this.meanRating = ratingInitializer.newRating(meanRating);
         this.users = new IntOpenHashMap<Rating[]>(expectedSize);
         this.items = new IntOpenHashMap<Rating[]>(expectedSize);
-        this.userBias = new SparseFloatVector(expectedSize);
-        this.itemBias = new SparseFloatVector(expectedSize);
-        this.randInit = randInit;
+        this.userBias = new IntOpenHashMap<Rating>(expectedSize);
+        this.itemBias = new IntOpenHashMap<Rating>(expectedSize);
         this.randU = new Random(31L);
         this.randI = new Random(41L);
     }
@@ -64,12 +85,17 @@ public final class FactorizedModel {
         return maxIndex;
     }
 
-    public float getMeanRating() {
+    @Nonnull
+    public Rating meanRating() {
         return meanRating;
     }
 
+    public float getMeanRating() {
+        return meanRating.getWeight();
+    }
+
     public void setMeanRating(float rating) {
-        this.meanRating = rating;
+        meanRating.setWeight(rating);
     }
 
     @Nullable
@@ -83,7 +109,9 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             if(randInit) {
-                fill(v, randU);
+                uniformFill(v, randU, maxInitValue, ratingInitializer);
+            } else {
+                gaussianFill(v, randU, initStdDev, ratingInitializer);
             }
             users.put(u, v);
             this.maxIndex = Math.max(maxIndex, u);
@@ -103,7 +131,9 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             if(randInit) {
-                fill(v, randI);
+                uniformFill(v, randI, maxInitValue, ratingInitializer);
+            } else {
+                gaussianFill(v, randI, initStdDev, ratingInitializer);
             }
             items.put(i, v);
             this.maxIndex = Math.max(maxIndex, i);
@@ -112,26 +142,77 @@ public final class FactorizedModel {
         return v;
     }
 
+    @Nonnull
+    public Rating userBias(int u) {
+        Rating b = userBias.get(u);
+        if(b == null) {
+            b = ratingInitializer.newRating(0.f); // dummy
+            userBias.put(u, b);
+        }
+        return b;
+    }
+
     public float getUserBias(int u) {
-        return userBias.get(u);
+        Rating b = userBias.get(u);
+        if(b == null) {
+            return 0.f;
+        }
+        return b.getWeight();
     }
 
     public void setUserBias(int u, float value) {
-        userBias.set(u, value);
+        Rating b = userBias.get(u);
+        if(b == null) {
+            b = ratingInitializer.newRating(value);
+            userBias.put(u, b);
+        }
+        b.setWeight(value);
     }
 
-    public float getItemBias(int i) {
+    @Nonnull
+    public Rating itemBias(int i) {
+        Rating b = itemBias.get(i);
+        if(b == null) {
+            b = ratingInitializer.newRating(0.f); // dummy
+            itemBias.put(i, b);
+        }
+        return b;
+    }
+
+    @Nullable
+    public Rating getItemBiasObject(int i) {
         return itemBias.get(i);
     }
 
-    public void setItemBias(int i, float value) {
-        itemBias.set(i, value);
+    public float getItemBias(int i) {
+        Rating b = itemBias.get(i);
+        if(b == null) {
+            return 0.f;
+        }
+        return b.getWeight();
     }
 
-    private static void fill(final Rating[] a, final Random rand) {
+    public void setItemBias(int i, float value) {
+        Rating b = itemBias.get(i);
+        if(b == null) {
+            b = ratingInitializer.newRating(value);
+            itemBias.put(i, b);
+        }
+        b.setWeight(value);
+    }
+
+    private static void uniformFill(final Rating[] a, final Random rand, final float maxInitValue, final RatingInitilizer init) {
         for(int i = 0, len = a.length; i < len; i++) {
-            float v = rand.nextFloat();
-            a[i] = new Rating(v);
+            float v = rand.nextFloat() * maxInitValue / len;
+            a[i] = init.newRating(v);
         }
     }
+
+    private static void gaussianFill(final Rating[] a, final Random rand, final double stddev, final RatingInitilizer init) {
+        for(int i = 0, len = a.length; i < len; i++) {
+            float v = (float) MathUtils.gaussian(0.d, stddev, rand);
+            a[i] = init.newRating(v);
+        }
+    }
+
 }
