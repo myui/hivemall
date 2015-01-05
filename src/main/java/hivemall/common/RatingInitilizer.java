@@ -18,32 +18,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package hivemall.io;
+package hivemall.common;
 
-import hivemall.utils.collections.Int2FloatOpenHash;
+import hivemall.io.Rating;
 
-import javax.annotation.concurrent.NotThreadSafe;
+public interface RatingInitilizer {
 
-@NotThreadSafe
-public final class SparseFloatVector {
-
-    private final Int2FloatOpenHash entries;
-
-    public SparseFloatVector() {
-        this(136861);
-    }
-
-    public SparseFloatVector(int size) {
-        this.entries = new Int2FloatOpenHash(size);
-        entries.defaultReturnValue(0.f);
-    }
-
-    public float get(int i) {
-        return entries.get(i);
-    }
-
-    public void set(int i, float value) {
-        entries.put(i, value);
-    }
+    public Rating newRating(float v);
 
 }

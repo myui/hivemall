@@ -36,6 +36,14 @@ public class Rating {
         this.weight = weight;
     }
 
+    public double getSumOfSquaredGradients() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setSumOfSquaredGradients(double sqgrad) {
+        throw new UnsupportedOperationException();
+    }
+
     public float getCovariance() {
         throw new UnsupportedOperationException();
     }
@@ -47,6 +55,31 @@ public class Rating {
     @Override
     public String toString() {
         return "Rating [weight=" + weight + "]";
+    }
+
+    public static class RatingWithSquaredGrad extends Rating {
+
+        private double sumSquaredGrads;
+
+        public RatingWithSquaredGrad(float weight) {
+            this(weight, 0.d);
+        }
+
+        public RatingWithSquaredGrad(float weight, double sqgrad) {
+            super(weight);
+            this.sumSquaredGrads = sqgrad;
+        }
+
+        @Override
+        public double getSumOfSquaredGradients() {
+            return sumSquaredGrads;
+        }
+
+        @Override
+        public void setSumOfSquaredGradients(double sqgrad) {
+            this.sumSquaredGrads = sqgrad;
+        }
+
     }
 
 }

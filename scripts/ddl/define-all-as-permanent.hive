@@ -415,4 +415,6 @@ CREATE FUNCTION mf_predict as 'hivemall.mf.MFPredictionUDF' USING JAR '${hivemal
 DROP FUNCTION IF EXISTS train_mf_sgd;
 CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS train_mf_adagrad;
+CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
 

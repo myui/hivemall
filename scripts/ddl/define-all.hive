@@ -411,6 +411,9 @@ create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
 drop temporary function train_mf_sgd;
 create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
 
+drop temporary function train_mf_adagrad;
+create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
+
 
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0
