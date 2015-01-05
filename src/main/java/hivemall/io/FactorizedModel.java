@@ -72,7 +72,7 @@ public final class FactorizedModel {
     }
 
     public enum RankInitScheme {
-        random, random_vcol /* default */, gaussian;
+        random /* default */, gaussian;
 
         @Nonnegative
         private float maxInitValue;
@@ -82,15 +82,13 @@ public final class FactorizedModel {
         @Nonnull
         public static RankInitScheme resolve(@Nullable String opt) {
             if(opt == null) {
-                return random_vcol;
-            } else if("random_vcol".equalsIgnoreCase(opt)) {
-                return random_vcol;
+                return gaussian;
             } else if("gaussian".equalsIgnoreCase(opt)) {
                 return gaussian;
             } else if("random".equalsIgnoreCase(opt)) {
                 return random;
             }
-            return random_vcol;
+            return gaussian;
         }
 
         public void setMaxInitValue(float maxInitValue) {
@@ -143,9 +141,6 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             switch(initScheme) {
-                case random_vcol:
-                    randomVcolFill(v, randU[0], 10, initScheme.maxInitValue, ratingInitializer);
-                    break;
                 case random:
                     uniformFill(v, randU[0], initScheme.maxInitValue, ratingInitializer);
                     break;
@@ -175,9 +170,6 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             switch(initScheme) {
-                case random_vcol:
-                    randomVcolFill(v, randI[0], 10, initScheme.maxInitValue, ratingInitializer);
-                    break;
                 case random:
                     uniformFill(v, randI[0], initScheme.maxInitValue, ratingInitializer);
                     break;
@@ -260,21 +252,6 @@ public final class FactorizedModel {
             float v = rand.nextFloat() * maxInitValue / len;
             a[i] = init.newRating(v);
         }
-    }
-
-    private static void randomVcolFill(final Rating[] a, final Random rand, final int k, final float maxInitValue, final RatingInitilizer init) {
-        for(int i = 0, len = a.length; i < len; i++) {
-            float v = avg(rand, k) * maxInitValue / len;
-            a[i] = init.newRating(v);
-        }
-    }
-
-    private static float avg(final Random rand, final int k) {
-        float total = 0.f;
-        for(int i = 0; i < k; i++) {
-            total += rand.nextFloat();
-        }
-        return total / k;
     }
 
     private static void gaussianFill(final Rating[] a, final Random[] rand, final double stddev, final RatingInitilizer init) {
