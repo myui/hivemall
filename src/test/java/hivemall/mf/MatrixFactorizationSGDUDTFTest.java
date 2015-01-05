@@ -20,6 +20,7 @@
  */
 package hivemall.mf;
 
+import hivemall.io.FactorizedModel.RankInitScheme;
 import junit.framework.Assert;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -29,7 +30,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Test;
 
 public class MatrixFactorizationSGDUDTFTest {
-    private static final boolean DEBUG_PRINT = true;
+    private static final boolean DEBUG_PRINT = false;
 
     private static void print(String msg) {
         if(DEBUG_PRINT)
@@ -57,7 +58,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3"));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
         mf.initialize(argOIs);
-        Assert.assertFalse(mf.randInit);
+        Assert.assertTrue(mf.rankInit == RankInitScheme.random_vcol);
 
         float[][] rating = { { 5, 3, 0, 1 }, { 4, 0, 0, 1 }, { 1, 1, 0, 5 }, { 1, 0, 0, 4 },
                 { 0, 1, 5, 4 } };
@@ -93,10 +94,10 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector floatOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
         //ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -eta 0.0002"));
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -rand_init"));
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -rankinit random"));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
         mf.initialize(argOIs);
-        Assert.assertTrue(mf.randInit);
+        Assert.assertTrue(mf.rankInit == RankInitScheme.random);
 
         float[][] rating = { { 5, 3, 0, 1 }, { 4, 0, 0, 1 }, { 1, 1, 0, 5 }, { 1, 0, 0, 4 },
                 { 0, 1, 5, 4 } };
@@ -124,4 +125,41 @@ public class MatrixFactorizationSGDUDTFTest {
         }
     }
 
+    @Test
+    public void testGaussianInit() throws HiveException {
+        println("--------------------------\n testGaussianInit()");
+        OnlineMatrixFactorizationUDTF mf = new MatrixFactorizationSGDUDTF();
+
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ObjectInspector floatOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -rankinit gaussian"));
+        ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
+        mf.initialize(argOIs);
+        Assert.assertTrue(mf.rankInit == RankInitScheme.gaussian);
+
+        float[][] rating = { { 5, 3, 0, 1 }, { 4, 0, 0, 1 }, { 1, 1, 0, 5 }, { 1, 0, 0, 4 },
+                { 0, 1, 5, 4 } };
+        Object[] args = new Object[3];
+        final int num_iters = 100;
+        for(int iter = 0; iter < num_iters; iter++) {
+            for(int row = 0; row < rating.length; row++) {
+                for(int col = 0, size = rating[row].length; col < size; col++) {
+                    //print(row + "," + col + ",");
+                    args[0] = row;
+                    args[1] = col;
+                    args[2] = (float) rating[row][col];
+                    //println((float) rating[row][col]);
+                    mf.process(args);
+                }
+            }
+        }
+        for(int row = 0; row < rating.length; row++) {
+            for(int col = 0, size = rating[row].length; col < size; col++) {
+                double predicted = mf.predict(row, col);
+                print(rating[row][col] + "[" + predicted + "]\t");
+                Assert.assertEquals(rating[row][col], predicted, 0.2d);
+            }
+            println();
+        }
+    }
 }

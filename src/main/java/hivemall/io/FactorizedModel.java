@@ -40,11 +40,7 @@ public final class FactorizedModel {
     private final int factor;
 
     // rank matrix initialization
-    private final boolean randInit;
-    @Nonnegative
-    private final float maxInitValue;
-    @Nonnegative
-    private final double initStdDev;
+    private final RankInitScheme initScheme;
 
     private int minIndex, maxIndex;
     @Nonnull
@@ -56,16 +52,14 @@ public final class FactorizedModel {
 
     private final Random[] randU, randI;
 
-    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, boolean randInit, @Nonnegative float maxInitValue, @Nonnegative double initStdDev) {
-        this(ratingInitializer, factor, meanRating, randInit, maxInitValue, initStdDev, 136861);
+    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, @Nonnull RankInitScheme initScheme) {
+        this(ratingInitializer, factor, meanRating, initScheme, 136861);
     }
 
-    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, boolean randInit, @Nonnegative float maxInitValue, @Nonnegative double initStdDev, int expectedSize) {
+    public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, @Nonnull RankInitScheme initScheme, int expectedSize) {
         this.ratingInitializer = ratingInitializer;
         this.factor = factor;
-        this.randInit = randInit;
-        this.maxInitValue = maxInitValue;
-        this.initStdDev = initStdDev;
+        this.initScheme = initScheme;
         this.minIndex = 0;
         this.maxIndex = 0;
         this.meanRating = ratingInitializer.newRating(meanRating);
@@ -75,6 +69,38 @@ public final class FactorizedModel {
         this.itemBias = new IntOpenHashMap<Rating>(expectedSize);
         this.randU = newRandoms(factor, 31L);
         this.randI = newRandoms(factor, 41L);
+    }
+
+    public enum RankInitScheme {
+        random, random_vcol /* default */, gaussian;
+
+        @Nonnegative
+        private float maxInitValue;
+        @Nonnegative
+        private double initStdDev;
+
+        @Nonnull
+        public static RankInitScheme resolve(@Nullable String opt) {
+            if(opt == null) {
+                return random_vcol;
+            } else if("random_vcol".equalsIgnoreCase(opt)) {
+                return random_vcol;
+            } else if("gaussian".equalsIgnoreCase(opt)) {
+                return gaussian;
+            } else if("random".equalsIgnoreCase(opt)) {
+                return random;
+            }
+            return random_vcol;
+        }
+
+        public void setMaxInitValue(float maxInitValue) {
+            this.maxInitValue = maxInitValue;
+        }
+
+        public void setInitStdDev(double initStdDev) {
+            this.initStdDev = initStdDev;
+        }
+
     }
 
     private static Random[] newRandoms(@Nonnull final int size, final long seed) {
@@ -116,10 +142,20 @@ public final class FactorizedModel {
         Rating[] v = users.get(u);
         if(init && v == null) {
             v = new Rating[factor];
-            if(randInit) {
-                uniformFill(v, randU[0], maxInitValue, ratingInitializer);
-            } else {
-                gaussianFill(v, randU, initStdDev, ratingInitializer);
+            switch(initScheme) {
+                case random_vcol:
+                    randomVcolFill(v, randU[0], 10, initScheme.maxInitValue, ratingInitializer);
+                    break;
+                case random:
+                    uniformFill(v, randU[0], initScheme.maxInitValue, ratingInitializer);
+                    break;
+                case gaussian:
+                    gaussianFill(v, randU, initScheme.initStdDev, ratingInitializer);
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported rank initialization scheme: "
+                            + initScheme);
+
             }
             users.put(u, v);
             this.maxIndex = Math.max(maxIndex, u);
@@ -138,10 +174,20 @@ public final class FactorizedModel {
         Rating[] v = items.get(i);
         if(init && v == null) {
             v = new Rating[factor];
-            if(randInit) {
-                uniformFill(v, randI[0], maxInitValue, ratingInitializer);
-            } else {
-                gaussianFill(v, randI, initStdDev, ratingInitializer);
+            switch(initScheme) {
+                case random_vcol:
+                    randomVcolFill(v, randI[0], 10, initScheme.maxInitValue, ratingInitializer);
+                    break;
+                case random:
+                    uniformFill(v, randI[0], initScheme.maxInitValue, ratingInitializer);
+                    break;
+                case gaussian:
+                    gaussianFill(v, randI, initScheme.initStdDev, ratingInitializer);
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported rank initialization scheme: "
+                            + initScheme);
+
             }
             items.put(i, v);
             this.maxIndex = Math.max(maxIndex, i);
@@ -214,6 +260,21 @@ public final class FactorizedModel {
             float v = rand.nextFloat() * maxInitValue / len;
             a[i] = init.newRating(v);
         }
+    }
+
+    private static void randomVcolFill(final Rating[] a, final Random rand, final int k, final float maxInitValue, final RatingInitilizer init) {
+        for(int i = 0, len = a.length; i < len; i++) {
+            float v = avg(rand, k) * maxInitValue / len;
+            a[i] = init.newRating(v);
+        }
+    }
+
+    private static float avg(final Random rand, final int k) {
+        float total = 0.f;
+        for(int i = 0; i < k; i++) {
+            total += rand.nextFloat();
+        }
+        return total / k;
     }
 
     private static void gaussianFill(final Rating[] a, final Random[] rand, final double stddev, final RatingInitilizer init) {
