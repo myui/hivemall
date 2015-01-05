@@ -22,20 +22,19 @@ package hivemall.mf;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(name = "mf_predict", value = "_FUNC_(List<Float> Pu, List<Float> Qi[, double Bu, double Bi[, double mu]]) - Returns the prediction value")
 @UDFType(deterministic = true, stateful = false)
 public final class MFPredictionUDF extends UDF {
 
     public FloatWritable evaluate(List<Float> Pu, List<Float> Qi) throws HiveException {
-        if(Pu == null) {
-            throw new HiveException("Pu should not be NULL");
-        }
-        if(Qi == null) {
-            throw new HiveException("Pu should not be NULL");
+        if(Pu == null || Qi == null) {
+            return null; //throw new HiveException("Pu should not be NULL");
         }
         final int factor = Pu.size();
         if(Qi.size() != factor) {
@@ -55,12 +54,18 @@ public final class MFPredictionUDF extends UDF {
 
     public FloatWritable evaluate(List<Float> Pu, List<Float> Qi, double Bu, double Bi, double mu)
             throws HiveException {
-        if(Pu == null) {
-            throw new HiveException("Pu should not be NULL");
+        if(Pu == null && Qi == null) {
+            return null; //throw new HiveException("Both Pu and Qi was NULL");
         }
-        if(Qi == null) {
-            throw new HiveException("Pu should not be NULL");
+
+        if(Pu == null) {// TODO REVIEWME
+            float ret = (float) (mu + Bi);
+            return new FloatWritable(ret);
+        } else if(Qi == null) {
+            float ret = (float) (mu + Bu);
+            return new FloatWritable(ret);
         }
+
         final int factor = Pu.size();
         if(Qi.size() != factor) {
             throw new HiveException("|Pu| " + factor + " was not equal to |Qi| " + Qi.size());
