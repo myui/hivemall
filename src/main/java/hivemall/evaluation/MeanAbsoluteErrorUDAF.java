@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
 @Description(name = "mae", value = "_FUNC_(predicted, actual) - Return a Mean Absolute Error")
 public final class MeanAbsoluteErrorUDAF extends UDAF {
@@ -39,11 +40,15 @@ public final class MeanAbsoluteErrorUDAF extends UDAF {
             this.partial = null;
         }
 
-        public boolean iterate(double predicted, double actual) throws HiveException {
+        public boolean iterate(DoubleWritable predicted, DoubleWritable actual)
+                throws HiveException {
+            if(predicted == null || actual == null) {// skip
+                return true;
+            }
             if(partial == null) {
                 this.partial = new PartialResult();
             }
-            partial.iterate(predicted, actual);
+            partial.iterate(predicted.get(), actual.get());
             return true;
         }
 
