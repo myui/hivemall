@@ -218,7 +218,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         if(updateMeanRating) {
             updateMeanRating(err, eta);
         }
+
+        onUpdate(user, item, users, items, err);
     }
+
+    protected void onUpdate(final int user, final int item, final Rating[] users, final Rating[] items, final double err) {}
 
     protected double predictionError(final int user, final int item, final double rating) {
         return rating - predict(user, item, userProbe, itemProbe);
