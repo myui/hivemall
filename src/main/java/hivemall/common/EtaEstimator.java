@@ -21,6 +21,7 @@
 package hivemall.common;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -82,7 +83,7 @@ public abstract class EtaEstimator {
     }
 
     @Nonnull
-    public static EtaEstimator get(@Nonnull CommandLine cl) throws UDFArgumentException {
+    public static EtaEstimator get(@Nullable CommandLine cl) throws UDFArgumentException {
         if(cl == null) {
             return new InvscalingEtaEstimator(0.2f, 0.1f);
         }
