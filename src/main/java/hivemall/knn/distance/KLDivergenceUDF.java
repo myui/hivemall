@@ -22,7 +22,7 @@ package hivemall.knn.distance;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 
 @UDFType(deterministic = true, stateful = false)

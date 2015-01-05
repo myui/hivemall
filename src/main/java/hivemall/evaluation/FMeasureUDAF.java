@@ -24,11 +24,13 @@ import hivemall.utils.hadoop.WritableUtils;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "f1score", value = "_FUNC_(array[int], array[int]) - Return a F-measure/F1 score")
 public final class FMeasureUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {

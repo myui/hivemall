@@ -56,6 +56,13 @@ public final class Primitives {
         return Float.parseFloat(s);
     }
 
+    public static double parseDouble(final String s, final double defaultValue) {
+        if(s == null) {
+            return defaultValue;
+        }
+        return Double.parseDouble(s);
+    }
+
     public static boolean parseBoolean(final String s, final boolean defaultValue) {
         if(s == null) {
             return defaultValue;

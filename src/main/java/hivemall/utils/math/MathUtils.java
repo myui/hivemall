@@ -38,6 +38,10 @@
  */
 package hivemall.utils.math;
 
+import java.util.Random;
+
+import javax.annotation.Nonnull;
+
 public final class MathUtils {
 
     private MathUtils() {}
@@ -193,6 +197,14 @@ public final class MathUtils {
             sqsum += (e * e);
         }
         return (float) Math.sqrt(sqsum);
+    }
+
+    public static double gaussian(final double mean, final double stddev, @Nonnull final Random rnd) {
+        return mean + (stddev * rnd.nextGaussian());
+    }
+
+    public static double lognormal(final double mean, final double stddev, @Nonnull final Random rnd) {
+        return Math.exp(gaussian(mean, stddev, rnd));
     }
 
 }
