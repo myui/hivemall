@@ -54,7 +54,7 @@ public final class FactorizedModel {
     private IntOpenHashMap<Rating> userBias;
     private IntOpenHashMap<Rating> itemBias;
 
-    private final Random randU, randI;
+    private final Random[] randU, randI;
 
     public FactorizedModel(@Nonnull RatingInitilizer ratingInitializer, @Nonnegative int factor, float meanRating, boolean randInit, @Nonnegative float maxInitValue, @Nonnegative double initStdDev) {
         this(ratingInitializer, factor, meanRating, randInit, maxInitValue, initStdDev, 136861);
@@ -73,8 +73,16 @@ public final class FactorizedModel {
         this.items = new IntOpenHashMap<Rating[]>(expectedSize);
         this.userBias = new IntOpenHashMap<Rating>(expectedSize);
         this.itemBias = new IntOpenHashMap<Rating>(expectedSize);
-        this.randU = new Random(31L);
-        this.randI = new Random(41L);
+        this.randU = newRandoms(factor, 31L);
+        this.randI = newRandoms(factor, 41L);
+    }
+
+    private static Random[] newRandoms(@Nonnull final int size, final long seed) {
+        final Random[] rand = new Random[size];
+        for(int i = 0, len = rand.length; i < len; i++) {
+            rand[i] = new Random(seed + i);
+        }
+        return rand;
     }
 
     public int getMinIndex() {
@@ -109,7 +117,7 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             if(randInit) {
-                uniformFill(v, randU, maxInitValue, ratingInitializer);
+                uniformFill(v, randU[0], maxInitValue, ratingInitializer);
             } else {
                 gaussianFill(v, randU, initStdDev, ratingInitializer);
             }
@@ -131,7 +139,7 @@ public final class FactorizedModel {
         if(init && v == null) {
             v = new Rating[factor];
             if(randInit) {
-                uniformFill(v, randI, maxInitValue, ratingInitializer);
+                uniformFill(v, randI[0], maxInitValue, ratingInitializer);
             } else {
                 gaussianFill(v, randI, initStdDev, ratingInitializer);
             }
@@ -208,9 +216,9 @@ public final class FactorizedModel {
         }
     }
 
-    private static void gaussianFill(final Rating[] a, final Random rand, final double stddev, final RatingInitilizer init) {
+    private static void gaussianFill(final Rating[] a, final Random[] rand, final double stddev, final RatingInitilizer init) {
         for(int i = 0, len = a.length; i < len; i++) {
-            float v = (float) MathUtils.gaussian(0.d, stddev, rand);
+            float v = (float) MathUtils.gaussian(0.d, stddev, rand[i]);
             a[i] = init.newRating(v);
         }
     }
