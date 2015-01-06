@@ -123,6 +123,11 @@ public final class HiveUtils {
         return Integer.parseInt(s);
     }
 
+    public static boolean isBigInt(ObjectInspector oi) {
+        String typeName = oi.getTypeName();
+        return BIGINT_TYPE_NAME.equals(typeName);
+    }
+
     public static String getConstString(ObjectInspector oi) throws UDFArgumentException {
         if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
             throw new UDFArgumentException("argument must be a constant value: "
@@ -144,11 +149,6 @@ public final class HiveUtils {
         }
         WritableConstantBooleanObjectInspector booleanOI = (WritableConstantBooleanObjectInspector) oi;
         return booleanOI.getWritableConstantValue().get();
-    }
-
-    public static boolean isBigInt(ObjectInspector oi) {
-        String typeName = oi.getTypeName();
-        return BIGINT_TYPE_NAME.equals(typeName);
     }
 
     public static int getConstInt(ObjectInspector oi) throws UDFArgumentException {
