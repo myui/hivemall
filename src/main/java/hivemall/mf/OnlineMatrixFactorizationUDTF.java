@@ -68,8 +68,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
     /** The number of processed training examples */
     protected int count;
-    /** The cumulative loss in the training */
-    protected double cumulativeLoss;
+    /** The cumulative errors in the training */
+    protected double errors;
 
     protected IntObjectInspector userOI;
     protected IntObjectInspector itemOI;
@@ -79,7 +79,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
     public OnlineMatrixFactorizationUDTF() {
         this.factor = 10;
-        this.lambda = 0.02f;
+        this.lambda = 0.03f;
         this.meanRating = 0.f;
         this.updateMeanRating = false;
     }
@@ -88,7 +88,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("k", "factor", true, "The number of latent factor [default: 10]");
-        opts.addOption("r", "lambda", true, "The regularization factor [default: 0.02]");
+        opts.addOption("r", "lambda", true, "The regularization factor [default: 0.03]");
         opts.addOption("mu", "mean_rating", true, "The mean rating [default: 0.0]");
         opts.addOption("update_mean", false, "Whether update (and return) the mean rating or not");
         opts.addOption("rankinit", true, "Initialization strategy of rank matrix [default: guassian, random]");
@@ -107,7 +107,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             String rawArgs = HiveUtils.getConstString(argOIs[3]);
             cl = parseOptions(rawArgs);
             this.factor = Primitives.parseInt(cl.getOptionValue("factor"), 10);
-            this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), 0.02f);
+            this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), 0.03f);
             this.meanRating = Primitives.parseFloat(cl.getOptionValue("mu"), 0.f);
             this.updateMeanRating = cl.hasOption("update_mean");
             rankInitOpt = cl.getOptionValue("rankinit");
@@ -153,7 +153,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
         this.count = 0;
-        this.cumulativeLoss = 0.d;
+        this.errors = 0.d;
         this.userProbe = new float[factor];
         this.itemProbe = new float[factor];
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -206,8 +206,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         final float[] userProbe = copyToUserProbe(users);
         final float[] itemProbe = copyToItemProbe(items);
 
-        final double err = predictionError(user, item, rating);
-        this.cumulativeLoss += Math.abs(err);
+        final double err = rating - predict(user, item, userProbe, itemProbe);
+        this.errors += Math.abs(err);
 
         final float eta = eta();
         for(int k = 0, size = factor; k < size; k++) {
@@ -225,10 +225,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     }
 
     protected void onUpdate(final int user, final int item, final Rating[] users, final Rating[] items, final double err) {}
-
-    protected double predictionError(final int user, final int item, final double rating) {
-        return rating - predict(user, item, userProbe, itemProbe);
-    }
 
     protected double predict(final int user, final int item, final float[] userProbe, final float[] itemProbe) {
         double ret = bias(user, item);
@@ -258,7 +254,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         return model.getMeanRating() + model.getUserBias(user) + model.getItemBias(item);
     }
 
-    protected abstract float eta();
+    protected float eta() {
+        return 1.f; // dummy
+    }
 
     protected void updateItemRating(final Rating rating, final float Pu, final float Qi, final double err, final float eta) {
         double grad = err * Pu - lambda * Qi;
@@ -281,11 +279,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
     protected void updateBias(final int user, final int item, final double err, final float eta) {
         float Bu = model.getUserBias(user);
-        Bu += eta * (err - lambda * Bu);
+        double Gu = err - lambda * Bu;
+        Bu += eta * Gu;
         model.setUserBias(user, Bu);
 
         float Bi = model.getItemBias(item);
-        Bi += eta * (err - lambda * Bi);
+        double Gi = err - lambda * Bi;
+        Bi += eta * Gi;
         model.setItemBias(item, Bi);
     }
 
