@@ -69,11 +69,6 @@ public final class MatrixFactorizationAdaGradUDTF extends OnlineMatrixFactorizat
     }
 
     @Override
-    protected float eta() {
-        return eta; // dummy
-    }
-
-    @Override
     protected void updateItemRating(Rating rating, float Pu, float Qi, double err, float eta) {
         double gradient = err * Pu - lambda * Qi;
         updateRating(rating, Qi, gradient);
@@ -97,13 +92,13 @@ public final class MatrixFactorizationAdaGradUDTF extends OnlineMatrixFactorizat
     protected void updateBias(int user, int item, double err, float eta) {
         Rating ratingBu = model.userBias(user);
         float Bu = ratingBu.getWeight();
-        double gradBu = err - lambda * Bu;
-        updateRating(ratingBu, Bu, gradBu);
+        double Gu = err - lambda * Bu;
+        updateRating(ratingBu, Bu, Gu);
 
         Rating ratingBi = model.itemBias(item);
         float Bi = ratingBi.getWeight();
-        double gradBi = err - lambda * Bi;
-        updateRating(ratingBi, Bi, gradBi);
+        double Gi = err - lambda * Bi;
+        updateRating(ratingBi, Bi, Gi);
     }
 
     private void updateRating(final Rating rating, final float oldWeight, final double gradient) {
