@@ -82,13 +82,13 @@ public final class FactorizedModel {
         @Nonnull
         public static RankInitScheme resolve(@Nullable String opt) {
             if(opt == null) {
-                return gaussian;
+                return random;
             } else if("gaussian".equalsIgnoreCase(opt)) {
                 return gaussian;
             } else if("random".equalsIgnoreCase(opt)) {
                 return random;
             }
-            return gaussian;
+            return random;
         }
 
         public void setMaxInitValue(float maxInitValue) {

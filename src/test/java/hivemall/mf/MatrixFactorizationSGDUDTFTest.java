@@ -58,7 +58,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3"));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
         mf.initialize(argOIs);
-        Assert.assertTrue(mf.rankInit == RankInitScheme.gaussian);
+        Assert.assertTrue(mf.rankInit == RankInitScheme.random);
 
         float[][] rating = { { 5, 3, 0, 1 }, { 4, 0, 0, 1 }, { 1, 1, 0, 5 }, { 1, 0, 0, 4 },
                 { 0, 1, 5, 4 } };
