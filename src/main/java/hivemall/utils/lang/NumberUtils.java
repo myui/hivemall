@@ -20,6 +20,8 @@
  */
 package hivemall.utils.lang;
 
+import java.text.DecimalFormat;
+
 public final class NumberUtils {
 
     private NumberUtils() {}
@@ -57,6 +59,34 @@ public final class NumberUtils {
             return defaultValue;
         }
         return parseInt(s);
+    }
+
+    public static String formatNumber(final long number) {
+        DecimalFormat f = new DecimalFormat("#,###");
+        return f.format(number);
+    }
+
+    public static String prettySize(long size) {
+        if(size < 0) {
+            return "N/A";
+        } else {
+            if(size < 1024) {
+                return size + " bytes";
+            } else {
+                float kb = size / 1024f;
+                if(kb < 1024f) {
+                    return String.format("%.1f KiB", kb);
+                } else {
+                    float mb = kb / 1024f;
+                    if(mb < 1024f) {
+                        return String.format("%.1f MiB", mb);
+                    } else {
+                        float gb = mb / 1024f;
+                        return String.format("%.2f GiB", gb);
+                    }
+                }
+            }
+        }
     }
 
 }

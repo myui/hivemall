@@ -26,16 +26,25 @@ import hivemall.io.FactorizedModel;
 import hivemall.io.FactorizedModel.RankInitScheme;
 import hivemall.io.Rating;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.FileUtils;
+import hivemall.utils.io.NioFixedSegment;
+import hivemall.utils.io.Segments;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -51,6 +60,9 @@ import org.apache.hadoop.io.IntWritable;
 public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         implements RatingInitilizer {
     private static final Log logger = LogFactory.getLog(OnlineMatrixFactorizationUDTF.class);
+    private static final int RECORD_BYTES = (Integer.SIZE + Integer.SIZE + Double.SIZE) / 8;
+
+    protected MapredContext mapredContext;
 
     /** The number of latent factors */
     protected int factor;
@@ -60,6 +72,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected float meanRating;
     /** Whether update (and return) the mean rating or not */
     protected boolean updateMeanRating;
+    /** The number of iterations */
+    protected int iterations;
+
+    // Used for iterations
+    protected Segments fileIO;
+    protected ByteBuffer inputBuf;
+    private long lastWritePos;
 
     /** Initialization strategy of rank matrix */
     protected RankInitScheme rankInit;
@@ -67,7 +86,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected FactorizedModel model;
 
     /** The number of processed training examples */
-    protected int count;
+    protected long count;
     /** The cumulative errors in the training */
     protected double errors;
 
@@ -78,10 +97,12 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     private float[] userProbe, itemProbe;
 
     public OnlineMatrixFactorizationUDTF() {
+        this.mapredContext = null;
         this.factor = 10;
         this.lambda = 0.03f;
         this.meanRating = 0.f;
         this.updateMeanRating = false;
+        this.iterations = 1;
     }
 
     @Override
@@ -90,10 +111,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         opts.addOption("k", "factor", true, "The number of latent factor [default: 10]");
         opts.addOption("r", "lambda", true, "The regularization factor [default: 0.03]");
         opts.addOption("mu", "mean_rating", true, "The mean rating [default: 0.0]");
-        opts.addOption("update_mean", false, "Whether update (and return) the mean rating or not");
+        opts.addOption("update_mean", "update_mu", false, "Whether update (and return) the mean rating or not");
         opts.addOption("rankinit", true, "Initialization strategy of rank matrix [default: guassian, random]");
         opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the rank matrix [default: 1.0]");
         opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial rank matrix [default: 0.1]");
+        opts.addOption("iter", "iterations", true, "The number of iterations [default: 1]");
         return opts;
     }
 
@@ -113,12 +135,22 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             rankInitOpt = cl.getOptionValue("rankinit");
             maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
             initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
+            this.iterations = Primitives.parseInt(cl.getOptionValue("iterations"), 1);
+            if(iterations < 1) {
+                throw new UDFArgumentException("'-iterations' must be greater than or equals to 1: "
+                        + iterations);
+            }
         }
         this.rankInit = RankInitScheme.resolve(rankInitOpt);
         rankInit.setMaxInitValue(maxInitValue);
         initStdDev = Math.max(initStdDev, 1.0d / factor);
         rankInit.setInitStdDev(initStdDev);
         return cl;
+    }
+
+    @Override
+    public void configure(MapredContext mapredContext) {
+        this.mapredContext = mapredContext;
     }
 
     @Override
@@ -152,10 +184,31 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         }
 
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
-        this.count = 0;
+        this.count = 0L;
         this.errors = 0.d;
+        this.lastWritePos = 0L;
         this.userProbe = new float[factor];
         this.itemProbe = new float[factor];
+
+        if(mapredContext != null && iterations > 1) {
+            // invoke only at task node (initialize is also invoked in compilation)
+            final File file;
+            try {
+                file = File.createTempFile("hivemall_mf", ".sgmt");
+                file.deleteOnExit();
+                if(!file.canWrite()) {
+                    throw new UDFArgumentException("Cannot write a temporary file: "
+                            + file.getAbsolutePath());
+                }
+            } catch (IOException ioe) {
+                throw new UDFArgumentException(ioe);
+            } catch (Throwable e) {
+                throw new UDFArgumentException(e);
+            }
+            this.fileIO = new NioFixedSegment(file, RECORD_BYTES, false);
+            this.inputBuf = ByteBuffer.allocateDirect(65536); // 64 KiB
+        }
+
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
@@ -178,6 +231,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         }
         double rating = PrimitiveObjectInspectorUtils.getDouble(args[2], ratingOI);
 
+        beforeTrain(count, user, item, rating);
         count++;
         train(user, item, rating);
     }
@@ -198,7 +252,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         return itemProbe;
     }
 
-    protected void train(final int user, final int item, final double rating) {
+    protected void train(final int user, final int item, final double rating) throws HiveException {
         final Rating[] users = model.getUserVector(user, true);
         assert (users != null);
         final Rating[] items = model.getItemVector(item, true);
@@ -224,7 +278,36 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         onUpdate(user, item, users, items, err);
     }
 
-    protected void onUpdate(final int user, final int item, final Rating[] users, final Rating[] items, final double err) {}
+    private void beforeTrain(final long rowNum, final int user, final int item, final double rating)
+            throws HiveException {
+        if(inputBuf != null) {
+            assert (fileIO != null);
+            final ByteBuffer buf = inputBuf;
+            int remain = buf.remaining();
+            if(remain < RECORD_BYTES) {
+                writeBuffer(buf, fileIO, lastWritePos);
+                this.lastWritePos = rowNum;
+            }
+            buf.putInt(user);
+            buf.putInt(item);
+            buf.putDouble(rating);
+        }
+    }
+
+    private static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final Segments dst, final long lastWritePos)
+            throws HiveException {
+        // TODO asynchronous write in the background
+        srcBuf.flip();
+        try {
+            dst.write(lastWritePos, srcBuf);
+        } catch (IOException e) {
+            throw new HiveException("Exception causes while writing records to : " + lastWritePos, e);
+        }
+        srcBuf.clear();
+    }
+
+    protected void onUpdate(final int user, final int item, final Rating[] users, final Rating[] items, final double err)
+            throws HiveException {}
 
     protected double predict(final int user, final int item, final float[] userProbe, final float[] itemProbe) {
         double ret = bias(user, item);
@@ -296,6 +379,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 this.model = null; // help GC
                 return;
             }
+            if(iterations > 1) {
+                runIterativeTraining(iterations);
+            }
             final IntWritable idx = new IntWritable();
             final FloatWritable[] Pu = HiveUtils.newFloatArray(factor, 0.f);
             final FloatWritable[] Qi = HiveUtils.newFloatArray(factor, 0.f);
@@ -333,6 +419,103 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             }
             this.model = null; // help GC
             logger.info("Forwarded the prediction model of " + numForwarded + " rows");
+        }
+    }
+
+    protected final void runIterativeTraining(@Nonnegative final int iterations)
+            throws HiveException {
+        assert (inputBuf != null);
+        assert (fileIO != null);
+
+        try {
+            if(lastWritePos == 0) {// run iterations w/o temporary file
+                if(inputBuf.position() == 0) {
+                    return; // no training example
+                }
+                inputBuf.flip();
+                for(int i = 1; i < iterations; i++) {
+                    while(inputBuf.remaining() > 0) {
+                        int user = inputBuf.getInt();
+                        int item = inputBuf.getInt();
+                        double rating = inputBuf.getDouble();
+                        // invoke train
+                        count++;
+                        train(user, item, rating);
+                    }
+                    inputBuf.rewind();
+                }
+            } else {// read training examples in the temporary file and invoke train for each example
+
+                // write training examples in buffer to a temporary file
+                if(inputBuf.position() > 0) {
+                    writeBuffer(inputBuf, fileIO, lastWritePos);
+                } else if(lastWritePos == 0) {
+                    return; // no training example
+                }
+                try {
+                    fileIO.flush();
+                } catch (IOException e) {
+                    throw new HiveException("Failed to flush a file: "
+                            + fileIO.getFile().getAbsolutePath(), e);
+                }
+                final long numTrainingExamples = count;
+                if(logger.isInfoEnabled()) {
+                    File tmpFile = fileIO.getFile();
+                    logger.info("Wrote " + numTrainingExamples
+                            + " records to a temporary file for iterative training: "
+                            + tmpFile.getAbsolutePath() + " (" + FileUtils.prettyFileSize(tmpFile)
+                            + ")");
+                }
+
+                // run iterations
+                for(int i = 1; i < iterations; i++) {
+                    inputBuf.clear();
+                    long seekPos = 0L;
+                    while(true) {
+                        // writes training examples to a buffer in the temporary file
+                        final int bytesRead;
+                        try {
+                            bytesRead = fileIO.directRead(seekPos, inputBuf);
+                        } catch (IOException e) {
+                            throw new HiveException("Failed to read a file: "
+                                    + fileIO.getFile().getAbsolutePath(), e);
+                        }
+                        if(bytesRead == 0) { // reached file EOF
+                            break;
+                        }
+                        assert (bytesRead > 0) : bytesRead;
+                        seekPos += bytesRead;
+
+                        // reads training examples from a buffer
+                        inputBuf.flip();
+                        int remain = inputBuf.remaining();
+                        assert (remain > 0) : remain;
+                        for(; remain >= RECORD_BYTES; remain -= RECORD_BYTES) {
+                            int user = inputBuf.getInt();
+                            int item = inputBuf.getInt();
+                            double rating = inputBuf.getDouble();
+                            // invoke train
+                            count++;
+                            train(user, item, rating);
+                        }
+                        inputBuf.compact();
+                    }
+                }
+                logger.info("Performed " + iterations + " iterations of "
+                        + NumberUtils.formatNumber(numTrainingExamples)
+                        + " training examples (thus " + NumberUtils.formatNumber(count)
+                        + " training updates in total)");
+            }
+        } finally {
+            // delete the temporary file and release resources
+            try {
+                fileIO.close(true);
+            } catch (IOException e) {
+                throw new HiveException("Failed to close a file: "
+                        + fileIO.getFile().getAbsolutePath(), e);
+            }
+            this.inputBuf = null;
+            this.fileIO = null;
         }
     }
 
