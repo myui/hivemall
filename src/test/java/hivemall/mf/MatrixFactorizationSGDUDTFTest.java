@@ -27,6 +27,8 @@ import java.io.File;
 
 import junit.framework.Assert;
 
+import org.apache.hadoop.hive.ql.exec.MapredContext;
+import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.Collector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -174,6 +176,8 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
+        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        mf.configure(mrContext);
         mf.initialize(argOIs);
         Assert.assertTrue(mf.rankInit == RankInitScheme.random);
 
@@ -211,6 +215,8 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
+        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        mf.configure(mrContext);
         mf.initialize(argOIs);
         final MutableInt numCollected = new MutableInt(0);
         mf.setCollector(new Collector() {
@@ -254,6 +260,8 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
+        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        mf.configure(mrContext);
         mf.initialize(argOIs);
         final MutableInt numCollected = new MutableInt(0);
         mf.setCollector(new Collector() {
