@@ -63,3 +63,4 @@ public interface Segments extends Closeable {
     public void close(boolean deleteFile) throws IOException;
 
 }
+
