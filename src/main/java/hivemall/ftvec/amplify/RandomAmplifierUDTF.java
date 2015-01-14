@@ -50,7 +50,6 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
 
     @Override
     public void configure(MapredContext mapredContext) {
-        super.configure(mapredContext);
         JobConf jobconf = mapredContext.getJobConf();
         String seed = jobconf.get(HivemallConstants.CONFKEY_RAND_AMPLIFY_SEED);
         this.useSeed = (seed != null);
