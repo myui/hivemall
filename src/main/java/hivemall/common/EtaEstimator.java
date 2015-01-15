@@ -87,7 +87,7 @@ public abstract class EtaEstimator {
     @Nonnull
     public static EtaEstimator get(@Nullable CommandLine cl) throws UDFArgumentException {
         if(cl == null) {
-            return new InvscalingEtaEstimator(0.2f, 0.1f);
+            return new InvscalingEtaEstimator(0.1f, 0.1f);
         }
 
         String etaValue = cl.getOptionValue("eta");
@@ -96,7 +96,7 @@ public abstract class EtaEstimator {
             return new FixedEtaEstimator(eta);
         }
 
-        double eta0 = Double.parseDouble(cl.getOptionValue("eta0", "0.2"));
+        double eta0 = Double.parseDouble(cl.getOptionValue("eta0", "0.1"));
         if(cl.hasOption("t")) {
             long t = Long.parseLong(cl.getOptionValue("t"));
             return new SimpleEtaEstimator(eta0, t);
