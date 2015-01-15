@@ -78,6 +78,11 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     @Override
+    protected boolean isDenseModel() {
+        return true;
+    }
+
+    @Override
     public boolean hasCovariance() {
         return covars != null;
     }
@@ -196,7 +201,8 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         float weight = value.get();
         setWeight(i, weight);
         float covar = 1.f;
-        if(value.hasCovariance()) {
+        boolean hasCovar = value.hasCovariance();
+        if(hasCovar) {
             covar = value.getCovariance();
             setCovar(i, covar);
         }
@@ -219,7 +225,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
             deltaUpdates[i] = (byte) delta;
         }
 
-        onUpdate(i, weight, covar, clock, delta);
+        onUpdate(i, weight, covar, clock, delta, hasCovar);
     }
 
     @Override
@@ -264,7 +270,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
 
     @Override
     protected void _set(Object feature, float weight, short clock) {
-        int i = HiveUtils.parseInt(feature);
+        int i = ((Integer) feature).intValue();
         ensureCapacity(i);
         setWeight(i, weight);
         clocks[i] = clock;
@@ -274,7 +280,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
 
     @Override
     protected void _set(Object feature, float weight, float covar, short clock) {
-        int i = HiveUtils.parseInt(feature);
+        int i = ((Integer) feature).intValue();
         ensureCapacity(i);
         setWeight(i, weight);
         setCovar(i, covar);

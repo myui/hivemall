@@ -20,6 +20,7 @@
  */
 package hivemall.mix.store;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.GuardedBy;
 
 public final class PartialArgminKLD extends PartialResult {
@@ -48,9 +49,14 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     private void addWeight(float localWeight, float covar, float scale) {
-        assert (covar != 0.f);
         this.sum_mean_div_covar += (localWeight / covar) / scale;
         this.sum_inv_covar += (1.f / covar) / scale;
+    }
+
+    @Override
+    public void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
+        this.sum_mean_div_covar -= (localWeight / covar) / scale;
+        this.sum_inv_covar -= (1.f / covar) / scale;
     }
 
     @Override

@@ -46,6 +46,11 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
+    protected boolean isDenseModel() {
+        return false;
+    }
+
+    @Override
     public boolean hasCovariance() {
         return hasCovar;
     }
