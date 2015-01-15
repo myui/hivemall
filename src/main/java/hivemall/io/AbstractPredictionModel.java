@@ -24,7 +24,7 @@ import hivemall.mix.MixedWeight;
 import hivemall.mix.MixedWeight.WeightWithCovar;
 import hivemall.mix.MixedWeight.WeightWithDelta;
 import hivemall.utils.collections.IntOpenHashMap;
-import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
@@ -33,12 +33,14 @@ public abstract class AbstractPredictionModel implements PredictionModel {
 
     protected ModelUpdateHandler handler;
     protected int numMixed;
+    private boolean cancelMixRequest;
 
     private IntOpenHashMap<MixedWeight> mixedRequests_i;
-    private OpenHashMap<Object, MixedWeight> mixedRequests_o;
+    private OpenHashTable<Object, MixedWeight> mixedRequests_o;
 
     public AbstractPredictionModel() {
         this.numMixed = 0;
+        this.cancelMixRequest = false;
     }
 
     protected abstract boolean isDenseModel();
@@ -49,12 +51,15 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     @Override
-    public void setUpdateHandler(ModelUpdateHandler handler) {
+    public void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest) {
         this.handler = handler;
-        if(isDenseModel()) {
-            this.mixedRequests_i = new IntOpenHashMap<MixedWeight>(16384);
-        } else {
-            this.mixedRequests_o = new OpenHashMap<Object, MixedWeight>(16384);
+        this.cancelMixRequest = cancelMixRequest;
+        if(cancelMixRequest) {
+            if(isDenseModel()) {
+                this.mixedRequests_i = new IntOpenHashMap<MixedWeight>(327680);
+            } else {
+                this.mixedRequests_o = new OpenHashTable<Object, MixedWeight>(327680);
+            }
         }
     }
 
@@ -80,33 +85,35 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                 throw new RuntimeException(e);
             }
             if(requestSent) {
-                if(hasCovar) {
-                    MixedWeight prevMixed = mixedRequests_i.get(feature);
-                    if(prevMixed == null) {
-                        prevMixed = new WeightWithCovar(weight, covar);
-                        mixedRequests_i.put(feature, prevMixed);
-                    } else {
-                        try {
-                            handler.sendCancelRequest(feature, prevMixed);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                if(cancelMixRequest) {
+                    if(hasCovar) {
+                        MixedWeight prevMixed = mixedRequests_i.get(feature);
+                        if(prevMixed == null) {
+                            prevMixed = new WeightWithCovar(weight, covar);
+                            mixedRequests_i.put(feature, prevMixed);
+                        } else {
+                            try {
+                                handler.sendCancelRequest(feature, prevMixed);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                            prevMixed.setWeight(weight);
+                            prevMixed.setCovar(covar);
                         }
-                        prevMixed.setWeight(weight);
-                        prevMixed.setCovar(covar);
-                    }
-                } else {
-                    MixedWeight prevMixed = mixedRequests_i.get(feature);
-                    if(prevMixed == null) {
-                        prevMixed = new WeightWithDelta(weight, deltaUpdates);
-                        mixedRequests_i.put(feature, prevMixed);
                     } else {
-                        try {
-                            handler.sendCancelRequest(feature, prevMixed);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                        MixedWeight prevMixed = mixedRequests_i.get(feature);
+                        if(prevMixed == null) {
+                            prevMixed = new WeightWithDelta(weight, deltaUpdates);
+                            mixedRequests_i.put(feature, prevMixed);
+                        } else {
+                            try {
+                                handler.sendCancelRequest(feature, prevMixed);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                            prevMixed.setWeight(weight);
+                            prevMixed.setDeltaUpdates(deltaUpdates);
                         }
-                        prevMixed.setWeight(weight);
-                        prevMixed.setDeltaUpdates(deltaUpdates);
                     }
                 }
                 resetDeltaUpdates(feature);
@@ -131,18 +138,20 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                     throw new RuntimeException(e);
                 }
                 if(requestSent) {
-                    MixedWeight prevMixed = mixedRequests_o.get(feature);
-                    if(prevMixed == null) {
-                        prevMixed = new WeightWithCovar(weight, covar);
-                        mixedRequests_o.put(feature, prevMixed);
-                    } else {
-                        try {
-                            handler.sendCancelRequest(feature, prevMixed);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                    if(cancelMixRequest) {
+                        MixedWeight prevMixed = mixedRequests_o.get(feature);
+                        if(prevMixed == null) {
+                            prevMixed = new WeightWithCovar(weight, covar);
+                            mixedRequests_o.put(feature, prevMixed);
+                        } else {
+                            try {
+                                handler.sendCancelRequest(feature, prevMixed);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                            prevMixed.setWeight(weight);
+                            prevMixed.setCovar(covar);
                         }
-                        prevMixed.setWeight(weight);
-                        prevMixed.setCovar(covar);
                     }
                     value.setDeltaUpdates(BYTE0);
                 }
@@ -153,18 +162,20 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                     throw new RuntimeException(e);
                 }
                 if(requestSent) {
-                    MixedWeight prevMixed = mixedRequests_o.get(feature);
-                    if(prevMixed == null) {
-                        prevMixed = new WeightWithDelta(weight, deltaUpdates);
-                        mixedRequests_o.put(feature, prevMixed);
-                    } else {
-                        try {
-                            handler.sendCancelRequest(feature, prevMixed);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                    if(cancelMixRequest) {
+                        MixedWeight prevMixed = mixedRequests_o.get(feature);
+                        if(prevMixed == null) {
+                            prevMixed = new WeightWithDelta(weight, deltaUpdates);
+                            mixedRequests_o.put(feature, prevMixed);
+                        } else {
+                            try {
+                                handler.sendCancelRequest(feature, prevMixed);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                            prevMixed.setWeight(weight);
+                            prevMixed.setDeltaUpdates(deltaUpdates);
                         }
-                        prevMixed.setWeight(weight);
-                        prevMixed.setDeltaUpdates(deltaUpdates);
                     }
                     value.setDeltaUpdates(BYTE0);
                 }
