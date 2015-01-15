@@ -62,8 +62,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     private static final Log logger = LogFactory.getLog(OnlineMatrixFactorizationUDTF.class);
     private static final int RECORD_BYTES = (Integer.SIZE + Integer.SIZE + Double.SIZE) / 8;
 
-    protected MapredContext mapredContext;
-
+    // Option variables
     /** The number of latent factors */
     protected int factor;
     /** The regularization factor */
@@ -74,25 +73,35 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected boolean updateMeanRating;
     /** The number of iterations */
     protected int iterations;
+    /** Whether to check conversion */
+    protected boolean conversionCheck;
+    /** Threshold to determine convergence */
+    protected double convergenceRate;
+
+    /** Initialization strategy of rank matrix */
+    protected RankInitScheme rankInit;
+
+    // Model itself
+    protected FactorizedModel model;
+
+    // Variable managing status of learning
+    /** The number of processed training examples */
+    protected long count;
+    /** The cumulative errors in the training */
+    protected double totalErrors;
+    /** The cumulative losses in an iteration */
+    protected double currLosses, prevLosses;
+
+    // Input OIs and Context
+    protected IntObjectInspector userOI;
+    protected IntObjectInspector itemOI;
+    protected PrimitiveObjectInspector ratingOI;
+    protected MapredContext mapredContext;
 
     // Used for iterations
     protected Segments fileIO;
     protected ByteBuffer inputBuf;
     private long lastWritePos;
-
-    /** Initialization strategy of rank matrix */
-    protected RankInitScheme rankInit;
-
-    protected FactorizedModel model;
-
-    /** The number of processed training examples */
-    protected long count;
-    /** The cumulative errors in the training */
-    protected double errors;
-
-    protected IntObjectInspector userOI;
-    protected IntObjectInspector itemOI;
-    protected PrimitiveObjectInspector ratingOI;
 
     private float[] userProbe, itemProbe;
 
@@ -103,6 +112,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         this.meanRating = 0.f;
         this.updateMeanRating = false;
         this.iterations = 1;
+        this.conversionCheck = true;
+        this.convergenceRate = 0.01d;
     }
 
     @Override
@@ -116,6 +127,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the rank matrix [default: 1.0]");
         opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial rank matrix [default: 0.1]");
         opts.addOption("iter", "iterations", true, "The number of iterations [default: 1]");
+        opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: enabled]");
+        opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.01]");
         return opts;
     }
 
@@ -140,6 +153,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 throw new UDFArgumentException("'-iterations' must be greater than or equals to 1: "
                         + iterations);
             }
+            this.conversionCheck = !cl.hasOption("disable_cvtest");
+            this.convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), 0.01d);
         }
         this.rankInit = RankInitScheme.resolve(rankInitOpt);
         rankInit.setMaxInitValue(maxInitValue);
@@ -149,7 +164,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     }
 
     @Override
-    public void configure(MapredContext mapredContext) {
+    public final void configure(MapredContext mapredContext) {
         this.mapredContext = mapredContext;
     }
 
@@ -185,7 +200,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
         this.count = 0L;
-        this.errors = 0.d;
+        this.totalErrors = 0.d;
+        this.currLosses = 0.d;
+        this.prevLosses = Double.POSITIVE_INFINITY;
         this.lastWritePos = 0L;
         this.userProbe = new float[factor];
         this.itemProbe = new float[factor];
@@ -218,7 +235,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     }
 
     @Override
-    public void process(Object[] args) throws HiveException {
+    public final void process(Object[] args) throws HiveException {
         assert (args.length >= 3) : args.length;
 
         int user = userOI.get(args[0]);
@@ -261,7 +278,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         final float[] itemProbe = copyToItemProbe(items);
 
         final double err = rating - predict(user, item, userProbe, itemProbe);
-        this.errors += Math.abs(err);
+        this.totalErrors += Math.abs(err);
+        this.currLosses += err * err;
 
         final float eta = eta();
         for(int k = 0, size = factor; k < size; k++) {
@@ -278,7 +296,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         onUpdate(user, item, users, items, err);
     }
 
-    private void beforeTrain(final long rowNum, final int user, final int item, final double rating)
+    protected void beforeTrain(final long rowNum, final int user, final int item, final double rating)
             throws HiveException {
         if(inputBuf != null) {
             assert (fileIO != null);
@@ -292,18 +310,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             buf.putInt(item);
             buf.putDouble(rating);
         }
-    }
-
-    private static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final Segments dst, final long lastWritePos)
-            throws HiveException {
-        // TODO asynchronous write in the background
-        srcBuf.flip();
-        try {
-            dst.write(lastWritePos, srcBuf);
-        } catch (IOException e) {
-            throw new HiveException("Exception causes while writing records to : " + lastWritePos, e);
-        }
-        srcBuf.clear();
     }
 
     protected void onUpdate(final int user, final int item, final Rating[] users, final Rating[] items, final double err)
@@ -345,12 +351,14 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         double grad = err * Pu - lambda * Qi;
         float newQi = Qi + (float) (eta * grad);
         rating.setWeight(newQi);
+        this.currLosses += lambda * Qi * Qi;
     }
 
     protected void updateUserRating(final Rating rating, final float Pu, final float Qi, final double err, final float eta) {
         double grad = err * Qi - lambda * Pu;
         float newPu = Pu + (float) (eta * grad);
         rating.setWeight(newPu);
+        this.currLosses += lambda * Pu * Pu;
     }
 
     protected void updateMeanRating(final double err, final float eta) {
@@ -365,11 +373,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         double Gu = err - lambda * Bu;
         Bu += eta * Gu;
         model.setUserBias(user, Bu);
+        this.currLosses += lambda * Bu * Bu;
 
         float Bi = model.getItemBias(item);
         double Gi = err - lambda * Bi;
         Bi += eta * Gi;
         model.setItemBias(item, Bi);
+        this.currLosses += lambda * Bi * Bi;
     }
 
     @Override
@@ -418,12 +428,28 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 numForwarded++;
             }
             this.model = null; // help GC
-            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
+            logger.info("Forwarded the prediction model of " + numForwarded
+                    + " rows. [totalErrors=" + totalErrors + ", lastLosses=" + currLosses
+                    + ", #trainingExamples=" + count + "]");
         }
+    }
+
+    protected static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final Segments dst, final long lastWritePos)
+            throws HiveException {
+        // TODO asynchronous write in the background
+        srcBuf.flip();
+        try {
+            dst.write(lastWritePos, srcBuf);
+        } catch (IOException e) {
+            throw new HiveException("Exception causes while writing records to : " + lastWritePos, e);
+        }
+        srcBuf.clear();
     }
 
     protected final void runIterativeTraining(@Nonnegative final int iterations)
             throws HiveException {
+        final ByteBuffer inputBuf = this.inputBuf;
+        final Segments fileIO = this.fileIO;
         assert (inputBuf != null);
         assert (fileIO != null);
 
@@ -469,9 +495,15 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
                 // run iterations
                 for(int i = 1; i < iterations; i++) {
+                    this.currLosses /= 2.0d;
+                    if(conversionCheck && isConverged(i + 1)) {
+                        break;
+                    }
+
                     inputBuf.clear();
                     long seekPos = 0L;
                     while(true) {
+                        // TODO prefetch
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;
                         try {
@@ -517,6 +549,31 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             this.inputBuf = null;
             this.fileIO = null;
         }
+    }
+
+    private boolean isConverged(final int iter) {
+        assert conversionCheck;
+        if(currLosses > prevLosses) {//sanity check
+            return false;
+        }
+
+        final double changeRate = (prevLosses - currLosses) / prevLosses;
+        if(changeRate < convergenceRate) {
+            // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
+            logger.info("Training converged at " + iter + "-th iteration. [curLosses=" + currLosses
+                    + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate + "]");
+            return true;
+        } else {
+            if(logger.isDebugEnabled()) {
+                logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
+                        + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
+                        + count + "]");
+            }
+        }
+
+        this.prevLosses = currLosses;
+        this.currLosses = 0.d;
+        return false;
     }
 
     private static void copyTo(@Nonnull final Rating[] rating, @Nonnull final FloatWritable[] dst) {

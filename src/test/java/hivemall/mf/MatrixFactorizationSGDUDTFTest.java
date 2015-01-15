@@ -250,14 +250,62 @@ public class MatrixFactorizationSGDUDTFTest {
     }
 
     @Test
-    public void testIterationsCloseWithFile() throws HiveException {
-        println("--------------------------\n testIterationsCloseWithFile()");
+    public void testFileBackedIterationsCloseWithConverge() throws HiveException {
+        println("--------------------------\n testFileBackedIterationsCloseWithConverge()");
         OnlineMatrixFactorizationUDTF mf = new MatrixFactorizationSGDUDTF();
 
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector floatOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
-        int iters = 3;
+        int iters = 10;
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
+                + iters));
+        ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
+        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        mf.configure(mrContext);
+        mf.initialize(argOIs);
+        final MutableInt numCollected = new MutableInt(0);
+        mf.setCollector(new Collector() {
+            @Override
+            public void collect(Object input) throws HiveException {
+                numCollected.addValue(1);
+            }
+        });
+        Assert.assertTrue(mf.rankInit == RankInitScheme.random);
+
+        float[][] rating = { { 5, 3, 0, 1 }, { 4, 0, 0, 1 }, { 1, 1, 0, 5 }, { 1, 0, 0, 4 },
+                { 0, 1, 5, 4 } };
+        Object[] args = new Object[3];
+
+        final int num_iters = 500;
+        int trainingExamples = 0;
+        for(int iter = 0; iter < num_iters; iter++) {
+            for(int row = 0; row < rating.length; row++) {
+                for(int col = 0, size = rating[row].length; col < size; col++) {
+                    args[0] = row;
+                    args[1] = col;
+                    args[2] = (float) rating[row][col];
+                    mf.process(args);
+                    trainingExamples++;
+                }
+            }
+        }
+
+        File tmpFile = mf.fileIO.getFile();
+        mf.close();
+        Assert.assertTrue(mf.count < trainingExamples * iters);
+        Assert.assertEquals(5, numCollected.intValue());
+        Assert.assertFalse(tmpFile.exists());
+    }
+
+    @Test
+    public void testFileBackedIterationsCloseNoConverge() throws HiveException {
+        println("--------------------------\n testFileBackedIterationsCloseNoConverge()");
+        OnlineMatrixFactorizationUDTF mf = new MatrixFactorizationSGDUDTF();
+
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ObjectInspector floatOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        int iters = 5;
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-disable_cv -factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
         MapredContext mrContext = MapredContextAccessor.create(true, null);
