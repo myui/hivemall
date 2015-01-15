@@ -47,8 +47,6 @@ public final class MixClientInitializer extends ChannelInitializer<SocketChannel
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
 
-        //ObjectEncoder encoder = new ObjectEncoder();
-        //ObjectDecoder decoder = new ObjectDecoder(ClassResolvers.cacheDisabled(null));
         MixMessageEncoder encoder = new MixMessageEncoder();
         MixMessageDecoder decoder = new MixMessageDecoder();
         pipeline.addLast(encoder, decoder, responseHandler);

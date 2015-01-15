@@ -33,16 +33,25 @@ public final class MixMessage implements Externalizable {
     private float covariance;
     private short clock;
     private int deltaUpdates;
+    private boolean cancelRequest;
 
     private String groupID;
 
     public MixMessage() {} // for Externalizable
 
     public MixMessage(MixEventName event, Object feature, float weight, short clock, int deltaUpdates) {
-        this(event, feature, weight, 0.f, clock, deltaUpdates);
+        this(event, feature, weight, 0.f, clock, deltaUpdates, false);
     }
 
     public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates) {
+        this(event, feature, weight, covariance, clock, deltaUpdates, false);
+    }
+
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance, int deltaUpdates, boolean cancelRequest) {
+        this(event, feature, weight, covariance, (short) 0 /* dummy clock */, deltaUpdates, cancelRequest);
+    }
+
+    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates, boolean cancelRequest) {
         if(feature == null) {
             throw new IllegalArgumentException("feature is null");
         }
@@ -55,6 +64,7 @@ public final class MixMessage implements Externalizable {
         this.covariance = covariance;
         this.clock = clock;
         this.deltaUpdates = deltaUpdates;
+        this.cancelRequest = cancelRequest;
     }
 
     public enum MixEventName {
@@ -114,6 +124,10 @@ public final class MixMessage implements Externalizable {
         this.groupID = groupID;
     }
 
+    public boolean isCancelRequest() {
+        return cancelRequest;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeByte(event.getID());
@@ -122,6 +136,7 @@ public final class MixMessage implements Externalizable {
         out.writeFloat(covariance);
         out.writeShort(clock);
         out.writeInt(deltaUpdates);
+        out.writeBoolean(cancelRequest);
         if(groupID == null) {
             out.writeBoolean(false);
         } else {
@@ -139,6 +154,7 @@ public final class MixMessage implements Externalizable {
         this.covariance = in.readFloat();
         this.clock = in.readShort();
         this.deltaUpdates = in.readInt();
+        this.cancelRequest = in.readBoolean();
         boolean hasGroupID = in.readBoolean();
         if(hasGroupID) {
             this.groupID = in.readUTF();
@@ -147,9 +163,9 @@ public final class MixMessage implements Externalizable {
 
     @Override
     public String toString() {
-        return "MixMessage [event=" + event + ", groupID=" + groupID + ", feature=" + feature
-                + ", weight=" + weight + ", covariance=" + covariance + ", clock=" + clock
-                + ", deltaUpdates=" + deltaUpdates + "]";
+        return "MixMessage [event=" + event + ", feature=" + feature + ", weight=" + weight
+                + ", covariance=" + covariance + ", clock=" + clock + ", deltaUpdates="
+                + deltaUpdates + ", cancel=" + cancelRequest + ", groupID=" + groupID + "]";
     }
 
 }

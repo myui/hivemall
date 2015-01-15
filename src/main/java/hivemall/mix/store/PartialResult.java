@@ -48,6 +48,8 @@ public abstract class PartialResult {
 
     public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale);
 
+    public abstract void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
+
     public abstract float getWeight(float scale);
 
     public abstract float getCovariance(float scale);

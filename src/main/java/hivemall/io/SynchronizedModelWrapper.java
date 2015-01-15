@@ -30,8 +30,8 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public void setUpdateHandler(ModelUpdateHandler handler) {
-        model.setUpdateHandler(handler);
+    public void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest) {
+        model.configureMix(handler, cancelMixRequest);
     }
 
     @Override

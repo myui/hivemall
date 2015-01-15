@@ -47,10 +47,18 @@ public final class PartialAverage extends PartialResult {
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, int deltaUpdates, float scale) {
+    private void addWeight(float localWeight, int deltaUpdates, float scale) {
         assert (deltaUpdates > 0) : deltaUpdates;
         scaledSumWeights += ((localWeight / scale) * deltaUpdates);
         totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
+        assert (totalUpdates > 0) : totalUpdates;
+    }
+
+    @Override
+    public void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
+        assert (deltaUpdates > 0) : deltaUpdates;
+        scaledSumWeights -= ((localWeight / scale) * deltaUpdates);
+        totalUpdates -= deltaUpdates; // note deltaUpdates is in range (0,127]
         assert (totalUpdates > 0) : totalUpdates;
     }
 

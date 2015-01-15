@@ -20,6 +20,10 @@
  */
 package hivemall.io;
 
+import hivemall.mix.MixedWeight;
+
+import javax.annotation.Nonnull;
+
 public interface ModelUpdateHandler {
 
     /**
@@ -30,7 +34,9 @@ public interface ModelUpdateHandler {
      * @param deltaUpdates 
      * @return reset the deltaUpdates?
      */
-    boolean onUpdate(Object feature, float weight, float covar, short clock, int deltaUpdates)
+    boolean onUpdate(@Nonnull Object feature, float weight, float covar, short clock, int deltaUpdates)
             throws Exception;
+
+    void sendCancelRequest(@Nonnull Object feature, @Nonnull MixedWeight mixed) throws Exception;
 
 }
