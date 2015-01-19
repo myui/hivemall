@@ -129,9 +129,9 @@ public abstract class AbstractPredictionModel implements PredictionModel {
             final float weight = value.get();
             final short clock = value.getClock();
             final int deltaUpdates = value.getDeltaUpdates();
-            final boolean requestSent;
             if(value.hasCovariance()) {
                 final float covar = value.getCovariance();
+                final boolean requestSent;
                 try {
                     requestSent = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
                 } catch (Exception e) {
@@ -156,6 +156,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                     value.setDeltaUpdates(BYTE0);
                 }
             } else {
+                final boolean requestSent;
                 try {
                     requestSent = handler.onUpdate(feature, weight, 1.f, clock, deltaUpdates);
                 } catch (Exception e) {

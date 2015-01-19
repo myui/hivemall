@@ -69,6 +69,9 @@ public final class MixMessageEncoder extends MessageToByteEncoder<MixMessage> {
         int deltaUpdates = msg.getDeltaUpdates();
         out.writeInt(deltaUpdates);
 
+        boolean cancelRequest = msg.isCancelRequest();
+        out.writeBoolean(cancelRequest);
+
         String groupId = msg.getGroupID();
         writeString(groupId, out);
 
