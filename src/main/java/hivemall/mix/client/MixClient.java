@@ -145,9 +145,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     @Override
     public void sendCancelRequest(@Nonnull Object feature, @Nonnull MixedWeight mixed)
             throws Exception {
-        if(!initialized) {
-            throw new IllegalStateException("Initilize() is not called");
-        }
+        assert (initialized);
 
         float weight = mixed.getWeight();
         float covar = mixed.getCovar();
