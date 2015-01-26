@@ -2,7 +2,6 @@
 <project basedir="." default="package" name="hivemall">
 
 	<property file="build.properties" />
-	<property name="dist.dir" value="target/${project.groupId}-${project.version}" />
 
 	<path id="classpath">
 		<fileset dir="lib/">
@@ -100,18 +99,14 @@
 		</jar>
 	</target>
 
-	<target name="assemble" description="making package" depends="jar-with-dependencies">
-		<mkdir dir="${dist.dir}"/>
-		<copy todir="${dist.dir}">
-			<file file="${target.dir}/hivemall-with-dependencies.jar" />
-		</copy>
-		<copy todir="${dist.dir}">
-			<file file="scripts/ddl/define-all.hive" />
-		</copy>
-		<tar destfile="${dist.dir}.tar.gz"
-			 basedir="${dist.dir}"
-			 includes="*"
-			 compression="gzip" />
+	<target name="assemble" description="making package" depends="jar,jar-with-dependencies,jar-fat">
+		<property name="tarname" value="${project.groupId}-${project.version}" />
+		<delete failonerror="true" file="${target.dir}/${tarname}.tar.gz" />
+		<tar destfile="${target.dir}/${tarname}.tar.gz" compression="gzip">
+			<tarfileset dir="${target.dir}" prefix="${tarname}" includes="hivemall-fat.jar,hivemall-with-dependencies.jar" />
+			<tarfileset dir="scripts/ddl/" prefix="${tarname}" includes="define-all.hive,define-all-as-permanent.hive" />
+			<tarfileset dir="bin/" mode="755" prefix="${tarname}" includes="*.sh" />
+		</tar>
 	</target>
 
 	<target name="javadoc" depends="compile">
