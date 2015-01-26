@@ -2,6 +2,7 @@
 <project basedir="." default="package" name="hivemall">
 
 	<property file="build.properties" />
+	<property name="dist.dir" value="target/${project.groupId}-${project.version}" />
 
 	<path id="classpath">
 		<fileset dir="lib/">
@@ -46,7 +47,7 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
-	<target name="package" depends="jar,jar-with-dependencies,jar-fat">
+	<target name="package" depends="jar,jar-with-dependencies,jar-fat,assemble">
 		<delete failonerror="true" dir="${build.dir}" />
 	</target>
 
@@ -97,6 +98,20 @@
 			<zipfileset src="lib/jsr305-1.3.9.jar" excludes="META-INF/*,**/*.java" />
 			<zipfileset src="lib/optional/guava-r09-jarjar.jar" excludes="META-INF/*,**/*.java" />
 		</jar>
+	</target>
+
+	<target name="assemble" description="making package" depends="jar-with-dependencies">
+		<mkdir dir="${dist.dir}"/>
+		<copy todir="${dist.dir}">
+			<file file="${target.dir}/hivemall-with-dependencies.jar" />
+		</copy>
+		<copy todir="${dist.dir}">
+			<file file="scripts/ddl/define-all.hive" />
+		</copy>
+		<tar destfile="${dist.dir}.tar.gz"
+			 basedir="${dist.dir}"
+			 includes="*"
+			 compression="gzip" />
 	</target>
 
 	<target name="javadoc" depends="compile">
