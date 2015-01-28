@@ -31,10 +31,9 @@ public interface ModelUpdateHandler {
      * @param weight
      * @param covar 1.0 by the default
      * @param clock 0 by the default
-     * @param deltaUpdates 
-     * @return reset the deltaUpdates?
+     * @param generation 
      */
-    boolean onUpdate(@Nonnull Object feature, float weight, float covar, short clock, int deltaUpdates)
+    void sendRequest(@Nonnull Object feature, float weight, float covar, short clock, int generation)
             throws Exception;
 
     void sendCancelRequest(@Nonnull Object feature, @Nonnull MixedWeight mixed) throws Exception;

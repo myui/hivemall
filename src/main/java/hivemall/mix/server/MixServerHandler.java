@@ -122,7 +122,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final float weight = requestMsg.getWeight();
         final float covar = requestMsg.getCovariance();
         final short clock = requestMsg.getClock();
-        final int deltaUpdates = requestMsg.getDeltaUpdates();
+        final int generation = requestMsg.getGeneration();
         final boolean cancelRequest = requestMsg.isCancelRequest();
 
         MixMessage responseMsg = null;
@@ -130,16 +130,16 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             partial.lock();
 
             if(cancelRequest) {
-                partial.subtract(weight, covar, deltaUpdates, scale);
+                partial.subtract(weight, covar, generation, scale);
             } else {
                 int diffClock = partial.diffClock(clock);
-                partial.add(weight, covar, clock, deltaUpdates, scale);
+                partial.add(weight, covar, clock, generation, scale);
 
                 if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
                     float averagedWeight = partial.getWeight(scale);
                     float meanCovar = partial.getCovariance(scale);
                     short totalClock = partial.getClock();
-                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, totalClock, 0 /* deltaUpdates */);
+                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, totalClock, 1 /* dummy generation */);
                 }
             }
 

@@ -30,7 +30,7 @@ public interface PredictionModel extends MixedModel {
 
     ModelUpdateHandler getUpdateHandler();
 
-    void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest);
+    void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest, int mixThreshold);
 
     int getNumMixed();
 

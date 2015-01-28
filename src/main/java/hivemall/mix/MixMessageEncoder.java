@@ -66,8 +66,8 @@ public final class MixMessageEncoder extends MessageToByteEncoder<MixMessage> {
         short clock = msg.getClock();
         out.writeShort(clock);
 
-        int deltaUpdates = msg.getDeltaUpdates();
-        out.writeInt(deltaUpdates);
+        int generation = msg.getGeneration();
+        out.writeInt(generation);
 
         boolean cancelRequest = msg.isCancelRequest();
         out.writeBoolean(cancelRequest);

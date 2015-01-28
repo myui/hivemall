@@ -22,7 +22,6 @@ package hivemall.io;
 
 import hivemall.mix.MixedWeight;
 import hivemall.mix.MixedWeight.WeightWithCovar;
-import hivemall.mix.MixedWeight.WeightWithDelta;
 import hivemall.utils.collections.IntOpenHashMap;
 import hivemall.utils.collections.OpenHashMap;
 
@@ -34,13 +33,13 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     protected ModelUpdateHandler handler;
     protected int numMixed;
     private boolean cancelMixRequest;
+    private int mixThreshold;
 
     private IntOpenHashMap<MixedWeight> mixedRequests_i;
     private OpenHashMap<Object, MixedWeight> mixedRequests_o;
 
     public AbstractPredictionModel() {
         this.numMixed = 0;
-        this.cancelMixRequest = false;
     }
 
     protected abstract boolean isDenseModel();
@@ -51,9 +50,10 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     @Override
-    public void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest) {
+    public void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest, int mixThreshold) {
         this.handler = handler;
         this.cancelMixRequest = cancelMixRequest;
+        this.mixThreshold = mixThreshold;
         if(cancelMixRequest) {
             if(isDenseModel()) {
                 this.mixedRequests_i = new IntOpenHashMap<MixedWeight>(327680);
@@ -75,49 +75,16 @@ public abstract class AbstractPredictionModel implements PredictionModel {
 
     protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates, final boolean hasCovar) {
         if(handler != null) {
-            if(deltaUpdates < 1) {
+            if(deltaUpdates < mixThreshold) {
                 return;
             }
-            final boolean requestSent;
+            final int generation = cancelMixRequest(feature, weight, covar, clock, deltaUpdates, hasCovar);
             try {
-                requestSent = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
+                handler.sendRequest(feature, weight, covar, clock, generation);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            if(requestSent) {
-                if(cancelMixRequest) {
-                    if(hasCovar) {
-                        MixedWeight prevMixed = mixedRequests_i.get(feature);
-                        if(prevMixed == null) {
-                            prevMixed = new WeightWithCovar(weight, covar);
-                            mixedRequests_i.put(feature, prevMixed);
-                        } else {
-                            try {
-                                handler.sendCancelRequest(feature, prevMixed);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            prevMixed.setWeight(weight);
-                            prevMixed.setCovar(covar);
-                        }
-                    } else {
-                        MixedWeight prevMixed = mixedRequests_i.get(feature);
-                        if(prevMixed == null) {
-                            prevMixed = new WeightWithDelta(weight, deltaUpdates);
-                            mixedRequests_i.put(feature, prevMixed);
-                        } else {
-                            try {
-                                handler.sendCancelRequest(feature, prevMixed);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            prevMixed.setWeight(weight);
-                            prevMixed.setDeltaUpdates(deltaUpdates);
-                        }
-                    }
-                }
-                resetDeltaUpdates(feature);
-            }
+            resetDeltaUpdates(feature);
         }
     }
 
@@ -126,62 +93,101 @@ public abstract class AbstractPredictionModel implements PredictionModel {
             if(!value.isTouched()) {
                 return;
             }
-            final float weight = value.get();
-            final short clock = value.getClock();
             final int deltaUpdates = value.getDeltaUpdates();
-            if(value.hasCovariance()) {
-                final float covar = value.getCovariance();
-                final boolean requestSent;
-                try {
-                    requestSent = handler.onUpdate(feature, weight, covar, clock, deltaUpdates);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                if(requestSent) {
-                    if(cancelMixRequest) {
-                        MixedWeight prevMixed = mixedRequests_o.get(feature);
-                        if(prevMixed == null) {
-                            prevMixed = new WeightWithCovar(weight, covar);
-                            mixedRequests_o.put(feature, prevMixed);
-                        } else {
-                            try {
-                                handler.sendCancelRequest(feature, prevMixed);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            prevMixed.setWeight(weight);
-                            prevMixed.setCovar(covar);
-                        }
-                    }
-                    value.setDeltaUpdates(BYTE0);
-                }
+            if(deltaUpdates < mixThreshold) {
+                return;
+            }
+            final float weight = value.get();
+            final boolean hasCovar = value.hasCovariance();
+            final float covar = hasCovar ? value.getCovariance() : 1.f;
+            final short clock = value.getClock();
+
+            final int generation = cancelMixRequest(feature, weight, covar, clock, deltaUpdates, hasCovar);
+            try {
+                handler.sendRequest(feature, weight, covar, clock, generation);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            value.setDeltaUpdates(BYTE0);
+        }
+    }
+
+    private int cancelMixRequest(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates, final boolean hasCovar) {
+        if(!cancelMixRequest) {
+            return 1;
+        }
+
+        MixedWeight prevMixed;
+        if(hasCovar) {
+            prevMixed = mixedRequests_i.get(feature);
+            if(prevMixed == null) {
+                prevMixed = new WeightWithCovar(weight, covar);
+                mixedRequests_i.put(feature, prevMixed);
             } else {
-                final boolean requestSent;
                 try {
-                    requestSent = handler.onUpdate(feature, weight, 1.f, clock, deltaUpdates);
+                    handler.sendCancelRequest(feature, prevMixed);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                if(requestSent) {
-                    if(cancelMixRequest) {
-                        MixedWeight prevMixed = mixedRequests_o.get(feature);
-                        if(prevMixed == null) {
-                            prevMixed = new WeightWithDelta(weight, deltaUpdates);
-                            mixedRequests_o.put(feature, prevMixed);
-                        } else {
-                            try {
-                                handler.sendCancelRequest(feature, prevMixed);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            prevMixed.setWeight(weight);
-                            prevMixed.setDeltaUpdates(deltaUpdates);
-                        }
-                    }
-                    value.setDeltaUpdates(BYTE0);
+                prevMixed.setWeight(weight);
+                prevMixed.setCovar(covar);
+                prevMixed.incrGeneration();
+            }
+        } else {
+            prevMixed = mixedRequests_i.get(feature);
+            if(prevMixed == null) {
+                prevMixed = new MixedWeight(weight);
+                mixedRequests_i.put(feature, prevMixed);
+            } else {
+                try {
+                    handler.sendCancelRequest(feature, prevMixed);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
+                prevMixed.setWeight(weight);
+                prevMixed.incrGeneration();
             }
         }
+        return prevMixed.getGeneration();
+    }
+
+    private int cancelMixRequest(final Object feature, final float weight, final float covar, final short clock, final int deltaUpdates, final boolean hasCovar) {
+        if(!cancelMixRequest) {
+            return 1;
+        }
+
+        MixedWeight prevMixed;
+        if(hasCovar) {
+            prevMixed = mixedRequests_o.get(feature);
+            if(prevMixed == null) {
+                prevMixed = new WeightWithCovar(weight, covar);
+                mixedRequests_o.put(feature, prevMixed);
+            } else {
+                try {
+                    handler.sendCancelRequest(feature, prevMixed);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                prevMixed.setWeight(weight);
+                prevMixed.setCovar(covar);
+                prevMixed.incrGeneration();
+            }
+        } else {
+            prevMixed = mixedRequests_o.get(feature);
+            if(prevMixed == null) {
+                prevMixed = new MixedWeight(weight);
+                mixedRequests_o.put(feature, prevMixed);
+            } else {
+                try {
+                    handler.sendCancelRequest(feature, prevMixed);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                prevMixed.setWeight(weight);
+                prevMixed.incrGeneration();
+            }
+        }
+        return prevMixed.getGeneration();
     }
 
     @Override

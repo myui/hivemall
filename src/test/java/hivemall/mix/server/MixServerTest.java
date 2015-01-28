@@ -59,8 +59,8 @@ public class MixServerTest {
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:" + port, false, 2, model);
-            model.configureMix(client, false);
+            client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:" + port, false, model);
+            model.configureMix(client, false, 2);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -96,8 +96,8 @@ public class MixServerTest {
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, "testSSL", "localhost:" + port, true, 2, model);
-            model.configureMix(client, false);
+            client = new MixClient(MixEventName.average, "testSSL", "localhost:" + port, true, model);
+            model.configureMix(client, false, 2);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -153,8 +153,8 @@ public class MixServerTest {
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 2, model);
-            model.configureMix(client, false);
+            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, model);
+            model.configureMix(client, false, 2);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -297,8 +297,8 @@ public class MixServerTest {
         model.configureClock();
         MixClient client = null;
         try {
-            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
-            model.configureMix(client, cancelMix);
+            client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, model);
+            model.configureMix(client, cancelMix, 3);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 1000000; i++) {

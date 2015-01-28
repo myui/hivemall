@@ -42,8 +42,8 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock, int deltaUpdates, float scale) {
-        assert (deltaUpdates > 0) : deltaUpdates;
+    public void add(float localWeight, float covar, short clock, int generation, float scale) {
+        assert (generation >= 1) : generation;
         addWeight(localWeight, covar, scale);
         incrClock(clock);
     }
@@ -54,14 +54,14 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     @Override
-    public void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
+    public void subtract(float localWeight, float covar, @Nonnegative int generation, float scale) {
         this.sum_mean_div_covar -= (localWeight / covar) / scale;
         this.sum_inv_covar -= (1.f / covar) / scale;
     }
 
     @Override
     public float getWeight(float scale) {
-        return (float) (sum_mean_div_covar / sum_inv_covar);
+        return sum_inv_covar == 0.f ? 0.f : (float) (sum_mean_div_covar / sum_inv_covar);
     }
 
 }

@@ -20,12 +20,16 @@
  */
 package hivemall.mix;
 
-public abstract class MixedWeight {
+import javax.annotation.Nonnegative;
+
+public class MixedWeight {
 
     private float weight;
+    private int generation;
 
     public MixedWeight(float weight) {
         this.weight = weight;
+        this.generation = 1;
     }
 
     public float getWeight() {
@@ -36,41 +40,21 @@ public abstract class MixedWeight {
         this.weight = weight;
     }
 
-    public int getDeltaUpdates() {
-        return 0; // dummy
-    }
-
     public float getCovar() {
         return 0.f; // dummy
     }
 
-    public void setDeltaUpdates(int deltaUpdates) {
-        throw new UnsupportedOperationException();
+    @Nonnegative
+    public int getGeneration() {
+        return generation;
+    }
+
+    public void incrGeneration() {
+        generation++;
     }
 
     public void setCovar(float covar) {
         throw new UnsupportedOperationException();
-    }
-
-    public static final class WeightWithDelta extends MixedWeight {
-
-        private byte deltaUpdates;
-
-        public WeightWithDelta(float weight, int deltaUpdates) {
-            super(weight);
-            this.deltaUpdates = (byte) deltaUpdates;
-        }
-
-        @Override
-        public int getDeltaUpdates() {
-            return deltaUpdates;
-        }
-
-        @Override
-        public void setDeltaUpdates(int deltaUpdates) {
-            this.deltaUpdates = (byte) deltaUpdates;
-        }
-
     }
 
     public static final class WeightWithCovar extends MixedWeight {

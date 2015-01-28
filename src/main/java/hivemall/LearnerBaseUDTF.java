@@ -127,7 +127,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             mixConnectInfo = cl.getOptionValue("mix");
             mixSessionName = cl.getOptionValue("mix_session");
             mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 3);
-            if(mixThreshold > Byte.MAX_VALUE) {
+            if(mixThreshold < 1 || mixThreshold > Byte.MAX_VALUE) {
                 throw new UDFArgumentException("mix_threshold must be in range (0,127]: "
                         + mixThreshold);
             }
@@ -174,7 +174,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             model.configureClock();
             model = new SynchronizedModelWrapper(model);
             MixClient client = configureMixClient(mixConnectInfo, label, model);
-            model.configureMix(client, mixCancel);
+            model.configureMix(client, mixCancel, mixThreshold);
             this.mixClient = client;
         }
         assert (model != null);
@@ -189,7 +189,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             jobId = jobId + '-' + label;
         }
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
-        MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
+        MixClient client = new MixClient(event, jobId, connectURIs, ssl, model);
         logger.info("Successfully configured mix client: " + connectURIs);
         return client;
     }

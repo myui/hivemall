@@ -53,7 +53,6 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private final MixEventName event;
     private String groupID;
     private final boolean ssl;
-    private final int mixThreshold;
     private final MixRequestRouter router;
     private final MixClientHandler msgHandler;
     private final Map<NodeInfo, Channel> channelMap;
@@ -61,18 +60,14 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
+    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, @Nonnull MixedModel model) {
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
-        }
-        if(mixThreshold < 1 || mixThreshold > Byte.MAX_VALUE) {
-            throw new IllegalArgumentException("Invalid mixThreshold: " + mixThreshold);
         }
         this.event = event;
         this.groupID = groupID;
         this.router = new MixRequestRouter(connectURIs);
         this.ssl = ssl;
-        this.mixThreshold = mixThreshold;
         this.msgHandler = new MixClientHandler(model);
         this.channelMap = new HashMap<NodeInfo, Channel>();
     }
@@ -112,22 +107,18 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     /**
-     * @return true if sent request, otherwise false
      */
     @Override
-    public boolean onUpdate(Object feature, float weight, float covar, short clock, int deltaUpdates)
+    public void sendRequest(Object feature, float weight, float covar, short clock, int generation)
             throws Exception {
-        assert (deltaUpdates > 0) : deltaUpdates;
-        if(deltaUpdates < mixThreshold) {
-            return false; // avoid mixing
-        }
+        assert (generation >= 1) : generation;
 
         if(!initialized) {
             replaceGroupIDIfRequired();
             initialize(); // initialize connections to mix servers
         }
 
-        MixMessage msg = new MixMessage(event, feature, weight, covar, clock, deltaUpdates);
+        MixMessage msg = new MixMessage(event, feature, weight, covar, clock, generation);
         msg.setGroupID(groupID);
 
         NodeInfo server = router.selectNode(msg);
@@ -139,7 +130,6 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
         //ch.writeAndFlush(msg).sync();
         ch.writeAndFlush(msg); // send asynchronously in the background
-        return true;
     }
 
     @Override
@@ -149,9 +139,9 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
         float weight = mixed.getWeight();
         float covar = mixed.getCovar();
-        int deltaUpdates = mixed.getDeltaUpdates();
+        int generation = mixed.getGeneration();
 
-        MixMessage msg = new MixMessage(event, feature, weight, covar, deltaUpdates, true);
+        MixMessage msg = new MixMessage(event, feature, weight, covar, generation, true);
         assert (groupID != null);
         msg.setGroupID(groupID);
 

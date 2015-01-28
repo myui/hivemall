@@ -32,38 +32,34 @@ public final class MixMessage implements Externalizable {
     private float weight;
     private float covariance;
     private short clock;
-    private int deltaUpdates;
+    private int generation;
     private boolean cancelRequest;
 
     private String groupID;
 
     public MixMessage() {} // for Externalizable
 
-    public MixMessage(MixEventName event, Object feature, float weight, short clock, int deltaUpdates) {
-        this(event, feature, weight, 0.f, clock, deltaUpdates, false);
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int generation) {
+        this(event, feature, weight, covariance, clock, generation, false);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates) {
-        this(event, feature, weight, covariance, clock, deltaUpdates, false);
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance, int generation, boolean cancelRequest) {
+        this(event, feature, weight, covariance, (short) 0 /* dummy clock */, generation, cancelRequest);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, int deltaUpdates, boolean cancelRequest) {
-        this(event, feature, weight, covariance, (short) 0 /* dummy clock */, deltaUpdates, cancelRequest);
-    }
-
-    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates, boolean cancelRequest) {
+    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int generation, boolean cancelRequest) {
         if(feature == null) {
             throw new IllegalArgumentException("feature is null");
         }
-        if(deltaUpdates < 0 || deltaUpdates > Byte.MAX_VALUE) {
-            throw new IllegalArgumentException("Illegal deletaUpdates: " + deltaUpdates);
+        if(generation < 1) {
+            throw new IllegalArgumentException("Illegal generation: " + generation);
         }
         this.event = event;
         this.feature = feature;
         this.weight = weight;
         this.covariance = covariance;
         this.clock = clock;
-        this.deltaUpdates = deltaUpdates;
+        this.generation = generation;
         this.cancelRequest = cancelRequest;
     }
 
@@ -112,8 +108,8 @@ public final class MixMessage implements Externalizable {
         return clock;
     }
 
-    public int getDeltaUpdates() {
-        return deltaUpdates;
+    public int getGeneration() {
+        return generation;
     }
 
     public String getGroupID() {
@@ -135,7 +131,7 @@ public final class MixMessage implements Externalizable {
         out.writeFloat(weight);
         out.writeFloat(covariance);
         out.writeShort(clock);
-        out.writeInt(deltaUpdates);
+        out.writeInt(generation);
         out.writeBoolean(cancelRequest);
         if(groupID == null) {
             out.writeBoolean(false);
@@ -153,7 +149,7 @@ public final class MixMessage implements Externalizable {
         this.weight = in.readFloat();
         this.covariance = in.readFloat();
         this.clock = in.readShort();
-        this.deltaUpdates = in.readInt();
+        this.generation = in.readInt();
         this.cancelRequest = in.readBoolean();
         boolean hasGroupID = in.readBoolean();
         if(hasGroupID) {
@@ -164,8 +160,8 @@ public final class MixMessage implements Externalizable {
     @Override
     public String toString() {
         return "MixMessage [event=" + event + ", feature=" + feature + ", weight=" + weight
-                + ", covariance=" + covariance + ", clock=" + clock + ", deltaUpdates="
-                + deltaUpdates + ", cancel=" + cancelRequest + ", groupID=" + groupID + "]";
+                + ", covariance=" + covariance + ", clock=" + clock + ", generation=" + generation
+                + ", cancel=" + cancelRequest + ", groupID=" + groupID + "]";
     }
 
 }
