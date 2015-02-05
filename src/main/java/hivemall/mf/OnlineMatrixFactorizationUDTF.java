@@ -77,6 +77,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected boolean conversionCheck;
     /** Threshold to determine convergence */
     protected double convergenceRate;
+    /** being ready to end iteration */
+    protected boolean readyToFinishIterations;
 
     /** Initialization strategy of rank matrix */
     protected RankInitScheme rankInit;
@@ -113,7 +115,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         this.updateMeanRating = false;
         this.iterations = 1;
         this.conversionCheck = true;
-        this.convergenceRate = 0.01d;
+        this.convergenceRate = 0.005d;
+        this.readyToFinishIterations = false;
     }
 
     @Override
@@ -128,7 +131,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial rank matrix [default: 0.1]");
         opts.addOption("iter", "iterations", true, "The number of iterations [default: 1]");
         opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: enabled]");
-        opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.01]");
+        opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
         return opts;
     }
 
@@ -154,7 +157,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         + iterations);
             }
             this.conversionCheck = !cl.hasOption("disable_cvtest");
-            this.convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), 0.01d);
+            this.convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), 0.005d);
         }
         this.rankInit = RankInitScheme.resolve(rankInitOpt);
         rankInit.setMaxInitValue(maxInitValue);
@@ -494,7 +497,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 }
 
                 // run iterations
-                for(int i = 1; i < iterations; i++) {
+                int i = 1;
+                for(; i < iterations; i++) {
                     this.currLosses /= 2.0d;
                     if(conversionCheck && isConverged(i + 1)) {
                         break;
@@ -533,7 +537,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         inputBuf.compact();
                     }
                 }
-                logger.info("Performed " + iterations + " iterations of "
+                logger.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total)");
@@ -553,22 +557,34 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
     private boolean isConverged(final int iter) {
         assert conversionCheck;
-        if(currLosses > prevLosses) {//sanity check
+        if(currLosses > prevLosses) {
+            if(logger.isInfoEnabled()) {
+                logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
+            }
+            this.prevLosses = currLosses;
+            this.currLosses = 0.d;
+            this.readyToFinishIterations = false;
             return false;
         }
 
         final double changeRate = (prevLosses - currLosses) / prevLosses;
         if(changeRate < convergenceRate) {
-            // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
-            logger.info("Training converged at " + iter + "-th iteration. [curLosses=" + currLosses
-                    + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate + "]");
-            return true;
+            if(readyToFinishIterations) {
+                // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
+                logger.info("Training converged at " + iter + "-th iteration. [curLosses="
+                        + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
+                        + "]");
+                return true;
+            } else {
+                this.readyToFinishIterations = true;
+            }
         } else {
             if(logger.isDebugEnabled()) {
                 logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
                         + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
                         + count + "]");
             }
+            this.readyToFinishIterations = false;
         }
 
         this.prevLosses = currLosses;
