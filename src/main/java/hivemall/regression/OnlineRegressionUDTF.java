@@ -53,7 +53,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 
 public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
-
     private static final Log logger = LogFactory.getLog(OnlineRegressionUDTF.class);
 
     protected ListObjectInspector featureListOI;

@@ -12,3 +12,13 @@
 
 drop temporary function f1score;
 create temporary function f1score as 'hivemall.evaluation.FMeasureUDAF';
+
+drop temporary function mae;
+create temporary function mae as 'hivemall.evaluation.MeanAbsoluteErrorUDAF';
+
+drop temporary function mse;
+create temporary function mse as 'hivemall.evaluation.MeanSquaredErrorUDAF';
+
+drop temporary function rmse;
+create temporary function rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF';
+

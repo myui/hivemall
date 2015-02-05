@@ -60,7 +60,7 @@ public class MixServerTest {
         MixClient client = null;
         try {
             client = new MixClient(MixEventName.average, "testSimpleScenario", "localhost:" + port, false, 2, model);
-            model.setUpdateHandler(client);
+            model.configureMix(client, false);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -97,7 +97,7 @@ public class MixServerTest {
         MixClient client = null;
         try {
             client = new MixClient(MixEventName.average, "testSSL", "localhost:" + port, true, 2, model);
-            model.setUpdateHandler(client);
+            model.configureMix(client, false);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -154,7 +154,7 @@ public class MixServerTest {
         MixClient client = null;
         try {
             client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 2, model);
-            model.setUpdateHandler(client);
+            model.configureMix(client, false);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 100000; i++) {
@@ -191,7 +191,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient01("test2ClientsZeroOne", port, false);
+                        invokeClient01("test2ClientsZeroOne", port, false, false);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -220,7 +220,7 @@ public class MixServerTest {
                 @Override
                 public void run() {
                     try {
-                        invokeClient01("test2ClientsZeroOne", port, true);
+                        invokeClient01("test2ClientsZeroOne", port, true, false);
                     } catch (InterruptedException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -232,7 +232,65 @@ public class MixServerTest {
         serverExec.shutdown();
     }
 
-    private static void invokeClient01(String groupId, int serverPort, boolean denseModel)
+    @Test
+    public void test2ClientsZeroOneSparseModelWithMixCanceling() throws InterruptedException {
+        final int port = NetUtils.getAvailablePort();
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        waitForState(server, ServerState.RUNNING);
+
+        final ExecutorService clientsExec = Executors.newCachedThreadPool();
+        for(int i = 0; i < 2; i++) {
+            clientsExec.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        invokeClient01("test2ClientsZeroOne", port, false, true);
+                    } catch (InterruptedException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        clientsExec.awaitTermination(30, TimeUnit.SECONDS);
+        clientsExec.shutdown();
+        serverExec.shutdown();
+    }
+
+    @Test
+    public void test2ClientsZeroOneDenseModelWithMixCanceling() throws InterruptedException {
+        final int port = NetUtils.getAvailablePort();
+        CommandLine cl = CommandLineUtils.parseOptions(new String[] { "-port",
+                Integer.toString(port), "-sync_threshold", "30" }, MixServer.getOptions());
+        MixServer server = new MixServer(cl);
+        ExecutorService serverExec = Executors.newSingleThreadExecutor();
+        serverExec.submit(server);
+
+        waitForState(server, ServerState.RUNNING);
+
+        final ExecutorService clientsExec = Executors.newCachedThreadPool();
+        for(int i = 0; i < 2; i++) {
+            clientsExec.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        invokeClient01("test2ClientsZeroOne", port, true, true);
+                    } catch (InterruptedException e) {
+                        Assert.fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        clientsExec.awaitTermination(30, TimeUnit.SECONDS);
+        clientsExec.shutdown();
+        serverExec.shutdown();
+    }
+
+    private static void invokeClient01(String groupId, int serverPort, boolean denseModel, boolean cancelMix)
             throws InterruptedException {
         PredictionModel model = denseModel ? new DenseModel(100, false)
                 : new SparseModel(100, false);
@@ -240,7 +298,7 @@ public class MixServerTest {
         MixClient client = null;
         try {
             client = new MixClient(MixEventName.average, groupId, "localhost:" + serverPort, false, 3, model);
-            model.setUpdateHandler(client);
+            model.configureMix(client, cancelMix);
 
             final Random rand = new Random(43);
             for(int i = 0; i < 1000000; i++) {

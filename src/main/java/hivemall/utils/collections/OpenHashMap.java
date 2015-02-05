@@ -56,7 +56,7 @@ import java.util.Set;
  * than those divisable by prime numbers.  This allows the hash offset calculation to be
  * a simple binary masking operation.
  */
-public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
+public final class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
     private K[] keys;
     private V[] values;
 
@@ -71,7 +71,7 @@ public class OpenHashMap<K, V> implements Map<K, V>, Externalizable {
     // the sweepmask used to create sweep zone offsets
     private int sweepmask;
 
-    public OpenHashMap() {}
+    public OpenHashMap() {}// for Externalizable
 
     public OpenHashMap(int size) {
         resize(MathUtils.bitsRequired(size < 256 ? 256 : size));

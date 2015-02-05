@@ -20,6 +20,11 @@
  */
 package org.apache.hadoop.hive.ql.exec;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.apache.hadoop.mapred.JobConf;
+
 /**
  * An accessor to allow access to {@link MapredContext}
  * 
@@ -27,8 +32,14 @@ package org.apache.hadoop.hive.ql.exec;
  */
 public final class MapredContextAccessor {
 
+    @Nullable
     public static MapredContext get() {
         return MapredContext.get();
+    }
+
+    @Nonnull
+    public static MapredContext create(boolean isMap, @Nullable JobConf jobConf) {
+        return MapredContext.init(isMap, jobConf);
     }
 
 }

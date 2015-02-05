@@ -96,6 +96,9 @@ CREATE FUNCTION jaccard as 'hivemall.knn.distance.JaccardIndexUDF' USING JAR '${
 DROP FUNCTION IF EXISTS popcnt;
 CREATE FUNCTION popcnt as 'hivemall.knn.distance.PopcountUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS kld;
+CREATE FUNCTION kld as 'hivemall.knn.distance.KLDivergenceUDF' USING JAR '${hivemall_jar}';
+
 -------------------
 -- LSH functions --
 -------------------
@@ -310,6 +313,9 @@ CREATE FUNCTION concat_array as 'hivemall.tools.array.ConcatArrayUDF' USING JAR 
 DROP FUNCTION IF EXISTS subarray;
 CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS array_avg;
+CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgUDAF' USING JAR '${hivemall_jar}';
+
 ---------------------
 -- map functions --
 ---------------------
@@ -382,4 +388,33 @@ CREATE FUNCTION split_words as 'hivemall.tools.string.SplitWordsUDF' USING JAR '
 
 DROP FUNCTION IF EXISTS lr_datagen;
 CREATE FUNCTION lr_datagen as 'hivemall.dataset.LogisticRegressionDataGeneratorUDTF' USING JAR '${hivemall_jar}';
+
+--------------------------
+-- Evaluating functions --
+--------------------------
+
+DROP FUNCTION IF EXISTS f1score;
+CREATE FUNCTION f1score as 'hivemall.evaluation.FMeasureUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS mae;
+CREATE FUNCTION mae as 'hivemall.evaluation.MeanAbsoluteErrorUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS mse;
+CREATE FUNCTION mse as 'hivemall.evaluation.MeanSquaredErrorUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS rmse;
+CREATE FUNCTION rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF' USING JAR '${hivemall_jar}';
+
+--------------------------
+-- Matrix Factorization --
+--------------------------
+
+DROP FUNCTION IF EXISTS mf_predict;
+CREATE FUNCTION mf_predict as 'hivemall.mf.MFPredictionUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_mf_sgd;
+CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_mf_adagrad;
+CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
 

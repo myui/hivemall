@@ -70,6 +70,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected String mixConnectInfo;
     protected String mixSessionName;
     protected int mixThreshold;
+    protected boolean mixCancel;
     protected boolean ssl;
 
     protected MixClient mixClient;
@@ -90,6 +91,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
         opts.addOption("mix_session", "mix_session_name", true, "Mix session name [default: ${mapred.job.id}]");
         opts.addOption("mix_threshold", true, "Threshold to mix local updates in range (0,127] [default: 3]");
+        opts.addOption("mix_cancel", "enable_mix_canceling", false, "Enable mix cancel requests");
         opts.addOption("ssl", false, "Use SSL for the communication with mix servers");
         return opts;
     }
@@ -105,6 +107,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         String mixConnectInfo = null;
         String mixSessionName = null;
         int mixThreshold = -1;
+        boolean mixCancel = false;
         boolean ssl = false;
 
         CommandLine cl = null;
@@ -128,6 +131,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 throw new UDFArgumentException("mix_threshold must be in range (0,127]: "
                         + mixThreshold);
             }
+            mixCancel = cl.hasOption("mix_cancel");
             ssl = cl.hasOption("ssl");
         }
 
@@ -138,6 +142,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.mixConnectInfo = mixConnectInfo;
         this.mixSessionName = mixSessionName;
         this.mixThreshold = mixThreshold;
+        this.mixCancel = mixCancel;
         this.ssl = ssl;
         return cl;
     }
@@ -169,7 +174,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             model.configureClock();
             model = new SynchronizedModelWrapper(model);
             MixClient client = configureMixClient(mixConnectInfo, label, model);
-            model.setUpdateHandler(client);
+            model.configureMix(client, mixCancel);
             this.mixClient = client;
         }
         assert (model != null);

@@ -111,6 +111,11 @@ public final class RandomizedAmplifier<T> {
     }
 
     public void sweepAll() throws HiveException {
+        if(position < numBuffers && position > 1) {// shuffle an unfilled buffer
+            for(int x = 0; x < xtimes; x++) {
+                ArrayUtils.shuffle(slots[x], position, randoms[x]);
+            }
+        }
         for(int i = 0; i < numBuffers; i++) {
             for(int x = 0; x < xtimes; x++) {
                 AgedObject<T>[] slot = slots[x];

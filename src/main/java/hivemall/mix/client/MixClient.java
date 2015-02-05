@@ -24,6 +24,7 @@ import hivemall.io.ModelUpdateHandler;
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.MixedModel;
+import hivemall.mix.MixedWeight;
 import hivemall.mix.NodeInfo;
 import hivemall.utils.hadoop.HadoopUtils;
 import io.netty.bootstrap.Bootstrap;
@@ -110,6 +111,9 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         channelMap.put(server, channel);
     }
 
+    /**
+     * @return true if sent request, otherwise false
+     */
     @Override
     public boolean onUpdate(Object feature, float weight, float covar, short clock, int deltaUpdates)
             throws Exception {
@@ -136,6 +140,30 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         //ch.writeAndFlush(msg).sync();
         ch.writeAndFlush(msg); // send asynchronously in the background
         return true;
+    }
+
+    @Override
+    public void sendCancelRequest(@Nonnull Object feature, @Nonnull MixedWeight mixed)
+            throws Exception {
+        assert (initialized);
+
+        float weight = mixed.getWeight();
+        float covar = mixed.getCovar();
+        int deltaUpdates = mixed.getDeltaUpdates();
+
+        MixMessage msg = new MixMessage(event, feature, weight, covar, deltaUpdates, true);
+        assert (groupID != null);
+        msg.setGroupID(groupID);
+
+        // TODO REVIEWME consider mix server faults (what if mix server dead? Do not send cancel request?)
+        NodeInfo server = router.selectNode(msg);
+        Channel ch = channelMap.get(server);
+        if(!ch.isActive()) {// reconnect
+            SocketAddress remoteAddr = server.getSocketAddress();
+            ch.connect(remoteAddr).sync();
+        }
+
+        ch.writeAndFlush(msg); // send asynchronously in the background
     }
 
     private void replaceGroupIDIfRequired() {
