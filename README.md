@@ -43,6 +43,8 @@ _My recommendation is AdaDelta and AdaGrad, while it depends._
 
 ## Recommendation
 
+* Matrix Factorization (sgd, adagrad)
+
 * Minhash (LSH with jaccard index)
 
 ## k-Nearest Neighbor
@@ -120,7 +122,7 @@ Please refer the following paper for research uses:
 * Makoto Yui. ``Hivemall: Scalable Machine Learning Library for Apache Hive'', 
   [2014 Hadoop Summit](http://hadoopsummit.org/san-jose/), June 2014. \[[slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)]
 
-* Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo / no public proceeding), 
+* Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo), 
   [NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows](https://mloss.org/workshop/nips13/), Dec 2013.
 
 * Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'',  
