@@ -79,7 +79,7 @@ System requirements
 Basic Usage
 ------------
 
-[![Hivemall](https://gist.github.com/myui/d29241262f9313dec706/raw/a204903925fb2dd9901894d9761e1599b3fc7715/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)
+[![Hivemall](https://gist.githubusercontent.com/myui/d29241262f9313dec706/raw/a204903925fb2dd9901894d9761e1599b3fc7715/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)
 
 Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose).
 
