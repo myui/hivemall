@@ -27,3 +27,6 @@
 * Tsuyoshi Ozawa
 	- TravisCI integration
 	- Fixes on MixServerTest
+
+* Takahiko Ito
+        - Improvements on build.xml
