@@ -79,14 +79,7 @@ System requirements
 Basic Usage
 ------------
 
-```sql
-SELECT 
-  feature, 
-  CAST(avg(weight) as FLOAT) as weight
-FROM
- (SELECT logress(features,label) as (feature,weight) FROM training_features) t
-GROUP BY feature;
-```
+[![Hivemall](https://gist.github.com/myui/d29241262f9313dec706/raw/a204903925fb2dd9901894d9761e1599b3fc7715/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)
 
 Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose).
 
@@ -119,14 +112,11 @@ References
 
 Please refer the following paper for research uses:
 
-* Makoto Yui. ``Hivemall: Scalable Machine Learning Library for Apache Hive'', 
-  [2014 Hadoop Summit](http://hadoopsummit.org/san-jose/), June 2014. \[[slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)]
+* Makoto Yui. ``Hivemall: Scalable Machine Learning Library for Apache Hive'', [2014 Hadoop Summit](http://hadoopsummit.org/san-jose/), June 2014. \[[slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)]
 
-* Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo), 
-  [NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows](https://mloss.org/workshop/nips13/), Dec 2013.
+* Makoto Yui and Isao Kojima. ``Hivemall: Hive scalable machine learning library'' (demo), [NIPS 2013 Workshop on Machine Learning Open Source Software: Towards Open Workflows](https://mloss.org/workshop/nips13/), Dec 2013.
 
-* Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'',  
-  Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
+* Makoto Yui and Isao Kojima. ``A Database-Hadoop Hybrid Approach to Scalable Machine Learning'', Proc. IEEE 2nd International Congress on Big Data, July 2013 \[[paper](http://staff.aist.go.jp/m.yui/publications/bigdata2013myui.pdf)\] \[[slide](http://www.slideshare.net/myui/bigdata2013myui)\]
 
 Awards
 ------
