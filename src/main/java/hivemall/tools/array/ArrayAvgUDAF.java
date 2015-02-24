@@ -33,7 +33,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 public final class ArrayAvgUDAF extends UDAF {
 
-    private ArrayAvgUDAF() {}//prevent instantiation
+    public ArrayAvgUDAF() {}
 
     public static class Evaluator implements UDAFEvaluator {
 
