@@ -46,7 +46,7 @@
 		<delete failonerror="true" dir="${test.build.dir}" />
 	</target>
 
-	<target name="package" depends="jar,jar-with-dependencies,jar-fat,assemble">
+	<target name="package" depends="jar,jar-with-dependencies,jar-fat">
 		<delete failonerror="true" dir="${build.dir}" />
 	</target>
 

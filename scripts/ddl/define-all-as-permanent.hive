@@ -313,8 +313,11 @@ CREATE FUNCTION concat_array as 'hivemall.tools.array.ConcatArrayUDF' USING JAR 
 DROP FUNCTION IF EXISTS subarray;
 CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hivemall_jar}';
 
+-- DROP FUNCTION IF EXISTS array_avg;
+-- CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgUDAF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS array_avg;
-CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgUDAF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION array_avg as  'hivemall.tools.array.ArrayAvgGenericUDAF' USING JAR '${hivemall_jar}';
 
 ---------------------
 -- map functions --

@@ -38,8 +38,11 @@ create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
 drop temporary function subarray;
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 
+-- drop temporary function array_avg;
+-- create temporary function array_avg as 'hivemall.tools.array.ArrayAvgUDAF';
+
 drop temporary function array_avg;
-create temporary function array_avg as 'hivemall.tools.array.ArrayAvgUDAF';
+create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
 
 ---------------------
 -- map functions --
