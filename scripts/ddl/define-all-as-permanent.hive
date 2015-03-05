@@ -205,6 +205,9 @@ CREATE FUNCTION extract_feature as 'hivemall.ftvec.ExtractFeatureUDF' USING JAR 
 DROP FUNCTION IF EXISTS extract_weight;
 CREATE FUNCTION extract_weight as 'hivemall.ftvec.ExtractWeightUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS add_feature_index;
+CREATE FUNCTION add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -317,7 +320,7 @@ CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hive
 -- CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgUDAF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS array_avg;
-CREATE FUNCTION array_avg as  'hivemall.tools.array.ArrayAvgGenericUDAF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF' USING JAR '${hivemall_jar}';
 
 ---------------------
 -- map functions --
