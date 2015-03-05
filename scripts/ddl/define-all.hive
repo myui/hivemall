@@ -201,6 +201,9 @@ create temporary function extract_feature as 'hivemall.ftvec.ExtractFeatureUDF';
 drop temporary function extract_weight;
 create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
 
+drop temporary function add_feature_index;
+create temporary function add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
