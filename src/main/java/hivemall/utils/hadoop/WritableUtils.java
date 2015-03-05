@@ -23,6 +23,8 @@ package hivemall.utils.hadoop;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.ByteWritable;
@@ -57,6 +59,42 @@ public final class WritableUtils {
 
     public static BooleanWritable val(final boolean v) {
         return new BooleanWritable(v);
+    }
+
+    @Nonnull
+    public static List<LongWritable> newLongList(int size) {
+        final LongWritable[] array = new LongWritable[size];
+        for(int i = 0, len = array.length; i < len; i++) {
+            array[i] = new LongWritable(0L);
+        }
+        return Arrays.asList(array);
+    }
+
+    @Nonnull
+    public static List<DoubleWritable> newDoubleList(int size) {
+        final DoubleWritable[] array = new DoubleWritable[size];
+        for(int i = 0, len = array.length; i < len; i++) {
+            array[i] = new DoubleWritable(0.d);
+        }
+        return Arrays.asList(array);
+    }
+
+    @Nonnull
+    public static List<LongWritable> toWritableList(@Nonnull final long[] src) {
+        final LongWritable[] writables = new LongWritable[src.length];
+        for(int i = 0; i < src.length; i++) {
+            writables[i] = new LongWritable(src[i]);
+        }
+        return Arrays.asList(writables);
+    }
+
+    @Nonnull
+    public static List<DoubleWritable> toWritableList(@Nonnull final double[] src) {
+        final DoubleWritable[] writables = new DoubleWritable[src.length];
+        for(int i = 0; i < src.length; i++) {
+            writables[i] = new DoubleWritable(src[i]);
+        }
+        return Arrays.asList(writables);
     }
 
     public static Text val(final String v) {
