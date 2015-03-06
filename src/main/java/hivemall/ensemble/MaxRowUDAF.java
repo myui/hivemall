@@ -58,7 +58,7 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
     @UDFType(distinctLike = true)
     public static class GenericUDAFMaxRowEvaluator extends GenericUDAFEvaluator {
 
-    	StructObjectInspector inputStructOI;
+        StructObjectInspector inputStructOI;
         ObjectInspector[] inputOIs;
         ObjectInspector[] outputOIs;
 
@@ -151,7 +151,7 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
             } else if(partial instanceof LazyBinaryStruct) {
                 otherObjects = ((LazyBinaryStruct) partial).getFieldsAsList();
             } else {
-            	otherObjects = inputStructOI.getStructFieldsDataAsList(partial);
+                otherObjects = inputStructOI.getStructFieldsDataAsList(partial);
             }
 
             boolean isMax = false;
