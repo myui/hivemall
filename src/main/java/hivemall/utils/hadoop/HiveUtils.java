@@ -35,6 +35,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.io.ByteWritable;
+import org.apache.hadoop.hive.serde2.io.ShortWritable;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
@@ -128,7 +130,7 @@ public final class HiveUtils {
             throw new UDFArgumentException("argument must be a constant value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
-        WritableConstantStringObjectInspector stringOI = (WritableConstantStringObjectInspector) oi;
+        ConstantObjectInspector stringOI = (ConstantObjectInspector) oi;
         return stringOI.getWritableConstantValue().toString();
     }
 
@@ -186,17 +188,17 @@ public final class HiveUtils {
         }
         String typeName = numberOI.getTypeName();
         if(BIGINT_TYPE_NAME.equals(typeName)) {
-            WritableConstantLongObjectInspector longOI = (WritableConstantLongObjectInspector) numberOI;
-            return longOI.getWritableConstantValue().get();
+            ConstantObjectInspector longOI = (ConstantObjectInspector) numberOI;
+            return ((LongWritable)longOI.getWritableConstantValue()).get();
         } else if(INT_TYPE_NAME.equals(typeName)) {
-            WritableConstantIntObjectInspector intOI = (WritableConstantIntObjectInspector) numberOI;
-            return (long) intOI.getWritableConstantValue().get();
+        	ConstantObjectInspector intOI = (ConstantObjectInspector) numberOI;
+            return ((IntWritable) intOI.getWritableConstantValue()).get();
         } else if(SMALLINT_TYPE_NAME.equals(typeName)) {
-            WritableConstantShortObjectInspector shortOI = (WritableConstantShortObjectInspector) numberOI;
-            return (long) shortOI.getWritableConstantValue().get();
+            ConstantObjectInspector shortOI = (ConstantObjectInspector) numberOI;
+            return (long) ((ShortWritable)shortOI.getWritableConstantValue()).get();
         } else if(TINYINT_TYPE_NAME.equals(typeName)) {
-            WritableConstantByteObjectInspector byteOI = (WritableConstantByteObjectInspector) numberOI;
-            return (long) byteOI.getWritableConstantValue().get();
+        	ConstantObjectInspector byteOI = (ConstantObjectInspector) numberOI;
+            return (long) ((ByteWritable)byteOI.getWritableConstantValue()).get();
         }
         throw new UDFArgumentException("Unexpected argument type to cast as long: "
                 + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));

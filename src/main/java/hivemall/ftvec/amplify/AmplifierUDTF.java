@@ -27,10 +27,11 @@ import java.util.ArrayList;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
+import org.apache.hadoop.io.IntWritable;
 
 public class AmplifierUDTF extends GenericUDTF {
 
@@ -45,11 +46,11 @@ public class AmplifierUDTF extends GenericUDTF {
         if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
             throw new UDFArgumentException("first argument must be int: " + argOIs[0].getTypeName());
         }
-        if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {
+        if(!(argOIs[0] instanceof ConstantObjectInspector)) {
             throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the first argument: "
                     + argOIs[0].getClass().getSimpleName());
         }
-        this.xtimes = ((WritableConstantIntObjectInspector) argOIs[0]).getWritableConstantValue().get();
+        this.xtimes = ((IntWritable)((ConstantObjectInspector) argOIs[0]).getWritableConstantValue()).get();
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
