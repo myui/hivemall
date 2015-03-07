@@ -150,8 +150,10 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
                 otherObjects = Arrays.asList((Object[]) partial);
             } else if(partial instanceof LazyBinaryStruct) {
                 otherObjects = ((LazyBinaryStruct) partial).getFieldsAsList();
-            } else {
+            } else if(inputStructOI != null) {
                 otherObjects = inputStructOI.getStructFieldsDataAsList(partial);
+            } else {
+                throw new HiveException("Invalid type: " + partial.getClass().getName());
             }
 
             boolean isMax = false;
