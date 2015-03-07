@@ -172,7 +172,7 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         BooleanWritable v = getConstValue(oi);
-        return v == null ? null : v.get();
+        return v.get();
     }
 
     public static int getConstInt(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
@@ -181,7 +181,7 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         IntWritable v = getConstValue(oi);
-        return v == null ? null : v.get();
+        return v.get();
     }
 
     public static long getConstLong(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
@@ -190,7 +190,7 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         LongWritable v = getConstValue(oi);
-        return v == null ? null : v.get();
+        return v.get();
     }
 
     public static long getAsConstLong(@Nonnull final ObjectInspector numberOI)
