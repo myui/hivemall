@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.io.FloatWritable;
 
 public final class ArrayAvgUDAF extends UDAF {
 
@@ -76,7 +77,7 @@ public final class ArrayAvgUDAF extends UDAF {
             return true;
         }
 
-        public List<Float> terminate() {
+        public List<FloatWritable> terminate() {
             if(partial == null) {
                 return null;
             }
@@ -85,11 +86,11 @@ public final class ArrayAvgUDAF extends UDAF {
             final List<Double> sum = partial._sum;
             final List<Long> count = partial._count;
 
-            final Float[] ary = new Float[size];
+            final FloatWritable[] ary = new FloatWritable[size];
             for(int i = 0; i < size; i++) {
                 long c = count.get(i);
                 float avg = (c == 0) ? 0.f : (float) (sum.get(i) / c);
-                ary[i] = Float.valueOf(avg);
+                ary[i] = new FloatWritable(avg);
             }
             return Arrays.asList(ary);
         }
