@@ -49,7 +49,7 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
         fieldNames.add("value");
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(1);
 
-        this.useBigInt = HiveUtils.isBigInt(argOIs[1]);
+        this.useBigInt = HiveUtils.isBigIntOI(argOIs[1]);
         if(useBigInt) {
             fieldOIs.add(PrimitiveObjectInspectorFactory.javaLongObjectInspector);
         } else {
