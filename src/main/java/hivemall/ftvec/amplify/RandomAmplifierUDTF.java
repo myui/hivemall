@@ -88,7 +88,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         for(int i = 2; i < numArgs; i++) {
             fieldNames.add("c" + (i - 1));
             ObjectInspector rawOI = argOIs[i];
-            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.JAVA);
+            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.DEFAULT);
             fieldOIs.add(retOI);
         }
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -100,7 +100,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         for(int i = 2; i < args.length; i++) {
             Object arg = args[i];
             ObjectInspector argOI = argOIs[i];
-            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI);
+            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI, ObjectInspectorCopyOption.DEFAULT);
         }
         amplifier.add(row);
     }
