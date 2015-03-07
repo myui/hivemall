@@ -20,10 +20,10 @@
  */
 package hivemall.ftvec.amplify;
 
-import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import hivemall.HivemallConstants;
 import hivemall.common.RandomizedAmplifier;
 import hivemall.common.RandomizedAmplifier.DropoutListener;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 
@@ -32,14 +32,11 @@ import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
-import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapred.JobConf;
 
 public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
@@ -67,27 +64,12 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
             throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
-        if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
-            throw new UDFArgumentException("First argument must be int: " + argOIs[0].getTypeName());
-        }
-        if(!(argOIs[0] instanceof ConstantObjectInspector)) {
-            throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the first argument: "
-                    + argOIs[0].getClass().getSimpleName());
-        }
-        int xtimes = ((IntWritable)((ConstantObjectInspector) argOIs[0]).getWritableConstantValue()).get();
+        int xtimes = HiveUtils.getConstInt(argOIs[0]);
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         // num_buffers
-        if(!INT_TYPE_NAME.equals(argOIs[1].getTypeName())) {
-            throw new UDFArgumentException("Second argument must be int: "
-                    + argOIs[1].getTypeName());
-        }
-        if(!(argOIs[1] instanceof ConstantObjectInspector)) {
-            throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the second argument: "
-                    + argOIs[1].getClass().getSimpleName());
-        }
-        int numBuffers = ((IntWritable)((ConstantObjectInspector) argOIs[1]).getWritableConstantValue()).get();
+        int numBuffers = HiveUtils.getConstInt(argOIs[1]);
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
