@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.UDTFWithOptions;
 import hivemall.io.FeatureValue;
+import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hashing.HashFunction;
 import hivemall.utils.hashing.HashFunctionFactory;
 
@@ -42,7 +43,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantStringObjectInspector;
 
 /**
  * A Minhash implementation that outputs n different k-depth Signatures.
@@ -102,7 +102,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = null;
         if(argOIs.length >= 3) {
-            String rawArgs = ((WritableConstantStringObjectInspector) argOIs[2]).getWritableConstantValue().toString();
+            String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
 
             String numHashes = cl.getOptionValue("hashes");
