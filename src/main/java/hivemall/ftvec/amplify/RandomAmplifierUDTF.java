@@ -20,10 +20,10 @@
  */
 package hivemall.ftvec.amplify;
 
-import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import hivemall.HivemallConstants;
 import hivemall.common.RandomizedAmplifier;
 import hivemall.common.RandomizedAmplifier.DropoutListener;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 
@@ -37,7 +37,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
 import org.apache.hadoop.mapred.JobConf;
 
 public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
@@ -65,27 +64,12 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
             throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
-        if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
-            throw new UDFArgumentException("First argument must be int: " + argOIs[0].getTypeName());
-        }
-        if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {
-            throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the first argument: "
-                    + argOIs[0].getClass().getSimpleName());
-        }
-        int xtimes = ((WritableConstantIntObjectInspector) argOIs[0]).getWritableConstantValue().get();
+        int xtimes = HiveUtils.getConstInt(argOIs[0]);
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         // num_buffers
-        if(!INT_TYPE_NAME.equals(argOIs[1].getTypeName())) {
-            throw new UDFArgumentException("Second argument must be int: "
-                    + argOIs[1].getTypeName());
-        }
-        if(!(argOIs[1] instanceof WritableConstantIntObjectInspector)) {
-            throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the second argument: "
-                    + argOIs[1].getClass().getSimpleName());
-        }
-        int numBuffers = ((WritableConstantIntObjectInspector) argOIs[1]).getWritableConstantValue().get();
+        int numBuffers = HiveUtils.getConstInt(argOIs[1]);
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
@@ -104,7 +88,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         for(int i = 2; i < numArgs; i++) {
             fieldNames.add("c" + (i - 1));
             ObjectInspector rawOI = argOIs[i];
-            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.WRITABLE);
+            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.DEFAULT);
             fieldOIs.add(retOI);
         }
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -116,7 +100,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         for(int i = 2; i < args.length; i++) {
             Object arg = args[i];
             ObjectInspector argOI = argOIs[i];
-            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI);
+            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI, ObjectInspectorCopyOption.DEFAULT);
         }
         amplifier.add(row);
     }

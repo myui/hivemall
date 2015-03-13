@@ -20,7 +20,7 @@
  */
 package hivemall.ftvec.amplify;
 
-import static hivemall.HivemallConstants.INT_TYPE_NAME;
+import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 
@@ -30,7 +30,6 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableConstantIntObjectInspector;
 
 public class AmplifierUDTF extends GenericUDTF {
 
@@ -42,14 +41,7 @@ public class AmplifierUDTF extends GenericUDTF {
         if(!(argOIs.length >= 2)) {
             throw new UDFArgumentException("amplifier(int xtimes, *) takes at least two arguments");
         }
-        if(!INT_TYPE_NAME.equals(argOIs[0].getTypeName())) {
-            throw new UDFArgumentException("first argument must be int: " + argOIs[0].getTypeName());
-        }
-        if(!(argOIs[0] instanceof WritableConstantIntObjectInspector)) {
-            throw new UDFArgumentException("WritableConstantIntObjectInspector is expected for the first argument: "
-                    + argOIs[0].getClass().getSimpleName());
-        }
-        this.xtimes = ((WritableConstantIntObjectInspector) argOIs[0]).getWritableConstantValue().get();
+        this.xtimes = HiveUtils.getConstInt(argOIs[0]);
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }

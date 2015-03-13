@@ -34,7 +34,7 @@ import org.apache.hadoop.io.FloatWritable;
 
 public final class ArrayAvgUDAF extends UDAF {
 
-    private ArrayAvgUDAF() {}//prevent instantiation
+    public ArrayAvgUDAF() {}
 
     public static class Evaluator implements UDAFEvaluator {
 
