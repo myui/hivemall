@@ -16,6 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package hivemall.knn.lsh;
+
 import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.io.FeatureValue;
 import hivemall.utils.hashing.MurmurHash3;
