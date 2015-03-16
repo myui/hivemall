@@ -1,9 +1,5 @@
 -----------------------------------------------------------------------------
 -- Hivemall: Hive scalable Machine Learning Library
---
--- Copyright (C) 2013-2014
--- National Institute of Advanced Industrial Science and Technology (AIST)
--- Registration Number: H25PRO-1520
 -----------------------------------------------------------------------------
 
 -- CREATE DATABASE IF NOT EXISTS hivemall;
