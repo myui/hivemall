@@ -1,6 +1,7 @@
 Hivemall: Hive scalable machine learning library
 =================================================
 [![Build Status](https://travis-ci.org/myui/hivemall.svg?branch=master)](https://travis-ci.org/myui/hivemall)
+[![License](http://img.shields.io/:license-Apache_v2-blue.svg)](https://github.com/myui/hivemall/blob/master/LICENSE)
 
 Hivemall is a scalable machine learning library that runs on Apache Hive, licensed under the LGPL 2.1.
 Hivemall is designed to be scalable to the number of training instances as well as the number of training features.
@@ -82,18 +83,6 @@ Basic Usage
 [![Hivemall](https://gist.githubusercontent.com/myui/d29241262f9313dec706/raw/caead313efd829b42a4a4183285e8b53cf26ab62/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose)
 
 Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hivemall-hadoop-summit-2014-san-jose).
-
-License
----------
-
-GNU Lesser General Public License 2.1  
-http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-
-According to LGPL 2.1, softwares that modifies/copies Hivemall MUST open their source codes upon requests.  
-On the other hand, softwares that uses the Hivemall jar package without any modification are no need to show their sources.
-See GNU's [LGPL and Java page](http://www.gnu.org/licenses/lgpl-java.en.html) for detail.
-
-The LGPL does not require you to distribute source code of programs as far as just using/linking Hivemall in your application, so you can use Hivemall in closed-source apps and for most commercial uses.
 
 Copyright
 ---------
