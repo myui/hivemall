@@ -16,6 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//   Copyright (C) 2013 Michael Birk ( https://github.com/scribd/hive-udaf-maxrow )
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
 package hivemall.ensemble;
 
 import java.util.ArrayList;
@@ -38,9 +53,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
-/**
- * This code is based on https://github.com/scribd/hive-udaf-maxrow
- */
 @Description(name = "maxrow", value = "_FUNC_(expr) - Returns the maximum value of expr and values of associated columns as a struct")
 public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
 
