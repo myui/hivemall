@@ -388,7 +388,7 @@ public class IntOpenHashMap<V> implements Externalizable {
                 int decr = 1 + (hash % (keylen - 2));
                 for(;;) {
                     keyIdx -= decr;
-                    if(i < 0) {
+                    if(keyIdx < 0) {
                         keyIdx += keylen;
                     }
                     if(states[keyIdx] == FREE) {
