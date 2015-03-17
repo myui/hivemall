@@ -1,14 +1,33 @@
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "gYAzVukFw3ssmQzfovoKTNJnzQbUhF13tksHHhe5dqQWglxdix39wY405nMmzRm/21ZpIq3OFIlI7fnHdZSGkVPS/nPPxbzUkjYUh+zkujYwsqgjZecq9vGaoarnyV9CcI+2D6qUVnArHQ02FKxirtXduGvElZ/eRIa/hBfpgn4="
+
+addons:
+  coverity_scan:
+    project:
+      name: "myui/hivemall"
+      description: "Build submitted via Travis CI"
+    notification_email: false
+    build_command_prepend: "mvn clean"
+    build_command:   "mvn -DskipTests=true compile"
+    branch_pattern: master
+
 language: java
 jdk:
   - openjdk6
   - openjdk7
   - oraclejdk7
   - oraclejdk8
+
 branches:
   only:
     - master
     - develop
+
 notifications:
   email: false
+
 after_success:
   - mvn clean cobertura:cobertura coveralls:report
