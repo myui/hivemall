@@ -35,7 +35,7 @@ public final class JaccardIndexUDF extends UDF {
 
     public FloatWritable evaluate(long a, long b, int k) {
         int countMatches = k - HammingDistanceUDF.hammingDistance(a, b);
-        float jaccard = countMatches / k;
+        float jaccard = countMatches / (float) k;
         return val(2.f * (jaccard - 0.5f));
     }
 
