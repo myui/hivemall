@@ -211,7 +211,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
             sum_of_squared_delta_x[i] = value.getSumOfSquaredDeltaX();
         }
         if(sum_of_gradients != null) {
-            sum_of_squared_gradients[i] = value.getSumOfGradients();
+            sum_of_gradients[i] = value.getSumOfGradients();
         }
         short clock = 0;
         int delta = 0;

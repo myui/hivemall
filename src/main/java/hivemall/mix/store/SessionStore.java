@@ -18,7 +18,9 @@
  */
 package hivemall.mix.store;
 
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -79,17 +81,18 @@ public final class SessionStore {
         }
 
         public void run() {
-            for(Map.Entry<String, SessionObject> e : sessions.entrySet()) {
+            final Set<Map.Entry<String, SessionObject>> entries = sessions.entrySet();
+            final Iterator<Map.Entry<String, SessionObject>> itor = entries.iterator();
+            while(itor.hasNext()) {
+                Map.Entry<String, SessionObject> e = itor.next();
                 SessionObject sessionObj = e.getValue();
                 long lastAccessed = sessionObj.getLastAccessed();
                 long elapsedTime = System.currentTimeMillis() - lastAccessed;
                 if(elapsedTime > ttl) {
-                    String key = e.getKey();
-                    assert (key != null);
-                    SessionObject removedSession = sessions.remove(key);
-                    if(removedSession != null) {
-                        logger.info("Removed an idle session group: " + key + "\t"
-                                + removedSession.getSessionInfo());
+                    itor.remove();
+                    if(logger.isInfoEnabled()) {
+                        logger.info("Removed an idle session group: " + e.getKey() + "\t"
+                                + sessionObj.getSessionInfo());
                     }
                 }
             }

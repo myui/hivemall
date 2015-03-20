@@ -46,8 +46,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.FloatWritable;
 
 public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
@@ -55,7 +55,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
 
     protected ListObjectInspector featureListOI;
     protected PrimitiveObjectInspector featureInputOI;
-    protected FloatObjectInspector targetOI;
+    protected PrimitiveObjectInspector targetOI;
     protected boolean parseFeature;
 
     protected PredictionModel model;
@@ -68,7 +68,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
                     + " takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
         this.featureInputOI = processFeaturesOI(argOIs[0]);
-        this.targetOI = (FloatObjectInspector) argOIs[1];
+        this.targetOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
 
         processOptions(argOIs);
 
@@ -120,7 +120,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         if(features.isEmpty()) {
             return;
         }
-        float target = targetOI.get(args[1]);
+        float target = PrimitiveObjectInspectorUtils.getFloat(args[1], targetOI);
         checkTargetValue(target);
 
         count++;
