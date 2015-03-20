@@ -19,9 +19,10 @@
 package hivemall.classifier;
 
 import hivemall.common.LossFunctions;
+import hivemall.io.FeatureValue;
 import hivemall.io.PredictionResult;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -42,8 +43,8 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected void train(final List<?> features, final int label) {
-        final float y = label > 0 ? 1f : -1f;
+    protected void train(@Nonnull final FeatureValue[] features, final int label) {
+        final float y = label > 0 ? 1.f : -1.f;
 
         PredictionResult margin = calcScoreAndNorm(features);
         float p = margin.getScore();

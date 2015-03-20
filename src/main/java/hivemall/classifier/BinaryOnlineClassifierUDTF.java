@@ -34,6 +34,9 @@ import hivemall.utils.hadoop.HiveUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -52,9 +55,9 @@ import org.apache.hadoop.io.FloatWritable;
 public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     private static final Log logger = LogFactory.getLog(BinaryOnlineClassifierUDTF.class);
 
-    protected ListObjectInspector featureListOI;
-    protected IntObjectInspector labelOI;
-    protected boolean parseFeature;
+    private ListObjectInspector featureListOI;
+    private IntObjectInspector labelOI;
+    private boolean parseFeature;
 
     protected PredictionModel model;
     protected int count;
@@ -66,7 +69,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                     + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
         }
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
-        this.labelOI = (IntObjectInspector) argOIs[1];
+        this.labelOI = HiveUtils.asIntOI(argOIs[1]);
 
         processOptions(argOIs);
 
@@ -115,21 +118,53 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
-        if(features.isEmpty()) {
+        FeatureValue[] featureVector = parseFeatures(features);
+        if(featureVector == null) {
             return;
         }
-        int label = (int) labelOI.get(args[1]);
+        int label = labelOI.get(args[1]);
         checkLabelValue(label);
 
         count++;
-        train(features, label);
+        train(featureVector, label);
+    }
+
+    @Nullable
+    protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
+        final int size = features.size();
+        if(size == 0) {
+            return null;
+        }
+
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final FeatureValue[] featureVector = new FeatureValue[size];
+        for(int i = 0; i < size; i++) {
+            Object f = features.get(i);
+            if(f == null) {
+                continue;
+            }
+            final FeatureValue fv;
+            if(parseFeature) {
+                fv = FeatureValue.parse(f);
+            } else {
+                Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                fv = new FeatureValue(k, 1.f);
+            }
+            featureVector[i] = fv;
+        }
+        return featureVector;
     }
 
     protected void checkLabelValue(int label) throws UDFArgumentException {
         assert (label == -1 || label == 0 || label == 1) : label;
     }
 
-    protected void train(final List<?> features, final int label) {
+    void train(List<?> features, int label) {
+        FeatureValue[] featureVector = parseFeatures(features);
+        train(featureVector, label);
+    }
+
+    protected void train(@Nonnull final FeatureValue[] features, final int label) {
         final float y = label > 0 ? 1f : -1f;
 
         final float p = predict(features);
@@ -139,54 +174,34 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
     }
 
-    protected float predict(final List<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseFeature = this.parseFeature;
-
-        float score = 0f;
-        for(Object f : features) {// a += w[i] * x[i]
+    protected float predict(@Nonnull final FeatureValue[] features) {
+        float score = 0.f;
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1f;
-            }
+            Object k = f.getFeature();
             float old_w = model.getWeight(k);
-            if(old_w != 0f) {
+            if(old_w != 0.f) {
+                float v = f.getValue();
                 score += (old_w * v);
             }
         }
         return score;
     }
 
-    protected PredictionResult calcScoreAndNorm(List<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseX = this.parseFeature;
-
+    @Nonnull
+    protected PredictionResult calcScoreAndNorm(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float squared_norm = 0.f;
 
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
                 score += (old_w * v);
@@ -197,27 +212,18 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).squaredNorm(squared_norm);
     }
 
-    protected PredictionResult calcScoreAndVariance(List<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseFeature = this.parseFeature;
-
+    @Nonnull
+    protected PredictionResult calcScoreAndVariance(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float variance = 0.f;
 
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
@@ -230,27 +236,18 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(List<?> features, float y, float p) {
-        throw new IllegalStateException();
+    protected void update(@Nonnull final FeatureValue[] features, float y, float p) {
+        throw new IllegalStateException("update() should not be called");
     }
 
-    protected void update(final List<?> features, final float coeff) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
-        for(Object f : features) {// w[f] += y * x[f]
+    protected void update(@Nonnull final FeatureValue[] features, final float coeff) {
+        for(FeatureValue f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_w = model.getWeight(k);
             float new_w = old_w + (coeff * v);
             model.set(k, new WeightValue(new_w));

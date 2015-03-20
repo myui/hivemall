@@ -25,13 +25,12 @@ import hivemall.io.IWeightValue;
 import hivemall.io.PredictionResult;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 
-import java.util.Collection;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 public class AROWRegressionUDTF extends OnlineRegressionUDTF {
@@ -83,7 +82,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected void train(Collection<?> features, float target) {
+    protected void train(@Nonnull final FeatureValue[] features, float target) {
         PredictionResult margin = calcScoreAndVariance(features);
         float predicted = margin.getScore();
 
@@ -103,23 +102,14 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected void update(final Collection<?> features, final float coeff, final float beta) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
-        for(Object f : features) {
+    protected void update(@Nonnull final FeatureValue[] features, final float coeff, final float beta) {
+        for(FeatureValue f : features) {
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            Object k = f.getFeature();
+            float v = f.getValue();
+
             IWeightValue old_w = model.get(k);
             IWeightValue new_w = getNewWeight(old_w, v, coeff, beta);
             model.set(k, new_w);
@@ -173,7 +163,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
         }
 
         @Override
-        protected void train(Collection<?> features, float target) {
+        protected void train(@Nonnull final FeatureValue[] features, float target) {
             preTrain(target);
 
             PredictionResult margin = calcScoreAndVariance(features);

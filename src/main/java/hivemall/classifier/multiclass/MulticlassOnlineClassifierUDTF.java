@@ -44,6 +44,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -67,9 +70,9 @@ import org.apache.hadoop.io.Text;
 public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     private static final Log logger = LogFactory.getLog(MulticlassOnlineClassifierUDTF.class);
 
-    protected ListObjectInspector featureListOI;
-    protected boolean parseFeature;
-    protected PrimitiveObjectInspector labelInputOI;
+    private ListObjectInspector featureListOI;
+    private boolean parseFeature;
+    private PrimitiveObjectInspector labelInputOI;
 
     protected Map<Object, PredictionModel> label2model;
     protected int count;
@@ -143,7 +146,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
-        if(features.isEmpty()) {
+        FeatureValue[] featureVector = parseFeatures(features);
+        if(featureVector == null) {
             return;
         }
         Object label = ObjectInspectorUtils.copyToStandardObject(args[1], labelInputOI);
@@ -152,12 +156,38 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
 
         count++;
-        train(features, label);
+        train(featureVector, label);
     }
 
-    protected abstract void train(final List<?> features, final Object actual_label);
+    @Nullable
+    protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
+        final int size = features.size();
+        if(size == 0) {
+            return null;
+        }
 
-    protected final PredictionResult classify(final List<?> features) {
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final FeatureValue[] featureVector = new FeatureValue[size];
+        for(int i = 0; i < size; i++) {
+            Object f = features.get(i);
+            if(f == null) {
+                continue;
+            }
+            final FeatureValue fv;
+            if(parseFeature) {
+                fv = FeatureValue.parse(f);
+            } else {
+                Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                fv = new FeatureValue(k, 1.f);
+            }
+            featureVector[i] = fv;
+        }
+        return featureVector;
+    }
+
+    protected abstract void train(@Nonnull final FeatureValue[] features, @Nonnull final Object actual_label);
+
+    protected final PredictionResult classify(@Nonnull final FeatureValue[] features) {
         float maxScore = Float.MIN_VALUE;
         Object maxScoredLabel = null;
 
@@ -174,7 +204,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(maxScoredLabel, maxScore);
     }
 
-    protected Margin getMargin(final List<?> features, final Object actual_label) {
+    protected Margin getMargin(@Nonnull final FeatureValue[] features, final Object actual_label) {
         float correctScore = 0.f;
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
@@ -195,11 +225,11 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new Margin(correctScore, maxAnotherLabel, maxAnotherScore);
     }
 
-    protected Margin getMarginAndVariance(final List<?> features, final Object actual_label) {
+    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features, final Object actual_label) {
         return getMarginAndVariance(features, actual_label, false);
     }
 
-    protected Margin getMarginAndVariance(final List<?> features, final Object actual_label, boolean nonZeroVariance) {
+    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features, final Object actual_label, boolean nonZeroVariance) {
         float correctScore = 0.f;
         float correctVariance = 0.f;
         Object maxAnotherLabel = null;
@@ -233,43 +263,27 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new Margin(correctScore, maxAnotherLabel, maxAnotherScore).variance(var);
     }
 
-    protected final float squaredNorm(final List<?> features) {
+    protected final float squaredNorm(@Nonnull final FeatureValue[] features) {
         float squared_norm = 0.f;
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                v = fv.getValue();
-            } else {
-                v = 1.f;
-            }
+            final float v = f.getValue();
             squared_norm += (v * v);
         }
         return squared_norm;
     }
 
-    protected final float calcScore(final PredictionModel model, final List<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseX = this.parseFeature;
-
+    protected final float calcScore(@Nonnull final PredictionModel model, @Nonnull final FeatureValue[] features) {
         float score = 0.f;
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
                 score += (old_w * v);
@@ -278,47 +292,29 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return score;
     }
 
-    protected final float calcVariance(final List<?> features) {
-        final boolean parseX = this.parseFeature;
-
+    protected final float calcVariance(@Nonnull final FeatureValue[] features) {
         float variance = 0.f;
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f);
-                v = fv.getValue();
-            } else {
-                v = 1.f;
-            }
+            float v = f.getValue();
             variance += v * v;
         }
         return variance;
     }
 
-    protected final PredictionResult calcScoreAndVariance(final PredictionModel model, final List<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseX = this.parseFeature;
-
+    protected final PredictionResult calcScoreAndVariance(@Nonnull final PredictionModel model, @Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float variance = 0.f;
 
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
@@ -331,7 +327,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(List<?> features, float coeff, Object actual_label, Object missed_label) {
+    protected void update(@Nonnull final FeatureValue[] features, float coeff, Object actual_label, Object missed_label) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
@@ -352,21 +348,13 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             }
         }
 
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        for(Object f : features) {// w[f] += y * x[f]
+        for(FeatureValue f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_trueclass_w = model2add.getWeight(k);
             float add_w = old_trueclass_w + (coeff * v);
             model2add.set(k, new WeightValue(add_w));

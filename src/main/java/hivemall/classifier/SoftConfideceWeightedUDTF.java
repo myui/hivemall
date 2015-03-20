@@ -24,13 +24,12 @@ import hivemall.io.PredictionResult;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
@@ -111,8 +110,8 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
     }
 
     @Override
-    protected void train(List<?> features, int label) {
-        final float y = label > 0 ? 1f : -1f;
+    protected void train(@Nonnull final FeatureValue[] features, int label) {
+        final float y = label > 0 ? 1.f : -1.f;
 
         PredictionResult margin = calcScoreAndVariance(features);
         float loss = loss(margin, y);
@@ -232,23 +231,14 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
 
     }
 
-    protected void update(final List<?> features, final float y, final float alpha, final float beta) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
-        for(Object f : features) {
+    protected void update(@Nonnull final FeatureValue[] features, final float y, final float alpha, final float beta) {
+        for(FeatureValue f : features) {
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_w = model.get(k);
             IWeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);
             model.set(k, new_w);

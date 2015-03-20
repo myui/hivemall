@@ -18,7 +18,9 @@
  */
 package hivemall.classifier;
 
-import java.util.List;
+import hivemall.io.FeatureValue;
+
+import javax.annotation.Nonnull;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -37,7 +39,7 @@ public class PerceptronUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected void update(List<?> features, float y, float p) {
+    protected void update(@Nonnull final FeatureValue[] features, float y, float p) {
         update(features, y);
     }
 }

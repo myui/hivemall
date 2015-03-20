@@ -32,8 +32,10 @@ import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,10 +55,10 @@ import org.apache.hadoop.io.FloatWritable;
 public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     private static final Log logger = LogFactory.getLog(OnlineRegressionUDTF.class);
 
-    protected ListObjectInspector featureListOI;
-    protected PrimitiveObjectInspector featureInputOI;
-    protected PrimitiveObjectInspector targetOI;
-    protected boolean parseFeature;
+    private ListObjectInspector featureListOI;
+    private PrimitiveObjectInspector featureInputOI;
+    private PrimitiveObjectInspector targetOI;
+    private boolean parseFeature;
 
     protected PredictionModel model;
     protected int count;
@@ -117,42 +119,59 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
-        if(features.isEmpty()) {
+        FeatureValue[] featureVector = parseFeatures(features);
+        if(featureVector == null) {
             return;
         }
         float target = PrimitiveObjectInspectorUtils.getFloat(args[1], targetOI);
         checkTargetValue(target);
 
         count++;
-        train(features, target);
+        train(featureVector, target);
+    }
+
+    @Nullable
+    protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
+        final int size = features.size();
+        if(size == 0) {
+            return null;
+        }
+
+        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
+        final FeatureValue[] featureVector = new FeatureValue[size];
+        for(int i = 0; i < size; i++) {
+            Object f = features.get(i);
+            if(f == null) {
+                continue;
+            }
+            final FeatureValue fv;
+            if(parseFeature) {
+                fv = FeatureValue.parse(f);
+            } else {
+                Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
+                fv = new FeatureValue(k, 1.f);
+            }
+            featureVector[i] = fv;
+        }
+        return featureVector;
     }
 
     protected void checkTargetValue(float target) throws UDFArgumentException {}
 
-    protected void train(final Collection<?> features, final float target) {
+    protected void train(@Nonnull final FeatureValue[] features, final float target) {
         float p = predict(features);
         update(features, target, p);
     }
 
-    protected float predict(final Collection<?> features) {
-        final ObjectInspector featureInspector = this.featureInputOI;
-        final boolean parseFeature = this.parseFeature;
-
+    protected float predict(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
                 score += (old_w * v);
@@ -162,27 +181,18 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         return score;
     }
 
-    protected PredictionResult calcScoreAndNorm(Collection<?> features) {
-        final ObjectInspector featureInspector = this.featureInputOI;
-        final boolean parseX = this.parseFeature;
-
+    @Nonnull
+    protected PredictionResult calcScoreAndNorm(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float squared_norm = 0.f;
 
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseX) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
                 score += (old_w * v);
@@ -192,27 +202,18 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).squaredNorm(squared_norm);
     }
 
-    protected PredictionResult calcScoreAndVariance(Collection<?> features) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        final boolean parseFeature = this.parseFeature;
-
+    @Nonnull
+    protected PredictionResult calcScoreAndVariance(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float variance = 0.f;
 
-        for(Object f : features) {// a += w[i] * x[i]
+        for(FeatureValue f : features) {// a += w[i] * x[i]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
                 variance += (1.f * v * v);
@@ -225,7 +226,7 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(Collection<?> features, float target, float predicted) {
+    protected void update(@Nonnull final FeatureValue[] features, float target, float predicted) {
         float d = computeUpdate(target, predicted);
         update(features, d);
     }
@@ -234,23 +235,14 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         throw new IllegalStateException();
     }
 
-    protected void update(Collection<?> features, float coeff) {
-        final ObjectInspector featureInspector = this.featureInputOI;
-
-        for(Object f : features) {// w[i] += y * x[i]
+    protected void update(@Nonnull final FeatureValue[] features, float coeff) {
+        for(FeatureValue f : features) {// w[i] += y * x[i]
             if(f == null) {
                 continue;
             }
-            final Object x;
-            final float xi;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                x = fv.getFeature();
-                xi = fv.getValue();
-            } else {
-                x = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                xi = 1.f;
-            }
+            final Object x = f.getFeature();
+            final float xi = f.getValue();
+
             float old_w = model.getWeight(x);
             float new_w = old_w + (coeff * xi);
             model.set(x, new WeightValue(new_w));

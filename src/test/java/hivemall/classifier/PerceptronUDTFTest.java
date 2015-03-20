@@ -21,9 +21,6 @@ package hivemall.classifier;
 import static org.junit.Assert.assertEquals;
 import hivemall.io.FeatureValue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -69,31 +66,24 @@ public class PerceptronUDTFTest {
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector });
 
         /* update weights by List<Object> */
-        List<String> features1 = new ArrayList<String>();
-        features1.add("good");
-        features1.add("opinion");
+        FeatureValue word1 = FeatureValue.parse(new String("good"));
+        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
+        FeatureValue[] features1 = new FeatureValue[] { word1, word2 };
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"));
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
         assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
-        List<String> features2 = new ArrayList<String>();
-        features2.add("bad");
-        features2.add("opinion");
+        FeatureValue word3 = FeatureValue.parse(new String("bad"));
+        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
+        FeatureValue[] features2 = new FeatureValue[] { word3, word4 };
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word3 = FeatureValue.parse(new String("bad"));
         assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
-
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
         assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 
@@ -107,31 +97,24 @@ public class PerceptronUDTFTest {
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector, param });
 
         /* update weights by List<Object> */
-        List<String> features1 = new ArrayList<String>();
-        features1.add("good");
-        features1.add("opinion");
+        FeatureValue word1 = FeatureValue.parse(new String("good"));
+        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
+        FeatureValue[] features1 = new FeatureValue[] { word1, word2 };
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"));
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
         assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
-        List<String> features2 = new ArrayList<String>();
-        features2.add("bad");
-        features2.add("opinion");
+        FeatureValue word3 = FeatureValue.parse(new String("bad"));
+        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
+        FeatureValue[] features2 = new FeatureValue[] { word3, word4 };
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word3 = FeatureValue.parse(new String("bad"));
         assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
-
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
         assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 }
