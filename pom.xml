@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>hivemall</groupId>
+	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall</artifactId>
 	<version>0.3</version>
 
@@ -18,14 +18,30 @@
 		<license>
 			<name>Apache License, Version 2.0</name>
 			<url>http://opensource.org/licenses/Apache-2.0</url>
+			<distribution>repo</distribution>
 		</license>
 	</licenses>
 
+	<scm>
+		<url>https://github.com/myui/hivemall</url>
+		<connection>scm:git:git@github.com:myui/hivemall.git</connection>
+		<developerConnection>scm:git:git@github.com:myui/hivemall.git</developerConnection>
+	</scm>
+
+	<developers>
+		<developer>
+			<id>myui</id>
+			<name>Makoto YUI</name>
+			<email>yuin405@gmail.com</email>
+			<url>http://myui.github.io/</url>
+		</developer>
+	</developers>
+
 	<packaging>jar</packaging>
-	
+
 	<properties>
 		<maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
-        <build.year>${maven.build.timestamp}</build.year>	
+		<build.year>${maven.build.timestamp}</build.year>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<protobuf.version>2.5.0</protobuf.version>
 		<protoc.path>${env.PROTOC_PATH}</protoc.path>
@@ -37,6 +53,13 @@
 			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
 		</repository>
 	</repositories>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencies>
 
@@ -328,7 +351,81 @@
 			</plugin>
 			<!-- end overalls -->
 
+			<!-- start sonatype deploy -->
+			<!-- mvn clean deploy -DperformRelease=true -Dskiptests=true -->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<!-- end sonatype deploy -->
+
 		</plugins>
 	</build>
+
+	<!-- start maven central -->
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<!-- sources.jar -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- javadoc.jar -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- gpg sign -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+	<!-- end maven central -->
 
 </project>
