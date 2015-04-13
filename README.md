@@ -87,6 +87,7 @@ Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) an
 Copyright
 ---------
 
+Copyright (C) 2015 Makoto YUI
 Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)  
 
 Put the above copyrights for the services/softwares that use Hivemall.
