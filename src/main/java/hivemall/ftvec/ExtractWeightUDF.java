@@ -52,12 +52,13 @@ public final class ExtractWeightUDF extends UDF {
         if(ftvec == null) {
             return null;
         }
-        String[] splits = ftvec.split(":");
-        if(splits.length != 2) {
-            throw new UDFArgumentException("Unexpected feature vector representation: " + ftvec);
+        final String[] splits = ftvec.split(":");
+        if(splits.length == 2) {
+            float f = Float.valueOf(splits[1]);
+            return new FloatWritable(f);
+        } else {
+            return new FloatWritable(1.f);
         }
-        float f = Float.valueOf(splits[1]);
-        return new FloatWritable(f);
     }
 
 }
