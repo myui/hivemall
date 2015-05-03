@@ -20,9 +20,10 @@ package hivemall.regression;
 
 import hivemall.common.LossFunctions;
 import hivemall.common.OnlineVariance;
+import hivemall.io.FeatureValue;
 import hivemall.io.PredictionResult;
 
-import java.util.Collection;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -89,7 +90,7 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected void train(Collection<?> features, float target) {
+    protected void train(@Nonnull final FeatureValue[] features, float target) {
         preTrain(target);
 
         PredictionResult margin = calcScoreAndNorm(features);

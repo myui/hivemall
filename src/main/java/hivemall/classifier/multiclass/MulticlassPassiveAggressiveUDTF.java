@@ -18,9 +18,10 @@
  */
 package hivemall.classifier.multiclass;
 
+import hivemall.io.FeatureValue;
 import hivemall.io.Margin;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -40,9 +41,7 @@ public class MulticlassPassiveAggressiveUDTF extends MulticlassOnlineClassifierU
     }
 
     @Override
-    protected void train(List<?> features, Object actual_label) {
-        assert (!features.isEmpty());
-
+    protected void train(@Nonnull final FeatureValue[] features, @Nonnull Object actual_label) {
         Margin margin = getMargin(features, actual_label);
         float loss = loss(margin);
 

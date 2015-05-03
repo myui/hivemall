@@ -24,15 +24,12 @@ import hivemall.io.IWeightValue;
 import hivemall.io.WeightValue.WeightValueParamsF2;
 import hivemall.utils.lang.Primitives;
 
-import java.util.List;
-
 import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
@@ -78,7 +75,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Override
-    protected void train(final List<?> features, final int label) {
+    protected void train(@Nonnull final FeatureValue[] features, final int label) {
         final float y = label > 0 ? 1.f : -1.f;
 
         float p = predict(features);
@@ -90,23 +87,13 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         update(features, y, count);
     }
 
-    protected void update(final List<?> features, final float y, final int t) {
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-
-        for(Object f : features) {// w[f] += y * x[f]
+    protected void update(@Nonnull final FeatureValue[] features, final float y, final int t) {
+        for(FeatureValue f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
-            final Object x;
-            final float xi;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                x = fv.getFeature();
-                xi = fv.getValue();
-            } else {
-                x = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                xi = 1.f;
-            }
+            Object x = f.getFeature();
+            float xi = f.getValue();
 
             updateWeight(x, xi, y, t);
         }

@@ -21,9 +21,6 @@ package hivemall.classifier;
 import static org.junit.Assert.assertEquals;
 import hivemall.io.FeatureValue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -42,21 +39,22 @@ public class PerceptronUDTFTest {
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* test for INT_TYPE_NAME feature */
-        StructObjectInspector intListSOI = udtf.initialize(new ObjectInspector[] { intListOI, intOI });
+        StructObjectInspector intListSOI = udtf.initialize(new ObjectInspector[] {
+                intListOI, intOI });
         assertEquals("struct<feature:int,weight:float>", intListSOI.getTypeName());
 
         /* test for STRING_TYPE_NAME feature */
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        StructObjectInspector stringListSOI = udtf.initialize(new ObjectInspector[] { stringListOI,
-                intOI });
+        StructObjectInspector stringListSOI = udtf.initialize(new ObjectInspector[] {
+                stringListOI, intOI });
         assertEquals("struct<feature:string,weight:float>", stringListSOI.getTypeName());
 
         /* test for BIGINT_TYPE_NAME feature */
         ObjectInspector longOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ListObjectInspector longListOI = ObjectInspectorFactory.getStandardListObjectInspector(longOI);
-        StructObjectInspector longListSOI = udtf.initialize(new ObjectInspector[] { longListOI,
-                intOI });
+        StructObjectInspector longListSOI = udtf.initialize(new ObjectInspector[] {
+                longListOI, intOI });
         assertEquals("struct<feature:bigint,weight:float>", longListSOI.getTypeName());
     }
 
@@ -69,31 +67,24 @@ public class PerceptronUDTFTest {
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector });
 
         /* update weights by List<Object> */
-        List<String> features1 = new ArrayList<String>();
-        features1.add("good");
-        features1.add("opinion");
+        FeatureValue word1 = FeatureValue.parse("good");
+        FeatureValue word2 = FeatureValue.parse("opinion");
+        FeatureValue[] features1 = new FeatureValue[] { word1, word2 };
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"));
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
         assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
-        List<String> features2 = new ArrayList<String>();
-        features2.add("bad");
-        features2.add("opinion");
+        FeatureValue word3 = FeatureValue.parse("bad");
+        FeatureValue word4 = FeatureValue.parse("opinion");
+        FeatureValue[] features2 = new FeatureValue[] { word3, word4 };
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word3 = FeatureValue.parse(new String("bad"));
         assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
-
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
         assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 
@@ -102,36 +93,29 @@ public class PerceptronUDTFTest {
         PerceptronUDTF udtf = new PerceptronUDTF();
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String(""));
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
         udtf.initialize(new ObjectInspector[] { stringListOI,
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector, param });
 
         /* update weights by List<Object> */
-        List<String> features1 = new ArrayList<String>();
-        features1.add("good");
-        features1.add("opinion");
+        FeatureValue word1 = FeatureValue.parse("good");
+        FeatureValue word2 = FeatureValue.parse("opinion");
+        FeatureValue[] features1 = new FeatureValue[] { word1, word2 };
         udtf.update(features1, 1, 0.f);
 
         /* check weights */
-        FeatureValue word1 = FeatureValue.parse(new String("good"));
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word2 = FeatureValue.parse(new String("opinion"));
         assertEquals(1.f, udtf.model.get(word2.getFeature()).get(), 1e-5f);
 
         /* update weights by List<Object> */
-        List<String> features2 = new ArrayList<String>();
-        features2.add("bad");
-        features2.add("opinion");
+        FeatureValue word3 = FeatureValue.parse("bad");
+        FeatureValue word4 = FeatureValue.parse("opinion");
+        FeatureValue[] features2 = new FeatureValue[] { word3, word4 };
         udtf.update(features2, -1, 0.f);
 
         /* check weights */
         assertEquals(1.f, udtf.model.get(word1.getFeature()).get(), 1e-5f);
-
-        FeatureValue word3 = FeatureValue.parse(new String("bad"));
         assertEquals(-1.f, udtf.model.get(word3.getFeature()).get(), 1e-5f);
-
-        FeatureValue word4 = FeatureValue.parse(new String("opinion"));
         assertEquals(0.f, udtf.model.get(word4.getFeature()).get(), 1e-5f);
     }
 }

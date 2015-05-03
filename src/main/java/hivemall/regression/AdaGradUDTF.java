@@ -24,8 +24,6 @@ import hivemall.io.IWeightValue;
 import hivemall.io.WeightValue.WeightValueParamsF1;
 import hivemall.utils.lang.Primitives;
 
-import java.util.Collection;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -33,7 +31,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
@@ -89,30 +86,21 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     }
 
     @Override
-    protected void update(Collection<?> features, float target, float predicted) {
+    protected void update(@Nonnull final FeatureValue[] features, float target, float predicted) {
         float gradient = LossFunctions.logisticLoss(target, predicted);
         update(features, gradient);
     }
 
     @Override
-    protected void update(Collection<?> features, float gradient) {
-        final ObjectInspector featureInspector = this.featureInputOI;
+    protected void update(@Nonnull final FeatureValue[] features, float gradient) {
         final float g_g = gradient * (gradient / scaling);
 
-        for(Object f : features) {// w[i] += y * x[i]
+        for(FeatureValue f : features) {// w[i] += y * x[i]
             if(f == null) {
                 continue;
             }
-            final Object x;
-            final float xi;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                x = fv.getFeature();
-                xi = fv.getValue();
-            } else {
-                x = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                xi = 1.f;
-            }
+            Object x = f.getFeature();
+            float xi = f.getValue();
 
             IWeightValue old_w = model.get(x);
             IWeightValue new_w = getNewWeight(old_w, xi, gradient, g_g);

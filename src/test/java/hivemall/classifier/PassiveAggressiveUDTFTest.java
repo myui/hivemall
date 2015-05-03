@@ -18,21 +18,20 @@
  */
 package hivemall.classifier;
 
+import static org.junit.Assert.assertEquals;
 import hivemall.io.PredictionResult;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.junit.Test;
 
 public class PassiveAggressiveUDTFTest {
@@ -44,22 +43,22 @@ public class PassiveAggressiveUDTFTest {
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* test for INT_TYPE_NAME feature */
-        StructObjectInspector intListSOI = udtf.initialize(
-            new ObjectInspector[]{intListOI, intOI});
+        StructObjectInspector intListSOI = udtf.initialize(new ObjectInspector[] {
+                intListOI, intOI });
         assertEquals("struct<feature:int,weight:float>", intListSOI.getTypeName());
 
         /* test for STRING_TYPE_NAME feature */
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        StructObjectInspector stringListSOI = udtf.initialize(
-            new ObjectInspector[]{stringListOI, intOI});
+        StructObjectInspector stringListSOI = udtf.initialize(new ObjectInspector[] {
+                stringListOI, intOI });
         assertEquals("struct<feature:string,weight:float>", stringListSOI.getTypeName());
 
         /* test for BIGINT_TYPE_NAME feature */
         ObjectInspector longOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ListObjectInspector longListOI = ObjectInspectorFactory.getStandardListObjectInspector(longOI);
-        StructObjectInspector longListSOI = udtf.initialize(
-            new ObjectInspector[]{longListOI, intOI});
+        StructObjectInspector longListSOI = udtf.initialize(new ObjectInspector[] {
+                longListOI, intOI });
         assertEquals("struct<feature:bigint,weight:float>", longListSOI.getTypeName());
     }
 
@@ -68,7 +67,7 @@ public class PassiveAggressiveUDTFTest {
         PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
 
         /* train weights by List<Object> */
         List<Integer> features1 = new ArrayList<Integer>();
@@ -83,7 +82,7 @@ public class PassiveAggressiveUDTFTest {
         assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
 
         /* train weights by Object[] */
-        List<?> features2 = (List<?>) intListOI.getList(new Object[]{3, 4, 5});
+        List<?> features2 = (List<?>) intListOI.getList(new Object[] { 3, 4, 5 });
         udtf.train(features2, 1);
 
         /* check weights */
@@ -113,13 +112,10 @@ public class PassiveAggressiveUDTFTest {
         PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA1();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            new String("-c 3.0")
-        );
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 3.0");
 
         /* do initialize() with aggressiveness parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI, param });
         float loss = 0.1f;
 
         PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
@@ -137,7 +133,7 @@ public class PassiveAggressiveUDTFTest {
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
         float loss = 0.1f;
 
         PredictionResult margin = new PredictionResult(0.5f).squaredNorm(0.05f);
@@ -152,10 +148,10 @@ public class PassiveAggressiveUDTFTest {
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* define aggressive parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
 
         /* train weights */
-        List<?> features = (List<?>) intListOI.getList(new Object[]{1, 2, 3});
+        List<?> features = (List<?>) intListOI.getList(new Object[] { 1, 2, 3 });
         udtf.train(features, 1);
 
         /* check weights */
@@ -170,15 +166,12 @@ public class PassiveAggressiveUDTFTest {
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            new String("-c 0.1")
-        );
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 0.1");
         /* define aggressive parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI, param });
 
         /* train weights */
-        List<?> features = (List<?>) intListOI.getList(new Object[]{1, 2, 3});
+        List<?> features = (List<?>) intListOI.getList(new Object[] { 1, 2, 3 });
         udtf.train(features, 1);
 
         /* check weights */
@@ -194,7 +187,7 @@ public class PassiveAggressiveUDTFTest {
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* do initialize() with aggressiveness parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
         float loss = 0.1f;
 
         PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
@@ -211,13 +204,10 @@ public class PassiveAggressiveUDTFTest {
         PassiveAggressiveUDTF udtf = new PassiveAggressiveUDTF.PA2();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            new String("-c 3.0")
-        );
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 3.0");
 
         /* do initialize() with aggressiveness parameter */
-        udtf.initialize(new ObjectInspector[]{intListOI, intOI, param});
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI, param });
         float loss = 0.1f;
 
         PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);

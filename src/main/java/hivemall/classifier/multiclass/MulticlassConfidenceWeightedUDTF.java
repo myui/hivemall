@@ -25,13 +25,12 @@ import hivemall.io.PredictionModel;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
@@ -101,7 +100,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
     }
 
     @Override
-    protected void train(List<?> features, Object actual_label) {
+    protected void train(@Nonnull final FeatureValue[] features, @Nonnull Object actual_label) {
         Margin margin = getMarginAndVariance(features, actual_label, true);
         float gamma = getGamma(margin);
 
@@ -125,7 +124,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
         return gamma_numer / gamma_denom;
     }
 
-    protected void update(List<?> features, float alpha, Object actual_label, Object missed_label) {
+    protected void update(@Nonnull final FeatureValue[] features, float alpha, Object actual_label, Object missed_label) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
@@ -146,21 +145,13 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
             }
         }
 
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        for(Object f : features) {// w[f] += y * x[f]
+        for(FeatureValue f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_correctclass_w = model2add.get(k);
             IWeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, phi, true);
             model2add.set(k, new_correctclass_w);

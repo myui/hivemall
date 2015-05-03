@@ -25,13 +25,12 @@ import hivemall.io.PredictionModel;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
@@ -112,7 +111,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
     }
 
     @Override
-    protected void train(List<?> features, Object actual_label) {
+    protected void train(@Nonnull final FeatureValue[] features, @Nonnull Object actual_label) {
         Margin margin = getMarginAndVariance(features, actual_label, true);
         float loss = loss(margin);
 
@@ -233,7 +232,7 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
 
     }
 
-    protected void update(final List<?> features, final Object actual_label, final Object missed_label, final float alpha, final float beta) {
+    protected void update(@Nonnull final FeatureValue[] features, final Object actual_label, final Object missed_label, final float alpha, final float beta) {
         assert (actual_label != null);
         if(actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
@@ -254,21 +253,13 @@ public abstract class MulticlassSoftConfidenceWeightedUDTF extends MulticlassOnl
             }
         }
 
-        final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
-        for(Object f : features) {// w[f] += y * x[f]
+        for(FeatureValue f : features) {// w[f] += y * x[f]
             if(f == null) {
                 continue;
             }
-            final Object k;
-            final float v;
-            if(parseFeature) {
-                FeatureValue fv = FeatureValue.parse(f);
-                k = fv.getFeature();
-                v = fv.getValue();
-            } else {
-                k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
-                v = 1.f;
-            }
+            final Object k = f.getFeature();
+            final float v = f.getValue();
+
             IWeightValue old_correctclass_w = model2add.get(k);
             IWeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, beta, true);
             model2add.set(k, new_correctclass_w);
