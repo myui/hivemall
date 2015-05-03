@@ -45,32 +45,34 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.FloatWritable;
 
 public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     private static final Log logger = LogFactory.getLog(BinaryOnlineClassifierUDTF.class);
 
     protected ListObjectInspector featureListOI;
-    protected IntObjectInspector labelOI;
+    protected PrimitiveObjectInspector labelOI;
     protected boolean parseFeature;
 
     protected PredictionModel model;
     protected int count;
 
     @Override
-    public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+    public StructObjectInspector initialize(ObjectInspector[] argOIs)
+            throws UDFArgumentException {
         if(argOIs.length < 2) {
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
         }
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
-        this.labelOI = (IntObjectInspector) argOIs[1];
+        this.labelOI = HiveUtils.asIntCompatibleOI(argOIs[1]);
 
         processOptions(argOIs);
 
-        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
+        PrimitiveObjectInspector featureOutputOI = dense_model
+                ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
                 : featureInputOI;
         this.model = createModel();
         if(preloadedModelFile != null) {
@@ -86,7 +88,8 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+        if(!STRING_TYPE_NAME.equals(keyTypeName)
+                && !INT_TYPE_NAME.equals(keyTypeName)
                 && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
             throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
                     + keyTypeName);
@@ -118,7 +121,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         if(features.isEmpty()) {
             return;
         }
-        int label = (int) labelOI.get(args[1]);
+        int label = PrimitiveObjectInspectorUtils.getInt(args[1], labelOI);
         checkLabelValue(label);
 
         count++;
@@ -302,9 +305,11 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             }
             int numMixed = model.getNumMixed();
             this.model = null;
-            logger.info("Trained a prediction model using " + count + " training examples"
+            logger.info("Trained a prediction model using " + count
+                    + " training examples"
                     + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
-            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
+            logger.info("Forwarded the prediction model of " + numForwarded
+                    + " rows");
         }
     }
 

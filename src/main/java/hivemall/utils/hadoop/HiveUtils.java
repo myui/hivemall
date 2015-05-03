@@ -173,7 +173,8 @@ public final class HiveUtils {
         return v.get();
     }
 
-    public static int getConstInt(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
+    public static int getConstInt(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
         if(!isIntOI(oi)) {
             throw new UDFArgumentException("argument must be a Int value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
@@ -182,7 +183,8 @@ public final class HiveUtils {
         return v.get();
     }
 
-    public static long getConstLong(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
+    public static long getConstLong(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
         if(!isBigIntOI(oi)) {
             throw new UDFArgumentException("argument must be a BigInt value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
@@ -233,9 +235,35 @@ public final class HiveUtils {
     public static IntObjectInspector asIntOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentException {
         if(!INT_TYPE_NAME.equals(argOI.getTypeName())) {
-            throw new UDFArgumentException("Argument type must be INT: " + argOI.getTypeName());
+            throw new UDFArgumentException("Argument type must be INT: "
+                    + argOI.getTypeName());
         }
         return (IntObjectInspector) argOI;
+    }
+
+    public static PrimitiveObjectInspector asIntCompatibleOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if(argOI.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
+                    + argOI.getTypeName() + " is passed.");
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+            case BOOLEAN:
+            case BYTE:
+            case STRING:
+            case DECIMAL:
+                break;
+            default:
+                throw new UDFArgumentTypeException(0, "Unxpected type '"
+                        + argOI.getTypeName() + "' is passed.");
+        }
+        return oi;
     }
 
     public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
@@ -245,7 +273,7 @@ public final class HiveUtils {
                     + argOI.getTypeName() + " is passed.");
         }
         final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
-        switch(oi.getPrimitiveCategory()) {
+        switch (oi.getPrimitiveCategory()) {
             case BYTE:
             case SHORT:
             case INT:
@@ -277,7 +305,8 @@ public final class HiveUtils {
         Configuration conf = new Configuration();
         Properties tbl = new Properties();
         tbl.setProperty("columns", "key,value");
-        tbl.setProperty("columns.types", keyOI.getTypeName() + "," + valueOI.getTypeName());
+        tbl.setProperty("columns.types", keyOI.getTypeName() + ","
+                + valueOI.getTypeName());
         serde.initialize(conf, tbl);
         return serde;
     }
