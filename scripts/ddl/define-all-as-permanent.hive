@@ -6,6 +6,9 @@
 -- USE hivemall;
 -- set hivevar:hivemall_jar=hdfs:///apps/hivemall/hivemall-with-dependencies.jar;
 
+DROP FUNCTION IF EXISTS hivemall_version;
+CREATE FUNCTION hivemall_version as 'hivemall.HivemallVersionUDF' USING JAR '${hivemall_jar}';
+
 ---------------------------
 -- binary classification --
 ---------------------------
