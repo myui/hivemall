@@ -30,7 +30,7 @@ import org.apache.hadoop.io.IntWritable;
 @UDFType(deterministic = false, stateful = true)
 public class TaskIdUDF extends UDF {
 
-    /**  
+    /**
      * @since Hive 0.12.0
      */
     public IntWritable evaluate() {

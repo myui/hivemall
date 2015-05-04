@@ -43,8 +43,7 @@ public class MapTailNUDF extends GenericUDF {
     private IntObjectInspector intObjectInspector;
 
     @Override
-    public ObjectInspector initialize(ObjectInspector[] arguments)
-            throws UDFArgumentException {
+    public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
         if(arguments.length != 2) {
             throw new UDFArgumentLengthException("map_tail_n only takes 2 arguments: map<object, object>, int");
         }

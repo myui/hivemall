@@ -29,7 +29,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 /**
  * Convert two aggregated columns into a sorted key-value map.
  * 
- * The key must be a primitive type (int, boolean, float, string, ...) and the 
+ * The key must be a primitive type (int, boolean, float, string, ...) and the
  * value may be a primitive or a complex type (structs, maps, arrays).
  * 
  * https://cwiki.apache.org/Hive/genericudafcasestudy.html

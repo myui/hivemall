@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 
-/**  
+/**
  * @since Hive 0.12.0
  */
 @Description(name = "jobconf_gets", value = "_FUNC_() - Returns the value from JobConf")

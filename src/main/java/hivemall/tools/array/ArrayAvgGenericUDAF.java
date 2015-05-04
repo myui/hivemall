@@ -59,8 +59,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
     private ArrayAvgGenericUDAF() {}// prevent instantiation
 
     @Override
-    public GenericUDAFEvaluator getEvaluator(TypeInfo[] typeInfo)
-            throws SemanticException {
+    public GenericUDAFEvaluator getEvaluator(TypeInfo[] typeInfo) throws SemanticException {
         if(typeInfo.length != 1) {
             throw new UDFArgumentTypeException(typeInfo.length - 1, "One argument is expected, taking an array as an argument");
         }
@@ -84,13 +83,11 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         public Evaluator() {}
 
         @Override
-        public ObjectInspector init(Mode mode, ObjectInspector[] parameters)
-                throws HiveException {
+        public ObjectInspector init(Mode mode, ObjectInspector[] parameters) throws HiveException {
             assert (parameters.length == 1);
             super.init(mode, parameters);
             // initialize input
-            if(mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original
-                                                                // data
+            if(mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
                 this.inputListOI = (ListObjectInspector) parameters[0];
                 this.inputListElemOI = HiveUtils.asDoubleCompatibleOI(inputListOI.getListElementObjectInspector());
             } else {// from partial aggregation
@@ -142,8 +139,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void iterate(AggregationBuffer aggr, Object[] parameters)
-                throws HiveException {
+        public void iterate(AggregationBuffer aggr, Object[] parameters) throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
             Object tuple = parameters[0];
@@ -153,8 +149,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Object terminatePartial(AggregationBuffer aggr)
-                throws HiveException {
+        public Object terminatePartial(AggregationBuffer aggr) throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
             if(myAggr._size == -1) {
                 return null;
@@ -169,8 +164,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer aggr, Object partial)
-                throws HiveException {
+        public void merge(AggregationBuffer aggr, Object partial) throws HiveException {
             if(partial != null) {
                 ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
@@ -183,8 +177,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
 
                 // --------------------------------------------------------------
                 // [workaround]
-                // java.lang.ClassCastException:
-                // org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
+                // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
                 // cannot be cast to [Ljava.lang.Object;
                 if(sum instanceof LazyBinaryArray) {
                     sum = ((LazyBinaryArray) sum).getList();
@@ -199,8 +192,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public List<FloatWritable> terminate(AggregationBuffer aggr)
-                throws HiveException {
+        public List<FloatWritable> terminate(AggregationBuffer aggr) throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
             final int size = myAggr._size;
@@ -243,8 +235,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
             this._count = new long[size];
         }
 
-        void doIterate(@Nonnull final Object tuple, @Nonnull ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI)
-                throws HiveException {
+        void doIterate(@Nonnull final Object tuple, @Nonnull ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI) throws HiveException {
             final int size = listOI.getListLength(tuple);
             if(_size == -1) {
                 init(size);
@@ -265,8 +256,7 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
             }
         }
 
-        void merge(final int o_size, @Nonnull final Object o_sum, @Nonnull final Object o_count, @Nonnull final StandardListObjectInspector sumOI, @Nonnull final StandardListObjectInspector countOI)
-                throws HiveException {
+        void merge(final int o_size, @Nonnull final Object o_sum, @Nonnull final Object o_count, @Nonnull final StandardListObjectInspector sumOI, @Nonnull final StandardListObjectInspector countOI) throws HiveException {
             final WritableDoubleObjectInspector sumElemOI = PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
             final WritableLongObjectInspector countElemOI = PrimitiveObjectInspectorFactory.writableLongObjectInspector;
 

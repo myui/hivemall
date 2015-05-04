@@ -47,8 +47,7 @@ public class ConcatArrayUDF extends GenericUDF {
     private ListObjectInspector[] argumentOIs;
 
     @Override
-    public ObjectInspector initialize(ObjectInspector[] arguments)
-            throws UDFArgumentException {
+    public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
         if(arguments.length < 1) {
             throw new UDFArgumentLengthException("The function CONCAT_ARRAY(array1, array2) needs at least 1 argument.");
         }
@@ -61,9 +60,8 @@ public class ConcatArrayUDF extends GenericUDF {
                     }
                 default:
                     throw new UDFArgumentTypeException(0, "Argument " + i
-                            + " of function CONCAT_ARRAY must be "
-                            + LIST_TYPE_NAME + "<" + Category.PRIMITIVE
-                            + ">, but " + arguments[0].getTypeName()
+                            + " of function CONCAT_ARRAY must be " + LIST_TYPE_NAME + "<"
+                            + Category.PRIMITIVE + ">, but " + arguments[0].getTypeName()
                             + " was found.");
             }
         }

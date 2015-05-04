@@ -36,8 +36,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 public class CollectAllUDAF extends AbstractGenericUDAFResolver {
 
     @Override
-    public GenericUDAFEvaluator getEvaluator(TypeInfo[] tis)
-            throws SemanticException {
+    public GenericUDAFEvaluator getEvaluator(TypeInfo[] tis) throws SemanticException {
         if(tis.length != 1) {
             throw new UDFArgumentTypeException(tis.length - 1, "Exactly one argument is expected.");
         }
@@ -50,8 +49,7 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
         private StandardListObjectInspector internalMergeOI;
 
         @Override
-        public ObjectInspector init(Mode m, ObjectInspector[] parameters)
-                throws HiveException {
+        public ObjectInspector init(Mode m, ObjectInspector[] parameters) throws HiveException {
             super.init(m, parameters);
             if(m == Mode.PARTIAL1) {
                 inputOI = parameters[0];
@@ -86,8 +84,7 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void iterate(AggregationBuffer ab, Object[] parameters)
-                throws HiveException {
+        public void iterate(AggregationBuffer ab, Object[] parameters) throws HiveException {
             assert (parameters.length == 1);
             Object p = parameters[0];
             if(p != null) {
@@ -97,8 +94,7 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Object terminatePartial(AggregationBuffer ab)
-                throws HiveException {
+        public Object terminatePartial(AggregationBuffer ab) throws HiveException {
             ArrayAggregationBuffer agg = (ArrayAggregationBuffer) ab;
             ArrayList<Object> ret = new ArrayList<Object>(agg.container.size());
             ret.addAll(agg.container);
