@@ -22,10 +22,12 @@ import hivemall.utils.hadoop.WritableUtils;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
+@Description(name = "split_words", value = "_FUNC_(query [, regex]) - Returns an array<text> containing splitted strings")
 @UDFType(deterministic = true, stateful = false)
 public final class SplitWordsUDF extends UDF {
 

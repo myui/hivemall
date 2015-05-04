@@ -20,9 +20,14 @@ package hivemall.tools.array;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "subarray", value = "_FUNC_(orignal, fromIndex, toIndex) - Returns a slice of the orignal array "
+        + "between the specified fromIndex, inclusive, and toIndex, exclusive")
+@UDFType(deterministic = true, stateful = false)
 public class SubarrayUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> array, int fromIndex, int toIndex) {

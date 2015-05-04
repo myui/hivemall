@@ -20,10 +20,14 @@ package hivemall.tools.array;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
+@Description(name = "subarray_startwith", value = "_FUNC_(original, key) - Returns an array that starts with the specified key")
+@UDFType(deterministic = true, stateful = false)
 public class SubarrayStartWithUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> original, IntWritable key) {

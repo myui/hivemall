@@ -20,10 +20,12 @@ package hivemall.tools.math;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(name = "sigmoid", value = "_FUNC_(x) - Returns 1.0 / (1.0 + exp(-x))")
 @UDFType(deterministic = true, stateful = false)
 public final class SigmodUDF extends UDF {
 

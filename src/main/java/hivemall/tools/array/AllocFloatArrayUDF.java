@@ -21,9 +21,13 @@ package hivemall.tools.array;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(name = "float_array", value = "_FUNC_(nDims) - Returns an array<float> of nDims elements")
+@UDFType(deterministic = true, stateful = false)
 public class AllocFloatArrayUDF extends UDF {
 
     public List<FloatWritable> evaluate(int nDims) {
