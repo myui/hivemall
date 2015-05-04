@@ -20,6 +20,7 @@ package hivemall.tools.array;
 
 import java.util.ArrayList;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
@@ -31,6 +32,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
+@Description(name = "collect_all", value = "_FUNC_(x) - Retrurns a set of objects with duplicate elements eliminated")
 public class CollectAllUDAF extends AbstractGenericUDAFResolver {
 
     @Override

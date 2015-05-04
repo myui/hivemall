@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -33,6 +35,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 
+@Description(name = "concat_array", value = "_FUNC_(x1, x2, ..) - Returns a concatinated array")
+@UDFType(deterministic = true, stateful = false)
 public class ConcatArrayUDF extends GenericUDF {
     /**
      * @see org.apache.hadoop.hive.serde.serdeConstants
@@ -49,7 +53,7 @@ public class ConcatArrayUDF extends GenericUDF {
         }
         final int nargs = arguments.length;
         for(int i = 0; i < nargs; i++) {
-            switch(arguments[i].getCategory()) {
+            switch (arguments[i].getCategory()) {
                 case LIST:
                     if(((ListObjectInspector) (arguments[i])).getListElementObjectInspector().getCategory().equals(Category.PRIMITIVE)) {
                         break;

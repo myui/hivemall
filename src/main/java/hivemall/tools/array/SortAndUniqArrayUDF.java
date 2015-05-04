@@ -23,9 +23,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "sort_and_uniq_array", value = "_FUNC_(x) - Takes an array of type int and "
+        + "returns a sorted array with duplicate elementes eliminated")
+@UDFType(deterministic = true, stateful = false)
 public class SortAndUniqArrayUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> ary) {

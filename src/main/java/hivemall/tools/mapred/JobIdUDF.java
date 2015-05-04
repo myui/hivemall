@@ -30,7 +30,7 @@ import org.apache.hadoop.io.Text;
 @UDFType(deterministic = false, stateful = true)
 public class JobIdUDF extends UDF {
 
-    /**  
+    /**
      * @since Hive 0.12.0
      */
     public Text evaluate() {

@@ -20,10 +20,15 @@ package hivemall.tools.array;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
+@Description(name = "array_remove", value = "_FUNC_(original, target) - Returns an array that the target is removed "
+        + "from the original array")
+@UDFType(deterministic = true, stateful = false)
 public class ArrayRemoveUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> original, IntWritable target) {

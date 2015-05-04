@@ -31,7 +31,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-@Description(name = "generate_series", value = "_FUNC_(const int|bigint start, const int|bigint end) - Generate a series of values, from start to end")
+@Description(name = "generate_series", value = "_FUNC_(const int|bigint start, const int|bigint end) - "
+        + "Generate a series of values, from start to end")
 public final class GenerateSeriesUDTF extends GenericUDTF {
 
     private long start, end;

@@ -25,11 +25,15 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.io.FloatWritable;
 
+@Deprecated
+@Description(name = "array_avg", value = "_FUNC_(array) - Returns an array<double>"
+        + " in which each element is the mean of a set of numbers")
 public final class ArrayAvgUDAF extends UDAF {
 
     public ArrayAvgUDAF() {}

@@ -97,7 +97,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         ObjectInspector valueOutputOI = ObjectInspectorUtils.getStandardObjectInspector(valueInputOI, ObjectInspectorCopyOption.WRITABLE);
 
         final ObjectInspector outputOI;
-        switch(argOIs[1].getCategory()) {
+        switch (argOIs[1].getCategory()) {
             case PRIMITIVE:
                 this.multipleKeyLookup = false;
                 this.keyInputOI = (PrimitiveObjectInspector) argOIs[1];
@@ -131,8 +131,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         return outputOI;
     }
 
-    private static void loadValues(OpenHashMap<Object, Object> map, File file, PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI)
-            throws IOException, SerDeException {
+    private static void loadValues(OpenHashMap<Object, Object> map, File file, PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI) throws IOException, SerDeException {
         if(!file.exists()) {
             return;
         }

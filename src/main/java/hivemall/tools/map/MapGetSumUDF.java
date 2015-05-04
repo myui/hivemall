@@ -23,11 +23,16 @@ import static hivemall.utils.hadoop.WritableUtils.val;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "map_get_sum", value = "_FUNC_(map<int,float> src, array<int> keys) - Returns sum of values "
+        + "that are retrieved by keys")
+@UDFType(deterministic = true, stateful = false)
 public class MapGetSumUDF extends UDF {
 
     public DoubleWritable evaluate(Map<IntWritable, FloatWritable> map, List<IntWritable> keys) {

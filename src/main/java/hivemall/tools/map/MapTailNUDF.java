@@ -22,9 +22,11 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -32,6 +34,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 
+@Description(name = "map_tail_n", value = "_FUNC_(map SRC, int N) - Returns the last N elements "
+        + "from a sorted array of SRC")
+@UDFType(deterministic = true, stateful = false)
 public class MapTailNUDF extends GenericUDF {
 
     private MapObjectInspector mapObjectInspector;
