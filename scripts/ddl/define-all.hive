@@ -2,6 +2,9 @@
 -- Hivemall: Hive scalable Machine Learning Library
 -----------------------------------------------------------------------------
 
+drop temporary function hivemall_version;
+create temporary function hivemall_version as 'hivemall.HivemallVersionUDF';
+
 ---------------------------
 -- binary classification --
 ---------------------------
