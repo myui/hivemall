@@ -10,7 +10,7 @@
 --------------------
 
 create temporary macro java_min(x INT, y INT)
-reflect("java.lang.Math", "java_min", x, y);
+reflect("java.lang.Math", "min", x, y);
 
 create temporary macro max2(x INT, y INT)
 if(x>y,x,y);
