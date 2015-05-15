@@ -79,6 +79,10 @@ create temporary function train_multiclass_scw2 as 'hivemall.classifier.multicla
 -- distance functions --
 ------------------------
 
+drop temporary function cosine_similarity;
+create temporary function cosine_similarity as 'hivemall.knn.distance.CosineSimilarityUDF';
+
+-- alias for backward compatibility
 drop temporary function cosine_sim;
 create temporary function cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF';
 

@@ -83,6 +83,10 @@ CREATE FUNCTION train_multiclass_scw2 as 'hivemall.classifier.multiclass.Multicl
 -- distance functions --
 ------------------------
 
+DROP FUNCTION IF EXISTS cosine_similarity;
+CREATE FUNCTION cosine_similarity as 'hivemall.knn.distance.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
+
+-- alias for backward compatibility
 DROP FUNCTION IF EXISTS cosine_sim;
 CREATE FUNCTION cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
 
