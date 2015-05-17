@@ -32,8 +32,9 @@ import org.apache.hadoop.io.FloatWritable;
 @UDFType(deterministic = true, stateful = false)
 public final class ZScoreUDF extends UDF {
 
-    public FloatWritable evaluate(float value, double mean, double stddev) {
-        return evaluate(value, (float) mean, (float) stddev);
+    public FloatWritable evaluate(double value, double mean, double stddev) {
+        float v = (float) ((value - mean) / stddev);
+        return val(v);
     }
 
     public FloatWritable evaluate(float value, float mean, float stddev) {

@@ -27,9 +27,10 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
 /**
- * Min-Max normalization 
+ * Min-Max normalization
  * 
- * @see <a href="http://en.wikipedia.org/wiki/Feature_scaling">Feature_scaling</a>
+ * @see <a
+ *      href="http://en.wikipedia.org/wiki/Feature_scaling">Feature_scaling</a>
  */
 @Description(name = "rescale", value = "_FUNC_(value, min, max) - Returns rescaled value by min-max normalization")
 @UDFType(deterministic = true, stateful = false)
@@ -39,12 +40,19 @@ public final class RescaleUDF extends UDF {
         return val(min_max_normalization(value, min, max));
     }
 
-    public FloatWritable evaluate(final float value, final double min, final double max) {
-        return val(min_max_normalization(value, (float) min, (float) max));
+    public FloatWritable evaluate(final double value, final double min, final double max) {
+        return val(min_max_normalization(value, min, max));
     }
 
     public Text evaluate(final String s, final double min, final double max) {
-        return evaluate(s, (float) min, (float) max);
+        String[] fv = s.split(":");
+        if(fv.length != 2) {
+            throw new IllegalArgumentException("Invalid feature value representation: " + s);
+        }
+        double v = Float.parseFloat(fv[1]);
+        float scaled_v = min_max_normalization(v, min, max);
+        String ret = fv[0] + ':' + Float.toString(scaled_v);
+        return val(ret);
     }
 
     public Text evaluate(final String s, final float min, final float max) {
@@ -60,6 +68,10 @@ public final class RescaleUDF extends UDF {
 
     private static float min_max_normalization(final float value, final float min, final float max) {
         return (value - min) / (max - min);
+    }
+
+    private static float min_max_normalization(final double value, final double min, final double max) {
+        return (float) ((value - min) / (max - min));
     }
 
 }
