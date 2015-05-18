@@ -124,7 +124,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         opts.addOption("r", "lambda", true, "The regularization factor [default: 0.03]");
         opts.addOption("mu", "mean_rating", true, "The mean rating [default: 0.0]");
         opts.addOption("update_mean", "update_mu", false, "Whether update (and return) the mean rating or not");
-        opts.addOption("rankinit", true, "Initialization strategy of rank matrix [default: guassian, random]");
+        opts.addOption("rankinit", true, "Initialization strategy of rank matrix [random, gaussian] (default: random)");
         opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the rank matrix [default: 1.0]");
         opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial rank matrix [default: 0.1]");
         opts.addOption("iter", "iterations", true, "The number of iterations [default: 1]");
