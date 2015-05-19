@@ -36,7 +36,7 @@ public class MurmurHash3UDF extends UDF {
     public IntWritable evaluate(String word, boolean rawValue) throws UDFArgumentException {
         if(rawValue) {
             if(word == null) {
-                throw new UDFArgumentException("argument must not be null");
+                return null;
             }
             return val(MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c));
         } else {
@@ -46,7 +46,7 @@ public class MurmurHash3UDF extends UDF {
 
     public IntWritable evaluate(String word, int numFeatures) throws UDFArgumentException {
         if(word == null) {
-            throw new UDFArgumentException("argument must not be null");
+            return null;
         }
         int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
         if(r < 0) {
@@ -61,7 +61,7 @@ public class MurmurHash3UDF extends UDF {
 
     public IntWritable evaluate(List<String> words, int numFeatures) throws UDFArgumentException {
         if(words == null) {
-            throw new UDFArgumentException("argument must not be null");
+            return null;
         }
         final int size = words.size();
         if(size == 0) {
