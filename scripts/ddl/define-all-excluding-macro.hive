@@ -321,6 +321,9 @@ create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 drop temporary function array_avg;
 create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
 
+drop temporary function to_string_array;
+create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
+
 ---------------------
 -- map functions --
 ---------------------

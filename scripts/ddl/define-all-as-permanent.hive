@@ -325,6 +325,9 @@ CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hive
 DROP FUNCTION IF EXISTS array_avg;
 CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS to_string_array;
+CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
+
 ---------------------
 -- map functions --
 ---------------------

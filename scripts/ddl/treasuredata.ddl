@@ -107,6 +107,7 @@
 @ddl.create_function("concat_array", "hivemall.tools.array.ConcatArrayUDF")
 @ddl.create_function("subarray", "hivemall.tools.array.SubarrayUDF")
 @ddl.create_function("array_avg", "hivemall.tools.array.ArrayAvgGenericUDAF")
+@ddl.create_function("to_string_array", "hivemall.tools.array.ToStringArrayUDF")
 
 # Map functions
 @ddl.create_function("map_get_sum", "hivemall.tools.map.MapGetSumUDF")
