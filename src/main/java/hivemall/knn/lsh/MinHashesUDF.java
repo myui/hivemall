@@ -30,9 +30,11 @@ import java.util.Random;
 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-public class MinHashesUDF extends UDF {
+@UDFType(deterministic = true, stateful = false)
+public final class MinHashesUDF extends UDF {
 
     private int[] _seeds = null;
 
