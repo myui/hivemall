@@ -1,3 +1,5 @@
+@ddl.create_function("hivemall_version", "hivemall.HivemallVersionUDF")
+
 # Binary classification
 @ddl.create_function("perceptron", "hivemall.classifier.PerceptronUDTF")
 @ddl.create_function("train_perceptron", "hivemall.classifier.PerceptronUDTF")
@@ -9,6 +11,8 @@
 @ddl.create_function("train_arowh", "hivemall.classifier.AROWClassifierUDTF$AROWh")
 @ddl.create_function("train_scw", "hivemall.classifier.SoftConfideceWeightedUDTF$SCW1")
 @ddl.create_function("train_scw2", "hivemall.classifier.SoftConfideceWeightedUDTF$SCW2")
+@ddl.create_function("adagrad_rda", "hivemall.classifier.AdaGradRDAUDTF")
+@ddl.create_function("train_adagrad_rda", "hivemall.classifier.AdaGradRDAUDTF")
 
 # Multiclass classification
 @ddl.create_function("train_multiclass_perceptron", "hivemall.classifier.multiclass.MulticlassPerceptronUDTF")
@@ -26,6 +30,7 @@
 @ddl.create_function("hamming_distance", "hivemall.knn.distance.HammingDistanceUDF")
 @ddl.create_function("jaccard", "hivemall.knn.similarity.JaccardIndexUDF")
 @ddl.create_function("popcnt", "hivemall.knn.distance.PopcountUDF")
+@ddl.create_function("kld", "hivemall.knn.distance.KLDivergenceUDF")
 
 # LSH functions
 @ddl.create_function("minhashes", "hivemall.knn.lsh.MinHashesUDF")
@@ -65,9 +70,12 @@
 @ddl.create_function("extract_feature", "hivemall.ftvec.ExtractFeatureUDF")
 @ddl.create_function("extract_weight", "hivemall.ftvec.ExtractWeightUDF")
 
+# Ftvec/text functions
+@ddl.create_function("tf", "hivemall.ftvec.text.TermFrequencyUDAF")
+@ddl.create_function("tokenize", "hivemall.ftvec.text.TokenizeUDF")
+
 # Regression functions
 @ddl.create_function("train_logregr", "hivemall.regression.LogressUDTF")
-@ddl.create_function("train_logregr_iter", "hivemall.regression.LogressIterUDTF")
 @ddl.create_function("train_pa1_regr", "hivemall.regression.PassiveAggressiveRegressionUDTF")
 @ddl.create_function("train_pa1a_regr", "hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a")
 @ddl.create_function("train_pa2_regr", "hivemall.regression.PassiveAggressiveRegressionUDTF$PA2")
@@ -75,8 +83,9 @@
 @ddl.create_function("train_arow_regr", "hivemall.regression.AROWRegressionUDTF")
 @ddl.create_function("train_arowe_regr", "hivemall.regression.AROWRegressionUDTF$AROWe")
 @ddl.create_function("train_arowe2_regr", "hivemall.regression.AROWRegressionUDTF$AROWe2")
+@ddl.create_function("train_adagrad", "hivemall.regression.AdaGradUDTF")
+@ddl.create_function("train_adadelta", "hivemall.regression.AdaDeltaUDTF")
 @ddl.create_function("logress", "hivemall.regression.LogressUDTF")
-@ddl.create_function("logress_iter", "hivemall.regression.LogressIterUDTF")
 @ddl.create_function("pa1_regress", "hivemall.regression.PassiveAggressiveRegressionUDTF")
 @ddl.create_function("pa1a_regress", "hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a")
 @ddl.create_function("pa2_regress", "hivemall.regression.PassiveAggressiveRegressionUDTF$PA2")
@@ -84,6 +93,8 @@
 @ddl.create_function("arow_regress", "hivemall.regression.AROWRegressionUDTF")
 @ddl.create_function("arowe_regress", "hivemall.regression.AROWRegressionUDTF$AROWe")
 @ddl.create_function("arowe2_regress", "hivemall.regression.AROWRegressionUDTF$AROWe2")
+@ddl.create_function("adagrad", "hivemall.regression.AdaGradUDTF")
+@ddl.create_function("adadelta", "hivemall.regression.AdaDeltaUDTF")
 
 # Array functions
 @ddl.create_function("AllocFloatArray", "hivemall.tools.array.AllocFloatArrayUDF")
@@ -95,6 +106,7 @@
 @ddl.create_function("collect_all", "hivemall.tools.array.CollectAllUDAF")
 @ddl.create_function("concat_array", "hivemall.tools.array.ConcatArrayUDF")
 @ddl.create_function("subarray", "hivemall.tools.array.SubarrayUDF")
+@ddl.create_function("array_avg", "hivemall.tools.array.ArrayAvgGenericUDAF")
 
 # Map functions
 @ddl.create_function("map_get_sum", "hivemall.tools.map.MapGetSumUDF")
@@ -106,12 +118,15 @@
 @ddl.create_function("sigmoid", "hivemall.tools.math.SigmodUDF")
 
 # Mapred functions
-#@ddl.create_function("taskid", "hivemall.tools.mapred.TaskIdUDF")
-#@ddl.create_function("rowid", "hivemall.tools.mapred.RowIdUDF")
-#@ddl.create_function("distcache_gets", "hivemall.tools.mapred.DistributedCacheLookupUDF")
+@ddl.create_function("taskid", "hivemall.tools.mapred.TaskIdUDF")
+@ddl.create_function("jobid", "hivemall.tools.mapred.JobIdUDF")
+@ddl.create_function("rowid", "hivemall.tools.mapred.RowIdUDF")
+@ddl.create_function("distcache_gets", "hivemall.tools.mapred.DistributedCacheLookupUDF")
+@ddl.create_function("jobconf_gets", "hivemall.tools.mapred.JobConfGetsUDF")
 
 # Misc functions
 @ddl.create_function("generate_series", "hivemall.tools.GenerateSeriesUDTF")
+@ddl.create_function("convert_label", "hivemall.tools.ConvertLabelUDF")
 
 # String functions
 @ddl.create_function("isStopword", "hivemall.tools.string.StopwordUDF")
@@ -120,3 +135,22 @@
 
 # Dataset generator functions
 @ddl.create_function("lr_datagen", "hivemall.dataset.LogisticRegressionDataGeneratorUDTF")
+
+# Evaluating functions
+@ddl.create_function("f1score", "hivemall.evaluation.FMeasureUDAF")
+@ddl.create_function("mae", "hivemall.evaluation.MeanAbsoluteErrorUDAF")
+@ddl.create_function("mse", "hivemall.evaluation.MeanSquaredErrorUDAF")
+@ddl.create_function("rmse", "hivemall.evaluation.RootMeanSquaredErrorUDAF")
+
+# Matrix Factorization
+@ddl.create_function("mf_predict", "hivemall.mf.MFPredictionUDF")
+@ddl.create_function("train_mf_sgd", "hivemall.mf.MatrixFactorizationSGDUDTF")
+@ddl.create_function("train_mf_adagrad", "hivemall.mf.MatrixFactorizationAdaGradUDTF")
+
+# Macros
+@ddl.create_macro("max2(x INT, y INT)", "if(x>y,x,y)")
+@ddl.create_macro("min2(x INT, y INT)", "if(x<y,x,y)")
+@ddl.create_macro("rand_gid(k INT)", "floor(rand()*k)")
+@ddl.create_macro("rand_gid2(k INT, seed INT)", "floor(rand(seed)*k)")
+@ddl.create_macro("idf(df_t INT, n_docs INT)", "(log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0)")
+@ddl.create_macro("tfidf(tf FLOAT, df_t INT, n_docs INT)", "tf * (log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0)")
