@@ -84,17 +84,17 @@ CREATE FUNCTION train_multiclass_scw2 as 'hivemall.classifier.multiclass.Multicl
 ------------------------
 
 DROP FUNCTION IF EXISTS cosine_similarity;
-CREATE FUNCTION cosine_similarity as 'hivemall.knn.distance.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION cosine_similarity as 'hivemall.knn.similarity.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
 
 -- alias for backward compatibility
 DROP FUNCTION IF EXISTS cosine_sim;
-CREATE FUNCTION cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS hamming_distance;
 CREATE FUNCTION hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS jaccard;
-CREATE FUNCTION jaccard as 'hivemall.knn.distance.JaccardIndexUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION jaccard as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS popcnt;
 CREATE FUNCTION popcnt as 'hivemall.knn.distance.PopcountUDF' USING JAR '${hivemall_jar}';

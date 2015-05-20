@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.knn.distance;
+package hivemall.knn.similarity;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
+import hivemall.knn.distance.HammingDistanceUDF;
 
 import java.math.BigInteger;
 

@@ -16,89 +16,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.knn.distance;
+package hivemall.knn.similarity;
 
 import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.io.FeatureValue;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(name = "consine_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns a cosine similarity of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class CosineSimilarityUDF extends UDF {
 
-    public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2, boolean noWeight) {
+    public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2) {
         if(ftvec1 == null || ftvec2 == null) {
             return val(0.f);
         }
 
+        final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map1 = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         double score1 = 0.d;
         for(String ft : ftvec1) {
-            if(noWeight) {
-                score1++;
-                map1.put(ft, 1.f);
-            } else {
-                FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
-                float v = fv.getValue();
-                score1 += (v * v);
-                String f = fv.getFeature();
-                map1.put(f, v);
-            }
+            FeatureValue.parseFeatureAsString(ft, probe);
+            float v = probe.getValue();
+            score1 += (v * v);
+            String f = probe.getFeature();
+            map1.put(f, v);
         }
         double l1norm1 = Math.sqrt(score1);
 
         float dotp = 0.f;
         double score2 = 0.d;
         for(String ft : ftvec2) {
-            if(noWeight) {
-                score2++;
-                if(map1.containsKey(ft)) {
-                    dotp++;
-                }
-            } else {
-                FeatureValue fv = FeatureValue.parseFeatureAsString(ft);
-                float v2 = fv.getValue();
-                score2 += (v2 * v2);
-                String f2 = fv.getFeature();
-                Float v1 = map1.get(f2);
-                if(v1 != null) {
-                    dotp += (v1.floatValue() * v2);
-                }
+            FeatureValue.parseFeatureAsString(ft, probe);
+            float v2 = probe.getValue();
+            score2 += (v2 * v2);
+            String f2 = probe.getFeature();
+            Float v1 = map1.get(f2);
+            if(v1 != null) {
+                dotp += (v1.floatValue() * v2);
             }
         }
         double l1norm2 = Math.sqrt(score2);
-
-        final double denom = (l1norm1 * l1norm2);
-        if(denom <= 0.f) {
-            return val(0.f);
-        } else {
-            return val((float) (dotp / denom));
-        }
-    }
-
-    public FloatWritable evaluate(List<Integer> ftvec1, List<Integer> ftvec2) {
-        if(ftvec1 == null || ftvec2 == null) {
-            return val(0.f);
-        }
-
-        Collections.sort(ftvec1);
-
-        double dotp = 0.f;
-        for(Integer f : ftvec2) {
-            if(Collections.binarySearch(ftvec1, f) >= 0) {
-                dotp++;
-            }
-        }
-
-        double l1norm1 = Math.sqrt(ftvec1.size());
-        double l1norm2 = Math.sqrt(ftvec2.size());
 
         final double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
