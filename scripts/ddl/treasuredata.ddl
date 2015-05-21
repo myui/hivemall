@@ -31,6 +31,7 @@
 @ddl.create_function("jaccard", "hivemall.knn.similarity.JaccardIndexUDF")
 @ddl.create_function("popcnt", "hivemall.knn.distance.PopcountUDF")
 @ddl.create_function("kld", "hivemall.knn.distance.KLDivergenceUDF")
+@ddl.create_function("euclid_distance", "hivemall.knn.distance.EuclidDistanceUDF")
 
 # LSH functions
 @ddl.create_function("minhashes", "hivemall.knn.lsh.MinHashesUDF")
