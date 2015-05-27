@@ -49,7 +49,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.FloatWritable;
@@ -93,8 +92,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected double currLosses, prevLosses;
 
     // Input OIs and Context
-    protected IntObjectInspector userOI;
-    protected IntObjectInspector itemOI;
+    protected PrimitiveObjectInspector userOI;
+    protected PrimitiveObjectInspector itemOI;
     protected PrimitiveObjectInspector ratingOI;
     protected MapredContext mapredContext;
 
@@ -175,8 +174,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             throw new UDFArgumentException(getClass().getSimpleName()
                     + " takes 3 arguments: INT user, INT item, FLOAT rating [, CONSTANT STRING options]");
         }
-        this.userOI = HiveUtils.asIntOI(argOIs[0]);
-        this.itemOI = HiveUtils.asIntOI(argOIs[1]);
+        this.userOI = HiveUtils.asIntCompatibleOI(argOIs[0]);
+        this.itemOI = HiveUtils.asIntCompatibleOI(argOIs[1]);
         this.ratingOI = HiveUtils.asDoubleCompatibleOI(argOIs[2]);
 
         processOptions(argOIs);
@@ -239,11 +238,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     public final void process(Object[] args) throws HiveException {
         assert (args.length >= 3) : args.length;
 
-        int user = userOI.get(args[0]);
+        int user = PrimitiveObjectInspectorUtils.getInt(args[0], userOI);
         if(user < 0) {
             throw new HiveException("Illegal user index: " + user);
         }
-        int item = itemOI.get(args[1]);
+        int item = PrimitiveObjectInspectorUtils.getInt(args[1], itemOI);
         if(item < 0) {
             throw new HiveException("Illegal item index: " + user);
         }
