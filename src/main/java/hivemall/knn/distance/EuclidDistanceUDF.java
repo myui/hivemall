@@ -37,6 +37,9 @@ public final class EuclidDistanceUDF extends UDF {
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         for(String ft : ftvec1) {
+            if(ft == null) {
+                continue;
+            }
             FeatureValue.parseFeatureAsString(ft, probe);
             float v1 = probe.getValue();
             String f1 = probe.getFeature();
@@ -44,6 +47,9 @@ public final class EuclidDistanceUDF extends UDF {
         }
         double d = 0.d;
         for(String ft : ftvec2) {
+            if(ft == null) {
+                continue;
+            }
             FeatureValue.parseFeatureAsString(ft, probe);
             String f2 = probe.getFeature();
             float v2f = probe.getValue();
