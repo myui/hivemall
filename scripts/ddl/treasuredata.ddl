@@ -150,9 +150,9 @@
 @ddl.create_function("train_mf_adagrad", "hivemall.mf.MatrixFactorizationAdaGradUDTF")
 
 # Macros
-@ddl.create_macro("max2(x INT, y INT)", "if(x>y,x,y)")
-@ddl.create_macro("min2(x INT, y INT)", "if(x<y,x,y)")
+@ddl.create_macro("max2(x DOUBLE, y DOUBLE)", "if(x>y,x,y)")
+@ddl.create_macro("min2(x DOUBLE, y DOUBLE)", "if(x<y,x,y)")
 @ddl.create_macro("rand_gid(k INT)", "floor(rand()*k)")
 @ddl.create_macro("rand_gid2(k INT, seed INT)", "floor(rand(seed)*k)")
-@ddl.create_macro("idf(df_t INT, n_docs INT)", "(log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0)")
-@ddl.create_macro("tfidf(tf FLOAT, df_t INT, n_docs INT)", "tf * (log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0)")
+@ddl.create_macro("idf(df_t DOUBLE, n_docs DOUBLE)", "log(10, n_docs / max2(1, df_t)) + 1.0")
+@ddl.create_macro("tfidf(tf FLOAT, df_t DOUBLE, n_docs DOUBLE)", "tf * (log(10, n_docs / max2(1,df_t)) + 1.0)")
