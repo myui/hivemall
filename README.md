@@ -17,7 +17,7 @@ Hivemall provides machine learning functionality as well as feature engineering 
 
 ## Classfication
 
-* Perceptron
+* [Perceptron](http://en.wikipedia.org/wiki/Perceptron)
 
 * Passive Aggressive (PA, PA1, PA2)
 
@@ -33,7 +33,7 @@ _My recommendation is AROW, SCW1 and AdaGradRDA, while it depends._
 
 ## Regression
 
-* Logistic Regression using Stochastic Gradient Descent
+* [Logistic Regression](http://en.wikipedia.org/wiki/Logistic_regression) using [Stochastic Gradient Descent](http://en.wikipedia.org/wiki/Stochastic_gradient_descent)
 
 * AdaGrad / AdaDelta (with logistic loss)
   
@@ -45,27 +45,31 @@ _My recommendation is AdaDelta and AdaGrad, while it depends._
 
 ## Recommendation
 
-* Matrix Factorization (sgd, adagrad)
+* [Matrix Factorization](http://en.wikipedia.org/wiki/Matrix_decomposition) (sgd, adagrad)
 
-* Minhash (LSH with jaccard index)
+* [Minhash](http://en.wikipedia.org/wiki/MinHash) ([LSH](http://en.wikipedia.org/wiki/Locality-sensitive_hashing) with jaccard index)
 
 ## k-Nearest Neighbor
 
-* Minhash (LSH with jaccard index)
+* [Minhash](http://en.wikipedia.org/wiki/MinHash) ([LSH](http://en.wikipedia.org/wiki/Locality-sensitive_hashing) with jaccard index)
 
 * b-Bit minhash
 
-* Brute-force search using cosine similarity
+* Brute-force search using Cosine similarity
+
+## Anomaly Detection
+
+* [Local Outlier Factor (LOF)](http://en.wikipedia.org/wiki/Local_outlier_factor)
 
 ## Feature engineering
   
-* Feature hashing (MurmurHash, SHA1)
+* [Feature Hashing](http://en.wikipedia.org/wiki/Feature_hashing) (MurmurHash, SHA1)
 
-* Feature scaling (Min-Max Normalization, Z-Score)
+* [Feature scaling](http://en.wikipedia.org/wiki/Feature_scaling) (Min-Max Normalization, Z-Score)
 
 * Feature instances amplifier that reduces iterations on training
 
-* TF-IDF vectorizer
+* [TF-IDF](http://en.wikipedia.org/wiki/Tf%E2%80%93idf) vectorizer
 
 * Bias clause
 
@@ -75,8 +79,6 @@ System requirements
 --------------------
 
 * Hive 0.11 or later
-
-* Hive 0.9, 0.10 [out of support]
 
 Basic Usage
 ------------
