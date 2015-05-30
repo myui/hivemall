@@ -28,29 +28,32 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.io.Text;
 
 @Description(name = "euclid_distance", value = "_FUNC_(ftvec1, ftvec2) - Returns the square root of the sum of the squared differences")
 @UDFType(deterministic = true, stateful = false)
 public final class EuclidDistanceUDF extends UDF {
 
-    public DoubleWritable evaluate(final List<String> ftvec1, final List<String> ftvec2) {
+    public DoubleWritable evaluate(final List<Text> ftvec1, final List<Text> ftvec2) {
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
-        for(String ft : ftvec1) {
+        for(Text ft : ftvec1) {
             if(ft == null) {
                 continue;
             }
-            FeatureValue.parseFeatureAsString(ft, probe);
+            String s = ft.toString();
+            FeatureValue.parseFeatureAsString(s, probe);
             float v1 = probe.getValue();
             String f1 = probe.getFeature();
             map.put(f1, v1);
         }
         double d = 0.d;
-        for(String ft : ftvec2) {
+        for(Text ft : ftvec2) {
             if(ft == null) {
                 continue;
             }
-            FeatureValue.parseFeatureAsString(ft, probe);
+            String s = ft.toString();
+            FeatureValue.parseFeatureAsString(s, probe);
             String f2 = probe.getFeature();
             float v2f = probe.getValue();
             Float v1 = map.remove(f2);
