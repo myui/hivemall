@@ -80,23 +80,26 @@ create temporary function train_multiclass_scw2 as 'hivemall.classifier.multicla
 ------------------------
 
 drop temporary function cosine_similarity;
-create temporary function cosine_similarity as 'hivemall.knn.distance.CosineSimilarityUDF';
+create temporary function cosine_similarity as 'hivemall.knn.similarity.CosineSimilarityUDF';
 
 -- alias for backward compatibility
 drop temporary function cosine_sim;
-create temporary function cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF';
+create temporary function cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF';
 
 drop temporary function hamming_distance;
 create temporary function hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF';
 
 drop temporary function jaccard;
-create temporary function jaccard as 'hivemall.knn.distance.JaccardIndexUDF';
+create temporary function jaccard as 'hivemall.knn.similarity.JaccardIndexUDF';
 
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.knn.distance.PopcountUDF';
 
 drop temporary function kld;
 create temporary function kld as 'hivemall.knn.distance.KLDivergenceUDF';
+
+drop temporary function euclid_distance;
+create temporary function euclid_distance as 'hivemall.knn.distance.EuclidDistanceUDF';
 
 -------------------
 -- LSH functions --
@@ -321,6 +324,9 @@ create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 drop temporary function array_avg;
 create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
 
+drop temporary function to_string_array;
+create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
+
 ---------------------
 -- map functions --
 ---------------------
@@ -432,13 +438,17 @@ create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAd
 -- General Macros --
 --------------------
 
-create temporary macro java_min(x INT, y INT)
+--------------------
+-- General Macros --
+--------------------
+
+create temporary macro java_min(x DOUBLE, y DOUBLE)
 reflect("java.lang.Math", "min", x, y);
 
-create temporary macro max2(x INT, y INT)
+create temporary macro max2(x DOUBLE, y DOUBLE)
 if(x>y,x,y);
 
-create temporary macro min2(x INT, y INT)
+create temporary macro min2(x DOUBLE, y DOUBLE)
 if(x<y,x,y);
 
 create temporary macro rand_gid(k INT)
@@ -451,9 +461,13 @@ floor(rand(seed)*k);
 -- Statistics functions --
 --------------------------
 
-create temporary macro idf(df_t INT, n_docs INT)
-(log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0);
+-- create temporary macro SIGMOID(x DOUBLE)
+-- 1.0 / (1.0 + exp(-x));
 
-create temporary macro tfidf(tf FLOAT, df_t INT, n_docs INT)
-tf * (log(10, CAST(n_docs as FLOAT)/max2(1,df_t)) + 1.0);
+create temporary macro idf(df_t DOUBLE, n_docs DOUBLE)
+log(10, n_docs / max2(1,df_t)) + 1.0;
+
+create temporary macro tfidf(tf FLOAT, df_t DOUBLE, n_docs DOUBLE)
+tf * (log(10, n_docs / max2(1,df_t)) + 1.0);
+
 

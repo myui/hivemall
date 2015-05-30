@@ -25,8 +25,10 @@ import org.apache.hadoop.io.Text;
 
 public final class FeatureValue {
 
-    private final Object feature;
-    private final float value;
+    private/* final */Object feature;
+    private/* final */float value;
+
+    public FeatureValue() {}// used for Probe
 
     public FeatureValue(Object f, float v) {
         this.feature = f;
@@ -93,6 +95,26 @@ public final class FeatureValue {
             weight = 1.f;
         }
         return new FeatureValue(feature, weight);
+    }
+
+    @Nonnull
+    public static void parseFeatureAsString(@Nonnull final String s, @Nonnull final FeatureValue probe)
+            throws IllegalArgumentException {
+        assert (s != null);
+        assert (probe != null);
+
+        final int pos = s.indexOf(':');
+        if(pos == 0) {
+            throw new IllegalArgumentException("Invalid feature value representation: " + s);
+        }
+        if(pos > 0) {
+            probe.feature = s.substring(0, pos);
+            String s2 = s.substring(pos + 1);
+            probe.value = Float.parseFloat(s2);
+        } else {
+            probe.feature = s;
+            probe.value = 1.f;
+        }
     }
 
 }

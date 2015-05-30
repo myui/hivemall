@@ -80,23 +80,26 @@ create temporary function train_multiclass_scw2 as 'hivemall.classifier.multicla
 ------------------------
 
 drop temporary function cosine_similarity;
-create temporary function cosine_similarity as 'hivemall.knn.distance.CosineSimilarityUDF';
+create temporary function cosine_similarity as 'hivemall.knn.similarity.CosineSimilarityUDF';
 
 -- alias for backward compatibility
 drop temporary function cosine_sim;
-create temporary function cosine_sim as 'hivemall.knn.distance.CosineSimilarityUDF';
+create temporary function cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF';
 
 drop temporary function hamming_distance;
 create temporary function hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF';
 
 drop temporary function jaccard;
-create temporary function jaccard as 'hivemall.knn.distance.JaccardIndexUDF';
+create temporary function jaccard as 'hivemall.knn.similarity.JaccardIndexUDF';
 
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.knn.distance.PopcountUDF';
 
 drop temporary function kld;
 create temporary function kld as 'hivemall.knn.distance.KLDivergenceUDF';
+
+drop temporary function euclid_distance;
+create temporary function euclid_distance as 'hivemall.knn.distance.EuclidDistanceUDF';
 
 -------------------
 -- LSH functions --
@@ -320,6 +323,9 @@ create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 
 drop temporary function array_avg;
 create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
+
+drop temporary function to_string_array;
+create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
 
 ---------------------
 -- map functions --
