@@ -105,6 +105,9 @@ CREATE FUNCTION kld as 'hivemall.knn.distance.KLDivergenceUDF' USING JAR '${hive
 DROP FUNCTION IF EXISTS euclid_distance;
 CREATE FUNCTION euclid_distance as 'hivemall.knn.distance.EuclidDistanceUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS cosine_distance;
+CREATE FUNCTION cosine_distance as 'hivemall.knn.distance.CosineDistanceUDF' USING JAR '${hivemall_jar}';
+
 -------------------
 -- LSH functions --
 -------------------

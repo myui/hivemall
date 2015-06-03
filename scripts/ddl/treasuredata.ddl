@@ -32,6 +32,7 @@
 @ddl.create_function("popcnt", "hivemall.knn.distance.PopcountUDF")
 @ddl.create_function("kld", "hivemall.knn.distance.KLDivergenceUDF")
 @ddl.create_function("euclid_distance", "hivemall.knn.distance.EuclidDistanceUDF")
+@ddl.create_function("cosine_distance", "hivemall.knn.distance.CosineDistanceUDF")
 
 # LSH functions
 @ddl.create_function("minhashes", "hivemall.knn.lsh.MinHashesUDF")

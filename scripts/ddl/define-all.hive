@@ -101,6 +101,9 @@ create temporary function kld as 'hivemall.knn.distance.KLDivergenceUDF';
 drop temporary function euclid_distance;
 create temporary function euclid_distance as 'hivemall.knn.distance.EuclidDistanceUDF';
 
+drop temporary function cosine_distance;
+create temporary function cosine_distance as 'hivemall.knn.distance.CosineDistanceUDF';
+
 -------------------
 -- LSH functions --
 -------------------
