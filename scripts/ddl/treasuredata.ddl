@@ -24,15 +24,19 @@
 @ddl.create_function("train_multiclass_scw", "hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1")
 @ddl.create_function("train_multiclass_scw2", "hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2")
 
-# Distance functions
+# Similarity functions
 @ddl.create_function("cosine_sim", "hivemall.knn.similarity.CosineSimilarityUDF")
 @ddl.create_function("cosine_similarity", "hivemall.knn.similarity.CosineSimilarityUDF")
-@ddl.create_function("hamming_distance", "hivemall.knn.distance.HammingDistanceUDF")
 @ddl.create_function("jaccard", "hivemall.knn.similarity.JaccardIndexUDF")
+@ddl.create_function("angular_similarity", "hivemall.knn.distance.AngularSimilarityUDF")
+
+# Distance functions
+@ddl.create_function("hamming_distance", "hivemall.knn.distance.HammingDistanceUDF")
 @ddl.create_function("popcnt", "hivemall.knn.distance.PopcountUDF")
 @ddl.create_function("kld", "hivemall.knn.distance.KLDivergenceUDF")
 @ddl.create_function("euclid_distance", "hivemall.knn.distance.EuclidDistanceUDF")
 @ddl.create_function("cosine_distance", "hivemall.knn.distance.CosineDistanceUDF")
+@ddl.create_function("angular_distance", "hivemall.knn.distance.AngularDistanceUDF")
 
 # LSH functions
 @ddl.create_function("minhashes", "hivemall.knn.lsh.MinHashesUDF")

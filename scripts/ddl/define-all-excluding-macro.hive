@@ -75,9 +75,9 @@ create temporary function train_multiclass_scw as 'hivemall.classifier.multiclas
 drop temporary function train_multiclass_scw2;
 create temporary function train_multiclass_scw2 as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2';
 
-------------------------
--- distance functions --
-------------------------
+--------------------------
+-- similarity functions --
+--------------------------
 
 drop temporary function cosine_similarity;
 create temporary function cosine_similarity as 'hivemall.knn.similarity.CosineSimilarityUDF';
@@ -86,11 +86,18 @@ create temporary function cosine_similarity as 'hivemall.knn.similarity.CosineSi
 drop temporary function cosine_sim;
 create temporary function cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF';
 
-drop temporary function hamming_distance;
-create temporary function hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF';
-
 drop temporary function jaccard;
 create temporary function jaccard as 'hivemall.knn.similarity.JaccardIndexUDF';
+
+drop temporary function angular_similarity;
+create temporary function angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF';
+
+------------------------
+-- distance functions --
+------------------------
+
+drop temporary function hamming_distance;
+create temporary function hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF';
 
 drop temporary function popcnt;
 create temporary function popcnt as 'hivemall.knn.distance.PopcountUDF';
@@ -103,6 +110,9 @@ create temporary function euclid_distance as 'hivemall.knn.distance.EuclidDistan
 
 drop temporary function cosine_distance;
 create temporary function cosine_distance as 'hivemall.knn.distance.CosineDistanceUDF';
+
+drop temporary function angular_distance;
+create temporary function angular_distance as 'hivemall.knn.distance.AngularDistanceUDF';
 
 -------------------
 -- LSH functions --
