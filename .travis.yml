@@ -4,16 +4,15 @@ env:
    #   via the "travis encrypt" command using the project repo's public key
    - secure: "gYAzVukFw3ssmQzfovoKTNJnzQbUhF13tksHHhe5dqQWglxdix39wY405nMmzRm/21ZpIq3OFIlI7fnHdZSGkVPS/nPPxbzUkjYUh+zkujYwsqgjZecq9vGaoarnyV9CcI+2D6qUVnArHQ02FKxirtXduGvElZ/eRIa/hBfpgn4="
 
-addons:
-  coverity_scan:
-    project:
-      name: "myui/hivemall"
-      description: "Build submitted via Travis CI"
-    notification_email: false
-    build_script_url: https://raw.githubusercontent.com/myui/hivemall/master/scripts/misc/travisci_build_coverity_scan.sh
-    build_command_prepend: "mvn clean"
-    build_command:   "mvn -DskipTests=true compile"
-    branch_pattern: master
+#addons:
+#  coverity_scan:
+#    project:
+#      name: "myui/hivemall"
+#      description: "Build submitted via Travis CI"
+#    notification_email: false
+#    build_command_prepend: "mvn clean"
+#    build_command:   "mvn -DskipTests=true compile"
+#    branch_pattern: master
 
 language: java
 jdk:
