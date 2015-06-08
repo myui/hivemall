@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.io.Text;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class PoweredFeaturesUDFTest {
     @Test
     public void testIllegalDegree() throws HiveException {
         thrown.expect(HiveException.class);
-        thrown.expectMessage(CoreMatchers.startsWith("degree must be greater than or equals to 2"));
+        thrown.expectMessage("degree must be greater than or equals to 2");
 
         List<Text> args = WritableUtils.val("a:0.5", "b:0.3");
         PoweredFeaturesUDF udf = new PoweredFeaturesUDF();
