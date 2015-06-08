@@ -25,20 +25,12 @@ import java.util.List;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class PolynomialFeaturesUDFTest {
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Test
+    @Test(expected = HiveException.class)
     public void testIllegalDegree() throws HiveException {
-        thrown.expect(HiveException.class);
-        thrown.expectMessage("degree must be greater than or equals to 2");
-
         List<Text> args = WritableUtils.val("a:0.5", "b:0.3");
         PolynomialFeaturesUDF udf = new PolynomialFeaturesUDF();
         udf.evaluate(args, 1);
