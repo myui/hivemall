@@ -175,6 +175,16 @@ DROP FUNCTION IF EXISTS prefixed_hash_values;
 CREATE FUNCTION prefixed_hash_values as 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF' USING JAR '${hivemall_jar}';
 
 -----------------------
+-- pairing functions --
+-----------------------
+
+DROP FUNCTION IF EXISTS polynomial_features;
+CREATE FUNCTION polynomial_features as 'hivemall.ftvec.pairing.PolynomialFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS powered_features;
+CREATE FUNCTION powered_features as 'hivemall.ftvec.pairing.PoweredFeaturesUDF' USING JAR '${hivemall_jar}';
+
+-----------------------
 -- scaling functions --
 -----------------------
 

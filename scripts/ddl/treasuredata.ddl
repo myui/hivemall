@@ -59,6 +59,10 @@
 @ddl.create_function("array_hash_values", "hivemall.ftvec.hashing.ArrayHashValuesUDF")
 @ddl.create_function("prefixed_hash_values", "hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF")
 
+# Pairing functions
+@ddl.create_function("polynomial_features", "hivemall.ftvec.pairing.PolynomialFeaturesUDF")
+@ddl.create_function("powered_features", "hivemall.ftvec.pairing.PoweredFeaturesUDF")
+
 # Scaling functions
 @ddl.create_function("rescale", "hivemall.ftvec.scaling.RescaleUDF")
 @ddl.create_function("rescale_fv", "hivemall.ftvec.scaling.RescaleUDF")

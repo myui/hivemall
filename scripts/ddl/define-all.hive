@@ -171,6 +171,16 @@ drop temporary function prefixed_hash_values;
 create temporary function prefixed_hash_values as 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF';
 
 -----------------------
+-- pairing functions --
+-----------------------
+
+drop temporary function polynomial_features;
+create temporary function polynomial_features as 'hivemall.ftvec.pairing.PolynomialFeaturesUDF';
+
+drop temporary function powered_features;
+create temporary function powered_features as 'hivemall.ftvec.pairing.PoweredFeaturesUDF';
+
+-----------------------
 -- scaling functions --
 -----------------------
 

@@ -99,7 +99,7 @@ public final class WritableUtils {
         return new Text(v);
     }
 
-    public static List<Text> val(final String[] v) {
+    public static List<Text> val(final String... v) {
         final Text[] ret = new Text[v.length];
         for(int i = 0; i < v.length; i++) {
             String vi = v[i];

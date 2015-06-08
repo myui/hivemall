@@ -76,6 +76,12 @@ public final class FeatureValue {
     }
 
     @Nonnull
+    public static FeatureValue parseFeatureAsString(@Nonnull final Text t) {
+        String s = t.toString();
+        return parseFeatureAsString(s);
+    }
+
+    @Nonnull
     public static FeatureValue parseFeatureAsString(@Nonnull final String s)
             throws IllegalArgumentException {
         assert (s != null);
@@ -97,7 +103,13 @@ public final class FeatureValue {
         return new FeatureValue(feature, weight);
     }
 
-    @Nonnull
+    public static void parseFeatureAsString(@Nonnull final Text t, @Nonnull final FeatureValue probe) {
+        assert (t != null);
+
+        String s = t.toString();
+        parseFeatureAsString(s, probe);
+    }
+
     public static void parseFeatureAsString(@Nonnull final String s, @Nonnull final FeatureValue probe)
             throws IllegalArgumentException {
         assert (s != null);
