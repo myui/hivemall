@@ -18,7 +18,6 @@
  */
 package hivemall.knn.similarity;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.io.FeatureValue;
 
 import java.util.HashMap;
@@ -30,13 +29,17 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "consine_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns a cosine similarity of the given two vectors")
+@Description(name = "cosine_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns a cosine similarity of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class CosineSimilarityUDF extends UDF {
 
     public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2) {
+        return new FloatWritable(cosineSimilarity(ftvec1, ftvec2));
+    }
+
+    public static float cosineSimilarity(final List<String> ftvec1, List<String> ftvec2) {
         if(ftvec1 == null || ftvec2 == null) {
-            return val(0.f);
+            return 0.f;
         }
 
         final FeatureValue probe = new FeatureValue();
@@ -67,9 +70,9 @@ public final class CosineSimilarityUDF extends UDF {
 
         final double denom = (l1norm1 * l1norm2);
         if(denom <= 0.f) {
-            return val(0.f);
+            return 0.f;
         } else {
-            return val((float) (dotp / denom));
+            return (float) (dotp / denom);
         }
     }
 
