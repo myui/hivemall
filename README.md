@@ -67,6 +67,8 @@ _My recommendation is AdaDelta and AdaGrad, while it depends._
 
 * [Feature scaling](http://en.wikipedia.org/wiki/Feature_scaling) (Min-Max Normalization, Z-Score)
 
+* [Polynomial Features](http://en.wikipedia.org/wiki/Polynomial_kernel)
+
 * Feature instances amplifier that reduces iterations on training
 
 * [TF-IDF](http://en.wikipedia.org/wiki/Tf%E2%80%93idf) vectorizer
