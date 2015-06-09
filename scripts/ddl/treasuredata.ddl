@@ -79,6 +79,8 @@
 @ddl.create_function("sort_by_feature", "hivemall.ftvec.SortByFeatureUDF")
 @ddl.create_function("extract_feature", "hivemall.ftvec.ExtractFeatureUDF")
 @ddl.create_function("extract_weight", "hivemall.ftvec.ExtractWeightUDF")
+@ddl.create_function("add_feature_index", "hivemall.ftvec.AddFeatureIndexUDF")
+@ddl.create_function("vectorize_features", "hivemall.ftvec.VectorizeFeaturesUDF")
 
 # Ftvec/text functions
 @ddl.create_function("tf", "hivemall.ftvec.text.TermFrequencyUDAF")

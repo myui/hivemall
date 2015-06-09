@@ -25,6 +25,7 @@ import static hivemall.HivemallConstants.SMALLINT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static hivemall.HivemallConstants.TINYINT_TYPE_NAME;
 
+import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
@@ -153,6 +154,26 @@ public final class HiveUtils {
         return (T) v;
     }
 
+    @Nonnull
+    public static String[] getConstStringArray(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
+            throw new UDFArgumentException("argument must be a constant value: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
+        ConstantObjectInspector constOI = (ConstantObjectInspector) oi;
+        final List<?> lst = (List<?>) constOI.getWritableConstantValue();
+        final int size = lst.size();
+        final String[] ary = new String[size];
+        for(int i = 0; i < size; i++) {
+            Object o = lst.get(i);
+            if(o != null) {
+                ary[i] = o.toString();
+            }
+        }
+        return ary;
+    }
+
     public static String getConstString(@Nonnull final ObjectInspector oi)
             throws UDFArgumentException {
         if(!isStringOI(oi)) {
@@ -173,8 +194,7 @@ public final class HiveUtils {
         return v.get();
     }
 
-    public static int getConstInt(@Nonnull final ObjectInspector oi)
-            throws UDFArgumentException {
+    public static int getConstInt(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
         if(!isIntOI(oi)) {
             throw new UDFArgumentException("argument must be a Int value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
@@ -183,8 +203,7 @@ public final class HiveUtils {
         return v.get();
     }
 
-    public static long getConstLong(@Nonnull final ObjectInspector oi)
-            throws UDFArgumentException {
+    public static long getConstLong(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
         if(!isBigIntOI(oi)) {
             throw new UDFArgumentException("argument must be a BigInt value: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
@@ -235,8 +254,7 @@ public final class HiveUtils {
     public static IntObjectInspector asIntOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentException {
         if(!INT_TYPE_NAME.equals(argOI.getTypeName())) {
-            throw new UDFArgumentException("Argument type must be INT: "
-                    + argOI.getTypeName());
+            throw new UDFArgumentException("Argument type must be INT: " + argOI.getTypeName());
         }
         return (IntObjectInspector) argOI;
     }
@@ -260,8 +278,8 @@ public final class HiveUtils {
             case DECIMAL:
                 break;
             default:
-                throw new UDFArgumentTypeException(0, "Unxpected type '"
-                        + argOI.getTypeName() + "' is passed.");
+                throw new UDFArgumentTypeException(0, "Unxpected type '" + argOI.getTypeName()
+                        + "' is passed.");
         }
         return oi;
     }
@@ -305,8 +323,7 @@ public final class HiveUtils {
         Configuration conf = new Configuration();
         Properties tbl = new Properties();
         tbl.setProperty("columns", "key,value");
-        tbl.setProperty("columns.types", keyOI.getTypeName() + ","
-                + valueOI.getTypeName());
+        tbl.setProperty("columns.types", keyOI.getTypeName() + "," + valueOI.getTypeName());
         serde.initialize(conf, tbl);
         return serde;
     }
