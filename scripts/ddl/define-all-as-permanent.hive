@@ -237,6 +237,9 @@ CREATE FUNCTION extract_weight as 'hivemall.ftvec.ExtractWeightUDF' USING JAR '$
 DROP FUNCTION IF EXISTS add_feature_index;
 CREATE FUNCTION add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS vectorize_features;
+CREATE FUNCTION vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
