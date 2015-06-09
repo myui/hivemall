@@ -29,19 +29,21 @@ Hivemall provides machine learning functionality as well as feature engineering 
 
 * AdaGradRDA (with hinge loss)
 
-_My recommendation is AROW, SCW1 and AdaGradRDA, while it depends._
+_My recommendation is AROW, SCW1, and AdaGradRDA, while it depends._
 
 ## Regression
 
 * [Logistic Regression](http://en.wikipedia.org/wiki/Logistic_regression) using [Stochastic Gradient Descent](http://en.wikipedia.org/wiki/Stochastic_gradient_descent)
 
-* AdaGrad / AdaDelta (with logistic loss)
+* AdaGrad / AdaDelta (with Logistic Loss)
   
 * Passive Aggressive Regression (PA1, PA2)
 
 * AROW regression
 
-_My recommendation is AdaDelta and AdaGrad, while it depends._
+* [Polynomial Regression](http://en.wikipedia.org/wiki/Polynomial_regression)
+
+_My recommendation for is AROW regression, AdaDelta, and AdaGrad while it depends._
 
 ## Recommendation
 
