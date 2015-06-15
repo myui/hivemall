@@ -30,12 +30,17 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "powered_features", value = "_FUNC_(feature_vector in array<string>) - Returns a feature vector"
-        + "having a powered feature space")
+@Description(name = "powered_features", value = "_FUNC_(feature_vector in array<string>, int degree [, boolean truncate])"
+        + " - Returns a feature vector having a powered feature space")
 @UDFType(deterministic = true, stateful = false)
 public final class PoweredFeaturesUDF extends UDF {
 
     public List<Text> evaluate(final List<Text> ftvec, final int degree) throws HiveException {
+        return evaluate(ftvec, degree, true);
+    }
+
+    public List<Text> evaluate(final List<Text> ftvec, final int degree, final boolean truncate)
+            throws HiveException {
         if(ftvec == null) {
             return null;
         }
@@ -57,9 +62,12 @@ public final class PoweredFeaturesUDF extends UDF {
             dstVec.add(t); // x^1
 
             FeatureValue.parseFeatureAsString(t, probe);
-            final String f = probe.getFeature();
             final float v = probe.getValue();
+            if(truncate && (v == 0.f || v == 1.f)) {
+                continue;
+            }
 
+            final String f = probe.getFeature();
             float baseV = v;
             for(int d = 2; d <= degree; d++) {
                 String f2 = f + '^' + d;
