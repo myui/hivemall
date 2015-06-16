@@ -236,6 +236,9 @@ create temporary function add_feature_index as 'hivemall.ftvec.AddFeatureIndexUD
 drop temporary function vectorize_features;
 create temporary function vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF';
 
+drop temporary function feature;
+create temporary function feature as 'hivemall.ftvec.FeatureUDF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
