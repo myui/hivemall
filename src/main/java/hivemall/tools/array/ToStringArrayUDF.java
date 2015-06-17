@@ -29,13 +29,12 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "to_string_array", value = "_FUNC_(array) - Returns an array of strings")
+@Description(name = "to_string_array", value = "_FUNC_(array<int>) - Returns an array of strings")
 @UDFType(deterministic = true, stateful = false)
 public final class ToStringArrayUDF extends UDF {
 
-    @SuppressWarnings("unchecked")
     @Nullable
-    public List<Text> evaluate(@Nullable final List<?> inArray) {
+    public List<Text> evaluate(@Nullable final List<Integer> inArray) {
         if(inArray == null) {
             return null;
         }
@@ -43,11 +42,6 @@ public final class ToStringArrayUDF extends UDF {
         final int size = inArray.size();
         if(size == 0) {
             return Collections.emptyList();
-        }
-
-        Class<?> c = inArray.get(0).getClass();
-        if(c.equals(Text.class)) {// no need to convert;
-            return (List<Text>) inArray;
         }
 
         final List<Text> outArray = new ArrayList<Text>(size);
