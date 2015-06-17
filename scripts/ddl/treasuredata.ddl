@@ -28,6 +28,7 @@
       @ddl.create_function("cosine_similarity", "hivemall.knn.similarity.CosineSimilarityUDF")
       @ddl.create_function("cosine_sim", "hivemall.knn.similarity.CosineSimilarityUDF")
       @ddl.create_function("jaccard", "hivemall.knn.similarity.JaccardIndexUDF")
+      @ddl.create_function("jaccard_similarity", "hivemall.knn.similarity.JaccardIndexUDF")
       @ddl.create_function("angular_similarity", "hivemall.knn.similarity.AngularSimilarityUDF")
 
       # Distance functions

@@ -93,6 +93,9 @@ CREATE FUNCTION cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF' USIN
 DROP FUNCTION IF EXISTS jaccard;
 CREATE FUNCTION jaccard as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS jaccard_similarity;
+CREATE FUNCTION jaccard_similarity as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS angular_similarity;
 CREATE FUNCTION angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF' USING JAR '${hivemall_jar}';
 

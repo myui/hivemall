@@ -89,6 +89,9 @@ create temporary function cosine_sim as 'hivemall.knn.similarity.CosineSimilarit
 drop temporary function jaccard;
 create temporary function jaccard as 'hivemall.knn.similarity.JaccardIndexUDF';
 
+drop temporary function jaccard_similarity;
+create temporary function jaccard_similarity as 'hivemall.knn.similarity.JaccardIndexUDF';
+
 drop temporary function angular_similarity;
 create temporary function angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF';
 

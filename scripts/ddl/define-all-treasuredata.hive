@@ -22,6 +22,7 @@ CREATE TEMPORARY FUNCTION train_multiclass_scw2 AS 'hivemall.classifier.multicla
 CREATE TEMPORARY FUNCTION cosine_similarity AS 'hivemall.knn.similarity.CosineSimilarityUDF';
 CREATE TEMPORARY FUNCTION cosine_sim AS 'hivemall.knn.similarity.CosineSimilarityUDF';
 CREATE TEMPORARY FUNCTION jaccard AS 'hivemall.knn.similarity.JaccardIndexUDF';
+CREATE TEMPORARY FUNCTION jaccard_similarity AS 'hivemall.knn.similarity.JaccardIndexUDF';
 CREATE TEMPORARY FUNCTION angular_similarity AS 'hivemall.knn.similarity.AngularSimilarityUDF';
 CREATE TEMPORARY FUNCTION hamming_distance AS 'hivemall.knn.distance.HammingDistanceUDF';
 CREATE TEMPORARY FUNCTION popcnt AS 'hivemall.knn.distance.PopcountUDF';
