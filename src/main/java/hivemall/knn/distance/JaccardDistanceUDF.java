@@ -16,10 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.knn.similarity;
-
-import static hivemall.utils.hadoop.WritableUtils.val;
-import hivemall.knn.distance.HammingDistanceUDF;
+package hivemall.knn.distance;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -31,9 +28,9 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "jaccard", value = "_FUNC_(A, B [,int k]) - Returns Jaccard similarity coefficient of A and B")
+@Description(name = "jaccard_distance", value = "_FUNC_(A, B [,int k]) - Returns Jaccard distance between A and B")
 @UDFType(deterministic = true, stateful = false)
-public final class JaccardIndexUDF extends UDF {
+public final class JaccardDistanceUDF extends UDF {
 
     private final Set<Object> union = new HashSet<Object>();
     private final Set<Object> intersect = new HashSet<Object>();
@@ -45,7 +42,8 @@ public final class JaccardIndexUDF extends UDF {
     public FloatWritable evaluate(long a, long b, int k) {
         int countMatches = k - HammingDistanceUDF.hammingDistance(a, b);
         float jaccard = countMatches / (float) k;
-        return val(2.f * (jaccard - 0.5f));
+        float pseudoJaccard = 2.f * (jaccard - 0.5f); // pseudo Jaccard
+        return new FloatWritable(1.f - pseudoJaccard);
     }
 
     public FloatWritable evaluate(String a, String b) {
@@ -57,21 +55,22 @@ public final class JaccardIndexUDF extends UDF {
         BigInteger bi = new BigInteger(b);
         int countMatches = k - HammingDistanceUDF.hammingDistance(ai, bi);
         float jaccard = countMatches / (float) k;
-        return val(2.f * (jaccard - 0.5f));
+        float pseudoJaccard = 2.f * (jaccard - 0.5f); // pseudo Jaccard
+        return new FloatWritable(1.f - pseudoJaccard);
     }
 
     public FloatWritable evaluate(final List<String> a, final List<String> b) {
         if(a == null && b == null) {
-            return new FloatWritable(1.f);
-        } else if(a == null || b == null) {
             return new FloatWritable(0.f);
+        } else if(a == null || b == null) {
+            return new FloatWritable(1.f);
         }
         final int asize = a.size();
         final int bsize = b.size();
         if(asize == 0 && bsize == 0) {
-            return new FloatWritable(1.f);
-        } else if(asize == 0 || bsize == 0) {
             return new FloatWritable(0.f);
+        } else if(asize == 0 || bsize == 0) {
+            return new FloatWritable(1.f);
         }
 
         union.addAll(a);
@@ -84,7 +83,8 @@ public final class JaccardIndexUDF extends UDF {
         float intersectSize = intersect.size();
         intersect.clear();
 
-        return new FloatWritable(intersectSize / unionSize);
+        float j = intersectSize / unionSize;
+        return new FloatWritable(1.f - j);
     }
 
 }

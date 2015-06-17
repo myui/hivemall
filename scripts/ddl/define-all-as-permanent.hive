@@ -121,6 +121,9 @@ CREATE FUNCTION cosine_distance as 'hivemall.knn.distance.CosineDistanceUDF' USI
 DROP FUNCTION IF EXISTS angular_distance;
 CREATE FUNCTION angular_distance as 'hivemall.knn.distance.AngularDistanceUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS jaccard_distance;
+CREATE FUNCTION jaccard_distance as 'hivemall.knn.distance.JaccardDistanceUDF' USING JAR '${hivemall_jar}';
+
 -------------------
 -- LSH functions --
 -------------------
