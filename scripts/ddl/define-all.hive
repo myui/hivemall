@@ -117,6 +117,9 @@ create temporary function cosine_distance as 'hivemall.knn.distance.CosineDistan
 drop temporary function angular_distance;
 create temporary function angular_distance as 'hivemall.knn.distance.AngularDistanceUDF';
 
+drop temporary function jaccard_distance;
+create temporary function jaccard_distance as 'hivemall.knn.distance.JaccardDistanceUDF';
+
 -------------------
 -- LSH functions --
 -------------------

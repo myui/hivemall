@@ -38,6 +38,7 @@
       @ddl.create_function("euclid_distance", "hivemall.knn.distance.EuclidDistanceUDF")
       @ddl.create_function("cosine_distance", "hivemall.knn.distance.CosineDistanceUDF")
       @ddl.create_function("angular_distance", "hivemall.knn.distance.AngularDistanceUDF")
+      @ddl.create_function("jaccard_distance", "hivemall.knn.distance.JaccardDistanceUDF")
 
       # LSH functions
       @ddl.create_function("minhashes", "hivemall.knn.lsh.MinHashesUDF")

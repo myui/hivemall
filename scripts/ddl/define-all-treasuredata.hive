@@ -30,6 +30,7 @@ CREATE TEMPORARY FUNCTION kld AS 'hivemall.knn.distance.KLDivergenceUDF';
 CREATE TEMPORARY FUNCTION euclid_distance AS 'hivemall.knn.distance.EuclidDistanceUDF';
 CREATE TEMPORARY FUNCTION cosine_distance AS 'hivemall.knn.distance.CosineDistanceUDF';
 CREATE TEMPORARY FUNCTION angular_distance AS 'hivemall.knn.distance.AngularDistanceUDF';
+CREATE TEMPORARY FUNCTION jaccard_distance AS 'hivemall.knn.distance.JaccardDistanceUDF';
 CREATE TEMPORARY FUNCTION minhashes AS 'hivemall.knn.lsh.MinHashesUDF';
 CREATE TEMPORARY FUNCTION minhash AS 'hivemall.knn.lsh.MinHashUDTF';
 CREATE TEMPORARY FUNCTION bbit_minhash AS 'hivemall.knn.lsh.bBitMinHashUDF';
