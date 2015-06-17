@@ -60,11 +60,17 @@ public final class JaccardDistanceUDF extends UDF {
     }
 
     public FloatWritable evaluate(final List<String> a, final List<String> b) {
-        if(a == null || b == null) {
+        if(a == null && b == null) {
             return new FloatWritable(0.f);
+        } else if(a == null || b == null) {
+            return new FloatWritable(1.f);
         }
-        if(a.size() == 0 || b.size() == 0) {
+        final int asize = a.size();
+        final int bsize = b.size();
+        if(asize == 0 && bsize == 0) {
             return new FloatWritable(0.f);
+        } else if(asize == 0 || bsize == 0) {
+            return new FloatWritable(1.f);
         }
 
         union.addAll(a);
