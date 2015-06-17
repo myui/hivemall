@@ -18,8 +18,6 @@
  */
 package hivemall.tools.array;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -29,32 +27,13 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "to_string_array", value = "_FUNC_(array<int>) - Returns an array of strings")
+@Description(name = "to_string_array", value = "_FUNC_(array<ANY>) - Returns an array of strings")
 @UDFType(deterministic = true, stateful = false)
 public final class ToStringArrayUDF extends UDF {
 
     @Nullable
-    public List<Text> evaluate(@Nullable final List<Integer> inArray) {
-        if(inArray == null) {
-            return null;
-        }
-
-        final int size = inArray.size();
-        if(size == 0) {
-            return Collections.emptyList();
-        }
-
-        final List<Text> outArray = new ArrayList<Text>(size);
-        for(int i = 0; i < size; i++) {
-            Object o = inArray.get(i);
-            if(o == null) {
-                outArray.add(null);
-            } else {
-                String s = o.toString();
-                outArray.add(new Text(s));
-            }
-        }
-        return outArray;
+    public List<Text> evaluate(@Nullable final List<Text> inArray) {
+        return inArray;
     }
 
 }

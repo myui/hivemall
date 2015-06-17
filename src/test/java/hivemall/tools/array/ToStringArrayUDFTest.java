@@ -52,40 +52,4 @@ public class ToStringArrayUDFTest {
         Assert.assertSame(input, output);
     }
 
-    @Test
-    public void testIntArray() {
-        List<Integer> input = new ArrayList<Integer>(2);
-        input.add(1);
-        input.add(2);
-
-        ToStringArrayUDF udf = new ToStringArrayUDF();
-        List<Text> output = udf.evaluate(input);
-
-        Assert.assertEquals(2, output.size());
-
-        List<Text> expected = new ArrayList<Text>(2);
-        expected.add(new Text("1"));
-        expected.add(new Text("2"));
-        Assert.assertEquals(expected, output);
-    }
-
-    @Test
-    public void testIntArrayWithNull() {
-        List<Integer> input = new ArrayList<Integer>(2);
-        input.add(1);
-        input.add(null);
-        input.add(2);
-
-        ToStringArrayUDF udf = new ToStringArrayUDF();
-        List<Text> output = udf.evaluate(input);
-
-        Assert.assertEquals(3, output.size());
-
-        List<Text> expected = new ArrayList<Text>(2);
-        expected.add(new Text("1"));
-        expected.add(null);
-        expected.add(new Text("2"));
-        Assert.assertEquals(expected, output);
-    }
-
 }
