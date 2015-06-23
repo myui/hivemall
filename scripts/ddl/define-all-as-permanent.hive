@@ -249,6 +249,9 @@ CREATE FUNCTION vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF' USIN
 DROP FUNCTION IF EXISTS feature;
 CREATE FUNCTION feature as 'hivemall.ftvec.FeatureUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS categorical_features;
+CREATE FUNCTION categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------

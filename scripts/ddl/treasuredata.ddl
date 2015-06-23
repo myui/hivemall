@@ -84,6 +84,7 @@
       @ddl.create_function("add_feature_index", "hivemall.ftvec.AddFeatureIndexUDF")
       @ddl.create_function("vectorize_features", "hivemall.ftvec.VectorizeFeaturesUDF")
       @ddl.create_function("feature", "hivemall.ftvec.FeatureUDF")
+      @ddl.create_function("categorical_features", "hivemall.ftvec.CategoricalFeaturesUDF")
 
       # Ftvec/text functions
       @ddl.create_function("tf", "hivemall.ftvec.text.TermFrequencyUDAF")
