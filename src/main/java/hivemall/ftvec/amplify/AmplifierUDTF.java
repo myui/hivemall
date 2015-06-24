@@ -39,7 +39,7 @@ public class AmplifierUDTF extends GenericUDTF {
         if(!(argOIs.length >= 2)) {
             throw new UDFArgumentException("amplifier(int xtimes, *) takes at least two arguments");
         }
-        this.xtimes = HiveUtils.getConstInt(argOIs[0]);
+        this.xtimes = HiveUtils.getAsConstInt(argOIs[0]);
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }

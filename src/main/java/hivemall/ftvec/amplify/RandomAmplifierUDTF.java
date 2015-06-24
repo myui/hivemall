@@ -62,12 +62,12 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
             throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
-        int xtimes = HiveUtils.getConstInt(argOIs[0]);
+        int xtimes = HiveUtils.getAsConstInt(argOIs[0]);
         if(!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         // num_buffers
-        int numBuffers = HiveUtils.getConstInt(argOIs[1]);
+        int numBuffers = HiveUtils.getAsConstInt(argOIs[1]);
         if(numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
