@@ -245,6 +245,9 @@ create temporary function vectorize_features as 'hivemall.ftvec.VectorizeFeature
 drop temporary function feature;
 create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 
+drop temporary function categorical_features;
+create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------

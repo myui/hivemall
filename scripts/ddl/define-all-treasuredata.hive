@@ -62,6 +62,7 @@ CREATE TEMPORARY FUNCTION extract_weight AS 'hivemall.ftvec.ExtractWeightUDF';
 CREATE TEMPORARY FUNCTION add_feature_index AS 'hivemall.ftvec.AddFeatureIndexUDF';
 CREATE TEMPORARY FUNCTION vectorize_features AS 'hivemall.ftvec.VectorizeFeaturesUDF';
 CREATE TEMPORARY FUNCTION feature AS 'hivemall.ftvec.FeatureUDF';
+CREATE TEMPORARY FUNCTION categorical_features AS 'hivemall.ftvec.CategoricalFeaturesUDF';
 CREATE TEMPORARY FUNCTION tf AS 'hivemall.ftvec.text.TermFrequencyUDAF';
 CREATE TEMPORARY FUNCTION tokenize AS 'hivemall.ftvec.text.TokenizeUDF';
 CREATE TEMPORARY FUNCTION train_logregr AS 'hivemall.regression.LogressUDTF';
