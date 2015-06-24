@@ -212,6 +212,26 @@ public final class HiveUtils {
         return v.get();
     }
 
+    public static int getAsConstInt(@Nonnull final ObjectInspector numberOI)
+            throws UDFArgumentException {
+        final String typeName = numberOI.getTypeName();
+        if(INT_TYPE_NAME.equals(typeName)) {
+            IntWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(BIGINT_TYPE_NAME.equals(typeName)) {
+            LongWritable v = getConstValue(numberOI);
+            return (int) v.get();
+        } else if(SMALLINT_TYPE_NAME.equals(typeName)) {
+            ShortWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(TINYINT_TYPE_NAME.equals(typeName)) {
+            ByteWritable v = getConstValue(numberOI);
+            return v.get();
+        }
+        throw new UDFArgumentException("Unexpected argument type to cast as INT: "
+                + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
+    }
+
     public static long getAsConstLong(@Nonnull final ObjectInspector numberOI)
             throws UDFArgumentException {
         final String typeName = numberOI.getTypeName();
