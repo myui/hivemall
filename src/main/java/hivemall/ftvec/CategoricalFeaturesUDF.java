@@ -84,7 +84,11 @@ public final class CategoricalFeaturesUDF extends GenericUDF {
             final float v = PrimitiveObjectInspectorUtils.getFloat(argument, oi);
             if(v == 1.f) {
                 String featureName = featureNames[i];
-                Text f = new Text(featureName);
+                Text f = new Text(featureName + "#T");
+                result.add(f);
+            } else if(v == 0.f || v == -1.f) {
+                String featureName = featureNames[i];
+                Text f = new Text(featureName + "#F");
                 result.add(f);
             }
         }
