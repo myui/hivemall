@@ -81,7 +81,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if(argOIs.length < 2) {
             throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 arguments: List<Int|BigInt|Text> features, {Int|Text} label [, constant text options]");
+                    + " takes 2 arguments: List<Int|BigInt|Text> features, {Int|BitInt|Text} label [, constant text options]");
         }
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
         this.labelInputOI = HiveUtils.asPrimitiveObjectInspector(argOIs[1]);
