@@ -86,15 +86,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
         this.labelInputOI = HiveUtils.asPrimitiveObjectInspector(argOIs[1]);
         String labelTypeName = labelInputOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)) {
-            throw new UDFArgumentTypeException(0, "label must be a type [Int|Text]: "
+        if(!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)
+                && !BIGINT_TYPE_NAME.equals(labelTypeName)) {
+            throw new UDFArgumentTypeException(0, "label must be a type [Int|BigInt|Text]: "
                     + labelTypeName);
         }
 
         processOptions(argOIs);
 
-        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
-                : featureInputOI;
+        PrimitiveObjectInspector featureOutputOI = dense_model
+                ? PrimitiveObjectInspectorFactory.javaIntObjectInspector : featureInputOI;
         this.label2model = new HashMap<Object, PredictionModel>(64);
         if(preloadedModelFile != null) {
             loadPredictionModel(label2model, preloadedModelFile, labelInputOI, featureOutputOI);
