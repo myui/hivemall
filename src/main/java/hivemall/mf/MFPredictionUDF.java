@@ -31,6 +31,10 @@ import org.apache.hadoop.io.FloatWritable;
 public final class MFPredictionUDF extends UDF {
 
     public FloatWritable evaluate(List<Float> Pu, List<Float> Qi) throws HiveException {
+        return evaluate(Pu, Qi, 0.d);
+    }
+
+    public FloatWritable evaluate(List<Float> Pu, List<Float> Qi, double mu) throws HiveException {
         if(Pu == null || Qi == null) {
             return null; //throw new HiveException("Pu should not be NULL");
         }
@@ -38,7 +42,7 @@ public final class MFPredictionUDF extends UDF {
         if(Qi.size() != factor) {
             throw new HiveException("|Pu| " + factor + " was not equal to |Qi| " + Qi.size());
         }
-        float ret = 0.f;
+        float ret = (float) mu;
         for(int k = 0; k < factor; k++) {
             ret += Pu.get(k) * Qi.get(k);
         }

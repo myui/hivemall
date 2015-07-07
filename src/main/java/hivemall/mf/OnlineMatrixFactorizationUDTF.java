@@ -76,6 +76,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected double convergenceRate;
     /** being ready to end iteration */
     protected boolean readyToFinishIterations;
+    /** Whether to use bias clause */
+    protected boolean useBiasClause;
 
     /** Initialization strategy of rank matrix */
     protected RankInitScheme rankInit;
@@ -114,6 +116,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         this.conversionCheck = true;
         this.convergenceRate = 0.005d;
         this.readyToFinishIterations = false;
+        this.useBiasClause = true;
     }
 
     @Override
@@ -129,6 +132,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         opts.addOption("iter", "iterations", true, "The number of iterations [default: 1]");
         opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: enabled]");
         opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
+        opts.addOption("disable_bias", "no_bias", false, "Turn off bias clause");
         return opts;
     }
 
@@ -155,6 +159,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             }
             this.conversionCheck = !cl.hasOption("disable_cvtest");
             this.convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), 0.005d);
+            boolean noBias = cl.hasOption("no_bias");
+            this.useBiasClause = !noBias;
+            if(noBias && updateMeanRating) {
+                throw new UDFArgumentException("Cannot set both `update_mean` and `no_bias` option");
+            }
         }
         this.rankInit = RankInitScheme.resolve(rankInitOpt);
         rankInit.setMaxInitValue(maxInitValue);
@@ -189,13 +198,15 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
         fieldNames.add("Qi");
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
-        fieldNames.add("Bu");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        fieldNames.add("Bi");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(updateMeanRating) {
-            fieldNames.add("mu");
+        if(useBiasClause) {
+            fieldNames.add("Bu");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            fieldNames.add("Bi");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            if(updateMeanRating) {
+                fieldNames.add("mu");
+                fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            }
         }
 
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
@@ -288,9 +299,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             updateItemRating(items[k], Pu, Qi, err, eta);
             updateUserRating(users[k], Pu, Qi, err, eta);
         }
-        updateBias(user, item, err, eta);
-        if(updateMeanRating) {
-            updateMeanRating(err, eta);
+        if(useBiasClause) {
+            updateBias(user, item, err, eta);
+            if(updateMeanRating) {
+                updateMeanRating(err, eta);
+            }
         }
 
         onUpdate(user, item, users, items, err);
@@ -340,6 +353,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     }
 
     protected double bias(final int user, final int item) {
+        if(useBiasClause == false) {
+            return model.getMeanRating();
+        }
         return model.getMeanRating() + model.getUserBias(user) + model.getItemBias(item);
     }
 
@@ -369,6 +385,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     }
 
     protected void updateBias(final int user, final int item, final double err, final float eta) {
+        assert useBiasClause;
         float Bu = model.getUserBias(user);
         double Gu = err - lambda * Bu;
         Bu += eta * Gu;
@@ -399,11 +416,16 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             final FloatWritable Bi = new FloatWritable();
             final Object[] forwardObj;
             if(updateMeanRating) {
+                assert useBiasClause;
                 float meanRating = model.getMeanRating();
                 FloatWritable mu = new FloatWritable(meanRating);
                 forwardObj = new Object[] { idx, Pu, Qi, Bu, Bi, mu };
             } else {
-                forwardObj = new Object[] { idx, Pu, Qi, Bu, Bi };
+                if(useBiasClause) {
+                    forwardObj = new Object[] { idx, Pu, Qi, Bu, Bi };
+                } else {
+                    forwardObj = new Object[] { idx, Pu, Qi };
+                }
             }
             int numForwarded = 0;
             for(int i = model.getMinIndex(), maxIdx = model.getMaxIndex(); i <= maxIdx; i++) {
@@ -422,8 +444,10 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     forwardObj[2] = Qi;
                     copyTo(itemRatings, Qi);
                 }
-                Bu.set(model.getUserBias(i));
-                Bi.set(model.getItemBias(i));
+                if(useBiasClause) {
+                    Bu.set(model.getUserBias(i));
+                    Bi.set(model.getItemBias(i));
+                }
                 forward(forwardObj);
                 numForwarded++;
             }
