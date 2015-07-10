@@ -421,6 +421,9 @@ CREATE FUNCTION generate_series as 'hivemall.tools.GenerateSeriesUDTF' USING JAR
 DROP FUNCTION IF EXISTS convert_label;
 CREATE FUNCTION convert_label as 'hivemall.tools.ConvertLabelUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS x_rank;
+CREATE FUNCTION x_rank as 'hivemall.tools.RankSequenceUDF' USING JAR '${hivemall_jar}';
+
 ----------------------
 -- string functions --
 ----------------------

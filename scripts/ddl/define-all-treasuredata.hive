@@ -108,6 +108,7 @@ CREATE TEMPORARY FUNCTION distcache_gets AS 'hivemall.tools.mapred.DistributedCa
 CREATE TEMPORARY FUNCTION jobconf_gets AS 'hivemall.tools.mapred.JobConfGetsUDF';
 CREATE TEMPORARY FUNCTION generate_series AS 'hivemall.tools.GenerateSeriesUDTF';
 CREATE TEMPORARY FUNCTION convert_label AS 'hivemall.tools.ConvertLabelUDF';
+CREATE TEMPORARY FUNCTION x_rank AS 'hivemall.tools.RankSequenceUDF';
 CREATE TEMPORARY FUNCTION isStopword AS 'hivemall.tools.string.StopwordUDF';
 CREATE TEMPORARY FUNCTION is_stopword AS 'hivemall.tools.string.StopwordUDF';
 CREATE TEMPORARY FUNCTION split_words AS 'hivemall.tools.string.SplitWordsUDF';
