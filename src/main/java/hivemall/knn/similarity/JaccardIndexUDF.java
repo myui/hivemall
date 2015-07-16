@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "jaccard", value = "_FUNC_(A, B [,int k]) - Returns Jaccard similarity coefficient of A and B")
+@Description(name = "jaccard_similarity", value = "_FUNC_(A, B [,int k]) - Returns Jaccard similarity coefficient of A and B")
 @UDFType(deterministic = true, stateful = false)
 public final class JaccardIndexUDF extends UDF {
 

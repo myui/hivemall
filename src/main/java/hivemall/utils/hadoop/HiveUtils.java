@@ -25,6 +25,8 @@ import static hivemall.HivemallConstants.SMALLINT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static hivemall.HivemallConstants.TINYINT_TYPE_NAME;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -34,6 +36,8 @@ import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.ShortWritable;
@@ -41,6 +45,7 @@ import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -119,6 +124,28 @@ public final class HiveUtils {
         }
         String s = o.toString();
         return Integer.parseInt(s);
+    }
+
+    @Nullable
+    public static List<String> asStringList(@Nonnull final DeferredObject arg, @Nonnull final ListObjectInspector listOI)
+            throws HiveException {
+        Object argObj = arg.get();
+        if(argObj == null) {
+            return null;
+        }
+        List<?> data = listOI.getList(argObj);
+        int size = data.size();
+        if(size == 0) {
+            return Collections.emptyList();
+        }
+        final String[] ary = new String[size];
+        for(int i = 0; i < size; i++) {
+            Object o = data.get(i);
+            if(o != null) {
+                ary[i] = o.toString();
+            }
+        }
+        return Arrays.asList(ary);
     }
 
     public static boolean isStringOI(@Nonnull final ObjectInspector oi) {
@@ -326,6 +353,16 @@ public final class HiveUtils {
                         + argOI.getTypeName() + " is passed.");
         }
         return oi;
+    }
+
+    @Nonnull
+    public static ListObjectInspector asListOI(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        Category category = oi.getCategory();
+        if(category != Category.LIST) {
+            throw new UDFArgumentException("Expected List OI but was: " + oi);
+        }
+        return (ListObjectInspector) oi;
     }
 
     @Nonnull
