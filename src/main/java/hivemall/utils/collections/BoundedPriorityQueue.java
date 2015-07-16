@@ -25,7 +25,7 @@ public final class BoundedPriorityQueue<E> {
         }
         this.maxSize = size;
         this.comparator = comparator;
-        this.queue = new PriorityQueue<E>(comparator);
+        this.queue = new PriorityQueue<E>(size + 10, comparator);
     }
 
     public boolean offer(@Nonnull E e) {
