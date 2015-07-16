@@ -12,11 +12,11 @@ public final class BoundedPriorityQueue<E> {
     @Nonnegative
     private final int maxSize;
     @Nonnull
-    private final Comparator<? super E> comparator;
+    private final Comparator<E> comparator;
     @Nonnull
     private final PriorityQueue<E> queue;
 
-    public BoundedPriorityQueue(int size, @Nonnull Comparator<? super E> comparator) {
+    public BoundedPriorityQueue(int size, @Nonnull Comparator<E> comparator) {
         if(size < 1) {
             throw new IllegalArgumentException("Illegal queue size: " + size);
         }
