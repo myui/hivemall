@@ -20,6 +20,8 @@ package hivemall.utils.hadoop;
 
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.BOOLEAN_TYPE_NAME;
+import static hivemall.HivemallConstants.DOUBLE_TYPE_NAME;
+import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.SMALLINT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
@@ -40,6 +42,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.io.ShortWritable;
 import org.apache.hadoop.hive.serde2.lazy.LazyInteger;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
@@ -276,6 +279,32 @@ public final class HiveUtils {
             return v.get();
         }
         throw new UDFArgumentException("Unexpected argument type to cast as long: "
+                + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
+    }
+
+    public static double getAsConstDouble(@Nonnull final ObjectInspector numberOI)
+            throws UDFArgumentException {
+        final String typeName = numberOI.getTypeName();
+        if(DOUBLE_TYPE_NAME.equals(typeName)) {
+            DoubleWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(FLOAT_TYPE_NAME.equals(typeName)) {
+            FloatWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(INT_TYPE_NAME.equals(typeName)) {
+            IntWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(BIGINT_TYPE_NAME.equals(typeName)) {
+            LongWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(SMALLINT_TYPE_NAME.equals(typeName)) {
+            ShortWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if(TINYINT_TYPE_NAME.equals(typeName)) {
+            ByteWritable v = getConstValue(numberOI);
+            return v.get();
+        }
+        throw new UDFArgumentException("Unexpected argument type to cast as double: "
                 + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
     }
 

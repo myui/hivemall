@@ -424,6 +424,9 @@ CREATE FUNCTION convert_label as 'hivemall.tools.ConvertLabelUDF' USING JAR '${h
 DROP FUNCTION IF EXISTS x_rank;
 CREATE FUNCTION x_rank as 'hivemall.tools.RankSequenceUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS each_top_k;
+CREATE FUNCTION each_top_k as 'hivemall.tools.EachTopKUDTF' USING JAR '${hivemall_jar}';
+
 ----------------------
 -- string functions --
 ----------------------
