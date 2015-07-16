@@ -145,6 +145,7 @@
       @ddl.create_function("generate_series", "hivemall.tools.GenerateSeriesUDTF")
       @ddl.create_function("convert_label", "hivemall.tools.ConvertLabelUDF")
       @ddl.create_function("x_rank", "hivemall.tools.RankSequenceUDF")
+      @ddl.create_function("each_top_k", "hivemall.tools.EachTopKUDTF")
 
       # String functions
       @ddl.create_function("isStopword", "hivemall.tools.string.StopwordUDF")
