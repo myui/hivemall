@@ -123,6 +123,12 @@ create temporary function angular_distance as 'hivemall.knn.distance.AngularDist
 drop temporary function jaccard_distance;
 create temporary function jaccard_distance as 'hivemall.knn.distance.JaccardDistanceUDF';
 
+drop temporary function manhattan_distance;
+create temporary function manhattan_distance as 'hivemall.knn.distance.ManhattanDistanceUDF';
+
+drop temporary function minkowski_distance;
+create temporary function minkowski_distance as 'hivemall.knn.distance.MinkowskiDistanceUDF';
+
 -------------------
 -- LSH functions --
 -------------------
