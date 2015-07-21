@@ -95,6 +95,9 @@ create temporary function jaccard_similarity as 'hivemall.knn.similarity.Jaccard
 drop temporary function angular_similarity;
 create temporary function angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF';
 
+drop temporary function euclid_similarity;
+create temporary function euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity';
+
 ------------------------
 -- distance functions --
 ------------------------

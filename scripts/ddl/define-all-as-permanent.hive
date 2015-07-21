@@ -99,6 +99,9 @@ CREATE FUNCTION jaccard_similarity as 'hivemall.knn.similarity.JaccardIndexUDF' 
 DROP FUNCTION IF EXISTS angular_similarity;
 CREATE FUNCTION angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS euclid_similarity;
+CREATE FUNCTION euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity' USING JAR '${hivemall_jar}';
+
 ------------------------
 -- distance functions --
 ------------------------
