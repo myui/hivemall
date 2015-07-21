@@ -95,6 +95,16 @@ create temporary function jaccard_similarity as 'hivemall.knn.similarity.Jaccard
 drop temporary function angular_similarity;
 create temporary function angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF';
 
+drop temporary function euclid_similarity;
+create temporary function euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity';
+
+drop temporary function distance2similarity;
+create temporary function distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF';
+
+-- alias
+drop temporary function d2s;
+create temporary function d2s as 'hivemall.knn.similarity.Distance2SimilarityUDF';
+
 ------------------------
 -- distance functions --
 ------------------------
@@ -119,6 +129,12 @@ create temporary function angular_distance as 'hivemall.knn.distance.AngularDist
 
 drop temporary function jaccard_distance;
 create temporary function jaccard_distance as 'hivemall.knn.distance.JaccardDistanceUDF';
+
+drop temporary function manhattan_distance;
+create temporary function manhattan_distance as 'hivemall.knn.distance.ManhattanDistanceUDF';
+
+drop temporary function minkowski_distance;
+create temporary function minkowski_distance as 'hivemall.knn.distance.MinkowskiDistanceUDF';
 
 -------------------
 -- LSH functions --

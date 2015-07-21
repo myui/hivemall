@@ -36,7 +36,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "euclid_distance", value = "_FUNC_(ftvec1, ftvec2) - Returns the square root of the sum of the squared differences")
+@Description(name = "euclid_distance", value = "_FUNC_(ftvec1, ftvec2) - Returns the square root of the sum of the squared differences"
+        + ": sqrt(sum((x - y)^2))")
 @UDFType(deterministic = true, stateful = false)
 public final class EuclidDistanceUDF extends GenericUDF {
 
@@ -57,10 +58,11 @@ public final class EuclidDistanceUDF extends GenericUDF {
     public FloatWritable evaluate(DeferredObject[] arguments) throws HiveException {
         List<String> ftvec1 = HiveUtils.asStringList(arguments[0], arg0ListOI);
         List<String> ftvec2 = HiveUtils.asStringList(arguments[1], arg1ListOI);
-        return evaluate(ftvec1, ftvec2);
+        float d = (float) euclidDistance(ftvec1, ftvec2);
+        return new FloatWritable(d);
     }
 
-    public FloatWritable evaluate(final List<String> ftvec1, final List<String> ftvec2) {
+    public static double euclidDistance(final List<String> ftvec1, final List<String> ftvec2) {
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         for(String ft : ftvec1) {
@@ -93,7 +95,7 @@ public final class EuclidDistanceUDF extends GenericUDF {
             float v1f = e.getValue();
             d += (v1f * v1f);
         }
-        return new FloatWritable((float) Math.sqrt(d));
+        return Math.sqrt(d);
     }
 
     @Override

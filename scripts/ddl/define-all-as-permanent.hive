@@ -99,6 +99,16 @@ CREATE FUNCTION jaccard_similarity as 'hivemall.knn.similarity.JaccardIndexUDF' 
 DROP FUNCTION IF EXISTS angular_similarity;
 CREATE FUNCTION angular_similarity as 'hivemall.knn.similarity.AngularSimilarityUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS euclid_similarity;
+CREATE FUNCTION euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS distance2similarity;
+CREATE FUNCTION distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS d2s;
+CREATE FUNCTION d2s as 'hivemall.knn.similarity.Distance2SimilarityUDF' USING JAR '${hivemall_jar}';
+
 ------------------------
 -- distance functions --
 ------------------------
@@ -123,6 +133,12 @@ CREATE FUNCTION angular_distance as 'hivemall.knn.distance.AngularDistanceUDF' U
 
 DROP FUNCTION IF EXISTS jaccard_distance;
 CREATE FUNCTION jaccard_distance as 'hivemall.knn.distance.JaccardDistanceUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS manhattan_distance;
+CREATE FUNCTION manhattan_distance as 'hivemall.knn.distance.ManhattanDistanceUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS minkowski_distance;
+CREATE FUNCTION minkowski_distance as 'hivemall.knn.distance.MinkowskiDistanceUDF' USING JAR '${hivemall_jar}';
 
 -------------------
 -- LSH functions --
