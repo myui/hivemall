@@ -27,6 +27,7 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
@@ -38,18 +39,18 @@ import org.apache.hadoop.mapred.JobConf;
 @UDFType(deterministic = false, stateful = true)
 public class JobConfGetsUDF extends UDF {
 
-    public Text evaluate() {
+    public Text evaluate() throws HiveException {
         return evaluate(null);
     }
 
-    public Text evaluate(@Nullable final String regexKey) {
+    public Text evaluate(@Nullable final String regexKey) throws HiveException {
         MapredContext ctx = MapredContextAccessor.get();
         if(ctx == null) {
-            throw new IllegalStateException("MapredContext is not set");
+            throw new HiveException("MapredContext is not set");
         }
         JobConf jobconf = ctx.getJobConf();
         if(jobconf == null) {
-            throw new IllegalStateException("JobConf is not set");
+            throw new HiveException("JobConf is not set");
         }
 
         String dumped = HadoopUtils.toString(jobconf, regexKey);
