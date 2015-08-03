@@ -54,6 +54,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
@@ -306,6 +307,24 @@ public final class HiveUtils {
         }
         throw new UDFArgumentException("Unexpected argument type to cast as double: "
                 + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
+    }
+
+    @Nonnull
+    public static double[] asDoubleArray(@Nullable Object argObj, @Nonnull ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI) {
+        if(argObj == null) {
+            return null;
+        }
+        final int length = listOI.getListLength(argObj);
+        final double[] ary = new double[length];
+        for(int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if(o == null) {
+                continue;
+            }
+            double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
+            ary[i] = d;
+        }
+        return ary;
     }
 
     @Nonnull

@@ -25,6 +25,14 @@ import java.util.Random;
 
 public final class ArrayUtils {
 
+    /**
+     * The index value when an element is not found in a list or array:
+     * <code>-1</code>. This value is returned by methods in this class and can
+     * also be used in comparisons with values returned by various method from
+     * {@link java.util.List}.
+     */
+    public static final int INDEX_NOT_FOUND = -1;
+
     private ArrayUtils() {}
 
     public static double[] set(double[] src, final int index, final double value) {
@@ -160,6 +168,22 @@ public final class ArrayUtils {
         for(int i = 0, len = a.length; i < len; i++) {
             a[i] = rand.nextFloat();
         }
+    }
+
+    public static int indexOf(final int[] array, final int valueToFind, int startIndex, int endIndex) {
+        if(array == null) {
+            return INDEX_NOT_FOUND;
+        }
+        final int til = Math.min(endIndex, array.length);
+        if(startIndex < 0 || startIndex > til) {
+            throw new IllegalArgumentException("Illegal startIndex: " + startIndex);
+        }
+        for(int i = startIndex; i < til; i++) {
+            if(valueToFind == array[i]) {
+                return i;
+            }
+        }
+        return INDEX_NOT_FOUND;
     }
 
 }
