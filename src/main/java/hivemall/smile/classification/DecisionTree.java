@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 
 import javax.annotation.Nonnull;
 
+import hivemall.smile.vm.Operation;
 import smile.classification.Classifier;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
@@ -351,6 +352,57 @@ public class DecisionTree implements Classifier<double[]> {
                             + attributes[splitFeature].type);
                 }
             }
+        }
+
+        public int opcodegen(ArrayList<String> scripts, int depth) {
+            int selfDepth=0;
+            StringBuilder buf = new StringBuilder();
+            if(trueChild == null && falseChild == null) {
+                buf.append("push ").append(output);
+                scripts.add(buf.toString());
+                buf.setLength(0);
+                buf.append("goto last");
+                scripts.add(buf.toString());
+                selfDepth+=2;
+            } else {
+                if(attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                    buf.append("push ").append("x[").append(splitFeature).append("]");
+                    scripts.add(buf.toString());
+                    buf.setLength(0);
+                    buf.append("push ").append(splitValue);
+                    scripts.add(buf.toString());
+                    buf.setLength(0);
+                    buf.append("ifeq ");
+                    scripts.add(buf.toString());
+                    depth+=3;
+                    selfDepth+=3;
+                    int trueDepth = trueChild.opcodegen(scripts, depth);
+                    selfDepth+=trueDepth;
+                    scripts.set(depth-1, "ifeq " + String.valueOf(depth + trueDepth));
+                    int falseDepth = falseChild.opcodegen(scripts, depth+trueDepth);
+                    selfDepth+=falseDepth;
+                } else if(attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                    buf.append("push ").append("x[").append(splitFeature).append("]");
+                    scripts.add(buf.toString());
+                    buf.setLength(0);
+                    buf.append("push ").append(splitValue);
+                    scripts.add(buf.toString());
+                    buf.setLength(0);
+                    buf.append("ifgr ");
+                    scripts.add(buf.toString());
+                    depth+=3;
+                    selfDepth+=3;
+                    int trueDepth = trueChild.opcodegen(scripts, depth);
+                    selfDepth+=trueDepth;
+                    scripts.set(depth-1, "ifgr " + String.valueOf(depth+trueDepth));
+                    int falseDepth = falseChild.opcodegen(scripts, depth+trueDepth);
+                    selfDepth+=falseDepth;
+                } else {
+                    throw new IllegalStateException("Unsupported attribute type: "
+                            + attributes[splitFeature].type);
+                }
+            }
+            return selfDepth;
         }
     }
 
@@ -854,6 +906,10 @@ public class DecisionTree implements Classifier<double[]> {
         int[] labels = Math.unique(y);
         Arrays.sort(labels);
 
+//        for (int i=0;i<labels.length;i++){
+//            System.out.println(labels[i]);
+//        }
+
         for(int i = 0; i < labels.length; i++) {
             if(labels[i] < 0) {
                 throw new IllegalArgumentException("Negative class label: " + labels[i]);
@@ -1039,6 +1095,13 @@ public class DecisionTree implements Classifier<double[]> {
         StringBuilder buf = new StringBuilder(1024);
         root.codegen(buf, 0);
         return buf.toString();
+    }
+
+    public ArrayList<String> predictOpCodegen() {
+        ArrayList<String> scripts = new ArrayList<String>();
+        root.opcodegen(scripts, 0);
+        scripts.add("call end");
+        return scripts;
     }
 
 }
