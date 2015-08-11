@@ -1,35 +1,32 @@
 package hivemall.smile.vm;
 
+import static org.junit.Assert.assertEquals;
 import hivemall.smile.classification.DecisionTree;
-import hivemall.smile.regression.RegressionTree;
-import hivemall.smile.vm.StackMachine;
 import hivemall.smile.classification.VMTreePredictTrustedUDF;
-import hivemall.smile.classification.TreePredictTrustedUDF;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.io.IntWritable;
-import org.junit.Test;
-import smile.data.Attribute;
-import smile.data.AttributeDataset;
-import smile.data.parser.ArffParser;
-import smile.math.*;
-import smile.math.Math;
-import smile.validation.CrossValidation;
-import smile.validation.Validation;
-import smile.validation.LOOCV;
+import hivemall.smile.regression.RegressionTree;
 
-import javax.script.ScriptException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import javax.script.ScriptException;
+
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.io.IntWritable;
+import org.junit.Test;
+
+import smile.data.AttributeDataset;
+import smile.data.parser.ArffParser;
+import smile.math.Math;
+import smile.validation.CrossValidation;
+import smile.validation.LOOCV;
+import smile.validation.Validation;
 
 public class StackMachineTest {
 
@@ -80,14 +77,14 @@ public class StackMachineTest {
         int k = 10;
 
         CrossValidation cv = new CrossValidation(n, k);
-        for (int i = 0; i < k; i++) {
+        for(int i = 0; i < k; i++) {
             double[][] trainx = Math.slice(datax, cv.train[i]);
             double[] trainy = Math.slice(datay, cv.train[i]);
             double[][] testx = Math.slice(datax, cv.test[i]);
 
             RegressionTree tree = new RegressionTree(data.attributes(), trainx, trainy, 20);
 
-            for (int j = 0; j < testx.length; j++) {
+            for(int j = 0; j < testx.length; j++) {
                 assertEquals(tree.predict(testx[j]), evalPredict(tree, testx[j]), 1.0);
             }
         }
@@ -110,28 +107,29 @@ public class StackMachineTest {
 
         double[][] trainx = new double[m][];
         double[] trainy = new double[m];
-        for (int i = 0; i < m; i++) {
+        for(int i = 0; i < m; i++) {
             trainx[i] = datax[index[i]];
             trainy[i] = datay[index[i]];
         }
 
-        double[][] testx = new double[n-m][];
-        double[] testy = new double[n-m];
-        for (int i = m; i < n; i++) {
-            testx[i-m] = datax[index[i]];
-            testy[i-m] = datay[index[i]];
+        double[][] testx = new double[n - m][];
+        double[] testy = new double[n - m];
+        for(int i = m; i < n; i++) {
+            testx[i - m] = datax[index[i]];
+            testy[i - m] = datay[index[i]];
         }
 
         RegressionTree tree = new RegressionTree(data.attributes(), trainx, trainy, 20);
         System.out.format("RMSE = %.4f\n", Validation.test(tree, testx, testy));
 
-        for (int i = m; i < n; i++) {
-            assertEquals(tree.predict(testx[i-m]), evalPredict(tree, testx[i-m]), 1.0);
+        for(int i = m; i < n; i++) {
+            assertEquals(tree.predict(testx[i - m]), evalPredict(tree, testx[i - m]), 1.0);
         }
     }
 
     @Test
-    public void testFindInfinteLoop() throws IOException, ParseException, HiveException {
+    public void testFindInfinteLoop() throws IOException, ParseException, HiveException,
+            VMRuntimeException {
         // Sample of machine code having infinite loop
         ArrayList<String> opScript = new ArrayList<String>();
         opScript.add("push 2.0");
@@ -161,7 +159,8 @@ public class StackMachineTest {
         return result.get();
     }
 
-    private static int evalPredict(RegressionTree tree, double[] x) throws HiveException, IOException {
+    private static int evalPredict(RegressionTree tree, double[] x) throws HiveException,
+            IOException {
         ArrayList<String> opScript = tree.predictOpCodegen();
         System.out.println(opScript);
         VMTreePredictTrustedUDF udf = new VMTreePredictTrustedUDF();

@@ -18,7 +18,21 @@
 package hivemall.smile.classification;
 
 import hivemall.smile.vm.StackMachine;
+import hivemall.smile.vm.VMRuntimeException;
 import hivemall.utils.hadoop.HiveUtils;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import javax.annotation.Nonnull;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -32,11 +46,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
-
-import javax.annotation.Nonnull;
-import javax.script.*;
-import java.io.IOException;
-import java.util.*;
 
 @Description(name = "tree_predict", value = "_FUNC_(string script, array<double> features [, const boolean classification]) - Returns a prediction result of a random forest")
 @UDFType(deterministic = true, stateful = false)
@@ -98,7 +107,7 @@ public final class VMTreePredictTrustedUDF extends GenericUDF {
             return null;
         }
         String script = arg0.toString();
-        ArrayList<String> scriptList = new ArrayList(Arrays.asList(script.split("¥n")));
+        List<String> scriptList = Arrays.asList(script.split("¥n"));
 
         Object arg1 = arguments[1].get();
         if(arg1 == null) {
@@ -110,19 +119,21 @@ public final class VMTreePredictTrustedUDF extends GenericUDF {
     }
 
     @Nonnull
-    public Writable evaluate(@Nonnull final ArrayList<String> script, @Nonnull final double[] features, final boolean classification)
+    public Writable evaluate(@Nonnull final List<String> script, @Nonnull final double[] features, final boolean classification)
             throws HiveException {
-
         StackMachine sm = new StackMachine();
-        sm.run(script, features);
+        try {
+            sm.run(script, features);
+        } catch (VMRuntimeException e) {
+            throw new HiveException("failed to run StackMachine", e);
+        }
         Double result = sm.getResult();
 
         if(result == null) {
             return null;
         }
         if(classification) {
-            Integer i = result.intValue();
-            return new IntWritable(i.intValue());
+            return new IntWritable(result.intValue());
         } else {
             return new DoubleWritable(result.doubleValue());
         }

@@ -18,6 +18,8 @@
  */
 package hivemall.utils.lang;
 
+import javax.annotation.Nonnull;
+
 public final class StringUtils {
 
     private StringUtils() {}
@@ -142,6 +144,10 @@ public final class StringUtils {
         // allowSigns is true iff the val ends in 'E'
         // found digit it to make sure weird stuff like '.' and '1E-' doesn't pass
         return !allowSigns && foundDigit;
+    }
+
+    public static void clear(@Nonnull final StringBuilder buf) {
+        buf.setLength(0);
     }
 
 }
