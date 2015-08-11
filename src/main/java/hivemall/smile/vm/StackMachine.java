@@ -1,3 +1,20 @@
+/*
+ * Hivemall: Hive scalable Machine Learning Library
+ *
+ * Copyright (C) 2015 Makoto YUI
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package hivemall.smile.vm;
 
 import hivemall.utils.lang.StringUtils;
@@ -5,24 +22,36 @@ import hivemall.utils.lang.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+
+import javax.annotation.Nullable;
 
 public final class StackMachine {
 
-    private HashMap<String, Double> valuesMap;
-    private HashMap<String, Integer> jumpMap;
-    private ArrayList<Operation> code = new ArrayList<Operation>();
-    private Stack<Double> programStack;
+    private final Map<String, Double> valuesMap;
+    private final Map<String, Integer> jumpMap;
+    private final List<Operation> code;
+    private final Stack<Double> programStack;
+
     private int IP;
-    private int SP = 0;
+    private int SP;
+
     private int codeLength;
     private boolean[] done;
-    private double result = 0;
+    private Double result;
 
-    public StackMachine() {}
+    public StackMachine() {
+        this.valuesMap = new HashMap<String, Double>();
+        this.jumpMap = new HashMap<String, Integer>();
+        this.code = new ArrayList<Operation>();
+        this.programStack = new Stack<Double>();
+        this.SP = 0;
+        this.result = null;
+    }
 
-    public void run(List<String> script, double[] features) throws VMRuntimeException {
-        for(String line : script) {
+    public void run(List<String> scripts, double[] features) throws VMRuntimeException {
+        for(String line : scripts) {
             String[] ops = line.split(" ", -1);
             if(ops.length == 2) {
                 Operation.OperationEnum o = Operation.OperationEnum.valueOfLowerCase(ops[0]);
@@ -33,9 +62,7 @@ public final class StackMachine {
             }
         }
 
-        this.valuesMap = new HashMap<String, Double>();
-        this.jumpMap = new HashMap<String, Integer>();
-        int size = script.size();
+        int size = scripts.size();
         this.codeLength = size - 1;
         this.done = new boolean[size];
 
@@ -48,13 +75,13 @@ public final class StackMachine {
         jumpMap.put("last", codeLength);
 
         IP = entryPoint;
-        programStack = new Stack<Double>();
+
         while(IP < code.size()) {
             if(done[IP]) {
-                throw new IllegalArgumentException("There is a infinite loop in the Machine code.");
+                throw new VMRuntimeException("There is a infinite loop in the Machine code.");
             }
             done[IP] = true;
-            Operation currentOperation = code.get((int) IP);
+            Operation currentOperation = code.get(IP);
             if(!executeOperation(currentOperation)) {
                 return;
             }
@@ -64,12 +91,13 @@ public final class StackMachine {
     public void bind(final double[] features) {
         final StringBuilder buf = new StringBuilder();
         for(int i = 0; i < features.length; i++) {
-            String bindKey = buf.append("x[").append(String.valueOf(i)).append("]").toString();
+            String bindKey = buf.append("x[").append(i).append("]").toString();
             valuesMap.put(bindKey, features[i]);
             StringUtils.clear(buf);
         }
     }
 
+    @Nullable
     public Double getResult() {
         return result;
     }
@@ -86,52 +114,63 @@ public final class StackMachine {
     }
 
     private boolean executeOperation(Operation currentOperation) throws VMRuntimeException {
-        if(IP < 0)
+        if(IP < 0) {
             return false;
+        }
         switch (currentOperation.op) {
-            case GOTO:
-                if(isInt(currentOperation.operand))
+            case GOTO: {
+                if(isInt(currentOperation.operand)) {
                     IP = Integer.parseInt(currentOperation.operand);
-                else
+                } else {
                     IP = jumpMap.get(currentOperation.operand);
+                }
                 break;
-            case CALL:
+            }
+            case CALL: {
                 double candidateIP = valuesMap.get(currentOperation.operand);
                 if(candidateIP < 0) {
                     evaluateBuiltinByName(currentOperation.operand);
                     IP++;
                 }
                 break;
-            case IFEQ:
+            }
+            case IFEQ: {
                 // follow the rule of smile's Math class.
                 double a = pop();
                 double b = pop();
                 double absa = Math.abs(a);
                 double absb = Math.abs(b);
-                if(a == b || Math.abs(a - b) <= Math.min(absa, absb) * 2.2204460492503131e-16)
-                    if(isInt(currentOperation.operand))
+                if(a == b || Math.abs(a - b) <= Math.min(absa, absb) * 2.2204460492503131e-16) {
+                    if(isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
-                    else
+                    } else {
                         IP = jumpMap.get(currentOperation.operand);
-                else
+                    }
+                } else {
                     IP++;
+                }
                 break;
-            case IFGR:
+            }
+            case IFGR: {
                 double lower = pop();
                 double upper = pop();
-                if(upper > lower)
-                    if(isInt(currentOperation.operand))
+                if(upper > lower) {
+                    if(isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
-                    else
+                    } else {
                         IP = jumpMap.get(currentOperation.operand);
-                else
+                    }
+                } else {
                     IP++;
+                }
                 break;
-            case POP:
+            }
+            case POP: {
                 valuesMap.put(currentOperation.operand, pop());
                 IP++;
                 break;
-            case PUSH:
+            }
+            case PUSH: {
                 if(isDouble(currentOperation.operand))
                     push(Double.parseDouble(currentOperation.operand));
                 else {
@@ -144,19 +183,21 @@ public final class StackMachine {
                 }
                 IP++;
                 break;
+            }
             default:
-                throw new IllegalArgumentException("Machine code has wrong opcode :"
+                throw new VMRuntimeException("Machine code has wrong opcode :"
                         + currentOperation.op);
         }
         return true;
 
     }
 
-    private void evaluateBuiltinByName(String name) {
-        if(name.equals("end"))
-            result = pop();
-        else
-            throw new IllegalArgumentException("Machine code has wrong builin function :" + name);
+    private void evaluateBuiltinByName(String name) throws VMRuntimeException {
+        if(name.equals("end")) {
+            this.result = pop();
+        } else {
+            throw new VMRuntimeException("Machine code has wrong builin function :" + name);
+        }
     }
 
     private static boolean isInt(String i) {

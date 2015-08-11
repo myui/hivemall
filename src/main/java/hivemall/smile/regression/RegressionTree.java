@@ -347,7 +347,7 @@ public class RegressionTree implements Regression<double[]> {
 
         public int opcodegen(ArrayList<String> scripts, int depth) {
             int selfDepth = 0;
-            StringBuilder buf = new StringBuilder();
+            final StringBuilder buf = new StringBuilder();
             if(trueChild == null && falseChild == null) {
                 buf.append("push ").append(output);
                 scripts.add(buf.toString());

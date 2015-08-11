@@ -2,7 +2,7 @@ package hivemall.smile.vm;
 
 import static org.junit.Assert.assertEquals;
 import hivemall.smile.classification.DecisionTree;
-import hivemall.smile.classification.VMTreePredictTrustedUDF;
+import hivemall.smile.classification.TreePredictByStackMachineUDF;
 import hivemall.smile.regression.RegressionTree;
 
 import java.io.BufferedInputStream;
@@ -150,7 +150,7 @@ public class StackMachineTest {
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
         ArrayList<String> opScript = tree.predictOpCodegen();
         System.out.println(opScript);
-        VMTreePredictTrustedUDF udf = new VMTreePredictTrustedUDF();
+        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector) });
@@ -163,7 +163,7 @@ public class StackMachineTest {
             IOException {
         ArrayList<String> opScript = tree.predictOpCodegen();
         System.out.println(opScript);
-        VMTreePredictTrustedUDF udf = new VMTreePredictTrustedUDF();
+        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector) });

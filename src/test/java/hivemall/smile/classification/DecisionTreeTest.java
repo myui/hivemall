@@ -75,7 +75,7 @@ public class DecisionTreeTest {
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
         String script = tree.predictCodegen();
         System.out.println(script);
-        TreePredictTrustedUDF udf = new TreePredictTrustedUDF();
+        TreePredictByJavascriptUDF udf = new TreePredictByJavascriptUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector) });
