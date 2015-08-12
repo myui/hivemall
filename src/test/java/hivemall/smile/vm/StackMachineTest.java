@@ -19,6 +19,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
+import org.junit.Assert;
 import org.junit.Test;
 
 import smile.data.AttributeDataset;
@@ -29,6 +30,7 @@ import smile.validation.LOOCV;
 import smile.validation.Validation;
 
 public class StackMachineTest {
+    private static final boolean DEBUG = false;
 
     /**
      * Test of learn method, of class DecisionTree.
@@ -120,7 +122,7 @@ public class StackMachineTest {
         }
 
         RegressionTree tree = new RegressionTree(data.attributes(), trainx, trainy, 20);
-        System.out.format("RMSE = %.4f\n", Validation.test(tree, testx, testy));
+        debugPrint(String.format("RMSE = %.4f\n", Validation.test(tree, testx, testy)));
 
         for(int i = m; i < n; i++) {
             assertEquals(tree.predict(testx[i - m]), evalPredict(tree, testx[i - m]), 1.0);
@@ -137,19 +139,20 @@ public class StackMachineTest {
         opScript.add("ifgr 0");
         opScript.add("push 1");
         opScript.add("call end");
-        System.out.println(opScript);
+        debugPrint(opScript);
         double[] x = new double[0];
         StackMachine sm = new StackMachine();
         try {
             sm.run(opScript, x);
-        } catch (IllegalArgumentException ex) {
+            Assert.fail("VMRuntimeException is expected");
+        } catch (VMRuntimeException ex) {
             assertEquals("There is a infinite loop in the Machine code.", ex.getMessage());
         }
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
         ArrayList<String> opScript = tree.predictOpCodegen();
-        System.out.println(opScript);
+        debugPrint(opScript);
         TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
@@ -162,7 +165,7 @@ public class StackMachineTest {
     private static int evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
         ArrayList<String> opScript = tree.predictOpCodegen();
-        System.out.println(opScript);
+        debugPrint(opScript);
         TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
@@ -170,5 +173,11 @@ public class StackMachineTest {
         IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
         udf.close();
         return result.get();
+    }
+
+    private static void debugPrint(Object msg) {
+        if(DEBUG) {
+            System.out.println(msg);
+        }
     }
 }
