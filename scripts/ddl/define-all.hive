@@ -75,6 +75,13 @@ create temporary function train_multiclass_scw as 'hivemall.classifier.multiclas
 drop temporary function train_multiclass_scw2;
 create temporary function train_multiclass_scw2 as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2';
 
+drop temporary function train_randomforest_classifier;
+create temporary function train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+-- alias
+drop temporary function train_rf_classifier;
+create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
 --------------------------
 -- similarity functions --
 --------------------------
@@ -100,10 +107,6 @@ create temporary function euclid_similarity as 'hivemall.knn.similarity.EuclidSi
 
 drop temporary function distance2similarity;
 create temporary function distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF';
-
--- alias
-drop temporary function d2s;
-create temporary function d2s as 'hivemall.knn.similarity.Distance2SimilarityUDF';
 
 ------------------------
 -- distance functions --
@@ -263,6 +266,23 @@ create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 
 drop temporary function categorical_features;
 create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
+
+drop temporary function indexed_features;
+create temporary function indexed_features as 'hivemall.ftvec.IndexedFeatures';
+
+drop temporary function to_dense_features;
+create temporary function to_dense_features as 'hivemall.ftvec.ToDenseFeaturesUDF';
+
+-- alias
+drop temporary function to_dense;
+create temporary function to_dense as 'hivemall.ftvec.ToDenseFeaturesUDF';
+
+drop temporary function to_sparse_features;
+create temporary function to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF';
+
+-- alias
+drop temporary function to_sparse;
+create temporary function to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF';
 
 --------------------------
 -- ftvec/text functions --

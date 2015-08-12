@@ -22,6 +22,7 @@ import java.util.Arrays;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 import smile.data.Attribute;
@@ -31,16 +32,17 @@ import smile.data.NumericAttribute;
 import smile.data.StringAttribute;
 import smile.math.Math;
 
-public final class SmileUtils {
+public final class SmileExtUtils extends smile.util.SmileUtils {
 
-    private SmileUtils() {}
+    private SmileExtUtils() {}
 
     /**
      * Q for {@link NumericAttribute}, C for {@link NominalAttribute}, S for
      * {@link StringAttribute}, and D for {@link DateAttribute}.
      */
     @Nullable
-    public static Attribute[] resolveAttributes(@Nullable final String opt) throws HiveException {
+    public static Attribute[] resolveAttributes(@Nullable final String opt)
+            throws UDFArgumentException {
         if(opt == null) {
             return null;
         }
@@ -58,7 +60,7 @@ public final class SmileUtils {
             } else if("D".equals(type)) {
                 attr[i] = new DateAttribute("V" + (i + 1));
             } else {
-                throw new HiveException("Unexpected type: " + type);
+                throw new UDFArgumentException("Unexpected type: " + type);
             }
         }
         return attr;

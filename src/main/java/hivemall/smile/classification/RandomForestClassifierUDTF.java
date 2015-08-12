@@ -19,22 +19,27 @@
 package hivemall.smile.classification;
 
 import hivemall.UDTFWithOptions;
+import hivemall.smile.SmileExtUtils;
+import hivemall.smile.SmileTaskExecutor;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
+import hivemall.utils.lang.Primitives;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
+import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -48,53 +53,87 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 import smile.data.Attribute;
-import smile.data.NumericAttribute;
 import smile.math.Math;
 import smile.math.Random;
-import smile.util.MulticoreExecutor;
-import smile.util.SmileUtils;
 
 @Description(name = "train_randomforest_classifier", value = "_FUNC_(double[] features, int label [, string options]) - "
         + "Returns a relation consists of <string pred_model, double[] var_importance>")
 public final class RandomForestClassifierUDTF extends UDTFWithOptions {
+    private static final Log logger = LogFactory.getLog(RandomForestClassifierUDTF.class);
 
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
     private PrimitiveObjectInspector labelOI;
 
-    private ArrayList<double[]> featuresList;
+    private List<double[]> featuresList;
     private IntArrayList labels;
-    private int T, M;
+    /**
+     * The number of trees for each task
+     */
+    private int numTrees;
+    /**
+     * The number of random selected features
+     */
+    private int numVars;
+    private long seed;
     private Attribute[] attributes;
+    private OutputType outputType;
 
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("T", "num_trees", true, "The number of trees for each task [default: 50]");
-        opts.addOption("M", "num_features", true, "The number of random selected features [default: floor(sqrt(dim))]");
-        opts.addOption("attr_types", "attribute_types", true, "Comma separated attribute types"
+        opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
+        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(sqrt(dim))]");
+        opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
+        opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantative variable and C for categorical variable. e.g., [Q,C,Q,C])");
+        opts.addOption("output", "output_type", true, "The output type (opscode/vm or javascript/js) [default: opscode]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         int T = 50, M = -1;
+        Attribute[] attrs = null;
+        long seed = -1L;
+        String output = "opscode";
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
             String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
+
+            T = Primitives.parseInt(cl.getOptionValue("num_trees"), T);
+            if(T < 1) {
+                throw new IllegalArgumentException("Invlaid number of trees: " + T);
+            }
+            M = Primitives.parseInt(cl.getOptionValue("num_variables"), M);
+            attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
+            seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
+            output = cl.getOptionValue("output", output);
         }
 
-        if(T < 1) {
-            throw new IllegalArgumentException("Invlaid number of trees: " + T);
-        }
-        if(M < 1) {
-            throw new IllegalArgumentException("Invalid number of variables for splitting: " + M);
-        }
+        this.numTrees = T;
+        this.numVars = M;
+        this.seed = seed;
+        this.attributes = attrs;
+        this.outputType = OutputType.resolve(output);
 
         return cl;
+    }
+
+    public enum OutputType {
+        opscode, javascript;
+
+        public static OutputType resolve(String name) {
+            if("opscode".equalsIgnoreCase(name) || "vm".equalsIgnoreCase(name)) {
+                return opscode;
+            } else if("javascript".equalsIgnoreCase(name) || "js".equalsIgnoreCase(name)) {
+                return javascript;
+            }
+            throw new IllegalStateException("Unexpected output type: " + name);
+        }
+
     }
 
     @Override
@@ -123,9 +162,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
         fieldNames.add("var_importance");
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
-        fieldNames.add("oobErrors");
+        fieldNames.add("oob_errors");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
-        fieldNames.add("oobTests");
+        fieldNames.add("oob_tests");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -150,7 +189,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this.featuresList = null;
         int[] y = labels.toArray();
         this.labels = null;
-        train(x, y, attributes, T, M);
+
+        // run training
+        train(x, y, attributes, numTrees, numVars, seed);
 
         // clean up
         this.featureListOI = null;
@@ -159,27 +200,47 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this.attributes = null;
     }
 
-    private void train(@Nonnull final double[][] x, @Nonnull final int[] y, final Attribute[] attrs, final int T, final int M)
+    /**
+     * @param x
+     *            features
+     * @param y
+     *            label
+     * @param attrs
+     *            attribute types
+     * @param numTrees
+     *            The number of trees
+     * @param numVars
+     *            The number of variables to pick up in each node.
+     * @param seed
+     *            The seed number for Random Forest
+     */
+    private void train(@Nonnull final double[][] x, @Nonnull final int[] y, final Attribute[] attrs, final int numTrees, final int numVars, final long seed)
             throws HiveException {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        int[] labels = classLables(y);
-        Attribute[] attributes = attributeTypes(attrs, x);
+        int[] labels = SmileExtUtils.classLables(y);
+        Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
+        int numInputVars = (numVars == -1) ? (int) Math.floor(Math.sqrt(x[0].length)) : numVars;
 
         final int numExamples = x.length;
-        int[][] prediction = new int[numExamples][labels.length]; // out-of-bag prediction
-        int[][] order = SmileUtils.sort(attributes, x);
-        AtomicInteger remainingTasks = new AtomicInteger(T);
+        int[][] prediction = new int[numExamples][labels.length]; // placeholder for out-of-bag prediction
+        int[][] order = SmileExtUtils.sort(attributes, x);
+        AtomicInteger remainingTasks = new AtomicInteger(numTrees);
         List<TrainingTask> tasks = new ArrayList<TrainingTask>();
-        for(int i = 0; i < T; i++) {
-            tasks.add(new TrainingTask(this, attributes, x, y, M, order, prediction, remainingTasks));
+        for(int i = 0; i < numTrees; i++) {
+            tasks.add(new TrainingTask(this, attributes, x, y, numInputVars, order, prediction, seed
+                    + i, remainingTasks));
         }
 
+        MapredContext mapredContext = MapredContextAccessor.get();
+        final SmileTaskExecutor executor = new SmileTaskExecutor(mapredContext);
         try {
-            MulticoreExecutor.run(tasks);
+            executor.run(tasks);
         } catch (Exception ex) {
             throw new HiveException(ex);
+        } finally {
+            executor.shotdown();
         }
     }
 
@@ -211,41 +272,10 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         forward(forwardObjs);
     }
 
-    @Nonnull
-    public static int[] classLables(@Nonnull final int[] y) throws HiveException {
-        final int[] labels = Math.unique(y);
-        Arrays.sort(labels);
-
-        if(labels.length < 2) {
-            throw new HiveException("Only one class.");
-        }
-        for(int i = 0; i < labels.length; i++) {
-            if(labels[i] < 0) {
-                throw new HiveException("Negative class label: " + labels[i]);
-            }
-            if(i > 0 && labels[i] - labels[i - 1] > 1) {
-                throw new HiveException("Missing class: " + labels[i] + 1);
-            }
-        }
-
-        return labels;
-    }
-
-    public static Attribute[] attributeTypes(@Nullable Attribute[] attributes, @Nonnull final double[][] x) {
-        if(attributes == null) {
-            int p = x[0].length;
-            attributes = new Attribute[p];
-            for(int i = 0; i < p; i++) {
-                attributes[i] = new NumericAttribute("V" + (i + 1));
-            }
-        }
-        return attributes;
-    }
-
     /**
      * Trains a regression tree.
      */
-    private static final class TrainingTask implements Callable<DecisionTree> {
+    private static final class TrainingTask implements Callable<Integer> {
         /**
          * Attribute properties.
          */
@@ -266,58 +296,84 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         /**
          * The number of variables to pick up in each node.
          */
-        private final int M;
+        private final int numVars;
         /**
          * The out-of-bag predictions.
          */
         private final int[][] prediction;
 
         private final RandomForestClassifierUDTF udtf;
+        private final long seed;
         private final AtomicInteger remainingTasks;
 
         /**
          * Constructor.
          */
-        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int M, int[][] order, int[][] prediction, AtomicInteger remainingTasks) {
+        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int M, int[][] order, int[][] prediction, long seed, AtomicInteger remainingTasks) {
             this.udtf = udtf;
             this.attributes = attributes;
             this.x = x;
             this.y = y;
             this.order = order;
-            this.M = M;
+            this.numVars = M;
             this.prediction = prediction;
+            this.seed = seed;
             this.remainingTasks = remainingTasks;
         }
 
         @Override
-        public DecisionTree call() throws HiveException {
-            int n = x.length;
-            Random random = new Random(Thread.currentThread().getId() * System.currentTimeMillis());
+        public Integer call() throws HiveException {
+            long s = (this.seed == -1L) ? Thread.currentThread().getId()
+                    * System.currentTimeMillis() : this.seed;
+            final Random random = new Random(s);
+            final int n = x.length;
             int[] samples = new int[n]; // Training samples draw with replacement.
             for(int i = 0; i < n; i++) {
                 samples[random.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(attributes, x, y, M, samples, order);
+            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, samples, order);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {
                 if(samples[i] == 0) {
-                    int p = tree.predict(x[i]);
+                    final int p = tree.predict(x[i]);
                     synchronized(prediction[i]) {
                         prediction[i][p]++;
                     }
                 }
             }
 
-            String model = tree.predictCodegen();
+            String model = getModel(tree, udtf.outputType);
             double[] importance = tree.importance();
             int remain = remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
             udtf.forward(model, importance, y, prediction, lastTask);
 
-            return tree;
+            return Integer.valueOf(remain);
         }
+
+        private String getModel(DecisionTree tree, OutputType outputType) {
+            final String model;
+            switch (outputType) {
+                case opscode: {
+                    model = tree.predictCodegen();
+                    break;
+                }
+                case javascript: {
+                    model = tree.predictCodegen();
+                    break;
+                }
+                default: {
+                    logger.warn("Unexpected output type: " + udtf.outputType
+                            + ". Use javascript for the output instead");
+                    model = tree.predictCodegen();
+                    break;
+                }
+            }
+            return model;
+        }
+
     }
 
 }
