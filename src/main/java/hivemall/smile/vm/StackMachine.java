@@ -34,7 +34,13 @@ public final class StackMachine {
     private final List<Operation> code;
     private final Stack<Double> programStack;
 
+    /**
+     * Instruction pointer
+     */
     private int IP;
+    /**
+     * Stack pointer
+     */
     private int SP;
 
     private int codeLength;
@@ -138,9 +144,7 @@ public final class StackMachine {
                 // follow the rule of smile's Math class.
                 double a = pop();
                 double b = pop();
-                double absa = Math.abs(a);
-                double absb = Math.abs(b);
-                if(a == b || Math.abs(a - b) <= Math.min(absa, absb) * 2.2204460492503131e-16) {
+                if(smile.math.Math.equals(a, b)) {
                     if(isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
@@ -151,7 +155,7 @@ public final class StackMachine {
                 }
                 break;
             }
-            case IFGR: {
+            case IFGR: {//TODO assumes changing order of operands. Fix to IFLE (Less than or Equals to) or IFGT (Greater Than)
                 double lower = pop();
                 double upper = pop();
                 if(upper > lower) {
