@@ -155,17 +155,59 @@ public final class StackMachine {
                 }
                 break;
             }
-            case IFGR: {//TODO assumes changing order of operands. Fix to IFLE (Less than or Equals to) or IFGT (Greater Than)
+            case IFGE: {
                 double lower = pop();
                 double upper = pop();
-                if(upper > lower) {
+                if(upper >= lower) {
+                    IP++;
+                } else {
                     if(isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
                     }
-                } else {
+                }
+                break;
+            }
+            case IFGT: {
+                double lower = pop();
+                double upper = pop();
+                if(upper > lower) {
                     IP++;
+                } else {
+                    if(isInt(currentOperation.operand)) {
+                        IP = Integer.parseInt(currentOperation.operand);
+                    } else {
+                        IP = jumpMap.get(currentOperation.operand);
+                    }
+                }
+                break;
+            }
+            case IFLE: {
+                double lower = pop();
+                double upper = pop();
+                if(upper <= lower) {
+                    IP++;
+                } else {
+                    if(isInt(currentOperation.operand)) {
+                        IP = Integer.parseInt(currentOperation.operand);
+                    } else {
+                        IP = jumpMap.get(currentOperation.operand);
+                    }
+                }
+                break;
+            }
+            case IFLT: {
+                double lower = pop();
+                double upper = pop();
+                if(upper < lower) {
+                    IP++;
+                } else {
+                    if(isInt(currentOperation.operand)) {
+                        IP = Integer.parseInt(currentOperation.operand);
+                    } else {
+                        IP = jumpMap.get(currentOperation.operand);
+                    }
                 }
                 break;
             }

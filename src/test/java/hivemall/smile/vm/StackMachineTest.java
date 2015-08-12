@@ -136,7 +136,7 @@ public class StackMachineTest {
         ArrayList<String> opScript = new ArrayList<String>();
         opScript.add("push 2.0");
         opScript.add("push 1.0");
-        opScript.add("ifgr 0");
+        opScript.add("iflt 0");
         opScript.add("push 1");
         opScript.add("call end");
         debugPrint(opScript);

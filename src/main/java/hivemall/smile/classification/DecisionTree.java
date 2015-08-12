@@ -387,13 +387,13 @@ public class DecisionTree implements Classifier<double[]> {
                     buf.append("push ").append(splitValue);
                     scripts.add(buf.toString());
                     buf.setLength(0);
-                    buf.append("ifgr ");
+                    buf.append("ifle ");
                     scripts.add(buf.toString());
                     depth += 3;
                     selfDepth += 3;
                     int trueDepth = trueChild.opcodegen(scripts, depth);
                     selfDepth += trueDepth;
-                    scripts.set(depth - 1, "ifgr " + String.valueOf(depth + trueDepth));
+                    scripts.set(depth - 1, "ifle " + String.valueOf(depth + trueDepth));
                     int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
                 } else {
