@@ -17,20 +17,15 @@
  */
 package hivemall.smile.classification;
 
+import hivemall.smile.vm.StackMachine;
+import hivemall.smile.vm.VMRuntimeException;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.List;
 
 import javax.annotation.Nonnull;
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -46,23 +41,18 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
-@Description(name = "tree_predict", value = "_FUNC_(string script, array<double> features [, const boolean classification]) - Returns a prediction result of a random forest")
+@Description(name = "vm_tree_predict", value = "_FUNC_(string script, array<double> features [, const boolean classification]) - Returns a prediction result of a random forest")
 @UDFType(deterministic = true, stateful = false)
-public final class TreePredictTrustedUDF extends GenericUDF {
+public final class TreePredictByStackMachineUDF extends GenericUDF {
 
     private boolean classification;
-
-    private ScriptEngine scriptEngine;
-    private Compilable compilableEngine;
-    private Map<String, CompiledScript> cache;
-
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if(argOIs.length != 2 && argOIs.length != 3) {
-            throw new UDFArgumentException("tree_predict takes 2 or 3 arguments");
+            throw new UDFArgumentException("vm_tree_predict takes 2 or 3 arguments");
         }
 
         if(HiveUtils.isStringOI(argOIs[0]) == false) {
@@ -80,18 +70,6 @@ public final class TreePredictTrustedUDF extends GenericUDF {
         }
         this.classification = classification;
 
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByExtension("js");
-        if(!(engine instanceof Compilable)) {
-            throw new UDFArgumentException("ScriptEngine was not compilable: "
-                    + engine.getFactory().getEngineName() + " version "
-                    + engine.getFactory().getEngineVersion());
-        }
-        this.scriptEngine = engine;
-        this.compilableEngine = (Compilable) engine;
-
-        this.cache = new WeakHashMap<String, CompiledScript>();
-
         if(classification) {
             return PrimitiveObjectInspectorFactory.writableIntObjectInspector;
         } else {
@@ -106,6 +84,7 @@ public final class TreePredictTrustedUDF extends GenericUDF {
             return null;
         }
         String script = arg0.toString();
+        List<String> scriptList = Arrays.asList(script.split("¥n"));
 
         Object arg1 = arguments[1].get();
         if(arg1 == null) {
@@ -113,55 +92,36 @@ public final class TreePredictTrustedUDF extends GenericUDF {
         }
         double[] features = HiveUtils.asDoubleArray(arg1, featureListOI, featureElemOI);
 
-        return evaluate(script, features, classification);
+        return evaluate(scriptList, features, classification);
     }
 
     @Nonnull
-    public Writable evaluate(@Nonnull final String script, @Nonnull final double[] features, final boolean classification)
+    public Writable evaluate(@Nonnull final List<String> script, @Nonnull final double[] features, final boolean classification)
             throws HiveException {
-        CompiledScript compiled = cache.get(script);
-        if(compiled == null) {
-            try {
-                compiled = compilableEngine.compile(script);
-            } catch (ScriptException e) {
-                throw new HiveException("failed to compile: \n" + script, e);
-            }
-            cache.put(script, compiled);
-        }
-
-        final Bindings bindings = scriptEngine.createBindings();
-        final Object result;
+        final StackMachine vm = new StackMachine();
         try {
-            bindings.put("x", features);
-            result = compiled.eval(bindings);
-        } catch (ScriptException e) {
-            throw new HiveException("failed to evaluate: \n" + script, e);
-        } finally {
-            bindings.clear();
+            vm.run(script, features);
+        } catch (VMRuntimeException e) {
+            throw new HiveException("failed to run StackMachine", e);
         }
+        Double result = vm.getResult();
 
         if(result == null) {
             return null;
         }
         if(classification) {
-            Integer casted = (Integer) result;
-            return new IntWritable(casted.intValue());
+            return new IntWritable(result.intValue());
         } else {
-            Double casted = (Double) result;
-            return new DoubleWritable(casted.doubleValue());
+            return new DoubleWritable(result.doubleValue());
         }
     }
 
     @Override
-    public void close() throws IOException {
-        this.scriptEngine = null;
-        this.compilableEngine = null;
-        this.cache = null;
-    }
+    public void close() throws IOException {}
 
     @Override
     public String getDisplayString(String[] children) {
-        return "tree_predict(" + Arrays.toString(children) + ")";
+        return "vm_tree_predict(" + Arrays.toString(children) + ")";
     }
 
 }

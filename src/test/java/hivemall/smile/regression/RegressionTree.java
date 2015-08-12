@@ -1,21 +1,4 @@
-/*
- * Hivemall: Hive scalable Machine Learning Library
- *
- * Copyright (C) 2015 Makoto YUI
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/*
+/*******************************************************************************
  * Copyright (c) 2010 Haifeng Li
  *   
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,50 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package hivemall.smile.classification;
+ *******************************************************************************/
+package hivemall.smile.regression;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
-
-import javax.annotation.Nonnull;
-
-import smile.classification.Classifier;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.data.NumericAttribute;
 import smile.math.Math;
+import smile.regression.GradientTreeBoost;
+import smile.regression.RandomForest;
+import smile.regression.Regression;
+import smile.regression.RegressionTrainer;
 import smile.sort.QuickSort;
 import smile.util.MulticoreExecutor;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
+
 /**
- * Decision tree for classification. A decision tree can be learned by splitting
- * the training set into subsets based on an attribute value test. This process
- * is repeated on each derived subset in a recursive manner called recursive
- * partitioning. The recursion is completed when the subset at a node all has
- * the same value of the target variable, or when splitting no longer adds value
- * to the predictions.
- * <p>
- * The algorithms that are used for constructing decision trees usually work
- * top-down by choosing a variable at each step that is the next best variable
- * to use in splitting the set of items. "Best" is defined by how well the
- * variable splits the set into homogeneous subsets that have the same value of
- * the target variable. Different algorithms use different formulae for
- * measuring "best". Used by the CART algorithm, Gini impurity is a measure of
- * how often a randomly chosen element from the set would be incorrectly labeled
- * if it were randomly labeled according to the distribution of labels in the
- * subset. Gini impurity can be computed by summing the probability of each item
- * being chosen times the probability of a mistake in categorizing that item. It
- * reaches its minimum (zero) when all cases in the node fall into a single
- * target category. Information gain is another popular measure, used by the
- * ID3, C4.5 and C5.0 algorithms. Information gain is based on the concept of
- * entropy used in information theory. For categorical variables with different
- * number of levels, however, information gain are biased in favor of those
- * attributes with more levels. Instead, one may employ the information gain
- * ratio, which solves the drawback of information gain.
+ * Decision tree for regression. A decision tree can be learned by splitting the
+ * training set into subsets based on an attribute value test. This process is
+ * repeated on each derived subset in a recursive manner called recursive
+ * partitioning.
  * <p>
  * Classification and Regression Tree techniques have a number of advantages
  * over many of those alternative techniques.
@@ -109,20 +73,21 @@ import smile.util.MulticoreExecutor;
  * Some techniques such as bagging, boosting, and random forest use more than
  * one decision tree for their analysis.
  * 
- * @author Haifeng Li
- * @author Makoto Yui
+ * @see GradientTreeBoost
+ * @see RandomForest
+ * 
+ * @author Haifeng LI
  */
-public class DecisionTree implements Classifier<double[]> {
+public class RegressionTree implements Regression<double[]> {
     /**
      * The attributes of independent variable.
      */
-    private Attribute[] attributes;
+    static private Attribute[] attributes;
     /**
      * Variable importance. Every time a split of a node is made on variable the
-     * (GINI, information gain, etc.) impurity criterion for the two descendent
-     * nodes is less than the parent node. Adding up the decreases for each
-     * individual variable over the tree gives a simple measure of variable
-     * importance.
+     * impurity criterion for the two descendent nodes is less than the parent
+     * node. Adding up the decreases for each individual variable over the tree
+     * gives a simple measure of variable importance.
      */
     private double[] importance;
     /**
@@ -130,22 +95,23 @@ public class DecisionTree implements Classifier<double[]> {
      */
     private Node root;
     /**
-     * The splitting rule.
+     * The number of instances in a node below which the tree will not split,
+     * setting S = 5 generally gives good results.
      */
-    private SplitRule rule = SplitRule.GINI;
-    /**
-     * The number of classes.
-     */
-    private int k = 2;
+    private int S = 5;
     /**
      * The maximum number of leaf nodes in the tree.
      */
-    private int J = 100;
+    private int J = 6;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
     private int M;
+    /**
+     * The number of binary features.
+     */
+    private int numFeatures;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
@@ -153,17 +119,17 @@ public class DecisionTree implements Classifier<double[]> {
     private transient int[][] order;
 
     /**
-     * Trainer for decision tree classifiers.
+     * Trainer for regression tree.
      */
-    public static class Trainer extends ClassifierTrainer<double[]> {
-        /**
-         * The splitting rule.
-         */
-        private SplitRule rule = SplitRule.GINI;
+    public static class Trainer extends RegressionTrainer<double[]> {
         /**
          * The maximum number of leaf nodes in the tree.
          */
         private int J = 100;
+        /**
+         * The number of sparse binary features.
+         */
+        private int numFeatures = -1;
 
         /**
          * Constructor.
@@ -198,13 +164,25 @@ public class DecisionTree implements Classifier<double[]> {
         }
 
         /**
-         * Sets the splitting rule.
+         * Constructor.
          * 
-         * @param rule
-         *            the splitting rule.
+         * @param numFeatures
+         *            the number of features.
+         * @param J
+         *            the maximum number of leaf nodes in the tree.
          */
-        public void setSplitRule(SplitRule rule) {
-            this.rule = rule;
+        public Trainer(int numFeatures, int J) {
+            if(numFeatures <= 0) {
+                throw new IllegalArgumentException("Invalid number of sparse binary features: "
+                        + numFeatures);
+            }
+
+            if(J < 2) {
+                throw new IllegalArgumentException("Invalid number of leaf nodes: " + J);
+            }
+
+            this.numFeatures = numFeatures;
+            this.J = J;
         }
 
         /**
@@ -222,40 +200,45 @@ public class DecisionTree implements Classifier<double[]> {
         }
 
         @Override
-        public DecisionTree train(double[][] x, int[] y) {
-            return new DecisionTree(attributes, x, y, J, rule);
+        public RegressionTree train(double[][] x, double[] y) {
+            return new RegressionTree(attributes, x, y, J);
+        }
+
+        public RegressionTree train(int[][] x, double[] y) {
+            if(numFeatures <= 0) {
+                return new RegressionTree(Math.max(x) + 1, x, y, J);
+            } else {
+                return new RegressionTree(numFeatures, x, y, J);
+            }
         }
     }
 
     /**
-     * The criterion to choose variable to split instances.
+     * An interface to calculate node output. Note that samples[i] is the number
+     * of sampling of dataset[i]. 0 means that the datum is not included and
+     * values of greater than 1 are possible because of sampling with
+     * replacement.
      */
-    public static enum SplitRule {
+    public static interface NodeOutput {
         /**
-         * Used by the CART algorithm, Gini impurity is a measure of how often a
-         * randomly chosen element from the set would be incorrectly labeled if
-         * it were randomly labeled according to the distribution of labels in
-         * the subset. Gini impurity can be computed by summing the probability
-         * of each item being chosen times the probability of a mistake in
-         * categorizing that item. It reaches its minimum (zero) when all cases
-         * in the node fall into a single target category.
+         * Calculate the node output.
+         * 
+         * @param samples
+         *            the samples in the node.
+         * @return the node output
          */
-        GINI,
-        /**
-         * Used by the ID3, C4.5 and C5.0 tree generation algorithms.
-         */
-        ENTROPY
+        public double calculate(int[] samples);
     }
 
     /**
-     * Classification tree node.
+     * Regression tree node.
      */
     class Node {
 
         /**
-         * Predicted class label for this node.
+         * Predicted real value for this node.
          */
-        int output = -1;
+        double output = 0.0;
         /**
          * The split feature for this node.
          */
@@ -265,47 +248,42 @@ public class DecisionTree implements Classifier<double[]> {
          */
         double splitValue = Double.NaN;
         /**
-         * Reduction in splitting criterion.
+         * Reduction in squared error compared to parent.
          */
         double splitScore = 0.0;
         /**
          * Children node.
          */
-        Node trueChild = null;
+        Node trueChild;
         /**
          * Children node.
          */
-        Node falseChild = null;
+        Node falseChild;
         /**
          * Predicted output for children node.
          */
-        int trueChildOutput = -1;
+        double trueChildOutput = 0.0;
         /**
          * Predicted output for children node.
          */
-        int falseChildOutput = -1;
+        double falseChildOutput = 0.0;
 
         /**
          * Constructor.
          */
-        public Node() {}
-
-        /**
-         * Constructor.
-         */
-        public Node(int output) {
+        public Node(double output) {
             this.output = output;
         }
 
         /**
          * Evaluate the regression tree over an instance.
          */
-        public int predict(double[] x) {
+        public double predict(double[] x) {
             if(trueChild == null && falseChild == null) {
                 return output;
             } else {
                 if(attributes[splitFeature].type == Attribute.Type.NOMINAL) {
-                    if(x[splitFeature] == splitValue) {
+                    if(Math.equals(x[splitFeature], splitValue)) {
                         return trueChild.predict(x);
                     } else {
                         return falseChild.predict(x);
@@ -320,6 +298,19 @@ public class DecisionTree implements Classifier<double[]> {
                     throw new IllegalStateException("Unsupported attribute type: "
                             + attributes[splitFeature].type);
                 }
+            }
+        }
+
+        /**
+         * Evaluate the regression tree over an instance.
+         */
+        public double predict(int[] x) {
+            if(trueChild == null && falseChild == null) {
+                return output;
+            } else if(x[splitFeature] == (int) splitValue) {
+                return trueChild.predict(x);
+            } else {
+                return falseChild.predict(x);
             }
         }
 
@@ -412,7 +403,7 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
-     * Classification tree node for training purpose.
+     * Regression tree node for training purpose.
      */
     class TrainNode implements Comparable<TrainNode> {
         /**
@@ -420,13 +411,21 @@ public class DecisionTree implements Classifier<double[]> {
          */
         Node node;
         /**
+         * Child node that passes the test.
+         */
+        TrainNode trueChild;
+        /**
+         * Child node that fails the test.
+         */
+        TrainNode falseChild;
+        /**
          * Training dataset.
          */
         double[][] x;
         /**
-         * class labels.
+         * Training data response value.
          */
-        int[] y;
+        double[] y;
         /**
          * The samples for training this node. Note that samples[i] is the
          * number of sampling of dataset[i]. 0 means that the datum is not
@@ -438,7 +437,7 @@ public class DecisionTree implements Classifier<double[]> {
         /**
          * Constructor.
          */
-        public TrainNode(Node node, double[][] x, int[] y, int[] samples) {
+        public TrainNode(Node node, double[][] x, double[] y, int[] samples) {
             this.node = node;
             this.x = x;
             this.y = y;
@@ -451,56 +450,57 @@ public class DecisionTree implements Classifier<double[]> {
         }
 
         /**
+         * Calculate the node output for leaves.
+         * 
+         * @param output
+         *            the output calculate functor.
+         */
+        public void calculateOutput(NodeOutput output) {
+            if(node.trueChild == null && node.falseChild == null) {
+                node.output = output.calculate(samples);
+            } else {
+                if(trueChild != null) {
+                    trueChild.calculateOutput(output);
+                }
+                if(falseChild != null) {
+                    falseChild.calculateOutput(output);
+                }
+            }
+        }
+
+        /**
          * Finds the best attribute to split on at the current node. Returns
          * true if a split exists to reduce squared error, false otherwise.
          */
         public boolean findBestSplit() {
-            int N = x.length;
-            int label = -1;
-            boolean pure = true;
-            for(int i = 0; i < N; i++) {
-                if(samples[i] > 0) {
-                    if(label == -1) {
-                        label = y[i];
-                    } else if(y[i] != label) {
-                        pure = false;
-                        break;
-                    }
-                }
+            int n = 0;
+            for(int s : samples) {
+                n += s;
             }
 
-            // Since all instances have same label, stop splitting.
-            if(pure) {
+            if(n <= S) {
                 return false;
             }
 
-            // Sample count in each class.
-            int n = 0;
-            int[] count = new int[k];
-            int[] falseCount = new int[k];
-            for(int i = 0; i < N; i++) {
-                if(samples[i] > 0) {
-                    n += samples[i];
-                    count[y[i]] += samples[i];
-                }
-            }
-
-            double impurity = impurity(count, n);
-
+            double sum = node.output * n;
             int p = attributes.length;
             int[] variables = new int[p];
             for(int i = 0; i < p; i++) {
                 variables[i] = i;
             }
 
+            // Loop through features and compute the reduction of squared error,
+            // which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2                    
             if(M < p) {
-                synchronized(DecisionTree.class) {
+                // Training of Random Forest will get into this race condition.
+                // smile.math.Math uses a static object of random number generator.
+                synchronized(RegressionTree.class) {
                     Math.permutate(variables);
                 }
 
                 // Random forest already runs on parallel.
                 for(int j = 0; j < M; j++) {
-                    Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
+                    Node split = findBestSplit(n, sum, variables[j]);
                     if(split.splitScore > node.splitScore) {
                         node.splitFeature = split.splitFeature;
                         node.splitValue = split.splitValue;
@@ -513,7 +513,7 @@ public class DecisionTree implements Classifier<double[]> {
 
                 List<SplitTask> tasks = new ArrayList<SplitTask>(M);
                 for(int j = 0; j < M; j++) {
-                    tasks.add(new SplitTask(n, count, impurity, variables[j]));
+                    tasks.add(new SplitTask(n, sum, variables[j]));
                 }
 
                 try {
@@ -528,7 +528,7 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 } catch (Exception ex) {
                     for(int j = 0; j < M; j++) {
-                        Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
+                        Node split = findBestSplit(n, sum, variables[j]);
                         if(split.splitScore > node.splitScore) {
                             node.splitFeature = split.splitFeature;
                             node.splitValue = split.splitValue;
@@ -554,30 +554,23 @@ public class DecisionTree implements Classifier<double[]> {
              */
             int n;
             /**
-             * The sample count in each class.
+             * The sum of responses of this node.
              */
-            int[] count;
-            /**
-             * The impurity of this node.
-             */
-            double impurity;
+            double sum;
             /**
              * The index of variables for this task.
              */
             int j;
 
-            SplitTask(int n, int[] count, double impurity, int j) {
+            SplitTask(int n, double sum, int j) {
                 this.n = n;
-                this.count = count;
-                this.impurity = impurity;
+                this.sum = sum;
                 this.j = j;
             }
 
             @Override
             public Node call() {
-                // An array to store sample count in each class for false child node.
-                int[] falseCount = new int[k];
-                return findBestSplit(n, count, falseCount, impurity, j);
+                return findBestSplit(n, sum, j);
             }
         }
 
@@ -588,108 +581,109 @@ public class DecisionTree implements Classifier<double[]> {
          *            the number instances in this node.
          * @param count
          *            the sample count in each class.
-         * @param falseCount
-         *            an array to store sample count in each class for false
-         *            child node.
          * @param impurity
          *            the impurity of this node.
          * @param j
          *            the attribute to split on.
          */
-        public Node findBestSplit(int n, int[] count, int[] falseCount, double impurity, int j) {
+        public Node findBestSplit(int n, double sum, int j) {
             int N = x.length;
-            Node splitNode = new Node();
-
+            Node split = new Node(0.0);
             if(attributes[j].type == Attribute.Type.NOMINAL) {
                 int m = ((NominalAttribute) attributes[j]).size();
-                int[][] trueCount = new int[m][k];
+                double[] trueSum = new double[m];
+                int[] trueCount = new int[m];
 
                 for(int i = 0; i < N; i++) {
                     if(samples[i] > 0) {
-                        trueCount[(int) x[i][j]][y[i]] += samples[i];
+                        double target = samples[i] * y[i];
+
+                        // For each true feature of this datum increment the
+                        // sufficient statistics for the "true" branch to evaluate
+                        // splitting on this feature.
+                        int index = (int) x[i][j];
+                        trueSum[index] += target;
+                        trueCount[index] += samples[i];
                     }
                 }
 
-                for(int l = 0; l < m; l++) {
-                    int tc = Math.sum(trueCount[l]);
-                    int fc = n - tc;
+                for(int k = 0; k < m; k++) {
+                    double tc = (double) trueCount[k];
+                    double fc = n - tc;
 
                     // If either side is empty, skip this feature.
                     if(tc == 0 || fc == 0) {
                         continue;
                     }
 
-                    for(int q = 0; q < k; q++) {
-                        falseCount[q] = count[q] - trueCount[l][q];
-                    }
+                    // compute penalized means
+                    double trueMean = trueSum[k] / tc;
+                    double falseMean = (sum - trueSum[k]) / fc;
 
-                    int trueLabel = Math.whichMax(trueCount[l]);
-                    int falseLabel = Math.whichMax(falseCount);
-                    double gain = impurity - (double) tc / n * impurity(trueCount[l], tc)
-                            - (double) fc / n * impurity(falseCount, fc);
-
-                    if(gain > splitNode.splitScore) {
+                    double gain = (tc * trueMean * trueMean + fc * falseMean * falseMean) - n
+                            * split.output * split.output;
+                    if(gain > split.splitScore) {
                         // new best split
-                        splitNode.splitFeature = j;
-                        splitNode.splitValue = l;
-                        splitNode.splitScore = gain;
-                        splitNode.trueChildOutput = trueLabel;
-                        splitNode.falseChildOutput = falseLabel;
+                        split.splitFeature = j;
+                        split.splitValue = k;
+                        split.splitScore = gain;
+                        split.trueChildOutput = trueMean;
+                        split.falseChildOutput = falseMean;
                     }
                 }
             } else if(attributes[j].type == Attribute.Type.NUMERIC) {
-                int[] trueCount = new int[k];
+                double trueSum = 0.0;
+                int trueCount = 0;
                 double prevx = Double.NaN;
-                int prevy = -1;
 
                 for(int i : order[j]) {
                     if(samples[i] > 0) {
-                        if(Double.isNaN(prevx) || x[i][j] == prevx || y[i] == prevy) {
+                        if(Double.isNaN(prevx) || x[i][j] == prevx) {
                             prevx = x[i][j];
-                            prevy = y[i];
-                            trueCount[y[i]] += samples[i];
+                            trueSum += samples[i] * y[i];
+                            trueCount += samples[i];
                             continue;
                         }
 
-                        int tc = Math.sum(trueCount);
-                        int fc = n - tc;
+                        double falseCount = n - trueCount;
 
-                        // If either side is empty, continue.
-                        if(tc == 0 || fc == 0) {
+                        // If either side is empty, skip this feature.
+                        if(trueCount == 0 || falseCount == 0) {
                             prevx = x[i][j];
-                            prevy = y[i];
-                            trueCount[y[i]] += samples[i];
+                            trueSum += samples[i] * y[i];
+                            trueCount += samples[i];
                             continue;
                         }
 
-                        for(int l = 0; l < k; l++) {
-                            falseCount[l] = count[l] - trueCount[l];
-                        }
+                        // compute penalized means
+                        double trueMean = trueSum / trueCount;
+                        double falseMean = (sum - trueSum) / falseCount;
 
-                        int trueLabel = Math.whichMax(trueCount);
-                        int falseLabel = Math.whichMax(falseCount);
-                        double gain = impurity - (double) tc / n * impurity(trueCount, tc)
-                                - (double) fc / n * impurity(falseCount, fc);
-
-                        if(gain > splitNode.splitScore) {
+                        // The gain is actually -(reduction in squared error) for
+                        // sorting in priority queue, which treats smaller number with
+                        // higher priority.
+                        double gain = (trueCount * trueMean * trueMean + falseCount * falseMean
+                                * falseMean)
+                                - n * split.output * split.output;
+                        if(gain > split.splitScore) {
                             // new best split
-                            splitNode.splitFeature = j;
-                            splitNode.splitValue = (x[i][j] + prevx) / 2;
-                            splitNode.splitScore = gain;
-                            splitNode.trueChildOutput = trueLabel;
-                            splitNode.falseChildOutput = falseLabel;
+                            split.splitFeature = j;
+                            split.splitValue = (x[i][j] + prevx) / 2;
+                            split.splitScore = gain;
+                            split.trueChildOutput = trueMean;
+                            split.falseChildOutput = falseMean;
                         }
 
                         prevx = x[i][j];
-                        prevy = y[i];
-                        trueCount[y[i]] += samples[i];
+                        trueSum += samples[i] * y[i];
+                        trueCount += samples[i];
                     }
                 }
             } else {
                 throw new IllegalStateException("Unsupported attribute type: " + attributes[j].type);
             }
 
-            return splitNode;
+            return split;
         }
 
         /**
@@ -746,8 +740,8 @@ public class DecisionTree implements Classifier<double[]> {
             node.trueChild = new Node(node.trueChildOutput);
             node.falseChild = new Node(node.falseChildOutput);
 
-            TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(trueChild.findBestSplit()) {
+            trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
+            if(tc > S && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -755,8 +749,8 @@ public class DecisionTree implements Classifier<double[]> {
                 }
             }
 
-            TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(falseChild.findBestSplit()) {
+            falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
+            if(fc > S && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -771,44 +765,202 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
-     * Returns the impurity of a node.
-     * 
-     * @param count
-     *            the sample count in each class.
-     * @param n
-     *            the number of samples in the node.
-     * @return the impurity of a node
+     * Regression tree training node for sparse binary features.
      */
-    private double impurity(int[] count, int n) {
-        double impurity = 0.0;
+    class SparseBinaryTrainNode implements Comparable<SparseBinaryTrainNode> {
 
-        switch (rule) {
-            case GINI:
-                impurity = 1.0;
-                for(int i = 0; i < count.length; i++) {
-                    if(count[i] > 0) {
-                        double p = (double) count[i] / n;
-                        impurity -= p * p;
-                    }
-                }
-                break;
+        /**
+         * The associated regression tree node.
+         */
+        Node node;
+        /**
+         * Child node that passes the test.
+         */
+        SparseBinaryTrainNode trueChild;
+        /**
+         * Child node that fails the test.
+         */
+        SparseBinaryTrainNode falseChild;
+        /**
+         * Training dataset.
+         */
+        int[][] x;
+        /**
+         * Training data response value.
+         */
+        double[] y;
+        /**
+         * The samples for training this node. Note that samples[i] is the
+         * number of sampling of dataset[i]. 0 means that the datum is not
+         * included and values of greater than 1 are possible because of
+         * sampling with replacement.
+         */
+        int[] samples;
 
-            case ENTROPY:
-                for(int i = 0; i < count.length; i++) {
-                    if(count[i] > 0) {
-                        double p = (double) count[i] / n;
-                        impurity -= p * Math.log2(p);
-                    }
-                }
-                break;
+        /**
+         * Constructor.
+         */
+        public SparseBinaryTrainNode(Node node, int[][] x, double[] y, int[] samples) {
+            this.node = node;
+            this.x = x;
+            this.y = y;
+            this.samples = samples;
         }
 
-        return impurity;
+        @Override
+        public int compareTo(SparseBinaryTrainNode a) {
+            return (int) Math.signum(a.node.splitScore - node.splitScore);
+        }
+
+        /**
+         * Finds the best attribute to split on at the current node. Returns
+         * true if a split exists to reduce squared error, false otherwise.
+         */
+        public boolean findBestSplit() {
+            if(node.trueChild != null || node.falseChild != null) {
+                throw new IllegalStateException("Split non-leaf node.");
+            }
+
+            int p = numFeatures;
+            double[] trueSum = new double[p];
+            int[] trueCount = new int[p];
+            int[] featureIndex = new int[p];
+
+            int n = Math.sum(samples);
+            double sumX = 0.0;
+            for(int i = 0; i < x.length; i++) {
+                if(samples[i] == 0) {
+                    continue;
+                }
+
+                double target = samples[i] * y[i];
+                sumX += y[i];
+
+                // For each true feature of this datum increment the
+                // sufficient statistics for the "true" branch to evaluate
+                // splitting on this feature.
+                for(int j = 0; j < x[i].length; ++j) {
+                    int index = x[i][j];
+                    trueSum[index] += target;
+                    trueCount[index] += samples[i];
+                    featureIndex[index] = j;
+                }
+            }
+
+            // Loop through features and compute the reduction
+            // of squared error, which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2
+
+            // Initialize the information in the leaf
+            node.splitScore = 0.0;
+            node.splitFeature = -1;
+            node.splitValue = -1;
+
+            for(int i = 0; i < p; ++i) {
+                double tc = (double) trueCount[i];
+                double fc = n - tc;
+
+                // If either side would have fewer than 2 data, skip this feature.
+                if((tc < 2) || (fc < 2)) {
+                    continue;
+                }
+
+                // compute penalized means
+                double trueMean = trueSum[i] / tc;
+                double falseMean = (sumX - trueSum[i]) / fc;
+
+                double gain = (tc * trueMean * trueMean + fc * falseMean * falseMean) - n
+                        * node.output * node.output;
+                if(gain > node.splitScore) {
+                    // new best split
+                    node.splitFeature = featureIndex[i];
+                    node.splitValue = i;
+                    node.splitScore = gain;
+                    node.trueChildOutput = trueMean;
+                    node.falseChildOutput = falseMean;
+                }
+            }
+
+            return (node.splitFeature != -1);
+        }
+
+        /**
+         * Split the node into two children nodes.
+         */
+        public void split(PriorityQueue<SparseBinaryTrainNode> nextSplits) {
+            if(node.splitFeature < 0) {
+                throw new IllegalStateException("Split a node with invalid feature.");
+            }
+
+            if(node.trueChild != null || node.falseChild != null) {
+                throw new IllegalStateException("Split non-leaf node.");
+            }
+
+            int n = x.length;
+            int tc = 0;
+            int fc = 0;
+            int[] trueSamples = new int[n];
+            int[] falseSamples = new int[n];
+
+            for(int i = 0; i < n; i++) {
+                if(samples[i] > 0) {
+                    if(x[i][node.splitFeature] == (int) node.splitValue) {
+                        trueSamples[i] = samples[i];
+                        tc += samples[i];
+                    } else {
+                        falseSamples[i] = samples[i];
+                        fc += samples[i];
+                    }
+                }
+            }
+
+            node.trueChild = new Node(node.trueChildOutput);
+            node.falseChild = new Node(node.falseChildOutput);
+
+            trueChild = new SparseBinaryTrainNode(node.trueChild, x, y, trueSamples);
+            if(tc > S && trueChild.findBestSplit()) {
+                if(nextSplits != null) {
+                    nextSplits.add(trueChild);
+                } else {
+                    trueChild.split(null);
+                }
+            }
+
+            falseChild = new SparseBinaryTrainNode(node.falseChild, x, y, falseSamples);
+            if(fc > S && falseChild.findBestSplit()) {
+                if(nextSplits != null) {
+                    nextSplits.add(falseChild);
+                } else {
+                    falseChild.split(null);
+                }
+            }
+
+            importance[node.splitFeature] += node.splitScore;
+
+        }
+
+        /**
+         * Calculate the node output for leaves.
+         * 
+         * @param output
+         *            the output calculate functor.
+         */
+        public void calculateOutput(NodeOutput output) {
+            if(node.trueChild == null && node.falseChild == null) {
+                node.output = output.calculate(samples);
+            } else {
+                if(trueChild != null) {
+                    trueChild.calculateOutput(output);
+                }
+                if(falseChild != null) {
+                    falseChild.calculateOutput(output);
+                }
+            }
+        }
     }
 
     /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves. All attributes are assumed to be numeric.
+     * Constructor. Learns a regression tree with (most) given number of leaves.
+     * All attributes are assumed to be numeric.
      *
      * @param x
      *            the training instances.
@@ -817,30 +969,12 @@ public class DecisionTree implements Classifier<double[]> {
      * @param J
      *            the maximum number of leaf nodes in the tree.
      */
-    public DecisionTree(double[][] x, int[] y, int J) {
+    public RegressionTree(double[][] x, double[] y, int J) {
         this(null, x, y, J);
     }
 
     /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves. All attributes are assumed to be numeric.
-     *
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     * @param rule
-     *            the splitting rule.
-     */
-    public DecisionTree(double[][] x, int[] y, int J, SplitRule rule) {
-        this(null, x, y, J, rule);
-    }
-
-    /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves.
+     * Constructor. Learns a regression tree with (most) given number of leaves.
      * 
      * @param attributes
      *            the attribute properties.
@@ -851,13 +985,12 @@ public class DecisionTree implements Classifier<double[]> {
      * @param J
      *            the maximum number of leaf nodes in the tree.
      */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J) {
-        this(attributes, x, y, J, SplitRule.GINI);
+    public RegressionTree(Attribute[] attributes, double[][] x, double[] y, int J) {
+        this(attributes, x, y, J, null, null, null);
     }
 
     /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves.
+     * Constructor. Learns a regression tree for gradient tree boosting.
      * 
      * @param attributes
      *            the attribute properties.
@@ -865,63 +998,23 @@ public class DecisionTree implements Classifier<double[]> {
      *            the training instances.
      * @param y
      *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     * @param rule
-     *            the splitting rule.
-     */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, SplitRule rule) {
-        this(attributes, x, y, J, null, null, rule);
-    }
-
-    /**
-     * Constructor. Learns a classification tree for AdaBoost.
-     * 
-     * @param attributes
-     *            the attribute properties.
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
      * @param order
      *            the index of training values in ascending order. Note that
      *            only numeric attributes need be sorted.
+     * @param J
+     *            the maximum number of leaf nodes in the tree.
      * @param samples
      *            the sample set of instances for stochastic learning.
-     *            samples[i] is the number of sampling for instance i.
+     *            samples[i] should be 0 or 1 to indicate if the instance is
+     *            used for training.
      */
-    DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, int[] samples, int[][] order, SplitRule rule) {
+    public RegressionTree(Attribute[] attributes, double[][] x, double[] y, int J, int[][] order, int[] samples, NodeOutput output) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
 
         if(J < 2) {
             throw new IllegalArgumentException("Invalid maximum leaves: " + J);
-        }
-
-        // class label set.
-        int[] labels = Math.unique(y);
-        Arrays.sort(labels);
-
-        //        for (int i=0;i<labels.length;i++){
-        //            System.out.println(labels[i]);
-        //        }
-
-        for(int i = 0; i < labels.length; i++) {
-            if(labels[i] < 0) {
-                throw new IllegalArgumentException("Negative class label: " + labels[i]);
-            }
-
-            if(i > 0 && labels[i] - labels[i - 1] > 1) {
-                throw new IllegalArgumentException("Missing class: " + labels[i] + 1);
-            }
-        }
-
-        k = labels.length;
-        if(k < 2) {
-            throw new IllegalArgumentException("Only one class.");
         }
 
         if(attributes == null) {
@@ -934,7 +1027,6 @@ public class DecisionTree implements Classifier<double[]> {
 
         this.attributes = attributes;
         this.J = J;
-        this.rule = rule;
         this.M = attributes.length;
         importance = new double[attributes.length];
 
@@ -960,21 +1052,23 @@ public class DecisionTree implements Classifier<double[]> {
         // Priority queue for best-first tree growing.
         PriorityQueue<TrainNode> nextSplits = new PriorityQueue<TrainNode>();
 
-        int n = y.length;
-        int[] count = new int[k];
+        int n = 0;
+        double sum = 0.0;
         if(samples == null) {
+            n = y.length;
             samples = new int[n];
             for(int i = 0; i < n; i++) {
                 samples[i] = 1;
-                count[y[i]]++;
+                sum += y[i];
             }
         } else {
-            for(int i = 0; i < n; i++) {
-                count[y[i]] += samples[i];
+            for(int i = 0; i < y.length; i++) {
+                n += samples[i];
+                sum += samples[i] * y[i];
             }
         }
 
-        root = new Node(Math.whichMax(count));
+        root = new Node(sum / n);
 
         TrainNode trainRoot = new TrainNode(root, x, y, samples);
         // Now add splits to the tree until max tree size is reached
@@ -993,10 +1087,14 @@ public class DecisionTree implements Classifier<double[]> {
 
             node.split(nextSplits); // Split the parent node into two children nodes
         }
+
+        if(output != null) {
+            trainRoot.calculateOutput(output);
+        }
     }
 
     /**
-     * Constructor. Learns a classification tree for random forest.
+     * Constructor. Learns a regression tree for random forest.
      *
      * @param attributes
      *            the attribute properties.
@@ -1004,18 +1102,21 @@ public class DecisionTree implements Classifier<double[]> {
      *            the training instances.
      * @param y
      *            the response variable.
+     * @param order
+     *            the index of training values in ascending order. Note that
+     *            only numeric attributes need be sorted.
      * @param M
      *            the number of input variables to pick to split on at each
      *            node. It seems that dim/3 give generally good performance,
      *            where dim is the number of variables.
-     * @param order
-     *            the index of training values in ascending order. Note that
-     *            only numeric attributes need be sorted.
+     * @param S
+     *            number of instances in a node below which the tree will not
+     *            split, setting S = 5 generally gives good results.
      * @param samples
      *            the sample set of instances for stochastic learning.
      *            samples[i] is the number of sampling for instance i.
      */
-    DecisionTree(Attribute[] attributes, double[][] x, int[] y, int M, int[] samples, int[][] order) {
+    RegressionTree(Attribute[] attributes, double[][] x, double[] y, int M, int S, int[][] order, int[] samples) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -1025,14 +1126,13 @@ public class DecisionTree implements Classifier<double[]> {
                     + M);
         }
 
-        if(samples == null) {
-            throw new IllegalArgumentException("Sampling array is null.");
+        if(S <= 0) {
+            throw new IllegalArgumentException("Invalid mimum number of instances in leaf nodes: "
+                    + S);
         }
 
-        this.k = Math.max(y) + 1;
-
-        if(k < 2) {
-            throw new IllegalArgumentException("Only one class or negative class labels.");
+        if(samples == null) {
+            throw new IllegalArgumentException("Sampling array is null.");
         }
 
         if(attributes == null) {
@@ -1046,16 +1146,18 @@ public class DecisionTree implements Classifier<double[]> {
         this.attributes = attributes;
         this.J = Integer.MAX_VALUE;
         this.M = M;
+        this.S = S;
         this.order = order;
         importance = new double[attributes.length];
 
-        int n = y.length;
-        int[] count = new int[k];
-        for(int i = 0; i < n; i++) {
-            count[y[i]] += samples[i];
+        int n = 0;
+        double sum = 0.0;
+        for(int i = 0; i < y.length; i++) {
+            n += samples[i];
+            sum += samples[i] * y[i];
         }
 
-        root = new Node(Math.whichMax(count));
+        root = new Node(sum / n);
 
         TrainNode trainRoot = new TrainNode(root, x, y, samples);
         if(trainRoot.findBestSplit()) {
@@ -1064,11 +1166,99 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
+     * Constructor. Learns a regression tree on sparse binary samples.
+     * 
+     * @param numFeatures
+     *            the number of sparse binary features.
+     * @param x
+     *            the training instances of sparse binary features.
+     * @param y
+     *            the response variable.
+     * @param J
+     *            the maximum number of leaf nodes in the tree.
+     */
+    public RegressionTree(int numFeatures, int[][] x, double[] y, int J) {
+        this(numFeatures, x, y, J, null, null);
+    }
+
+    /**
+     * Constructor. Learns a regression tree on sparse binary samples.
+     * 
+     * @param numFeatures
+     *            the number of sparse binary features.
+     * @param x
+     *            the training instances.
+     * @param y
+     *            the response variable.
+     * @param J
+     *            the maximum number of leaf nodes in the tree.
+     * @param samples
+     *            the sample set of instances for stochastic learning.
+     *            samples[i] should be 0 or 1 to indicate if the instance is
+     *            used for training.
+     */
+    public RegressionTree(int numFeatures, int[][] x, double[] y, int J, int[] samples, NodeOutput output) {
+        if(x.length != y.length) {
+            throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
+        }
+
+        if(J < 2) {
+            throw new IllegalArgumentException("Invalid maximum leaves: " + J);
+        }
+
+        this.J = J;
+        this.numFeatures = numFeatures;
+        importance = new double[numFeatures];
+
+        // Priority queue for best-first tree growing.
+        PriorityQueue<SparseBinaryTrainNode> nextSplits = new PriorityQueue<SparseBinaryTrainNode>();
+
+        int n = 0;
+        double sum = 0.0;
+        if(samples == null) {
+            n = y.length;
+            samples = new int[n];
+            for(int i = 0; i < n; i++) {
+                samples[i] = 1;
+                sum += y[i];
+            }
+        } else {
+            for(int i = 0; i < y.length; i++) {
+                n += samples[i];
+                sum += samples[i] * y[i];
+            }
+        }
+
+        root = new Node(sum / n);
+
+        SparseBinaryTrainNode trainRoot = new SparseBinaryTrainNode(root, x, y, samples);
+        // Now add splits to the tree until max tree size is reached
+        if(trainRoot.findBestSplit()) {
+            nextSplits.add(trainRoot);
+        }
+
+        // Pop best leaf from priority queue, split it, and push
+        // children nodes into the queue if possible.
+        for(int leaves = 1; leaves < this.J; leaves++) {
+            // parent is the leaf to split
+            SparseBinaryTrainNode node = nextSplits.poll();
+            if(node == null) {
+                break;
+            }
+
+            node.split(nextSplits); // Split the parent node into two children nodes
+        }
+
+        if(output != null) {
+            trainRoot.calculateOutput(output);
+        }
+    }
+
+    /**
      * Returns the variable importance. Every time a split of a node is made on
-     * variable the (GINI, information gain, etc.) impurity criterion for the
-     * two descendent nodes is less than the parent node. Adding up the
-     * decreases for each individual variable over the tree gives a simple
-     * measure of variable importance.
+     * variable the impurity criterion for the two descendent nodes is less than
+     * the parent node. Adding up the decreases for each individual variable
+     * over the tree gives a simple measure of variable importance.
      *
      * @return the variable importance
      */
@@ -1077,17 +1267,20 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     @Override
-    public int predict(double[] x) {
+    public double predict(double[] x) {
         return root.predict(x);
     }
 
     /**
-     * Predicts the class label of an instance and also calculate a posteriori
-     * probabilities. Not supported.
+     * Predicts the dependent variable of an instance with sparse binary
+     * features.
+     * 
+     * @param x
+     *            the instance.
+     * @return the predicted value of dependent variable.
      */
-    @Override
-    public int predict(double[] x, double[] posteriori) {
-        throw new UnsupportedOperationException("Not supported.");
+    public double predict(int[] x) {
+        return root.predict(x);
     }
 
     public String predictCodegen() {
@@ -1102,5 +1295,4 @@ public class DecisionTree implements Classifier<double[]> {
         scripts.add("call end");
         return scripts;
     }
-
 }
