@@ -15,13 +15,6 @@
  *******************************************************************************/
 package hivemall.smile.regression;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
-
-import javax.annotation.Nonnull;
-
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.data.NumericAttribute;
@@ -32,6 +25,12 @@ import smile.regression.Regression;
 import smile.regression.RegressionTrainer;
 import smile.sort.QuickSort;
 import smile.util.MulticoreExecutor;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
 
 /**
  * Decision tree for regression. A decision tree can be learned by splitting the
@@ -379,13 +378,13 @@ public class RegressionTree implements Regression<double[]> {
                     buf.append("push ").append(splitValue);
                     scripts.add(buf.toString());
                     buf.setLength(0);
-                    buf.append("ifgr ");
+                    buf.append("ifle ");
                     scripts.add(buf.toString());
                     depth += 3;
                     selfDepth += 3;
                     int trueDepth = trueChild.opcodegen(scripts, depth);
                     selfDepth += trueDepth;
-                    scripts.set(depth - 1, "ifgr " + String.valueOf(depth + trueDepth));
+                    scripts.set(depth - 1, "ifle " + String.valueOf(depth + trueDepth));
                     int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
                 } else {
