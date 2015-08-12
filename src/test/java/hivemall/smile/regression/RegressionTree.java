@@ -15,6 +15,15 @@
  *******************************************************************************/
 package hivemall.smile.regression;
 
+import hivemall.utils.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
+
+import javax.annotation.Nonnull;
+
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.data.NumericAttribute;
@@ -25,12 +34,6 @@ import smile.regression.Regression;
 import smile.regression.RegressionTrainer;
 import smile.sort.QuickSort;
 import smile.util.MulticoreExecutor;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
 
 /**
  * Decision tree for regression. A decision tree can be learned by splitting the
@@ -1289,10 +1292,12 @@ public class RegressionTree implements Regression<double[]> {
         return buf.toString();
     }
 
-    public ArrayList<String> predictOpCodegen() {
-        ArrayList<String> scripts = new ArrayList<String>();
-        root.opcodegen(scripts, 0);
-        scripts.add("call end");
+    public String predictOpCodegen() {
+        List<String> opslist = new ArrayList<String>();
+        root.opcodegen(opslist, 0);
+        opslist.add("call end");
+        String scripts = StringUtils.concat(opslist, "\n");
         return scripts;
     }
+
 }

@@ -41,6 +41,7 @@ import smile.math.Math;
 import smile.validation.LOOCV;
 
 public class DecisionTreeTest {
+    private static final boolean DEBUG = false;
 
     /**
      * Test of learn method, of class DecisionTree.
@@ -74,7 +75,7 @@ public class DecisionTreeTest {
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
         String script = tree.predictCodegen();
-        System.out.println(script);
+        debugPrint(script);
         TreePredictByJavascriptUDF udf = new TreePredictByJavascriptUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
@@ -83,5 +84,13 @@ public class DecisionTreeTest {
         result = (IntWritable) udf.evaluate(script, x, true);
         udf.close();
         return result.get();
+    }
+
+    private static void debugPrint(String msg) {        
+        System.out.println(msg.replaceAll("\n", "\\\\n"));
+        
+        if(DEBUG) {
+            System.out.println(msg);
+        }
     }
 }

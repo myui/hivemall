@@ -23,7 +23,6 @@ import hivemall.utils.hadoop.HiveUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -84,7 +83,6 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
             return null;
         }
         String script = arg0.toString();
-        List<String> scriptList = Arrays.asList(script.split("¥n"));
 
         Object arg1 = arguments[1].get();
         if(arg1 == null) {
@@ -92,16 +90,18 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
         }
         double[] features = HiveUtils.asDoubleArray(arg1, featureListOI, featureElemOI);
 
-        return evaluate(scriptList, features, classification);
+        return evaluate(script, features, classification);
     }
 
     @Nonnull
-    public Writable evaluate(@Nonnull final List<String> script, @Nonnull final double[] features, final boolean classification)
+    public static Writable evaluate(@Nonnull final String scripts, @Nonnull final double[] features, final boolean classification)
             throws HiveException {
         final StackMachine vm = new StackMachine();
         try {
-            vm.run(script, features);
-        } catch (VMRuntimeException e) {
+            vm.run(scripts, features);
+        } catch (VMRuntimeException vme) {
+            throw new HiveException("failed to run StackMachine", vme);
+        } catch (Throwable e) {
             throw new HiveException("failed to run StackMachine", e);
         }
         Double result = vm.getResult();

@@ -98,6 +98,9 @@ create temporary function angular_similarity as 'hivemall.knn.similarity.Angular
 drop temporary function euclid_similarity;
 create temporary function euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity';
 
+drop temporary function distance2similarity;
+create temporary function distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF';
+
 ------------------------
 -- distance functions --
 ------------------------
@@ -256,6 +259,23 @@ create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 
 drop temporary function categorical_features;
 create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
+
+drop temporary function indexed_features;
+create temporary function indexed_features as 'hivemall.ftvec.IndexedFeatures';
+
+drop temporary function to_dense_features;
+create temporary function to_dense_features as 'hivemall.ftvec.ToDenseFeaturesUDF';
+
+-- alias
+drop temporary function to_dense;
+create temporary function to_dense as 'hivemall.ftvec.ToDenseFeaturesUDF';
+
+drop temporary function to_sparse_features;
+create temporary function to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF';
+
+-- alias
+drop temporary function to_sparse;
+create temporary function to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF';
 
 --------------------------
 -- ftvec/text functions --
@@ -479,5 +499,26 @@ create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
 drop temporary function train_mf_sgd;
 create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
 
+drop temporary function train_mf_adagrad;
+create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
 
+----------------------------
+-- Smile related features --
+----------------------------
 
+drop temporary function vm_tree_predict;
+create temporary function vm_tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF';
+
+-- alias
+drop temporary function tree_predict;
+create temporary function tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF';
+
+drop temporary function js_tree_predict;
+create temporary function js_tree_predict as 'hivemall.smile.classification.TreePredictByJavascriptUDF';
+
+drop temporary function train_randomforest_classifier;
+create temporary function train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+-- alias
+drop temporary function train_rf_classifier;
+create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';

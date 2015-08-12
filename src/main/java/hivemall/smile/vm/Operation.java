@@ -18,20 +18,20 @@
 package hivemall.smile.vm;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class Operation {
 
     final OperationEnum op;
     final String operand;
 
-    Operation(@Nonnull OperationEnum op, String operand) {
-        this.op = op;
-        this.operand = operand;
+    public Operation(@Nonnull OperationEnum op) {
+        this(op, null);
     }
 
-    Operation(@Nonnull OperationEnum op) {
+    public Operation(@Nonnull OperationEnum op, @Nullable String operand) {
         this.op = op;
-        this.operand = null;
+        this.operand = operand;
     }
 
     public enum OperationEnum {

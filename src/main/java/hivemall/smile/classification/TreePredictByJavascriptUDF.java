@@ -134,7 +134,9 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
         try {
             bindings.put("x", features);
             result = compiled.eval(bindings);
-        } catch (ScriptException e) {
+        } catch (ScriptException se) {
+            throw new HiveException("failed to evaluate: \n" + script, se);
+        } catch (Throwable e) {
             throw new HiveException("failed to evaluate: \n" + script, e);
         } finally {
             bindings.clear();
@@ -143,11 +145,14 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
         if(result == null) {
             return null;
         }
+        if(!(result instanceof Number)) {
+            throw new HiveException("Got an unexpected non-number result: " + result);
+        }
         if(classification) {
-            Integer casted = (Integer) result;
+            Number casted = (Number) result;
             return new IntWritable(casted.intValue());
         } else {
-            Double casted = (Double) result;
+            Number casted = (Number) result;
             return new DoubleWritable(casted.doubleValue());
         }
     }

@@ -32,6 +32,8 @@
  */
 package hivemall.smile.classification;
 
+import hivemall.utils.lang.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -905,10 +907,6 @@ public class DecisionTree implements Classifier<double[]> {
         int[] labels = Math.unique(y);
         Arrays.sort(labels);
 
-        //        for (int i=0;i<labels.length;i++){
-        //            System.out.println(labels[i]);
-        //        }
-
         for(int i = 0; i < labels.length; i++) {
             if(labels[i] < 0) {
                 throw new IllegalArgumentException("Negative class label: " + labels[i]);
@@ -1096,10 +1094,11 @@ public class DecisionTree implements Classifier<double[]> {
         return buf.toString();
     }
 
-    public ArrayList<String> predictOpCodegen() {
-        ArrayList<String> scripts = new ArrayList<String>();
-        root.opcodegen(scripts, 0);
-        scripts.add("call end");
+    public String predictOpCodegen(String sep) {
+        List<String> opslist = new ArrayList<String>();
+        root.opcodegen(opslist, 0);
+        opslist.add("call end");
+        String scripts = StringUtils.concat(opslist, sep);
         return scripts;
     }
 

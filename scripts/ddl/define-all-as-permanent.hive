@@ -105,10 +105,6 @@ CREATE FUNCTION euclid_similarity as 'hivemall.knn.similarity.EuclidSimilarity' 
 DROP FUNCTION IF EXISTS distance2similarity;
 CREATE FUNCTION distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF' USING JAR '${hivemall_jar}';
 
--- alias
-DROP FUNCTION IF EXISTS d2s;
-CREATE FUNCTION d2s as 'hivemall.knn.similarity.Distance2SimilarityUDF' USING JAR '${hivemall_jar}';
-
 ------------------------
 -- distance functions --
 ------------------------
@@ -267,6 +263,23 @@ CREATE FUNCTION feature as 'hivemall.ftvec.FeatureUDF' USING JAR '${hivemall_jar
 
 DROP FUNCTION IF EXISTS categorical_features;
 CREATE FUNCTION categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS indexed_features;
+CREATE FUNCTION indexed_features as 'hivemall.ftvec.IndexedFeatures' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS to_dense_features;
+CREATE FUNCTION to_dense_features as 'hivemall.ftvec.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS to_dense;
+CREATE FUNCTION to_dense as 'hivemall.ftvec.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS to_sparse_features;
+CREATE FUNCTION to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS to_sparse;
+CREATE FUNCTION to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
 
 --------------------------
 -- ftvec/text functions --
@@ -493,3 +506,23 @@ CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING J
 DROP FUNCTION IF EXISTS train_mf_adagrad;
 CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
 
+----------------------------
+-- Smile related features --
+----------------------------
+
+DROP FUNCTION IF EXISTS vm_tree_predict;
+CREATE FUNCTION vm_tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS tree_predict;
+CREATE FUNCTION tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS js_tree_predict;
+CREATE FUNCTION js_tree_predict as 'hivemall.smile.classification.TreePredictByJavascriptUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_randomforest_classifier;
+CREATE FUNCTION train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS train_rf_classifier;
+CREATE FUNCTION train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';

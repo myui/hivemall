@@ -15,9 +15,7 @@ import java.util.ArrayList;
 import javax.script.ScriptException;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -151,27 +149,17 @@ public class StackMachineTest {
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
-        ArrayList<String> opScript = tree.predictOpCodegen();
+        String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
-        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
-        udf.initialize(new ObjectInspector[] {
-                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector) });
-        IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
-        udf.close();
+        IntWritable result = (IntWritable) TreePredictByStackMachineUDF.evaluate(opScript, x, true);
         return result.get();
     }
 
-    private static int evalPredict(RegressionTree tree, double[] x) throws HiveException,
+    private static double evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
-        ArrayList<String> opScript = tree.predictOpCodegen();
+        String opScript = tree.predictOpCodegen();
         debugPrint(opScript);
-        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
-        udf.initialize(new ObjectInspector[] {
-                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector) });
-        IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
-        udf.close();
+        DoubleWritable result = (DoubleWritable) TreePredictByStackMachineUDF.evaluate(opScript, x, false);
         return result.get();
     }
 

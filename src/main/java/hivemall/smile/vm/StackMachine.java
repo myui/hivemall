@@ -20,27 +20,36 @@ package hivemall.smile.vm;
 import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class StackMachine {
+    public static final String SEP = "; ";
 
+    @Nonnull
     private final Map<String, Double> valuesMap;
+    @Nonnull
     private final Map<String, Integer> jumpMap;
+    @Nonnull
     private final List<Operation> code;
+    @Nonnull
     private final Stack<Double> programStack;
 
     /**
      * Instruction pointer
      */
     private int IP;
+
     /**
      * Stack pointer
      */
+    @SuppressWarnings("unused")
     private int SP;
 
     private int codeLength;
@@ -56,8 +65,14 @@ public final class StackMachine {
         this.result = null;
     }
 
-    public void run(List<String> scripts, double[] features) throws VMRuntimeException {
-        for(String line : scripts) {
+    public void run(@Nonnull String scripts, @Nonnull double[] features) throws VMRuntimeException {
+        List<String> opslist = Arrays.asList(scripts.split(SEP));
+        run(opslist, features);
+    }
+
+    public void run(@Nonnull List<String> opslist, @Nonnull double[] features)
+            throws VMRuntimeException {
+        for(String line : opslist) {
             String[] ops = line.split(" ", -1);
             if(ops.length == 2) {
                 Operation.OperationEnum o = Operation.OperationEnum.valueOfLowerCase(ops[0]);
@@ -68,7 +83,7 @@ public final class StackMachine {
             }
         }
 
-        int size = scripts.size();
+        int size = opslist.size();
         this.codeLength = size - 1;
         this.done = new boolean[size];
 
@@ -76,7 +91,7 @@ public final class StackMachine {
         execute(0);
     }
 
-    public void execute(int entryPoint) throws VMRuntimeException {
+    private void execute(int entryPoint) throws VMRuntimeException {
         valuesMap.put("end", -1.0);
         jumpMap.put("last", codeLength);
 
@@ -94,7 +109,7 @@ public final class StackMachine {
         }
     }
 
-    public void bind(final double[] features) {
+    private void bind(final double[] features) {
         final StringBuilder buf = new StringBuilder();
         for(int i = 0; i < features.length; i++) {
             String bindKey = buf.append("x[").append(i).append("]").toString();
@@ -125,7 +140,7 @@ public final class StackMachine {
         }
         switch (currentOperation.op) {
             case GOTO: {
-                if(isInt(currentOperation.operand)) {
+                if(StringUtils.isInt(currentOperation.operand)) {
                     IP = Integer.parseInt(currentOperation.operand);
                 } else {
                     IP = jumpMap.get(currentOperation.operand);
@@ -140,12 +155,11 @@ public final class StackMachine {
                 }
                 break;
             }
-            case IFEQ: {
-                // follow the rule of smile's Math class.
+            case IFEQ: {// follow the rule of smile's Math class.
                 double a = pop();
                 double b = pop();
                 if(smile.math.Math.equals(a, b)) {
-                    if(isInt(currentOperation.operand)) {
+                    if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -161,7 +175,7 @@ public final class StackMachine {
                 if(upper >= lower) {
                     IP++;
                 } else {
-                    if(isInt(currentOperation.operand)) {
+                    if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -175,7 +189,7 @@ public final class StackMachine {
                 if(upper > lower) {
                     IP++;
                 } else {
-                    if(isInt(currentOperation.operand)) {
+                    if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -189,7 +203,7 @@ public final class StackMachine {
                 if(upper <= lower) {
                     IP++;
                 } else {
-                    if(isInt(currentOperation.operand)) {
+                    if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -203,7 +217,7 @@ public final class StackMachine {
                 if(upper < lower) {
                     IP++;
                 } else {
-                    if(isInt(currentOperation.operand)) {
+                    if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -217,7 +231,7 @@ public final class StackMachine {
                 break;
             }
             case PUSH: {
-                if(isDouble(currentOperation.operand))
+                if(StringUtils.isDouble(currentOperation.operand))
                     push(Double.parseDouble(currentOperation.operand));
                 else {
                     Double v = valuesMap.get(currentOperation.operand);
@@ -243,24 +257,6 @@ public final class StackMachine {
             this.result = pop();
         } else {
             throw new VMRuntimeException("Machine code has wrong builin function :" + name);
-        }
-    }
-
-    private static boolean isInt(String i) {
-        try {
-            Integer.parseInt(i);
-            return true;
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-    }
-
-    private static boolean isDouble(String i) {
-        try {
-            Double.parseDouble(i);
-            return true;
-        } catch (NumberFormatException nfe) {
-            return false;
         }
     }
 

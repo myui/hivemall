@@ -19,8 +19,9 @@
 package hivemall.smile.classification;
 
 import hivemall.UDTFWithOptions;
-import hivemall.smile.SmileExtUtils;
-import hivemall.smile.SmileTaskExecutor;
+import hivemall.smile.utils.SmileExtUtils;
+import hivemall.smile.utils.SmileTaskExecutor;
+import hivemall.smile.vm.StackMachine;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
@@ -345,6 +346,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             }
 
             String model = getModel(tree, udtf.outputType);
+            //model = model.replaceAll("\n", "\\\\n");
             double[] importance = tree.importance();
             int remain = remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
@@ -357,7 +359,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             final String model;
             switch (outputType) {
                 case opscode: {
-                    model = tree.predictCodegen();
+                    model = tree.predictOpCodegen(StackMachine.SEP);
                     break;
                 }
                 case javascript: {
