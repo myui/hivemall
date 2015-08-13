@@ -49,7 +49,7 @@ public abstract class ClassifierTrainer<T> {
      * The feature attributes. This is optional since most classifiers can only
      * work on real-valued attributes.
      */
-    Attribute[] attributes;
+    protected Attribute[] attributes;
 
     /**
      * Constructor.

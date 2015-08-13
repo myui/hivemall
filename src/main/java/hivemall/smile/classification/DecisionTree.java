@@ -894,7 +894,7 @@ public class DecisionTree implements Classifier<double[]> {
      *            the sample set of instances for stochastic learning.
      *            samples[i] is the number of sampling for instance i.
      */
-    DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, int[] samples, int[][] order, SplitRule rule) {
+    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, int[] samples, int[][] order, SplitRule rule) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -1013,7 +1013,7 @@ public class DecisionTree implements Classifier<double[]> {
      *            the sample set of instances for stochastic learning.
      *            samples[i] is the number of sampling for instance i.
      */
-    DecisionTree(Attribute[] attributes, double[][] x, int[] y, int M, int[] samples, int[][] order) {
+    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int M, int[] samples, int[][] order) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }

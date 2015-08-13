@@ -86,9 +86,7 @@ public class DecisionTreeTest {
         return result.get();
     }
 
-    private static void debugPrint(String msg) {        
-        System.out.println(msg.replaceAll("\n", "\\\\n"));
-        
+    private static void debugPrint(String msg) {
         if(DEBUG) {
             System.out.println(msg);
         }
