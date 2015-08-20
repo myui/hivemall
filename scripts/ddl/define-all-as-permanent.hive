@@ -510,19 +510,29 @@ CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF'
 -- Smile related features --
 ----------------------------
 
-DROP FUNCTION IF EXISTS vm_tree_predict;
-CREATE FUNCTION vm_tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
-
--- alias
-DROP FUNCTION IF EXISTS tree_predict;
-CREATE FUNCTION tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS js_tree_predict;
-CREATE FUNCTION js_tree_predict as 'hivemall.smile.classification.TreePredictByJavascriptUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_randomforest_classifier;
 CREATE FUNCTION train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
 
 -- alias
 DROP FUNCTION IF EXISTS train_rf_classifier;
 CREATE FUNCTION train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_randomforest_regression;
+CREATE FUNCTION train_randomforest_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS train_rf_regression;
+CREATE FUNCTION train_rf_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS vm_tree_predict;
+CREATE FUNCTION vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS tree_predict;
+CREATE FUNCTION tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS js_tree_predict;
+CREATE FUNCTION js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS rf_ensemble;
+CREATE FUNCTION rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF' USING JAR '${hivemall_jar}';

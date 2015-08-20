@@ -2,8 +2,8 @@ package hivemall.smile.vm;
 
 import static org.junit.Assert.assertEquals;
 import hivemall.smile.classification.DecisionTree;
-import hivemall.smile.classification.TreePredictByStackMachineUDF;
 import hivemall.smile.regression.RegressionTree;
+import hivemall.smile.tools.TreePredictByStackMachineUDF;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -157,7 +157,7 @@ public class StackMachineTest {
 
     private static double evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
-        String opScript = tree.predictOpCodegen();
+        String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
         DoubleWritable result = (DoubleWritable) TreePredictByStackMachineUDF.evaluate(opScript, x, false);
         return result.get();

@@ -17,6 +17,8 @@
  */
 package hivemall.smile.utils;
 
+import hivemall.smile.classification.DecisionTree.SplitRule;
+
 import java.util.Arrays;
 
 import javax.annotation.Nonnull;
@@ -86,6 +88,7 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         return labels;
     }
 
+    @Nonnull
     public static Attribute[] attributeTypes(@Nullable Attribute[] attributes, @Nonnull final double[][] x) {
         if(attributes == null) {
             int p = x[0].length;
@@ -95,6 +98,17 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
             }
         }
         return attributes;
+    }
+
+    @Nonnull
+    public static SplitRule resolveSplitRule(@Nullable String ruleName) {
+        if("gini".equalsIgnoreCase(ruleName)) {
+            return SplitRule.GINI;
+        } else if("entropy".equalsIgnoreCase(ruleName)) {
+            return SplitRule.ENTROPY;
+        } else {
+            return SplitRule.GINI;
+        }
     }
 
 }

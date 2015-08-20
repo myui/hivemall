@@ -19,6 +19,7 @@
 package hivemall.smile.classification;
 
 import hivemall.UDTFWithOptions;
+import hivemall.smile.classification.DecisionTree.SplitRule;
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.smile.utils.SmileTaskExecutor;
 import hivemall.smile.vm.StackMachine;
@@ -33,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -58,7 +60,7 @@ import smile.math.Math;
 import smile.math.Random;
 
 @Description(name = "train_randomforest_classifier", value = "_FUNC_(double[] features, int label [, string options]) - "
-        + "Returns a relation consists of <string pred_model, double[] var_importance>")
+        + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
 public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(RandomForestClassifierUDTF.class);
 
@@ -76,28 +78,36 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
      * The number of random selected features
      */
     private int numVars;
+    /**
+     * The maximum number of leaf nodes
+     */
+    private int maxLeafNodes;
     private long seed;
     private Attribute[] attributes;
     private OutputType outputType;
+    private SplitRule splitRule;
 
     @Override
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
         opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(sqrt(dim))]");
+        opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true, "The output type (opscode/vm or javascript/js) [default: opscode]");
+        opts.addOption("split", "split_rule", true, "Split algorithm [default: GINI, ENTROPY]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        int T = 50, M = -1;
+        int T = 50, M = -1, J = Integer.MAX_VALUE;
         Attribute[] attrs = null;
         long seed = -1L;
         String output = "opscode";
+        SplitRule splitRule = SplitRule.GINI;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -109,16 +119,20 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 throw new IllegalArgumentException("Invlaid number of trees: " + T);
             }
             M = Primitives.parseInt(cl.getOptionValue("num_variables"), M);
-            attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
+            J = Primitives.parseInt(cl.getOptionValue("max_leaf_nodes"), J);
             seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
+            attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
             output = cl.getOptionValue("output", output);
+            splitRule = SmileExtUtils.resolveSplitRule(cl.getOptionValue("split_rule", "GINI"));
         }
 
         this.numTrees = T;
         this.numVars = M;
+        this.maxLeafNodes = J;
         this.seed = seed;
         this.attributes = attrs;
         this.outputType = OutputType.resolve(output);
+        this.splitRule = splitRule;
 
         return cl;
     }
@@ -192,7 +206,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this.labels = null;
 
         // run training
-        train(x, y, attributes, numTrees, numVars, seed);
+        train(x, y, attributes, splitRule, numTrees, numVars, maxLeafNodes, seed);
 
         // clean up
         this.featureListOI = null;
@@ -215,7 +229,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
      * @param seed
      *            The seed number for Random Forest
      */
-    private void train(@Nonnull final double[][] x, @Nonnull final int[] y, final Attribute[] attrs, final int numTrees, final int numVars, final long seed)
+    private void train(@Nonnull final double[][] x, @Nonnull final int[] y, @Nullable final Attribute[] attrs, @Nonnull final SplitRule splitRule, final int numTrees, final int numVars, final int maxLeafs, final long seed)
             throws HiveException {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
@@ -230,7 +244,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         AtomicInteger remainingTasks = new AtomicInteger(numTrees);
         List<TrainingTask> tasks = new ArrayList<TrainingTask>();
         for(int i = 0; i < numTrees; i++) {
-            tasks.add(new TrainingTask(this, attributes, x, y, numInputVars, order, prediction, seed
+            tasks.add(new TrainingTask(this, attributes, x, y, numInputVars, maxLeafs, order, prediction, splitRule, seed
                     + i, remainingTasks));
         }
 
@@ -295,9 +309,17 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
          */
         private final int[][] order;
         /**
+         * Split rule of DecisionTrere.
+         */
+        private final SplitRule splitRule;
+        /**
          * The number of variables to pick up in each node.
          */
         private final int numVars;
+        /**
+         * The maximum number of leaf nodes in the tree.
+         */
+        private final int numLeafs;
         /**
          * The out-of-bag predictions.
          */
@@ -310,13 +332,15 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         /**
          * Constructor.
          */
-        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int M, int[][] order, int[][] prediction, long seed, AtomicInteger remainingTasks) {
+        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int M, int J, int[][] order, int[][] prediction, SplitRule splitRule, long seed, AtomicInteger remainingTasks) {
             this.udtf = udtf;
             this.attributes = attributes;
             this.x = x;
             this.y = y;
             this.order = order;
+            this.splitRule = splitRule;
             this.numVars = M;
+            this.numLeafs = J;
             this.prediction = prediction;
             this.seed = seed;
             this.remainingTasks = remainingTasks;
@@ -333,7 +357,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 samples[random.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, samples, order);
+            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, samples, order, splitRule);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {
@@ -346,7 +370,6 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             }
 
             String model = getModel(tree, udtf.outputType);
-            //model = model.replaceAll("\n", "\\\\n");
             double[] importance = tree.importance();
             int remain = remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
@@ -355,7 +378,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             return Integer.valueOf(remain);
         }
 
-        private String getModel(DecisionTree tree, OutputType outputType) {
+        private String getModel(@Nonnull final DecisionTree tree, @Nonnull final OutputType outputType) {
             final String model;
             switch (outputType) {
                 case opscode: {

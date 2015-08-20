@@ -506,22 +506,32 @@ create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAd
 -- Smile related features --
 ----------------------------
 
-drop temporary function vm_tree_predict;
-create temporary function vm_tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF';
-
--- alias
-drop temporary function tree_predict;
-create temporary function tree_predict as 'hivemall.smile.classification.TreePredictByStackMachineUDF';
-
-drop temporary function js_tree_predict;
-create temporary function js_tree_predict as 'hivemall.smile.classification.TreePredictByJavascriptUDF';
-
 drop temporary function train_randomforest_classifier;
 create temporary function train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
 
 -- alias
 drop temporary function train_rf_classifier;
 create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+drop temporary function train_randomforest_regression;
+create temporary function train_randomforest_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+
+-- alias
+drop temporary function train_rf_regression;
+create temporary function train_rf_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+
+drop temporary function vm_tree_predict;
+create temporary function vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+-- alias
+drop temporary function tree_predict;
+create temporary function tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+drop temporary function js_tree_predict;
+create temporary function js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF';
+
+drop temporary function rf_ensemble;
+create temporary function rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF';
 
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0

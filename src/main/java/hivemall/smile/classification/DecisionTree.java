@@ -32,22 +32,21 @@
  */
 package hivemall.smile.classification;
 
+import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import smile.classification.Classifier;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
-import smile.data.NumericAttribute;
 import smile.math.Math;
-import smile.sort.QuickSort;
 import smile.util.MulticoreExecutor;
 
 /**
@@ -142,7 +141,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * The maximum number of leaf nodes in the tree.
      */
-    private int J = 100;
+    //private int J = 100;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
@@ -153,81 +152,6 @@ public class DecisionTree implements Classifier<double[]> {
      * attributes will be sorted.
      */
     private transient int[][] order;
-
-    /**
-     * Trainer for decision tree classifiers.
-     */
-    public static class Trainer extends ClassifierTrainer<double[]> {
-        /**
-         * The splitting rule.
-         */
-        private SplitRule rule = SplitRule.GINI;
-        /**
-         * The maximum number of leaf nodes in the tree.
-         */
-        private int J = 100;
-
-        /**
-         * Constructor.
-         * 
-         * @param J
-         *            the maximum number of leaf nodes in the tree.
-         */
-        public Trainer(int J) {
-            if(J < 2) {
-                throw new IllegalArgumentException("Invalid number of leaf nodes: " + J);
-            }
-
-            this.J = J;
-        }
-
-        /**
-         * Constructor.
-         * 
-         * @param attributes
-         *            the attributes of independent variable.
-         * @param J
-         *            the maximum number of leaf nodes in the tree.
-         */
-        public Trainer(Attribute[] attributes, int J) {
-            super(attributes);
-
-            if(J < 2) {
-                throw new IllegalArgumentException("Invalid number of leaf nodes: " + J);
-            }
-
-            this.J = J;
-        }
-
-        /**
-         * Sets the splitting rule.
-         * 
-         * @param rule
-         *            the splitting rule.
-         */
-        public void setSplitRule(SplitRule rule) {
-            this.rule = rule;
-        }
-
-        /**
-         * Sets the maximum number of leaf nodes in the tree.
-         * 
-         * @param J
-         *            the maximum number of leaf nodes in the tree.
-         */
-        public void setMaximumLeafNodes(int J) {
-            if(J < 2) {
-                throw new IllegalArgumentException("Invalid number of leaf nodes: " + J);
-            }
-
-            this.J = J;
-        }
-
-        @Override
-        public DecisionTree train(double[][] x, int[] y) {
-            return new DecisionTree(attributes, x, y, J, rule);
-        }
-    }
 
     /**
      * The criterion to choose variable to split instances.
@@ -809,188 +733,10 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves. All attributes are assumed to be numeric.
-     *
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int[], int[][], SplitRule)
      */
-    public DecisionTree(double[][] x, int[] y, int J) {
-        this(null, x, y, J);
-    }
-
-    /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves. All attributes are assumed to be numeric.
-     *
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     * @param rule
-     *            the splitting rule.
-     */
-    public DecisionTree(double[][] x, int[] y, int J, SplitRule rule) {
-        this(null, x, y, J, rule);
-    }
-
-    /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves.
-     * 
-     * @param attributes
-     *            the attribute properties.
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J) {
-        this(attributes, x, y, J, SplitRule.GINI);
-    }
-
-    /**
-     * Constructor. Learns a classification tree with (most) given number of
-     * leaves.
-     * 
-     * @param attributes
-     *            the attribute properties.
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     * @param rule
-     *            the splitting rule.
-     */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, SplitRule rule) {
-        this(attributes, x, y, J, null, null, rule);
-    }
-
-    /**
-     * Constructor. Learns a classification tree for AdaBoost.
-     * 
-     * @param attributes
-     *            the attribute properties.
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
-     * @param order
-     *            the index of training values in ascending order. Note that
-     *            only numeric attributes need be sorted.
-     * @param samples
-     *            the sample set of instances for stochastic learning.
-     *            samples[i] is the number of sampling for instance i.
-     */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int J, int[] samples, int[][] order, SplitRule rule) {
-        if(x.length != y.length) {
-            throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
-        }
-
-        if(J < 2) {
-            throw new IllegalArgumentException("Invalid maximum leaves: " + J);
-        }
-
-        // class label set.
-        int[] labels = Math.unique(y);
-        Arrays.sort(labels);
-
-        for(int i = 0; i < labels.length; i++) {
-            if(labels[i] < 0) {
-                throw new IllegalArgumentException("Negative class label: " + labels[i]);
-            }
-
-            if(i > 0 && labels[i] - labels[i - 1] > 1) {
-                throw new IllegalArgumentException("Missing class: " + labels[i] + 1);
-            }
-        }
-
-        k = labels.length;
-        if(k < 2) {
-            throw new IllegalArgumentException("Only one class.");
-        }
-
-        if(attributes == null) {
-            int p = x[0].length;
-            attributes = new Attribute[p];
-            for(int i = 0; i < p; i++) {
-                attributes[i] = new NumericAttribute("V" + (i + 1));
-            }
-        }
-
-        this.attributes = attributes;
-        this.J = J;
-        this.rule = rule;
-        this.M = attributes.length;
-        importance = new double[attributes.length];
-
-        if(order != null) {
-            this.order = order;
-        } else {
-            int n = x.length;
-            int p = x[0].length;
-
-            double[] a = new double[n];
-            this.order = new int[p][];
-
-            for(int j = 0; j < p; j++) {
-                if(attributes[j] instanceof NumericAttribute) {
-                    for(int i = 0; i < n; i++) {
-                        a[i] = x[i][j];
-                    }
-                    this.order[j] = QuickSort.sort(a);
-                }
-            }
-        }
-
-        // Priority queue for best-first tree growing.
-        PriorityQueue<TrainNode> nextSplits = new PriorityQueue<TrainNode>();
-
-        int n = y.length;
-        int[] count = new int[k];
-        if(samples == null) {
-            samples = new int[n];
-            for(int i = 0; i < n; i++) {
-                samples[i] = 1;
-                count[y[i]]++;
-            }
-        } else {
-            for(int i = 0; i < n; i++) {
-                count[y[i]] += samples[i];
-            }
-        }
-
-        root = new Node(Math.whichMax(count));
-
-        TrainNode trainRoot = new TrainNode(root, x, y, samples);
-        // Now add splits to the tree until max tree size is reached
-        if(trainRoot.findBestSplit()) {
-            nextSplits.add(trainRoot);
-        }
-
-        // Pop best leaf from priority queue, split it, and push
-        // children nodes into the queue if possible.
-        for(int leaves = 1; leaves < this.J; leaves++) {
-            // parent is the leaf to split
-            TrainNode node = nextSplits.poll();
-            if(node == null) {
-                break;
-            }
-
-            node.split(nextSplits); // Split the parent node into two children nodes
-        }
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J) {
+        this(attributes, x, y, x[0].length, J, null, null, SplitRule.GINI);
     }
 
     /**
@@ -1006,58 +752,79 @@ public class DecisionTree implements Classifier<double[]> {
      *            the number of input variables to pick to split on at each
      *            node. It seems that dim/3 give generally good performance,
      *            where dim is the number of variables.
+     * @param J
+     *            the maximum number of leaf nodes in the tree.
      * @param order
      *            the index of training values in ascending order. Note that
      *            only numeric attributes need be sorted.
      * @param samples
      *            the sample set of instances for stochastic learning.
      *            samples[i] is the number of sampling for instance i.
+     * @param rule
+     *            the splitting rule.
      */
-    public DecisionTree(Attribute[] attributes, double[][] x, int[] y, int M, int[] samples, int[][] order) {
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-
         if(M <= 0 || M > x[0].length) {
             throw new IllegalArgumentException("Invalid number of variables to split on at a node of the tree: "
                     + M);
         }
-
-        if(samples == null) {
-            throw new IllegalArgumentException("Sampling array is null.");
+        if(J < 2) {
+            throw new IllegalArgumentException("Invalid maximum leaves: " + J);
         }
 
         this.k = Math.max(y) + 1;
-
         if(k < 2) {
             throw new IllegalArgumentException("Only one class or negative class labels.");
         }
 
-        if(attributes == null) {
-            int p = x[0].length;
-            attributes = new Attribute[p];
-            for(int i = 0; i < p; i++) {
-                attributes[i] = new NumericAttribute("V" + (i + 1));
-            }
-        }
-
-        this.attributes = attributes;
-        this.J = Integer.MAX_VALUE;
+        this.attributes = SmileExtUtils.attributeTypes(attributes, x);
+        //this.J = J;
         this.M = M;
-        this.order = order;
-        importance = new double[attributes.length];
+        this.rule = rule;
+        this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
+        this.importance = new double[attributes.length];
 
         int n = y.length;
         int[] count = new int[k];
-        for(int i = 0; i < n; i++) {
-            count[y[i]] += samples[i];
+        if(samples == null) {
+            samples = new int[n];
+            for(int i = 0; i < n; i++) {
+                samples[i] = 1;
+                count[y[i]]++;
+            }
+        } else {
+            for(int i = 0; i < n; i++) {
+                count[y[i]] += samples[i];
+            }
         }
 
-        root = new Node(Math.whichMax(count));
+        this.root = new Node(Math.whichMax(count));
 
         TrainNode trainRoot = new TrainNode(root, x, y, samples);
-        if(trainRoot.findBestSplit()) {
-            trainRoot.split(null);
+        if(J == Integer.MAX_VALUE) {
+            if(trainRoot.findBestSplit()) {
+                trainRoot.split(null);
+            }
+        } else {
+            // Priority queue for best-first tree growing.
+            PriorityQueue<TrainNode> nextSplits = new PriorityQueue<TrainNode>();
+            // Now add splits to the tree until max tree size is reached
+            if(trainRoot.findBestSplit()) {
+                nextSplits.add(trainRoot);
+            }
+            // Pop best leaf from priority queue, split it, and push
+            // children nodes into the queue if possible.
+            for(int leaves = 1; leaves < J; leaves++) {
+                // parent is the leaf to split
+                TrainNode node = nextSplits.poll();
+                if(node == null) {
+                    break;
+                }
+                node.split(nextSplits); // Split the parent node into two children nodes
+            }
         }
     }
 

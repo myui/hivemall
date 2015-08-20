@@ -19,6 +19,7 @@
 package hivemall.smile.classification;
 
 import static org.junit.Assert.assertEquals;
+import hivemall.smile.tools.TreePredictByJavascriptUDF;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
