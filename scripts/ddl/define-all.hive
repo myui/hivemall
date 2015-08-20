@@ -9,12 +9,12 @@ create temporary function hivemall_version as 'hivemall.HivemallVersionUDF';
 -- binary classification --
 ---------------------------
 
-drop temporary function perceptron;
-create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
-
--- alias
 drop temporary function train_perceptron;
 create temporary function train_perceptron as 'hivemall.classifier.PerceptronUDTF';
+
+-- alias
+drop temporary function perceptron;
+create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
 
 drop temporary function train_pa;
 create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
@@ -294,62 +294,78 @@ create temporary function tokenize as 'hivemall.ftvec.text.TokenizeUDF';
 drop temporary function train_logregr;
 create temporary function train_logregr as 'hivemall.regression.LogressUDTF';
 
+-- alias for backward compatibility
+drop temporary function logress;
+create temporary function logress as 'hivemall.regression.LogressUDTF';
+
 drop temporary function train_pa1_regr;
 create temporary function train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+-- alias for backward compatibility
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
 
 drop temporary function train_pa1a_regr;
 create temporary function train_pa1a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
 
+-- alias for backward compatibility
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
 drop temporary function train_pa2_regr;
 create temporary function train_pa2_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+-- alias for backward compatibility
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
 
 drop temporary function train_pa2a_regr;
 create temporary function train_pa2a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
 
+-- alias for backward compatibility
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
 drop temporary function train_arow_regr;
 create temporary function train_arow_regr as 'hivemall.regression.AROWRegressionUDTF';
+
+-- alias for backward compatibility
+drop temporary function arow_regress;
+create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
 
 drop temporary function train_arowe_regr;
 create temporary function train_arowe_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe';
 
+-- alias for backward compatibility
+drop temporary function arowe_regress;
+create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
+
 drop temporary function train_arowe2_regr;
 create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
+-- alias for backward compatibility
+drop temporary function arowe2_regress;
+create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
 
 drop temporary function train_adagrad;
 create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';
 
-drop temporary function train_adadelta;
-create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
-
 -- alias for backward compatibility
+drop temporary function adagrad_regr;
+create temporary function adagrad_regr as 'hivemall.regression.AdaGradUDTF';
 
-drop temporary function logress;
-create temporary function logress as 'hivemall.regression.LogressUDTF';
-
-drop temporary function pa1_regress;
-create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
-
-drop temporary function pa1a_regress;
-create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
-
-drop temporary function pa2_regress;
-create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
-
-drop temporary function pa2a_regress;
-create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
-
-drop temporary function arow_regress;
-create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
-
-drop temporary function arowe_regress;
-create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
-
-drop temporary function arowe2_regress;
-create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
-
+-- alias
 drop temporary function adagrad;
 create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
 
+drop temporary function train_adadelta_regr;
+create temporary function train_adadelta_regr as 'hivemall.regression.AdaDeltaUDTF';
+
+-- alias
+drop temporary function train_adadelta;
+create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
+
+-- alias
 drop temporary function adadelta;
 create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
 
@@ -513,19 +529,22 @@ create temporary function train_randomforest_classifier as 'hivemall.smile.class
 drop temporary function train_rf_classifier;
 create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
 
-drop temporary function train_randomforest_regression;
-create temporary function train_randomforest_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF';
-
 -- alias
-drop temporary function train_rf_regression;
-create temporary function train_rf_regression as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+drop temporary function train_randomforest;
+create temporary function train_randomforest as 'hivemall.smile.classification.RandomForestClassifierUDTF';
 
-drop temporary function vm_tree_predict;
-create temporary function vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+drop temporary function train_randomforest_regr;
+create temporary function train_randomforest_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
 
--- alias
+drop temporary function train_rf_regr;
+create temporary function train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+
 drop temporary function tree_predict;
 create temporary function tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+-- alias
+drop temporary function vm_tree_predict;
+create temporary function vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
 
 drop temporary function js_tree_predict;
 create temporary function js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF';
