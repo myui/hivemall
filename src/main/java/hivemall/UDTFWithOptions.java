@@ -22,12 +22,16 @@ import hivemall.io.FeatureValue;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.lang.CommandLineUtils;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -42,7 +46,30 @@ public abstract class UDTFWithOptions extends GenericUDTF {
     protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
         String[] args = optionValue.split("\\s+");
         Options opts = getOptions();
-        return CommandLineUtils.parseOptions(args, opts);
+        opts.addOption("help", false, "Show function help");
+        CommandLine cl = CommandLineUtils.parseOptions(args, opts);
+
+        if(cl.hasOption("help")) {
+            Description funcDesc = getClass().getAnnotation(Description.class);
+            final String cmdLineSyntax;
+            if(funcDesc == null) {
+                cmdLineSyntax = getClass().getSimpleName();
+            } else {
+                String funcName = funcDesc.name();
+                cmdLineSyntax = funcName == null ? getClass().getSimpleName()
+                        : funcDesc.value().replace("_FUNC_", funcDesc.name());
+            }
+            StringWriter sw = new StringWriter();
+            sw.write('\n');
+            PrintWriter pw = new PrintWriter(sw);
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(pw, HelpFormatter.DEFAULT_WIDTH, cmdLineSyntax, null, opts, HelpFormatter.DEFAULT_LEFT_PAD, HelpFormatter.DEFAULT_DESC_PAD, null, true);
+            pw.flush();
+            String helpMsg = sw.toString();
+            throw new UDFArgumentException(helpMsg);
+        }
+
+        return cl;
     }
 
     protected abstract CommandLine processOptions(ObjectInspector[] argOIs)
