@@ -18,12 +18,11 @@
  */
 package hivemall.mf;
 
-import junit.framework.Assert;
-
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class MatrixFactorizationAdaGradUDTFTest {

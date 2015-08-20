@@ -19,8 +19,8 @@
 package hivemall.utils.collections;
 
 import hivemall.utils.lang.mutable.MutableInt;
-import junit.framework.Assert;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class OpenHashTableTest {
