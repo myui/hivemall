@@ -373,10 +373,6 @@ create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
 -- array functions --
 ---------------------
 
--- alias for backward compatibility
-drop temporary function AllocFloatArray;
-create temporary function AllocFloatArray as 'hivemall.tools.array.AllocFloatArrayUDF';
-
 drop temporary function float_array;
 create temporary function float_array as 'hivemall.tools.array.AllocFloatArrayUDF';
 
@@ -401,11 +397,14 @@ create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
 drop temporary function subarray;
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 
+drop temporary function array_avg;
+create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
+
 -- drop temporary function array_avg;
 -- create temporary function array_avg as 'hivemall.tools.array.ArrayAvgUDAF';
 
-drop temporary function array_avg;
-create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
+drop temporary function array_sum;
+create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
