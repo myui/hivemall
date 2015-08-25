@@ -229,9 +229,6 @@ CREATE FUNCTION amplify as 'hivemall.ftvec.amplify.AmplifierUDTF' USING JAR '${h
 DROP FUNCTION IF EXISTS rand_amplify;
 CREATE FUNCTION rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS conv2dense;
-CREATE FUNCTION conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF' USING JAR '${hivemall_jar}';
-
 -- for backward compatibility
 DROP FUNCTION IF EXISTS addBias;
 CREATE FUNCTION addBias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar}';
@@ -267,23 +264,26 @@ CREATE FUNCTION categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF' 
 DROP FUNCTION IF EXISTS indexed_features;
 CREATE FUNCTION indexed_features as 'hivemall.ftvec.IndexedFeatures' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS to_dense_features;
-CREATE FUNCTION to_dense_features as 'hivemall.ftvec.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
-
--- alias
-DROP FUNCTION IF EXISTS to_dense;
-CREATE FUNCTION to_dense as 'hivemall.ftvec.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS to_sparse_features;
-CREATE FUNCTION to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
-
--- alias
-DROP FUNCTION IF EXISTS to_sparse;
-CREATE FUNCTION to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
-
 ----------------------------------
 -- feature converting functions --
 ----------------------------------
+
+DROP FUNCTION IF EXISTS conv2dense;
+CREATE FUNCTION conv2dense as 'hivemall.ftvec.conv.ConvertToDenseModelUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS to_dense_features;
+CREATE FUNCTION to_dense_features as 'hivemall.ftvec.conv.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS to_dense;
+CREATE FUNCTION to_dense as 'hivemall.ftvec.conv.ToDenseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS to_sparse_features;
+CREATE FUNCTION to_sparse_features as 'hivemall.ftvec.conv.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
+
+-- alias
+DROP FUNCTION IF EXISTS to_sparse;
+CREATE FUNCTION to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS quantify;
 CREATE FUNCTION quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF' USING JAR '${hivemall_jar}';

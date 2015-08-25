@@ -225,9 +225,6 @@ create temporary function amplify as 'hivemall.ftvec.amplify.AmplifierUDTF';
 drop temporary function rand_amplify;
 create temporary function rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF';
 
-drop temporary function conv2dense;
-create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
-
 -- for backward compatibility
 drop temporary function addBias;
 create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
@@ -263,23 +260,26 @@ create temporary function categorical_features as 'hivemall.ftvec.CategoricalFea
 drop temporary function indexed_features;
 create temporary function indexed_features as 'hivemall.ftvec.IndexedFeatures';
 
-drop temporary function to_dense_features;
-create temporary function to_dense_features as 'hivemall.ftvec.ToDenseFeaturesUDF';
-
--- alias
-drop temporary function to_dense;
-create temporary function to_dense as 'hivemall.ftvec.ToDenseFeaturesUDF';
-
-drop temporary function to_sparse_features;
-create temporary function to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF';
-
--- alias
-drop temporary function to_sparse;
-create temporary function to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF';
-
 ----------------------------------
 -- feature converting functions --
 ----------------------------------
+
+drop temporary function conv2dense;
+create temporary function conv2dense as 'hivemall.ftvec.conv.ConvertToDenseModelUDAF';
+
+drop temporary function to_dense_features;
+create temporary function to_dense_features as 'hivemall.ftvec.conv.ToDenseFeaturesUDF';
+
+-- alias
+drop temporary function to_dense;
+create temporary function to_dense as 'hivemall.ftvec.conv.ToDenseFeaturesUDF';
+
+drop temporary function to_sparse_features;
+create temporary function to_sparse_features as 'hivemall.ftvec.conv.ToSparseFeaturesUDF';
+
+-- alias
+drop temporary function to_sparse;
+create temporary function to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF';
 
 drop temporary function quantify;
 create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
