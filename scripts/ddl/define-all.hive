@@ -277,6 +277,13 @@ create temporary function to_sparse_features as 'hivemall.ftvec.ToSparseFeatures
 drop temporary function to_sparse;
 create temporary function to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF';
 
+----------------------------------
+-- feature converting functions --
+----------------------------------
+
+drop temporary function quantify;
+create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------

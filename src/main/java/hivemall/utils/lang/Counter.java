@@ -43,16 +43,19 @@ public final class Counter<E> implements Serializable {
         return counts;
     }
 
-    public void increment(E key) {
-        increment(key, 1);
+    public int increment(E key) {
+        return increment(key, 1);
     }
 
-    public void increment(E key, int amount) {
+    public int increment(E key, int amount) {
         Integer count = counts.get(key);
         if(count == null) {
             counts.put(key, Integer.valueOf(amount));
+            return 0;
         } else {
-            counts.put(key, Integer.valueOf(count.intValue() + amount));
+            int old = count.intValue();
+            counts.put(key, Integer.valueOf(old + amount));
+            return old;
         }
     }
 

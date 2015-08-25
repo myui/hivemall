@@ -172,6 +172,24 @@ public final class HiveUtils {
         return BOOLEAN_TYPE_NAME.equals(typeName);
     }
 
+    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if(argOI.getCategory() != Category.PRIMITIVE) {
+            return false;
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case SHORT:
+            case INT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Nullable
     public static <T extends Writable> T getConstValue(@Nonnull final ObjectInspector oi)

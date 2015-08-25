@@ -281,6 +281,13 @@ CREATE FUNCTION to_sparse_features as 'hivemall.ftvec.ToSparseFeaturesUDF' USING
 DROP FUNCTION IF EXISTS to_sparse;
 CREATE FUNCTION to_sparse as 'hivemall.ftvec.ToSparseFeaturesUDF' USING JAR '${hivemall_jar}';
 
+----------------------------------
+-- feature converting functions --
+----------------------------------
+
+DROP FUNCTION IF EXISTS quantify;
+CREATE FUNCTION quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
