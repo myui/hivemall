@@ -184,6 +184,8 @@ public final class HiveUtils {
             case LONG:
             case FLOAT:
             case DOUBLE:
+            case BYTE:
+            case TIMESTAMP:
                 return true;
             default:
                 return false;

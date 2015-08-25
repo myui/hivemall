@@ -252,17 +252,8 @@ CREATE FUNCTION extract_weight as 'hivemall.ftvec.ExtractWeightUDF' USING JAR '$
 DROP FUNCTION IF EXISTS add_feature_index;
 CREATE FUNCTION add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS vectorize_features;
-CREATE FUNCTION vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS feature;
 CREATE FUNCTION feature as 'hivemall.ftvec.FeatureUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS categorical_features;
-CREATE FUNCTION categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS indexed_features;
-CREATE FUNCTION indexed_features as 'hivemall.ftvec.IndexedFeatures' USING JAR '${hivemall_jar}';
 
 ----------------------------------
 -- feature converting functions --
@@ -287,6 +278,22 @@ CREATE FUNCTION to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF' USING JAR
 
 DROP FUNCTION IF EXISTS quantify;
 CREATE FUNCTION quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF' USING JAR '${hivemall_jar}';
+
+--------------------------
+-- feature transformers --
+--------------------------
+
+DROP FUNCTION IF EXISTS vectorize_features;
+CREATE FUNCTION vectorize_features as 'hivemall.ftvec.trans.VectorizeFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS categorical_features;
+CREATE FUNCTION categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS indexed_features;
+CREATE FUNCTION indexed_features as 'hivemall.ftvec.trans.IndexedFeatures' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS quantified_features;
+CREATE FUNCTION quantified_features as 'hivemall.ftvec.trans.QuantifiedFeaturesUDTF' USING JAR '${hivemall_jar}';
 
 --------------------------
 -- ftvec/text functions --

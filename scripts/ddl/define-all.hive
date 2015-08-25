@@ -248,17 +248,8 @@ create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
 drop temporary function add_feature_index;
 create temporary function add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF';
 
-drop temporary function vectorize_features;
-create temporary function vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF';
-
 drop temporary function feature;
 create temporary function feature as 'hivemall.ftvec.FeatureUDF';
-
-drop temporary function categorical_features;
-create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
-
-drop temporary function indexed_features;
-create temporary function indexed_features as 'hivemall.ftvec.IndexedFeatures';
 
 ----------------------------------
 -- feature converting functions --
@@ -283,6 +274,22 @@ create temporary function to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF'
 
 drop temporary function quantify;
 create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
+
+--------------------------
+-- feature transformers --
+--------------------------
+
+drop temporary function vectorize_features;
+create temporary function vectorize_features as 'hivemall.ftvec.trans.VectorizeFeaturesUDF';
+
+drop temporary function categorical_features;
+create temporary function categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF';
+
+drop temporary function indexed_features;
+create temporary function indexed_features as 'hivemall.ftvec.trans.IndexedFeatures';
+
+drop temporary function quantified_features;
+create temporary function quantified_features as 'hivemall.ftvec.trans.QuantifiedFeaturesUDTF';
 
 --------------------------
 -- ftvec/text functions --
