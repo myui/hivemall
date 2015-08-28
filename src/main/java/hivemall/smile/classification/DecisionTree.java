@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,7 +47,6 @@ import smile.classification.Classifier;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.math.Math;
-import smile.util.MulticoreExecutor;
 
 /**
  * Decision tree for classification. A decision tree can be learned by splitting
@@ -437,75 +435,19 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 }
             } else {
-
-                List<SplitTask> tasks = new ArrayList<SplitTask>(M);
                 for(int j = 0; j < M; j++) {
-                    tasks.add(new SplitTask(n, count, impurity, variables[j]));
-                }
-
-                try {
-                    for(Node split : MulticoreExecutor.run(tasks)) {
-                        if(split.splitScore > node.splitScore) {
-                            node.splitFeature = split.splitFeature;
-                            node.splitValue = split.splitValue;
-                            node.splitScore = split.splitScore;
-                            node.trueChildOutput = split.trueChildOutput;
-                            node.falseChildOutput = split.falseChildOutput;
-                        }
-                    }
-                } catch (Exception ex) {
-                    for(int j = 0; j < M; j++) {
-                        Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
-                        if(split.splitScore > node.splitScore) {
-                            node.splitFeature = split.splitFeature;
-                            node.splitValue = split.splitValue;
-                            node.splitScore = split.splitScore;
-                            node.trueChildOutput = split.trueChildOutput;
-                            node.falseChildOutput = split.falseChildOutput;
-                        }
+                    Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
+                    if(split.splitScore > node.splitScore) {
+                        node.splitFeature = split.splitFeature;
+                        node.splitValue = split.splitValue;
+                        node.splitScore = split.splitScore;
+                        node.trueChildOutput = split.trueChildOutput;
+                        node.falseChildOutput = split.falseChildOutput;
                     }
                 }
             }
 
             return (node.splitFeature != -1);
-        }
-
-        /**
-         * Task to find the best split cutoff for attribute j at the current
-         * node.
-         */
-        class SplitTask implements Callable<Node> {
-
-            /**
-             * The number instances in this node.
-             */
-            int n;
-            /**
-             * The sample count in each class.
-             */
-            int[] count;
-            /**
-             * The impurity of this node.
-             */
-            double impurity;
-            /**
-             * The index of variables for this task.
-             */
-            int j;
-
-            SplitTask(int n, int[] count, double impurity, int j) {
-                this.n = n;
-                this.count = count;
-                this.impurity = impurity;
-                this.j = j;
-            }
-
-            @Override
-            public Node call() {
-                // An array to store sample count in each class for false child node.
-                int[] falseCount = new int[k];
-                return findBestSplit(n, count, falseCount, impurity, j);
-            }
         }
 
         /**

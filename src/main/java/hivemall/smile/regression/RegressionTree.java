@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.Callable;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -50,7 +49,6 @@ import smile.math.Math;
 import smile.regression.GradientTreeBoost;
 import smile.regression.RandomForest;
 import smile.regression.Regression;
-import smile.util.MulticoreExecutor;
 
 /**
  * Decision tree for regression. A decision tree can be learned by splitting the
@@ -431,68 +429,19 @@ public class RegressionTree implements Regression<double[]> {
                     }
                 }
             } else {
-
-                List<SplitTask> tasks = new ArrayList<SplitTask>(M);
                 for(int j = 0; j < M; j++) {
-                    tasks.add(new SplitTask(n, sum, variables[j]));
-                }
-
-                try {
-                    for(Node split : MulticoreExecutor.run(tasks)) {
-                        if(split.splitScore > node.splitScore) {
-                            node.splitFeature = split.splitFeature;
-                            node.splitValue = split.splitValue;
-                            node.splitScore = split.splitScore;
-                            node.trueChildOutput = split.trueChildOutput;
-                            node.falseChildOutput = split.falseChildOutput;
-                        }
-                    }
-                } catch (Exception ex) {
-                    for(int j = 0; j < M; j++) {
-                        Node split = findBestSplit(n, sum, variables[j]);
-                        if(split.splitScore > node.splitScore) {
-                            node.splitFeature = split.splitFeature;
-                            node.splitValue = split.splitValue;
-                            node.splitScore = split.splitScore;
-                            node.trueChildOutput = split.trueChildOutput;
-                            node.falseChildOutput = split.falseChildOutput;
-                        }
+                    Node split = findBestSplit(n, sum, variables[j]);
+                    if(split.splitScore > node.splitScore) {
+                        node.splitFeature = split.splitFeature;
+                        node.splitValue = split.splitValue;
+                        node.splitScore = split.splitScore;
+                        node.trueChildOutput = split.trueChildOutput;
+                        node.falseChildOutput = split.falseChildOutput;
                     }
                 }
             }
 
             return (node.splitFeature != -1);
-        }
-
-        /**
-         * Task to find the best split cutoff for attribute j at the current
-         * node.
-         */
-        class SplitTask implements Callable<Node> {
-
-            /**
-             * The number instances in this node.
-             */
-            int n;
-            /**
-             * The sum of responses of this node.
-             */
-            double sum;
-            /**
-             * The index of variables for this task.
-             */
-            int j;
-
-            SplitTask(int n, double sum, int j) {
-                this.n = n;
-                this.sum = sum;
-                this.j = j;
-            }
-
-            @Override
-            public Node call() {
-                return findBestSplit(n, sum, j);
-            }
         }
 
         /**
