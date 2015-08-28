@@ -53,6 +53,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
@@ -364,6 +365,14 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         return (PrimitiveObjectInspector) oi;
+    }
+
+    public static BooleanObjectInspector asBooleanOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if(!BOOLEAN_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be Boolean: " + argOI.getTypeName());
+        }
+        return (BooleanObjectInspector) argOI;
     }
 
     public static IntObjectInspector asIntOI(@Nonnull final ObjectInspector argOI)

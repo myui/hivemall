@@ -36,6 +36,7 @@ import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
@@ -704,9 +705,6 @@ public class RegressionTree implements Regression<double[]> {
      *            the training instances.
      * @param y
      *            the response variable.
-     * @param order
-     *            the index of training values in ascending order. Note that
-     *            only numeric attributes need be sorted.
      * @param M
      *            the number of input variables to pick to split on at each
      *            node. It seems that dim/3 give generally good performance,
@@ -716,6 +714,9 @@ public class RegressionTree implements Regression<double[]> {
      *            split, setting S = 5 generally gives good results.
      * @param J
      *            the maximum number of leaf nodes in the tree.
+     * @param order
+     *            the index of training values in ascending order. Note that
+     *            only numeric attributes need be sorted.
      * @param samples
      *            the sample set of instances for stochastic learning.
      *            samples[i] should be 0 or 1 to indicate if the instance is
@@ -740,6 +741,11 @@ public class RegressionTree implements Regression<double[]> {
         }
 
         this.attributes = SmileExtUtils.attributeTypes(attributes, x);
+        if(attributes.length != x[0].length) {
+            throw new IllegalArgumentException("-attrs option is invliad: "
+                    + Arrays.toString(attributes));
+        }
+
         this.M = M;
         this.S = S;
         this.J = J;

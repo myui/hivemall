@@ -36,6 +36,7 @@ import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
@@ -781,6 +782,10 @@ public class DecisionTree implements Classifier<double[]> {
         }
 
         this.attributes = SmileExtUtils.attributeTypes(attributes, x);
+        if(attributes.length != x[0].length) {
+            throw new IllegalArgumentException("-attrs option is invliad: "
+                    + Arrays.toString(attributes));
+        }
         //this.J = J;
         this.M = M;
         this.rule = rule;

@@ -198,13 +198,16 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     @Override
     public void close() throws HiveException {
         int numExamples = featuresList.size();
-        double[][] x = featuresList.toArray(new double[numExamples][]);
-        this.featuresList = null;
-        double[] y = targets.toArray();
-        this.targets = null;
 
-        // run training
-        train(x, y, attributes, numTrees, numVars, nodeCapacity, maxLeafNodes, seed);
+        if(numExamples > 0) {
+            double[][] x = featuresList.toArray(new double[numExamples][]);
+            this.featuresList = null;
+            double[] y = targets.toArray();
+            this.targets = null;
+
+            // run training
+            train(x, y, attributes, numTrees, numVars, nodeCapacity, maxLeafNodes, seed);
+        }
 
         // clean up
         this.featureListOI = null;
@@ -359,7 +362,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 samples[random.nextInt(n)]++;
             }
 
-            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, numLeafs, nodeCapacity, order, samples);
+            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, nodeCapacity, numLeafs, order, samples);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {

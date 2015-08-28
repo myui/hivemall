@@ -18,6 +18,7 @@
 package hivemall.smile.utils;
 
 import hivemall.smile.classification.DecisionTree.SplitRule;
+import hivemall.smile.data.NominalAttribute2;
 
 import java.util.Arrays;
 
@@ -56,7 +57,7 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
             if("Q".equals(type)) {
                 attr[i] = new NumericAttribute("V" + (i + 1));
             } else if("C".equals(type)) {
-                attr[i] = new NominalAttribute("V" + (i + 1));
+                attr[i] = new NominalAttribute2("V" + (i + 1));
             } else if("S".equals(type)) {
                 attr[i] = new StringAttribute("V" + (i + 1));
             } else if("D".equals(type)) {
@@ -95,6 +96,21 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
             attributes = new Attribute[p];
             for(int i = 0; i < p; i++) {
                 attributes[i] = new NumericAttribute("V" + (i + 1));
+            }
+        } else {
+            int size = attributes.length;
+            for(int j = 0; j < size; j++) {
+                Attribute attr = attributes[j];
+                if(attr instanceof NominalAttribute2) {
+                    int max_x = 0;
+                    for(int i = 0; i < x.length; i++) {
+                        int x_ij = (int) x[i][j];
+                        if(x_ij > max_x) {
+                            max_x = x_ij;
+                        }
+                    }
+                    ((NominalAttribute2) attr).setSize(max_x + 1);
+                }
             }
         }
         return attributes;
