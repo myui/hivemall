@@ -48,6 +48,9 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
 
+    private String prevScripts;
+    private StackMachine prevVM;
+
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if(argOIs.length != 2 && argOIs.length != 3) {
@@ -82,7 +85,7 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
         if(arg0 == null) {
             return null;
         }
-        String script = arg0.toString();
+        String scripts = arg0.toString();
 
         Object arg1 = arguments[1].get();
         if(arg1 == null) {
@@ -90,22 +93,35 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
         }
         double[] features = HiveUtils.asDoubleArray(arg1, featureListOI, featureElemOI);
 
-        return evaluate(script, features, classification);
+        return evaluate(scripts, features, classification);
     }
 
     @Nonnull
-    public static Writable evaluate(@Nonnull final String scripts, @Nonnull final double[] features, final boolean classification)
+    public Writable evaluate(@Nonnull final String scripts, @Nonnull final double[] features, final boolean classification)
             throws HiveException {
-        final StackMachine vm = new StackMachine();
-        try {
-            vm.run(scripts, features);
-        } catch (VMRuntimeException vme) {
-            throw new HiveException("failed to run StackMachine", vme);
-        } catch (Throwable e) {
-            throw new HiveException("failed to run StackMachine", e);
+        final StackMachine vm;
+        if(scripts.equals(prevScripts)) {
+            vm = prevVM;
+        } else {
+            vm = new StackMachine();
+            try {
+                vm.compile(scripts);
+            } catch (VMRuntimeException e) {
+                throw new HiveException("failed to compile StackMachine", e);
+            }
+            this.prevScripts = scripts;
+            this.prevVM = vm;
         }
-        Double result = vm.getResult();
 
+        try {
+            vm.eval(features);
+        } catch (VMRuntimeException vme) {
+            throw new HiveException("failed to eval StackMachine", vme);
+        } catch (Throwable e) {
+            throw new HiveException("failed to eval StackMachine", e);
+        }
+
+        Double result = vm.getResult();
         if(result == null) {
             return null;
         }
@@ -117,7 +133,12 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws IOException {
+        this.featureElemOI = null;
+        this.featureListOI = null;
+        this.prevScripts = null;
+        this.prevVM = null;
+    }
 
     @Override
     public String getDisplayString(String[] children) {

@@ -1,3 +1,21 @@
+/*
+ * Hivemall: Hive scalable Machine Learning Library
+ *
+ * Copyright (C) 2015 Makoto YUI
+ * Copyright (c) 2010 Haifeng Li
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package hivemall.smile.vm;
 
 import static org.junit.Assert.assertEquals;
@@ -52,7 +70,7 @@ public class StackMachineTest {
         int n = x.length;
         LOOCV loocv = new LOOCV(n);
         for(int i = 0; i < n; i++) {
-            double[][] trainx = smile.math.Math.slice(x, loocv.train[i]);
+            double[][] trainx = Math.slice(x, loocv.train[i]);
             int[] trainy = Math.slice(y, loocv.train[i]);
 
             DecisionTree tree = new DecisionTree(iris.attributes(), trainx, trainy, 4);
@@ -149,17 +167,21 @@ public class StackMachineTest {
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
+        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
-        IntWritable result = (IntWritable) TreePredictByStackMachineUDF.evaluate(opScript, x, true);
+        IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
+        udf.close();
         return result.get();
     }
 
     private static double evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
+        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
-        DoubleWritable result = (DoubleWritable) TreePredictByStackMachineUDF.evaluate(opScript, x, false);
+        DoubleWritable result = (DoubleWritable) udf.evaluate(opScript, x, false);
+        udf.close();
         return result.get();
     }
 

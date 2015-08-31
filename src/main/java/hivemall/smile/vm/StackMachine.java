@@ -33,11 +33,11 @@ public final class StackMachine {
     public static final String SEP = "; ";
 
     @Nonnull
+    private final List<Operation> code;
+    @Nonnull
     private final Map<String, Double> valuesMap;
     @Nonnull
     private final Map<String, Integer> jumpMap;
-    @Nonnull
-    private final List<Operation> code;
     @Nonnull
     private final Stack<Double> programStack;
 
@@ -57,21 +57,31 @@ public final class StackMachine {
     private Double result;
 
     public StackMachine() {
+        this.code = new ArrayList<Operation>();
         this.valuesMap = new HashMap<String, Double>();
         this.jumpMap = new HashMap<String, Integer>();
-        this.code = new ArrayList<Operation>();
         this.programStack = new Stack<Double>();
         this.SP = 0;
         this.result = null;
     }
 
     public void run(@Nonnull String scripts, @Nonnull double[] features) throws VMRuntimeException {
-        List<String> opslist = Arrays.asList(scripts.split(SEP));
-        run(opslist, features);
+        compile(scripts);
+        eval(features);
     }
 
     public void run(@Nonnull List<String> opslist, @Nonnull double[] features)
             throws VMRuntimeException {
+        compile(opslist);
+        eval(features);
+    }
+
+    public void compile(@Nonnull String scripts) throws VMRuntimeException {
+        List<String> opslist = Arrays.asList(scripts.split(SEP));
+        compile(opslist);
+    }
+
+    public void compile(@Nonnull List<String> opslist) throws VMRuntimeException {
         for(String line : opslist) {
             String[] ops = line.split(" ", -1);
             if(ops.length == 2) {
@@ -86,9 +96,30 @@ public final class StackMachine {
         int size = opslist.size();
         this.codeLength = size - 1;
         this.done = new boolean[size];
+    }
 
+    public void eval(final double[] features) throws VMRuntimeException {
+        init();
         bind(features);
         execute(0);
+    }
+
+    private void init() {
+        valuesMap.clear();
+        jumpMap.clear();
+        programStack.clear();
+        this.SP = 0;
+        this.result = null;
+        Arrays.fill(done, false);
+    }
+
+    private void bind(final double[] features) {
+        final StringBuilder buf = new StringBuilder();
+        for(int i = 0; i < features.length; i++) {
+            String bindKey = buf.append("x[").append(i).append("]").toString();
+            valuesMap.put(bindKey, features[i]);
+            StringUtils.clear(buf);
+        }
     }
 
     private void execute(int entryPoint) throws VMRuntimeException {
@@ -106,15 +137,6 @@ public final class StackMachine {
             if(!executeOperation(currentOperation)) {
                 return;
             }
-        }
-    }
-
-    private void bind(final double[] features) {
-        final StringBuilder buf = new StringBuilder();
-        for(int i = 0; i < features.length; i++) {
-            String bindKey = buf.append("x[").append(i).append("]").toString();
-            valuesMap.put(bindKey, features[i]);
-            StringUtils.clear(buf);
         }
     }
 
@@ -231,9 +253,9 @@ public final class StackMachine {
                 break;
             }
             case PUSH: {
-                if(StringUtils.isDouble(currentOperation.operand))
+                if(StringUtils.isDouble(currentOperation.operand)) {
                     push(Double.parseDouble(currentOperation.operand));
-                else {
+                } else {
                     Double v = valuesMap.get(currentOperation.operand);
                     if(v == null) {
                         throw new VMRuntimeException("value is not binded: "
