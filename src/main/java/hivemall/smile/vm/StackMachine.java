@@ -181,13 +181,13 @@ public final class StackMachine {
                 double a = pop();
                 double b = pop();
                 if(a==b) {
+                    IP++;
+                } else {
                     if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
                     }
-                } else {
-                    IP++;
                 }
                 break;
             }
@@ -195,13 +195,13 @@ public final class StackMachine {
                 double a = pop();
                 double b = pop();
                 if(smile.math.Math.equals(a, b)) {
+                    IP++;
+                } else {
                     if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
                     }
-                } else {
-                    IP++;
                 }
                 break;
             }
