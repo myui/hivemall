@@ -46,9 +46,11 @@ import javax.annotation.Nullable;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.math.Math;
+import smile.math.Random;
 import smile.regression.GradientTreeBoost;
 import smile.regression.RandomForest;
 import smile.regression.Regression;
+import smile.util.SmileUtils;
 
 /**
  * Decision tree for regression. A decision tree can be learned by splitting the
@@ -100,37 +102,39 @@ public class RegressionTree implements Regression<double[]> {
     /**
      * The attributes of independent variable.
      */
-    private Attribute[] attributes;
+    private final Attribute[] attributes;
     /**
      * Variable importance. Every time a split of a node is made on variable the
      * impurity criterion for the two descendent nodes is less than the parent
      * node. Adding up the decreases for each individual variable over the tree
      * gives a simple measure of variable importance.
      */
-    private double[] importance;
+    private final double[] importance;
     /**
      * The root of the regression tree
      */
-    private Node root;
+    private final Node root;
     /**
      * The number of instances in a node below which the tree will not split,
      * setting S = 5 generally gives good results.
      */
-    private int S = 5;
+    private final int S;
     /**
      * The maximum number of leaf nodes in the tree.
      */
-    private int J = 6;
+    private final int J;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
-    private int M;
+    private final int M;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
      */
-    private transient int[][] order;
+    private final int[][] order;
+    
+    private final Random rnd;
 
     /**
      * An interface to calculate node output. Note that samples[i] is the number
@@ -413,31 +417,16 @@ public class RegressionTree implements Regression<double[]> {
             if(M < p) {
                 // Training of Random Forest will get into this race condition.
                 // smile.math.Math uses a static object of random number generator.
-                synchronized(RegressionTree.class) {
-                    Math.permutate(variables);
-                }
-
-                // Random forest already runs on parallel.
-                for(int j = 0; j < M; j++) {
-                    Node split = findBestSplit(n, sum, variables[j]);
-                    if(split.splitScore > node.splitScore) {
-                        node.splitFeature = split.splitFeature;
-                        node.splitValue = split.splitValue;
-                        node.splitScore = split.splitScore;
-                        node.trueChildOutput = split.trueChildOutput;
-                        node.falseChildOutput = split.falseChildOutput;
-                    }
-                }
-            } else {
-                for(int j = 0; j < M; j++) {
-                    Node split = findBestSplit(n, sum, variables[j]);
-                    if(split.splitScore > node.splitScore) {
-                        node.splitFeature = split.splitFeature;
-                        node.splitValue = split.splitValue;
-                        node.splitScore = split.splitScore;
-                        node.trueChildOutput = split.trueChildOutput;
-                        node.falseChildOutput = split.falseChildOutput;
-                    }
+                SmileExtUtils.permutate(variables, rnd);
+            }
+            for(int j = 0; j < M; j++) {
+                Node split = findBestSplit(n, sum, variables[j]);
+                if(split.splitScore > node.splitScore) {
+                    node.splitFeature = split.splitFeature;
+                    node.splitValue = split.splitValue;
+                    node.splitScore = split.splitScore;
+                    node.trueChildOutput = split.trueChildOutput;
+                    node.falseChildOutput = split.falseChildOutput;
                 }
             }
 
@@ -635,14 +624,14 @@ public class RegressionTree implements Regression<double[]> {
     }
 
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int J) {
-        this(attributes, x, y, x[0].length, 5, J, null, null);
+        this(attributes, x, y, x[0].length, 5, J, null, null, SmileExtUtils.generateSeed());
     }
 
     /**
-     * @see RegressionTree#RegressionTree(Attribute[], double[][], double[], int, int, int, int[][], int[], NodeOutput)
+     * @see RegressionTree#RegressionTree(Attribute[], double[][], double[], int, int, int, int[][], int[], NodeOutput, seeds)
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples) {
-        this(attributes, x, y, M, S, J, order, samples, null);
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples, long seed) {
+        this(attributes, x, y, M, S, J, order, samples, null, seed);
     }
 
     /**
@@ -673,7 +662,7 @@ public class RegressionTree implements Regression<double[]> {
      * @param output
      *            An interface to calculate node output.
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -700,6 +689,7 @@ public class RegressionTree implements Regression<double[]> {
         this.J = J;
         this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this.importance = new double[attributes.length];
+        this.rnd = new Random(seed);
 
         int n = 0;
         double sum = 0.0;

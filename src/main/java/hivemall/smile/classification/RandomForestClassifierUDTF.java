@@ -348,8 +348,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? Thread.currentThread().getId()
-                    * System.currentTimeMillis() : this.seed;
+            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed() : this.seed;
             final Random random = new Random(s);
             final int n = x.length;
             int[] samples = new int[n]; // Training samples draw with replacement.
@@ -357,7 +356,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 samples[random.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, samples, order, splitRule);
+            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, samples, order, splitRule, s);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {

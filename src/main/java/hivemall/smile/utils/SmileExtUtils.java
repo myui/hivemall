@@ -127,4 +127,15 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         }
     }
 
+    public static long generateSeed() {
+        return Thread.currentThread().getId() * System.currentTimeMillis();
+    }
+
+    public static void permutate(@Nonnull final int[] x, @Nonnull final smile.math.Random rnd) {
+        for(int i = 0; i < x.length; i++) {
+            int j = i + rnd.nextInt(x.length - i);
+            Math.swap(x, i, j);
+        }
+    }
+
 }

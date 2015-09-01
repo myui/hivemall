@@ -362,7 +362,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 samples[random.nextInt(n)]++;
             }
 
-            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, nodeCapacity, numLeafs, order, samples);
+            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, nodeCapacity, numLeafs, order, samples, s);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {

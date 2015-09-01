@@ -34,6 +34,7 @@ package hivemall.smile.classification;
 
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.lang.StringUtils;
+import hivemall.utils.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +48,7 @@ import smile.classification.Classifier;
 import smile.data.Attribute;
 import smile.data.NominalAttribute;
 import smile.math.Math;
+import smile.math.Random;
 
 /**
  * Decision tree for classification. A decision tree can be learned by splitting
@@ -116,7 +118,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * The attributes of independent variable.
      */
-    private Attribute[] attributes;
+    private final Attribute[] attributes;
     /**
      * Variable importance. Every time a split of a node is made on variable the
      * (GINI, information gain, etc.) impurity criterion for the two descendent
@@ -124,33 +126,31 @@ public class DecisionTree implements Classifier<double[]> {
      * individual variable over the tree gives a simple measure of variable
      * importance.
      */
-    private double[] importance;
+    private final double[] importance;
     /**
      * The root of the regression tree
      */
-    private Node root;
+    private final Node root;
     /**
      * The splitting rule.
      */
-    private SplitRule rule = SplitRule.GINI;
+    private final SplitRule rule;
     /**
      * The number of classes.
      */
-    private int k = 2;
-    /**
-     * The maximum number of leaf nodes in the tree.
-     */
-    //private int J = 100;
+    private final int k;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
-    private int M;
+    private final int M;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
      */
-    private transient int[][] order;
+    private final int[][] order;
+    
+    private final Random rnd;
 
     /**
      * The criterion to choose variable to split instances.
@@ -417,33 +417,18 @@ public class DecisionTree implements Classifier<double[]> {
             for(int i = 0; i < p; i++) {
                 variables[i] = i;
             }
-
+            
             if(M < p) {
-                synchronized(DecisionTree.class) {
-                    Math.permutate(variables);
-                }
-
-                // Random forest already runs on parallel.
-                for(int j = 0; j < M; j++) {
-                    Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
-                    if(split.splitScore > node.splitScore) {
-                        node.splitFeature = split.splitFeature;
-                        node.splitValue = split.splitValue;
-                        node.splitScore = split.splitScore;
-                        node.trueChildOutput = split.trueChildOutput;
-                        node.falseChildOutput = split.falseChildOutput;
-                    }
-                }
-            } else {
-                for(int j = 0; j < M; j++) {
-                    Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
-                    if(split.splitScore > node.splitScore) {
-                        node.splitFeature = split.splitFeature;
-                        node.splitValue = split.splitValue;
-                        node.splitScore = split.splitScore;
-                        node.trueChildOutput = split.trueChildOutput;
-                        node.falseChildOutput = split.falseChildOutput;
-                    }
+                SmileExtUtils.permutate(variables, rnd);
+            }
+            for(int j = 0; j < M; j++) {
+                Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
+                if(split.splitScore > node.splitScore) {
+                    node.splitFeature = split.splitFeature;
+                    node.splitValue = split.splitValue;
+                    node.splitScore = split.splitScore;
+                    node.trueChildOutput = split.trueChildOutput;
+                    node.falseChildOutput = split.falseChildOutput;
                 }
             }
 
@@ -679,7 +664,7 @@ public class DecisionTree implements Classifier<double[]> {
      * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int[], int[][], SplitRule)
      */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J) {
-        this(attributes, x, y, x[0].length, J, null, null, SplitRule.GINI);
+        this(attributes, x, y, x[0].length, J, null, null, SplitRule.GINI, SmileExtUtils.generateSeed());
     }
 
     /**
@@ -705,8 +690,9 @@ public class DecisionTree implements Classifier<double[]> {
      *            samples[i] is the number of sampling for instance i.
      * @param rule
      *            the splitting rule.
+     * @param seed 
      */
-    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule) {
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule, long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -728,11 +714,11 @@ public class DecisionTree implements Classifier<double[]> {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
-        //this.J = J;
         this.M = M;
         this.rule = rule;
         this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this.importance = new double[attributes.length];
+        this.rnd = new Random(seed);
 
         int n = y.length;
         int[] count = new int[k];
