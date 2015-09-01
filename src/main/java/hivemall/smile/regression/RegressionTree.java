@@ -284,13 +284,13 @@ public class RegressionTree implements Regression<double[]> {
                     buf.append("push ").append(splitValue);
                     scripts.add(buf.toString());
                     buf.setLength(0);
-                    buf.append("ifeq ");
+                    buf.append("ifne ");
                     scripts.add(buf.toString());
                     depth += 3;
                     selfDepth += 3;
                     int trueDepth = trueChild.opcodegen(scripts, depth);
                     selfDepth += trueDepth;
-                    scripts.set(depth - 1, "ifeq " + String.valueOf(depth + trueDepth));
+                    scripts.set(depth - 1, "ifne " + String.valueOf(depth + trueDepth));
                     int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
                 } else if(attributes[splitFeature].type == Attribute.Type.NUMERIC) {
