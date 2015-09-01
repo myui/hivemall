@@ -168,12 +168,12 @@ public class StackMachineTest {
     }
 
     @Test
-    public void testBug() throws IOException, ParseException, HiveException, VMRuntimeException {
+    public void testLargeOpcodes() throws IOException, ParseException, HiveException,
+            VMRuntimeException {
         URL url = new URL("https://gist.githubusercontent.com/myui/b1a8e588f5750e3b658c/raw/a4074d37400dab2b13a2f43d81f5166188d3461a/vmtest01.txt");
         InputStream is = new BufferedInputStream(url.openStream());
         String opScript = IOUtils.toString(is);
 
-        // Sample of machine code having infinite loop
         double[] x = new double[] { 36, 2, 1, 2, 0, 436, 1, 0, 0, 13, 0, 567, 1, 595, 2, 1 };
         StackMachine sm = new StackMachine();
         sm.run(opScript, x);
