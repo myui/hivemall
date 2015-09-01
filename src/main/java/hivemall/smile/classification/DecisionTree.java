@@ -34,7 +34,6 @@ package hivemall.smile.classification;
 
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.lang.StringUtils;
-import hivemall.utils.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,7 +148,7 @@ public class DecisionTree implements Classifier<double[]> {
      * attributes will be sorted.
      */
     private final int[][] order;
-    
+
     private final Random rnd;
 
     /**
@@ -417,7 +416,7 @@ public class DecisionTree implements Classifier<double[]> {
             for(int i = 0; i < p; i++) {
                 variables[i] = i;
             }
-            
+
             if(M < p) {
                 SmileExtUtils.permutate(variables, rnd);
             }

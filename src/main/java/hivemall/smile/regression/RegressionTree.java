@@ -50,7 +50,6 @@ import smile.math.Random;
 import smile.regression.GradientTreeBoost;
 import smile.regression.RandomForest;
 import smile.regression.Regression;
-import smile.util.SmileUtils;
 
 /**
  * Decision tree for regression. A decision tree can be learned by splitting the
