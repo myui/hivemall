@@ -177,17 +177,31 @@ public final class StackMachine {
                 }
                 break;
             }
-            case IFEQ: {// follow the rule of smile's Math class.
+            case IFEQ: {
                 double a = pop();
                 double b = pop();
-                if(smile.math.Math.equals(a, b)) {
+                if(a==b) {
+                    IP++;
+                } else {
                     if(StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
                     }
-                } else {
+                }
+                break;
+            }
+            case IFNE: {// follow the rule of smile's Math class.
+                double a = pop();
+                double b = pop();
+                if(smile.math.Math.equals(a, b)) {
                     IP++;
+                } else {
+                    if(StringUtils.isInt(currentOperation.operand)) {
+                        IP = Integer.parseInt(currentOperation.operand);
+                    } else {
+                        IP = jumpMap.get(currentOperation.operand);
+                    }
                 }
                 break;
             }
