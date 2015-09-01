@@ -20,8 +20,13 @@ package hivemall.utils.io;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.annotation.Nonnull;
 
 public final class IOUtils {
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
 
     private IOUtils() {}
 
@@ -33,6 +38,30 @@ public final class IOUtils {
                 ;
             }
         }
+    }
+
+    /**
+     * Serialize given InputStream as String.
+     */
+    public static String toString(@Nonnull final InputStream input) throws IOException {
+        FastMultiByteArrayOutputStream output = new FastMultiByteArrayOutputStream();
+        copy(input, output);
+        return output.toString();
+    }
+
+    /**
+     * InputStream -> OutputStream
+     */
+    public static int copy(@Nonnull final InputStream input, @Nonnull final OutputStream output)
+            throws IOException {
+        final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        int count = 0;
+        int n = 0;
+        while(-1 != (n = input.read(buffer))) {
+            output.write(buffer, 0, n);
+            count += n;
+        }
+        return count;
     }
 
 }
