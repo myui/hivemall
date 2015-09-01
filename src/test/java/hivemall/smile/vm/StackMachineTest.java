@@ -174,11 +174,20 @@ public class StackMachineTest {
         InputStream is = new BufferedInputStream(url.openStream());
         String opScript = IOUtils.toString(is);
 
-        double[] x = new double[] { 36, 2, 1, 2, 0, 436, 1, 0, 0, 13, 0, 567, 1, 595, 2, 1 };
         StackMachine sm = new StackMachine();
-        sm.run(opScript, x);
-        Double result = sm.getResult();
-        assertEquals(0.d, result.doubleValue(), 0d);
+        sm.compile(opScript);
+
+        double[] x1 = new double[] { 36, 2, 1, 2, 0, 436, 1, 0, 0, 13, 0, 567, 1, 595, 2, 1 };
+        sm.eval(x1);
+        assertEquals(0.d, sm.getResult().doubleValue(), 0d);
+
+        double[] x2 = { 31, 2, 1, 2, 0, 354, 1, 0, 0, 30, 0, 502, 1, 9, 2, 2 };
+        sm.eval(x2);
+        assertEquals(1.d, sm.getResult().doubleValue(), 0d);
+
+        double[] x3 = { 39, 0, 0, 0, 0, 1756, 0, 0, 0, 3, 0, 939, 1, 0, 0, 0 };
+        sm.eval(x3);
+        assertEquals(0.d, sm.getResult().doubleValue(), 0d);
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
