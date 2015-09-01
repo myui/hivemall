@@ -51,13 +51,13 @@ import org.apache.hadoop.io.Writable;
 public final class TreePredictByJavascriptUDF extends GenericUDF {
 
     private boolean classification;
-
-    private ScriptEngine scriptEngine;
-    private Compilable compilableEngine;
-    private Map<String, CompiledScript> cache;
-
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
+
+    // should not be instantiated at #initialize
+    private ScriptEngine scriptEngine = null;
+    private Compilable compilableEngine = null;
+    private Map<String, CompiledScript> cache = null;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -80,18 +80,6 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
         }
         this.classification = classification;
 
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByExtension("js");
-        if(!(engine instanceof Compilable)) {
-            throw new UDFArgumentException("ScriptEngine was not compilable: "
-                    + engine.getFactory().getEngineName() + " version "
-                    + engine.getFactory().getEngineVersion());
-        }
-        this.scriptEngine = engine;
-        this.compilableEngine = (Compilable) engine;
-
-        this.cache = new WeakHashMap<String, CompiledScript>();
-
         if(classification) {
             return PrimitiveObjectInspectorFactory.writableIntObjectInspector;
         } else {
@@ -101,6 +89,19 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
 
     @Override
     public Writable evaluate(@Nonnull DeferredObject[] arguments) throws HiveException {
+        if(scriptEngine == null) {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            ScriptEngine engine = manager.getEngineByExtension("js");
+            if(!(engine instanceof Compilable)) {
+                throw new UDFArgumentException("ScriptEngine was not compilable: "
+                        + engine.getFactory().getEngineName() + " version "
+                        + engine.getFactory().getEngineVersion());
+            }
+            this.scriptEngine = engine;
+            this.compilableEngine = (Compilable) engine;
+            this.cache = new WeakHashMap<String, CompiledScript>();
+        }
+
         Object arg0 = arguments[0].get();
         if(arg0 == null) {
             return null;

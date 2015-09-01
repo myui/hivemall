@@ -48,8 +48,9 @@ public final class TreePredictByStackMachineUDF extends GenericUDF {
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
 
-    private String prevScripts;
-    private StackMachine prevVM;
+    // should not be instantiated at #initialize
+    private String prevScripts = null;
+    private StackMachine prevVM = null;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
