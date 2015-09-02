@@ -93,7 +93,7 @@ public final class RandomForestEnsembleUDAF extends UDAF {
 
     public static final class Result {
         @SuppressWarnings("unused")
-        private Integer predicted_class;
+        private Integer label;
         @SuppressWarnings("unused")
         private Double probability;
         @SuppressWarnings("unused")
@@ -133,7 +133,7 @@ public final class RandomForestEnsembleUDAF extends UDAF {
                     probabilities[i] = Double.valueOf(cnt.intValue() / totalCnt_d);
                 }
             }
-            this.predicted_class = maxKey;
+            this.label = maxKey;
             this.probability = Double.valueOf(maxCnt / totalCnt_d);
             this.probabilities = Arrays.asList(probabilities);
         }
