@@ -59,7 +59,7 @@ public class StackMachineTest {
      */
     @Test
     public void testIris() throws IOException, ParseException, HiveException {
-        URL url = new URL("http://people.cs.kuleuven.be/~leander.schietgat/datasets/iris.arff");
+        URL url = new URL("https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
         InputStream is = new BufferedInputStream(url.openStream());
 
         ArffParser arffParser = new ArffParser();
@@ -81,9 +81,7 @@ public class StackMachineTest {
 
     @Test
     public void testCpu() throws IOException, ParseException, HiveException {
-        // can change the datasets in http://storm.cis.fordham.edu/~gweiss/data-mining/weka-data/~
-        URL url = new URL("http://storm.cis.fordham.edu/~gweiss/data-mining/weka-data/cpu.arff");
-        // URL url = new URL("http://storm.cis.fordham.edu/~gweiss/data-mining/weka-data/cpu.with.vendor.arff");
+        URL url = new URL("https://gist.githubusercontent.com/myui/ef17aabecf0c0c5bcb69/raw/aac0575b4d43072c6f3c82d9072fdefb61892694/cpu.arff");
         InputStream is = new BufferedInputStream(url.openStream());
 
         ArffParser arffParser = new ArffParser();
@@ -111,7 +109,7 @@ public class StackMachineTest {
 
     @Test
     public void testCpu2() throws IOException, ParseException, HiveException {
-        URL url = new URL("http://storm.cis.fordham.edu/~gweiss/data-mining/weka-data/cpu.arff");
+        URL url = new URL("https://gist.githubusercontent.com/myui/ef17aabecf0c0c5bcb69/raw/aac0575b4d43072c6f3c82d9072fdefb61892694/cpu.arff");
         InputStream is = new BufferedInputStream(url.openStream());
 
         ArffParser arffParser = new ArffParser();

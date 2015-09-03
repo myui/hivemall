@@ -27,8 +27,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
 
-import javax.script.ScriptException;
-
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -46,14 +44,67 @@ public class DecisionTreeTest {
 
     /**
      * Test of learn method, of class DecisionTree.
-     * 
-     * @throws ScriptException
-     * @throws IOException
-     * @throws ParseException
-     * @throws HiveException
+     * @throws ParseException 
+     * @throws IOException 
      */
     @Test
-    public void testIris() throws IOException, ParseException, HiveException {
+    public void testWeather() throws IOException, ParseException {
+        URL url = new URL("https://gist.githubusercontent.com/myui/2c9df50db3de93a71b92/raw/3f6b4ecfd4045008059e1a2d1c4064fb8a3d372a/weather.nominal.arff");
+        InputStream is = new BufferedInputStream(url.openStream());
+
+        ArffParser arffParser = new ArffParser();
+        arffParser.setResponseIndex(4);
+
+        AttributeDataset weather = arffParser.parse(is);
+        double[][] x = weather.toArray(new double[weather.size()][]);
+        int[] y = weather.toArray(new int[weather.size()]);
+
+        int n = x.length;
+        LOOCV loocv = new LOOCV(n);
+        int error = 0;
+        for(int i = 0; i < n; i++) {
+            double[][] trainx = Math.slice(x, loocv.train[i]);
+            int[] trainy = Math.slice(y, loocv.train[i]);
+
+            DecisionTree tree = new DecisionTree(weather.attributes(), trainx, trainy, 3);
+            if(y[loocv.test[i]] != tree.predict(x[loocv.test[i]]))
+                error++;
+        }
+
+        debugPrint("Decision Tree error = " + error);
+        assertEquals(5, error);
+    }
+
+    @Test
+    public void testIris() throws IOException, ParseException {
+        URL url = new URL("https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
+        InputStream is = new BufferedInputStream(url.openStream());
+
+        ArffParser arffParser = new ArffParser();
+        arffParser.setResponseIndex(4);
+
+        AttributeDataset iris = arffParser.parse(is);
+        double[][] x = iris.toArray(new double[iris.size()][]);
+        int[] y = iris.toArray(new int[iris.size()]);
+
+        int n = x.length;
+        LOOCV loocv = new LOOCV(n);
+        int error = 0;
+        for(int i = 0; i < n; i++) {
+            double[][] trainx = Math.slice(x, loocv.train[i]);
+            int[] trainy = Math.slice(y, loocv.train[i]);
+
+            DecisionTree tree = new DecisionTree(iris.attributes(), trainx, trainy, 4);
+            if(y[loocv.test[i]] != tree.predict(x[loocv.test[i]]))
+                error++;
+        }
+
+        debugPrint("Decision Tree error = " + error);
+        assertEquals(7, error);
+    }
+
+    @Test
+    public void testIris2() throws IOException, ParseException, HiveException {
         URL url = new URL("http://people.cs.kuleuven.be/~leander.schietgat/datasets/iris.arff");
         InputStream is = new BufferedInputStream(url.openStream());
 
@@ -92,4 +143,5 @@ public class DecisionTreeTest {
             System.out.println(msg);
         }
     }
+
 }
