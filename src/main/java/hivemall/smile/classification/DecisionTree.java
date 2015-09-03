@@ -144,6 +144,10 @@ public class DecisionTree implements Classifier<double[]> {
      */
     private final int M;
     /**
+     * The number of instances in a node below which the tree will not split.
+     */
+    private final int S;
+    /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
      */
@@ -600,7 +604,7 @@ public class DecisionTree implements Classifier<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(trueChild.findBestSplit()) {
+            if(tc > S && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -609,7 +613,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(falseChild.findBestSplit()) {
+            if(fc > S && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -660,10 +664,24 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
-     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int[], int[][], SplitRule)
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
+     */
+    public DecisionTree(@Nonnull double[][] x, @Nonnull int[] y, int J, @Nonnull SplitRule rule) {
+        this(null, x, y, x[0].length, J, 2, null, null, rule, SmileExtUtils.generateSeed());
+    }
+
+    /**
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
      */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J) {
-        this(attributes, x, y, x[0].length, J, null, null, SplitRule.GINI, SmileExtUtils.generateSeed());
+        this(attributes, x, y, x[0].length, J, 2, null, null, SplitRule.GINI, SmileExtUtils.generateSeed());
+    }
+
+    /**
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
+     */
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J, @Nonnull SplitRule rule) {
+        this(attributes, x, y, x[0].length, J, 2, null, null, rule, SmileExtUtils.generateSeed());
     }
 
     /**
@@ -691,7 +709,7 @@ public class DecisionTree implements Classifier<double[]> {
      *            the splitting rule.
      * @param seed 
      */
-    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule, long seed) {
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, int S, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule, long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -714,6 +732,7 @@ public class DecisionTree implements Classifier<double[]> {
                     + Arrays.toString(attributes));
         }
         this.M = M;
+        this.S = S;
         this.rule = rule;
         this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this.importance = new double[attributes.length];

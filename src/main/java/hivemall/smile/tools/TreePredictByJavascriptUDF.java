@@ -89,19 +89,6 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
 
     @Override
     public Writable evaluate(@Nonnull DeferredObject[] arguments) throws HiveException {
-        if(scriptEngine == null) {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine engine = manager.getEngineByExtension("js");
-            if(!(engine instanceof Compilable)) {
-                throw new UDFArgumentException("ScriptEngine was not compilable: "
-                        + engine.getFactory().getEngineName() + " version "
-                        + engine.getFactory().getEngineVersion());
-            }
-            this.scriptEngine = engine;
-            this.compilableEngine = (Compilable) engine;
-            this.cache = new WeakHashMap<String, CompiledScript>();
-        }
-
         Object arg0 = arguments[0].get();
         if(arg0 == null) {
             return null;
@@ -120,6 +107,19 @@ public final class TreePredictByJavascriptUDF extends GenericUDF {
     @Nonnull
     public Writable evaluate(@Nonnull final String script, @Nonnull final double[] features, final boolean classification)
             throws HiveException {
+        if(scriptEngine == null) {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            ScriptEngine engine = manager.getEngineByExtension("js");
+            if(!(engine instanceof Compilable)) {
+                throw new UDFArgumentException("ScriptEngine was not compilable: "
+                        + engine.getFactory().getEngineName() + " version "
+                        + engine.getFactory().getEngineVersion());
+            }
+            this.scriptEngine = engine;
+            this.compilableEngine = (Compilable) engine;
+            this.cache = new WeakHashMap<String, CompiledScript>();
+        }
+
         CompiledScript compiled = cache.get(script);
         if(compiled == null) {
             try {

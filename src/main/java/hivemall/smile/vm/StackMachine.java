@@ -180,7 +180,7 @@ public final class StackMachine {
             case IFEQ: {
                 double a = pop();
                 double b = pop();
-                if(a==b) {
+                if(a == b) {
                     IP++;
                 } else {
                     if(StringUtils.isInt(currentOperation.operand)) {
@@ -191,7 +191,7 @@ public final class StackMachine {
                 }
                 break;
             }
-            case IFNE: {// follow the rule of smile's Math class.
+            case IFEQ2: {// follow the rule of smile's Math class.
                 double a = pop();
                 double b = pop();
                 if(smile.math.Math.equals(a, b)) {

@@ -119,10 +119,6 @@ public class RegressionTree implements Regression<double[]> {
      */
     private final int S;
     /**
-     * The maximum number of leaf nodes in the tree.
-     */
-    private final int J;
-    /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
@@ -132,7 +128,7 @@ public class RegressionTree implements Regression<double[]> {
      * attributes will be sorted.
      */
     private final int[][] order;
-    
+
     private final Random rnd;
 
     /**
@@ -623,14 +619,14 @@ public class RegressionTree implements Regression<double[]> {
     }
 
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int J) {
-        this(attributes, x, y, x[0].length, 5, J, null, null, SmileExtUtils.generateSeed());
+        this(attributes, x, y, x[0].length, J, 5, null, null, SmileExtUtils.generateSeed());
     }
 
     /**
      * @see RegressionTree#RegressionTree(Attribute[], double[][], double[], int, int, int, int[][], int[], NodeOutput, seeds)
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples, long seed) {
-        this(attributes, x, y, M, S, J, order, samples, null, seed);
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int J, int S, @Nullable int[][] order, @Nullable int[] samples, long seed) {
+        this(attributes, x, y, M, J, S, order, samples, null, seed);
     }
 
     /**
@@ -646,11 +642,11 @@ public class RegressionTree implements Regression<double[]> {
      *            the number of input variables to pick to split on at each
      *            node. It seems that dim/3 give generally good performance,
      *            where dim is the number of variables.
+     * @param J
+     *            the maximum number of leaf nodes in the tree.
      * @param S
      *            number of instances in a node below which the tree will not
      *            split, setting S = 5 generally gives good results.
-     * @param J
-     *            the maximum number of leaf nodes in the tree.
      * @param order
      *            the index of training values in ascending order. Note that
      *            only numeric attributes need be sorted.
@@ -661,7 +657,7 @@ public class RegressionTree implements Regression<double[]> {
      * @param output
      *            An interface to calculate node output.
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int S, int J, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, long seed) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int J, int S, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -685,7 +681,6 @@ public class RegressionTree implements Regression<double[]> {
 
         this.M = M;
         this.S = S;
-        this.J = J;
         this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this.importance = new double[attributes.length];
         this.rnd = new Random(seed);
@@ -722,7 +717,7 @@ public class RegressionTree implements Regression<double[]> {
             }
             // Pop best leaf from priority queue, split it, and push
             // children nodes into the queue if possible.
-            for(int leaves = 1; leaves < this.J; leaves++) {
+            for(int leaves = 1; leaves < J; leaves++) {
                 // parent is the leaf to split
                 TrainNode node = nextSplits.poll();
                 if(node == null) {
