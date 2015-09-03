@@ -232,8 +232,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        // Shuffle training samples
-        // SmileExtUtils.shuffle(x, y, new smile.math.Random(seed));
+        // Shuffle training samples        
+        SmileExtUtils.shuffle(x, y, seed);
 
         int[] labels = SmileExtUtils.classLables(y);
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);

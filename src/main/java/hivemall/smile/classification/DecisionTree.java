@@ -418,7 +418,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             if(M < p) {
-                SmileExtUtils.permutate(variables, rnd);
+                SmileExtUtils.shuffle(variables, rnd);
             }
             for(int j = 0; j < M; j++) {
                 Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);

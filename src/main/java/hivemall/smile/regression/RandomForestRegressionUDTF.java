@@ -238,8 +238,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         if(nodeCapacity <= 0) {
             throw new HiveException("Invalid minimum leaf node size: " + nodeCapacity);
         }
-        // Shuffle training samples
-        // SmileExtUtils.shuffle(x, y, new smile.math.Random(seed));
+        // Shuffle training samples 
+        SmileExtUtils.shuffle(x, y, seed);
 
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
         int numInputVars = (numVars <= 0) ? Math.max(1, x[0].length / 3) : numVars;
@@ -360,8 +360,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? Thread.currentThread().getId()
-                    * System.currentTimeMillis() : this.seed;
+            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed() : this.seed;
             final Random rand = new Random(s);
             final int n = x.length;
             // Training samples draw with replacement.

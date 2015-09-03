@@ -416,7 +416,7 @@ public class RegressionTree implements Regression<double[]> {
             if(M < p) {
                 // Training of Random Forest will get into this race condition.
                 // smile.math.Math uses a static object of random number generator.
-                SmileExtUtils.permutate(variables, rnd);
+                SmileExtUtils.shuffle(variables, rnd);
             }
             for(int j = 0; j < M; j++) {
                 Node split = findBestSplit(n, sum, variables[j]);

@@ -131,18 +131,22 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         return Thread.currentThread().getId() * System.currentTimeMillis();
     }
 
-    public static void permutate(@Nonnull final int[] x, @Nonnull final smile.math.Random rnd) {
-        for(int i = 0; i < x.length; i++) {
-            int j = i + rnd.nextInt(x.length - i);
-            Math.swap(x, i, j);
+    public static void shuffle(@Nonnull final int[] x, @Nonnull final smile.math.Random rnd) {
+        for(int i = x.length; i > 1; i--) {
+            int j = rnd.nextInt(i);
+            Math.swap(x, i - 1, j);
         }
     }
 
-    public static void shuffle(@Nonnull final double[][] x, final int[] y, @Nonnull final smile.math.Random rnd) {
+    public static void shuffle(@Nonnull final double[][] x, final int[] y, @Nonnull long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
                     + y.length + ')');
         }
+        if(seed == -1L) {
+            seed = generateSeed();
+        }
+        final smile.math.Random rnd = new smile.math.Random(seed);
         for(int i = x.length; i > 1; i--) {
             int j = rnd.nextInt(i);
             swap(x, i - 1, j);
@@ -150,11 +154,15 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         }
     }
 
-    public static void shuffle(@Nonnull final double[][] x, final double[] y, @Nonnull final smile.math.Random rnd) {
+    public static void shuffle(@Nonnull final double[][] x, final double[] y, @Nonnull long seed) {
         if(x.length != y.length) {
             throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
                     + y.length + ')');
         }
+        if(seed == -1L) {
+            seed = generateSeed();
+        }
+        final smile.math.Random rnd = new smile.math.Random(seed);
         for(int i = x.length; i > 1; i--) {
             int j = rnd.nextInt(i);
             swap(x, i - 1, j);
