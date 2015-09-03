@@ -56,8 +56,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 import smile.data.Attribute;
-import smile.math.Math;
-import smile.math.Random;
 
 @Description(name = "train_randomforest_classifier", value = "_FUNC_(double[] features, int label [, string options]) - "
         + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
@@ -234,9 +232,17 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
+        // Shuffle training samples
+        // SmileExtUtils.shuffle(x, y, new smile.math.Random(seed));
+
         int[] labels = SmileExtUtils.classLables(y);
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
         int numInputVars = (numVars == -1) ? (int) Math.floor(Math.sqrt(x[0].length)) : numVars;
+
+        if(logger.isInfoEnabled()) {
+            logger.info("numTrees: " + numTrees + ", numVars: " + numInputVars + ", maxLeafs: "
+                    + maxLeafs + ", splitRule: " + splitRule + ", seed: " + seed);
+        }
 
         final int numExamples = x.length;
         int[][] prediction = new int[numExamples][labels.length]; // placeholder for out-of-bag prediction
@@ -270,7 +276,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if(lastTask) {
             // out-of-bag error estimate
             for(int i = 0; i < y.length; i++) {
-                int pred = Math.whichMax(prediction[i]);
+                int pred = smile.math.Math.whichMax(prediction[i]);
                 if(prediction[i][pred] > 0) {
                     oobTests++;
                     if(pred != y[i]) {
@@ -349,11 +355,12 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         @Override
         public Integer call() throws HiveException {
             long s = (this.seed == -1L) ? SmileExtUtils.generateSeed() : this.seed;
-            final Random random = new Random(s);
+            final smile.math.Random rand = new smile.math.Random(s);
             final int n = x.length;
-            int[] samples = new int[n]; // Training samples draw with replacement.
+            // Training samples draw with replacement.
+            int[] samples = new int[n];
             for(int i = 0; i < n; i++) {
-                samples[random.nextInt(n)]++;
+                samples[rand.nextInt(n)]++;
             }
 
             DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, samples, order, splitRule, s);

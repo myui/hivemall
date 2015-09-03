@@ -138,4 +138,37 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         }
     }
 
+    public static void shuffle(@Nonnull final double[][] x, final int[] y, @Nonnull final smile.math.Random rnd) {
+        if(x.length != y.length) {
+            throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
+                    + y.length + ')');
+        }
+        for(int i = x.length; i > 1; i--) {
+            int j = rnd.nextInt(i);
+            swap(x, i - 1, j);
+            Math.swap(y, i - 1, j);
+        }
+    }
+
+    public static void shuffle(@Nonnull final double[][] x, final double[] y, @Nonnull final smile.math.Random rnd) {
+        if(x.length != y.length) {
+            throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
+                    + y.length + ')');
+        }
+        for(int i = x.length; i > 1; i--) {
+            int j = rnd.nextInt(i);
+            swap(x, i - 1, j);
+            Math.swap(y, i - 1, j);
+        }
+    }
+
+    /**
+     * Swap two elements of an array.
+     */
+    public static void swap(final double[][] x, final int i, final int j) {
+        double[] s = x[i];
+        x[i] = x[j];
+        x[j] = s;
+    }
+
 }

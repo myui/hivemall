@@ -238,9 +238,16 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         if(nodeCapacity <= 0) {
             throw new HiveException("Invalid minimum leaf node size: " + nodeCapacity);
         }
+        // Shuffle training samples
+        // SmileExtUtils.shuffle(x, y, new smile.math.Random(seed));
 
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
         int numInputVars = (numVars <= 0) ? Math.max(1, x[0].length / 3) : numVars;
+
+        if(logger.isInfoEnabled()) {
+            logger.info("numTrees: " + numTrees + ", numVars: " + numInputVars + ", maxLeafs: "
+                    + maxLeafs + ", nodeCapacity: " + nodeCapacity + ", seed: " + seed);
+        }
 
         final int numExamples = x.length;
         double[] prediction = new double[numExamples]; // placeholder for out-of-bag prediction
@@ -355,11 +362,12 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         public Integer call() throws HiveException {
             long s = (this.seed == -1L) ? Thread.currentThread().getId()
                     * System.currentTimeMillis() : this.seed;
-            final Random random = new Random(s);
+            final Random rand = new Random(s);
             final int n = x.length;
-            int[] samples = new int[n]; // Training samples draw with replacement.
+            // Training samples draw with replacement.
+            int[] samples = new int[n];
             for(int i = 0; i < n; i++) {
-                samples[random.nextInt(n)]++;
+                samples[rand.nextInt(n)]++;
             }
 
             RegressionTree tree = new RegressionTree(attributes, x, y, numVars, nodeCapacity, numLeafs, order, samples, s);
