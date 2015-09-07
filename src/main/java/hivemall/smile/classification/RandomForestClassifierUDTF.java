@@ -239,7 +239,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if(minSamplesSplit <= 0) {
             throw new HiveException("Invalid minSamplesSplit: " + minSamplesSplit);
         }
-        // Shuffle training samples        
+        // Shuffle training samples    
         SmileExtUtils.shuffle(x, y, seed);
 
         int[] labels = SmileExtUtils.classLables(y);
@@ -364,16 +364,18 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed() : this.seed;
-            final smile.math.Random rand = new smile.math.Random(s);
+            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed()
+                    : new smile.math.Random(seed).nextLong();
+            final smile.math.Random rnd1 = new smile.math.Random(s);
+            final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
             final int n = x.length;
             // Training samples draw with replacement.
-            int[] samples = new int[n];
+            final int[] samples = new int[n];
             for(int i = 0; i < n; i++) {
-                samples[rand.nextInt(n)]++;
+                samples[rnd1.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, samples, order, splitRule, s);
+            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, samples, order, splitRule, rnd2);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {

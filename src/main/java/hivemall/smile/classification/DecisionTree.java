@@ -117,7 +117,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * The attributes of independent variable.
      */
-    private final Attribute[] attributes;
+    private final Attribute[] _attributes;
     /**
      * Variable importance. Every time a split of a node is made on variable the
      * (GINI, information gain, etc.) impurity criterion for the two descendent
@@ -125,35 +125,35 @@ public class DecisionTree implements Classifier<double[]> {
      * individual variable over the tree gives a simple measure of variable
      * importance.
      */
-    private final double[] importance;
+    private final double[] _importance;
     /**
      * The root of the regression tree
      */
-    private final Node root;
+    private final Node _root;
     /**
      * The splitting rule.
      */
-    private final SplitRule rule;
+    private final SplitRule _rule;
     /**
      * The number of classes.
      */
-    private final int k;
+    private final int _k;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
-    private final int M;
+    private final int _M;
     /**
      * The number of instances in a node below which the tree will not split.
      */
-    private final int S;
+    private final int _S;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
      */
-    private final int[][] order;
+    private final int[][] _order;
 
-    private final Random rnd;
+    private final Random _rnd;
 
     /**
      * The criterion to choose variable to split instances.
@@ -232,13 +232,13 @@ public class DecisionTree implements Classifier<double[]> {
             if(trueChild == null && falseChild == null) {
                 return output;
             } else {
-                if(attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
                     if(x[splitFeature] == splitValue) {
                         return trueChild.predict(x);
                     } else {
                         return falseChild.predict(x);
                     }
-                } else if(attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
                     if(x[splitFeature] <= splitValue) {
                         return trueChild.predict(x);
                     } else {
@@ -246,7 +246,7 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + _attributes[splitFeature].type);
                 }
             }
         }
@@ -256,7 +256,7 @@ public class DecisionTree implements Classifier<double[]> {
                 indent(builder, depth);
                 builder.append("").append(output).append(";\n");
             } else {
-                if(attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
                     indent(builder, depth);
                     builder.append("if(x[").append(splitFeature).append("] == ").append(splitValue).append(") {\n");
                     trueChild.codegen(builder, depth + 1);
@@ -265,7 +265,7 @@ public class DecisionTree implements Classifier<double[]> {
                     falseChild.codegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("}\n");
-                } else if(attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
                     indent(builder, depth);
                     builder.append("if(x[").append(splitFeature).append("] <= ").append(splitValue).append(") {\n");
                     trueChild.codegen(builder, depth + 1);
@@ -276,7 +276,7 @@ public class DecisionTree implements Classifier<double[]> {
                     builder.append("}\n");
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + _attributes[splitFeature].type);
                 }
             }
         }
@@ -292,7 +292,7 @@ public class DecisionTree implements Classifier<double[]> {
                 scripts.add(buf.toString());
                 selfDepth += 2;
             } else {
-                if(attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -308,7 +308,7 @@ public class DecisionTree implements Classifier<double[]> {
                     scripts.set(depth - 1, "ifeq " + String.valueOf(depth + trueDepth));
                     int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
-                } else if(attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -326,7 +326,7 @@ public class DecisionTree implements Classifier<double[]> {
                     selfDepth += falseDepth;
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + _attributes[splitFeature].type);
                 }
             }
             return selfDepth;
@@ -404,8 +404,8 @@ public class DecisionTree implements Classifier<double[]> {
 
             // Sample count in each class.
             int n = 0;
-            int[] count = new int[k];
-            int[] falseCount = new int[k];
+            int[] count = new int[_k];
+            int[] falseCount = new int[_k];
             for(int i = 0; i < N; i++) {
                 if(samples[i] > 0) {
                     n += samples[i];
@@ -415,16 +415,16 @@ public class DecisionTree implements Classifier<double[]> {
 
             double impurity = impurity(count, n);
 
-            int p = attributes.length;
+            int p = _attributes.length;
             int[] variables = new int[p];
             for(int i = 0; i < p; i++) {
                 variables[i] = i;
             }
 
-            if(M < p) {
-                SmileExtUtils.shuffle(variables, rnd);
+            if(_M < p) {
+                SmileExtUtils.shuffle(variables, _rnd);
             }
-            for(int j = 0; j < M; j++) {
+            for(int j = 0; j < _M; j++) {
                 Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
                 if(split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
@@ -457,9 +457,9 @@ public class DecisionTree implements Classifier<double[]> {
             int N = x.length;
             Node splitNode = new Node();
 
-            if(attributes[j].type == Attribute.Type.NOMINAL) {
-                int m = ((NominalAttribute) attributes[j]).size();
-                int[][] trueCount = new int[m][k];
+            if(_attributes[j].type == Attribute.Type.NOMINAL) {
+                int m = ((NominalAttribute) _attributes[j]).size();
+                int[][] trueCount = new int[m][_k];
 
                 for(int i = 0; i < N; i++) {
                     if(samples[i] > 0) {
@@ -476,7 +476,7 @@ public class DecisionTree implements Classifier<double[]> {
                         continue;
                     }
 
-                    for(int q = 0; q < k; q++) {
+                    for(int q = 0; q < _k; q++) {
                         falseCount[q] = count[q] - trueCount[l][q];
                     }
 
@@ -494,12 +494,12 @@ public class DecisionTree implements Classifier<double[]> {
                         splitNode.falseChildOutput = falseLabel;
                     }
                 }
-            } else if(attributes[j].type == Attribute.Type.NUMERIC) {
-                int[] trueCount = new int[k];
+            } else if(_attributes[j].type == Attribute.Type.NUMERIC) {
+                int[] trueCount = new int[_k];
                 double prevx = Double.NaN;
                 int prevy = -1;
 
-                for(int i : order[j]) {
+                for(int i : _order[j]) {
                     if(samples[i] > 0) {
                         if(Double.isNaN(prevx) || x[i][j] == prevx || y[i] == prevy) {
                             prevx = x[i][j];
@@ -519,7 +519,7 @@ public class DecisionTree implements Classifier<double[]> {
                             continue;
                         }
 
-                        for(int l = 0; l < k; l++) {
+                        for(int l = 0; l < _k; l++) {
                             falseCount[l] = count[l] - trueCount[l];
                         }
 
@@ -543,7 +543,7 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 }
             } else {
-                throw new IllegalStateException("Unsupported attribute type: " + attributes[j].type);
+                throw new IllegalStateException("Unsupported attribute type: " + _attributes[j].type);
             }
 
             return splitNode;
@@ -564,7 +564,7 @@ public class DecisionTree implements Classifier<double[]> {
             int[] trueSamples = new int[n];
             int[] falseSamples = new int[n];
 
-            if(attributes[node.splitFeature].type == Attribute.Type.NOMINAL) {
+            if(_attributes[node.splitFeature].type == Attribute.Type.NOMINAL) {
                 for(int i = 0; i < n; i++) {
                     if(samples[i] > 0) {
                         if(x[i][node.splitFeature] == node.splitValue) {
@@ -576,7 +576,7 @@ public class DecisionTree implements Classifier<double[]> {
                         }
                     }
                 }
-            } else if(attributes[node.splitFeature].type == Attribute.Type.NUMERIC) {
+            } else if(_attributes[node.splitFeature].type == Attribute.Type.NUMERIC) {
                 for(int i = 0; i < n; i++) {
                     if(samples[i] > 0) {
                         if(x[i][node.splitFeature] <= node.splitValue) {
@@ -590,7 +590,7 @@ public class DecisionTree implements Classifier<double[]> {
                 }
             } else {
                 throw new IllegalStateException("Unsupported attribute type: "
-                        + attributes[node.splitFeature].type);
+                        + _attributes[node.splitFeature].type);
             }
 
             if(tc == 0 || fc == 0) {
@@ -604,7 +604,7 @@ public class DecisionTree implements Classifier<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(tc > S && trueChild.findBestSplit()) {
+            if(tc > _S && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -613,7 +613,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(fc > S && falseChild.findBestSplit()) {
+            if(fc > _S && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -621,7 +621,7 @@ public class DecisionTree implements Classifier<double[]> {
                 }
             }
 
-            importance[node.splitFeature] += node.splitScore;
+            _importance[node.splitFeature] += node.splitScore;
 
             return true;
         }
@@ -639,7 +639,7 @@ public class DecisionTree implements Classifier<double[]> {
     private double impurity(int[] count, int n) {
         double impurity = 0.0;
 
-        switch (rule) {
+        switch (_rule) {
             case GINI:
                 impurity = 1.0;
                 for(int i = 0; i < count.length; i++) {
@@ -664,24 +664,24 @@ public class DecisionTree implements Classifier<double[]> {
     }
 
     /**
-     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, Random)
      */
     public DecisionTree(@Nonnull double[][] x, @Nonnull int[] y, int J, @Nonnull SplitRule rule) {
-        this(null, x, y, x[0].length, J, 2, null, null, rule, SmileExtUtils.generateSeed());
+        this(null, x, y, x[0].length, J, 2, null, null, rule, null);
     }
 
     /**
-     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, Random)
      */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J) {
-        this(attributes, x, y, x[0].length, J, 2, null, null, SplitRule.GINI, SmileExtUtils.generateSeed());
+        this(attributes, x, y, x[0].length, J, 2, null, null, SplitRule.GINI, null);
     }
 
     /**
-     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, long)
+     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][], SplitRule, Random)
      */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int J, @Nonnull SplitRule rule) {
-        this(attributes, x, y, x[0].length, J, 2, null, null, rule, SmileExtUtils.generateSeed());
+        this(attributes, x, y, x[0].length, J, 2, null, null, rule, null);
     }
 
     /**
@@ -709,7 +709,7 @@ public class DecisionTree implements Classifier<double[]> {
      *            the splitting rule.
      * @param seed 
      */
-    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, int S, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule, long seed) {
+    public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y, int M, int J, int S, @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule, @Nullable smile.math.Random rand) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -721,25 +721,25 @@ public class DecisionTree implements Classifier<double[]> {
             throw new IllegalArgumentException("Invalid maximum leaves: " + J);
         }
 
-        this.k = Math.max(y) + 1;
-        if(k < 2) {
+        this._k = Math.max(y) + 1;
+        if(_k < 2) {
             throw new IllegalArgumentException("Only one class or negative class labels.");
         }
 
-        this.attributes = SmileExtUtils.attributeTypes(attributes, x);
+        this._attributes = SmileExtUtils.attributeTypes(attributes, x);
         if(attributes.length != x[0].length) {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
-        this.M = M;
-        this.S = S;
-        this.rule = rule;
-        this.order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
-        this.importance = new double[attributes.length];
-        this.rnd = new Random(seed);
+        this._M = M;
+        this._S = S;
+        this._rule = rule;
+        this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
+        this._importance = new double[attributes.length];
+        this._rnd = (rand == null) ? new smile.math.Random() : rand; 
 
         int n = y.length;
-        int[] count = new int[k];
+        int[] count = new int[_k];
         if(samples == null) {
             samples = new int[n];
             for(int i = 0; i < n; i++) {
@@ -752,9 +752,9 @@ public class DecisionTree implements Classifier<double[]> {
             }
         }
 
-        this.root = new Node(Math.whichMax(count));
+        this._root = new Node(Math.whichMax(count));
 
-        TrainNode trainRoot = new TrainNode(root, x, y, samples);
+        TrainNode trainRoot = new TrainNode(_root, x, y, samples);
         if(J == Integer.MAX_VALUE) {
             if(trainRoot.findBestSplit()) {
                 trainRoot.split(null);
@@ -789,12 +789,12 @@ public class DecisionTree implements Classifier<double[]> {
      * @return the variable importance
      */
     public double[] importance() {
-        return importance;
+        return _importance;
     }
 
     @Override
     public int predict(double[] x) {
-        return root.predict(x);
+        return _root.predict(x);
     }
 
     /**
@@ -808,13 +808,13 @@ public class DecisionTree implements Classifier<double[]> {
 
     public String predictCodegen() {
         StringBuilder buf = new StringBuilder(1024);
-        root.codegen(buf, 0);
+        _root.codegen(buf, 0);
         return buf.toString();
     }
 
     public String predictOpCodegen(String sep) {
         List<String> opslist = new ArrayList<String>();
-        root.opcodegen(opslist, 0);
+        _root.opcodegen(opslist, 0);
         opslist.add("call end");
         String scripts = StringUtils.concat(opslist, sep);
         return scripts;

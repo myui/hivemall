@@ -57,7 +57,6 @@ import org.apache.hadoop.io.Text;
 
 import smile.data.Attribute;
 import smile.math.Math;
-import smile.math.Random;
 
 @Description(name = "train_randomforest_regression", value = "_FUNC_(double[] features, int label [, string options]) - "
         + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
@@ -361,16 +360,18 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed() : this.seed;
-            final Random rand = new Random(s);
+            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed()
+                    : new smile.math.Random(seed).nextLong();
+            final smile.math.Random rnd1 = new smile.math.Random(s);
+            final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
             final int n = x.length;
             // Training samples draw with replacement.
             int[] samples = new int[n];
             for(int i = 0; i < n; i++) {
-                samples[rand.nextInt(n)]++;
+                samples[rnd1.nextInt(n)]++;
             }
 
-            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, order, samples, s);
+            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, order, samples, rnd2);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {
