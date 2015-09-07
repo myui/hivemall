@@ -105,7 +105,7 @@ public class DecisionTreeTest {
 
     @Test
     public void testIris2() throws IOException, ParseException, HiveException {
-        URL url = new URL("http://people.cs.kuleuven.be/~leander.schietgat/datasets/iris.arff");
+        URL url = new URL("https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
         InputStream is = new BufferedInputStream(url.openStream());
 
         ArffParser arffParser = new ArffParser();
