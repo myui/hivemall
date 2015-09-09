@@ -166,7 +166,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private void generateSparseData() throws HiveException {
         float label = rnd1.nextFloat();
-        float sign = (label >= prob_one) ? 1.f : 0.f;
+        float sign = (label <= prob_one) ? 1.f : 0.f;
         labels[position] = classification ? sign : label;
         String[] features = featuresArray[position];
         assert (features != null);
