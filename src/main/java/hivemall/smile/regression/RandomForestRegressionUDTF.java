@@ -325,7 +325,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         /**
          * The maximum number of leaf nodes in the tree.
          */
-        private final int numLeafs;
+        private final int maxLeafs;
         /**
          * The number of instances in a node below which the tree will not split
          */
@@ -343,14 +343,14 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         private final long seed;
         private final AtomicInteger remainingTasks;
 
-        TrainingTask(RandomForestRegressionUDTF udtf, Attribute[] attributes, double[][] x, double[] y, int numVars, int numLeafs, int minSamplesSplit, int[][] order, double[] prediction, int[] oob, long seed, AtomicInteger remainingTasks) {
+        TrainingTask(RandomForestRegressionUDTF udtf, Attribute[] attributes, double[][] x, double[] y, int numVars, int maxLeafs, int minSamplesSplit, int[][] order, double[] prediction, int[] oob, long seed, AtomicInteger remainingTasks) {
             this.udtf = udtf;
             this.attributes = attributes;
             this.x = x;
             this.y = y;
             this.order = order;
             this.numVars = numVars;
-            this.numLeafs = numLeafs;
+            this.maxLeafs = maxLeafs;
             this.minSamplesSplit = minSamplesSplit;
             this.prediction = prediction;
             this.oob = oob;
@@ -371,7 +371,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 samples[rnd1.nextInt(n)]++;
             }
 
-            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, order, samples, rnd2);
+            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, maxLeafs, minSamplesSplit, order, samples, rnd2);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {

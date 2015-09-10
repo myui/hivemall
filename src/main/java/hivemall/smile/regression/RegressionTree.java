@@ -535,7 +535,8 @@ public class RegressionTree implements Regression<double[]> {
                     }
                 }
             } else {
-                throw new IllegalStateException("Unsupported attribute type: " + _attributes[j].type);
+                throw new IllegalStateException("Unsupported attribute type: "
+                        + _attributes[j].type);
             }
 
             return split;
@@ -619,15 +620,15 @@ public class RegressionTree implements Regression<double[]> {
         }
     }
 
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int J) {
-        this(attributes, x, y, x[0].length, J, 5, null, null, null);
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int maxLeafs) {
+        this(attributes, x, y, x[0].length, maxLeafs, 5, null, null, null);
     }
 
     /**
      * @see RegressionTree#RegressionTree(Attribute[], double[][], double[], int, int, int, int[][], int[], NodeOutput, Random)
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int J, int S, @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
-        this(attributes, x, y, M, J, S, order, samples, null, rand);
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
+        this(attributes, x, y, numVars, maxLeafs, minSplits, order, samples, null, rand);
     }
 
     /**
@@ -639,13 +640,13 @@ public class RegressionTree implements Regression<double[]> {
      *            the training instances.
      * @param y
      *            the response variable.
-     * @param M
+     * @param numVars
      *            the number of input variables to pick to split on at each
      *            node. It seems that dim/3 give generally good performance,
      *            where dim is the number of variables.
-     * @param J
+     * @param maxLeafs
      *            the maximum number of leaf nodes in the tree.
-     * @param S
+     * @param minSplits
      *            number of instances in a node below which the tree will not
      *            split, setting S = 5 generally gives good results.
      * @param order
@@ -658,20 +659,20 @@ public class RegressionTree implements Regression<double[]> {
      * @param output
      *            An interface to calculate node output.
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int M, int J, int S, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        if(M <= 0 || M > x[0].length) {
+        if(numVars <= 0 || numVars > x[0].length) {
             throw new IllegalArgumentException("Invalid number of variables to split on at a node of the tree: "
-                    + M);
+                    + numVars);
         }
-        if(S <= 0) {
+        if(minSplits <= 0) {
             throw new IllegalArgumentException("Invalid mimum number of instances in leaf nodes: "
-                    + S);
+                    + minSplits);
         }
-        if(J < 2) {
-            throw new IllegalArgumentException("Invalid maximum leaves: " + J);
+        if(maxLeafs < 2) {
+            throw new IllegalArgumentException("Invalid maximum leaves: " + maxLeafs);
         }
 
         this._attributes = SmileExtUtils.attributeTypes(attributes, x);
@@ -680,8 +681,8 @@ public class RegressionTree implements Regression<double[]> {
                     + Arrays.toString(attributes));
         }
 
-        this._M = M;
-        this._S = S;
+        this._M = numVars;
+        this._S = minSplits;
         this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this._importance = new double[attributes.length];
         this._rnd = (rand == null) ? new smile.math.Random() : rand;
@@ -705,7 +706,7 @@ public class RegressionTree implements Regression<double[]> {
         this._root = new Node(sum / n);
 
         TrainNode trainRoot = new TrainNode(_root, x, y, samples);
-        if(J == Integer.MAX_VALUE) {
+        if(maxLeafs == Integer.MAX_VALUE) {
             if(trainRoot.findBestSplit()) {
                 trainRoot.split(null);
             }
@@ -718,7 +719,7 @@ public class RegressionTree implements Regression<double[]> {
             }
             // Pop best leaf from priority queue, split it, and push
             // children nodes into the queue if possible.
-            for(int leaves = 1; leaves < J; leaves++) {
+            for(int leaves = 1; leaves < maxLeafs; leaves++) {
                 // parent is the leaf to split
                 TrainNode node = nextSplits.poll();
                 if(node == null) {

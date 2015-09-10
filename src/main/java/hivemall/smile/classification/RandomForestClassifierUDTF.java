@@ -308,90 +308,90 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         /**
          * Attribute properties.
          */
-        private final Attribute[] attributes;
+        private final Attribute[] _attributes;
         /**
          * Training instances.
          */
-        private final double[][] x;
+        private final double[][] _x;
         /**
          * Training sample labels.
          */
-        private final int[] y;
+        private final int[] _y;
         /**
          * The index of training values in ascending order. Note that only
          * numeric attributes will be sorted.
          */
-        private final int[][] order;
+        private final int[][] _order;
         /**
          * Split rule of DecisionTrere.
          */
-        private final SplitRule splitRule;
+        private final SplitRule _splitRule;
         /**
          * The number of variables to pick up in each node.
          */
-        private final int numVars;
+        private final int _numVars;
         /**
          * The maximum number of leaf nodes in the tree.
          */
-        private final int numLeafs;
+        private final int _maxLeafs;
         /**
          * The number of instances in a node below which the tree will not split.
          */
-        private final int minSamplesSplit;
+        private final int _minSamplesSplit;
         /**
          * The out-of-bag predictions.
          */
-        private final int[][] prediction;
+        private final int[][] _prediction;
 
-        private final RandomForestClassifierUDTF udtf;
-        private final long seed;
-        private final AtomicInteger remainingTasks;
+        private final RandomForestClassifierUDTF _udtf;
+        private final long _seed;
+        private final AtomicInteger _remainingTasks;
 
-        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int M, int J, int S, int[][] order, int[][] prediction, SplitRule splitRule, long seed, AtomicInteger remainingTasks) {
-            this.udtf = udtf;
-            this.attributes = attributes;
-            this.x = x;
-            this.y = y;
-            this.order = order;
-            this.splitRule = splitRule;
-            this.numVars = M;
-            this.numLeafs = J;
-            this.minSamplesSplit = S;
-            this.prediction = prediction;
-            this.seed = seed;
-            this.remainingTasks = remainingTasks;
+        TrainingTask(RandomForestClassifierUDTF udtf, Attribute[] attributes, double[][] x, int[] y, int numVars, int maxLeafs, int minSamplesSplit, int[][] order, int[][] prediction, SplitRule splitRule, long seed, AtomicInteger remainingTasks) {
+            this._udtf = udtf;
+            this._attributes = attributes;
+            this._x = x;
+            this._y = y;
+            this._order = order;
+            this._splitRule = splitRule;
+            this._numVars = numVars;
+            this._maxLeafs = maxLeafs;
+            this._minSamplesSplit = minSamplesSplit;
+            this._prediction = prediction;
+            this._seed = seed;
+            this._remainingTasks = remainingTasks;
         }
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed()
-                    : new smile.math.Random(seed).nextLong();
+            long s = (this._seed == -1L) ? SmileExtUtils.generateSeed()
+                    : new smile.math.Random(_seed).nextLong();
             final smile.math.Random rnd1 = new smile.math.Random(s);
             final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
-            final int n = x.length;
+            final int n = _x.length;
             // Training samples draw with replacement.
             final int[] samples = new int[n];
             for(int i = 0; i < n; i++) {
                 samples[rnd1.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(attributes, x, y, numVars, numLeafs, minSamplesSplit, samples, order, splitRule, rnd2);
+            DecisionTree tree = new DecisionTree(_attributes, _x, _y, _numVars, _maxLeafs, _minSamplesSplit, samples, _order, _splitRule, rnd2);
 
             // out-of-bag prediction
             for(int i = 0; i < n; i++) {
                 if(samples[i] == 0) {
-                    final int p = tree.predict(x[i]);
-                    synchronized(prediction[i]) {
-                        prediction[i][p]++;
+                    final int p = tree.predict(_x[i]);
+                    synchronized(_prediction[i]) {
+                        _prediction[i][p]++;
                     }
                 }
             }
 
-            String model = getModel(tree, udtf.outputType);
+            String model = getModel(tree, _udtf.outputType);
             double[] importance = tree.importance();
-            int remain = remainingTasks.decrementAndGet();
+            int remain = _remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
-            udtf.forward(model, importance, y, prediction, lastTask);
+            _udtf.forward(model, importance, _y, _prediction, lastTask);
 
             return Integer.valueOf(remain);
         }
@@ -408,7 +408,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                     break;
                 }
                 default: {
-                    logger.warn("Unexpected output type: " + udtf.outputType
+                    logger.warn("Unexpected output type: " + _udtf.outputType
                             + ". Use javascript for the output instead");
                     model = tree.predictCodegen();
                     break;
