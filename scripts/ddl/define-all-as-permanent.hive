@@ -457,6 +457,9 @@ CREATE FUNCTION is_stopword as 'hivemall.tools.string.StopwordUDF' USING JAR '${
 DROP FUNCTION IF EXISTS split_words;
 CREATE FUNCTION split_words as 'hivemall.tools.string.SplitWordsUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS normalize_unicode;
+CREATE FUNCTION normalize_unicode as 'hivemall.tools.string.NormalizeUnicodeUDF' USING JAR '${hivemall_jar}';
+
 ---------------------------------
 -- Dataset generator functions --
 ---------------------------------

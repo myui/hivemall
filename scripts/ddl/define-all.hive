@@ -453,6 +453,9 @@ create temporary function is_stopword as 'hivemall.tools.string.StopwordUDF';
 drop temporary function split_words;
 create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
 
+drop temporary function normalize_unicode;
+create temporary function normalize_unicode as 'hivemall.tools.string.NormalizeUnicodeUDF';
+
 ---------------------------------
 -- Dataset generator functions --
 ---------------------------------
