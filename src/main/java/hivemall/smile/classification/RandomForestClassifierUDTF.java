@@ -92,12 +92,12 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
         opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(sqrt(dim))]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
-        opts.addOption("split", "min_samples_split", true, "S number of instances in a node below which the tree will not split [default: 2]");
+        opts.addOption("splits", "min_samples_split", true, "S number of instances in a node below which the tree will not split [default: 2]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true, "The output type (opscode/vm or javascript/js) [default: opscode]");
-        opts.addOption("split", "split_rule", true, "Split algorithm [default: GINI, ENTROPY]");
+        opts.addOption("rule", "split_rule", true, "Split algorithm [default: GINI, ENTROPY]");
         return opts;
     }
 
