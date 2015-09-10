@@ -90,7 +90,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
-        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(sqrt(dim))]");
+        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(max(sqrt(x[0].length),x[0].length/3.0))]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("splits", "min_samples_split", true, "S number of instances in a node below which the tree will not split [default: 2]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
@@ -244,7 +244,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
         int[] labels = SmileExtUtils.classLables(y);
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
-        int numInputVars = (numVars == -1) ? (int) Math.floor(Math.sqrt(x[0].length)) : numVars;
+        int numInputVars = (numVars <= 0)
+                ? (int) Math.floor(Math.max(Math.sqrt(x[0].length), x[0].length / 3.d)) : numVars;
 
         if(logger.isInfoEnabled()) {
             logger.info("numTrees: " + numTrees + ", numVars: " + numInputVars

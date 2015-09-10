@@ -56,7 +56,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 import smile.data.Attribute;
-import smile.math.Math;
 
 @Description(name = "train_randomforest_regression", value = "_FUNC_(double[] features, int label [, string options]) - "
         + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
@@ -90,7 +89,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
-        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: max(1, x[0].length / 3)]");
+        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(max(sqrt(x[0].length),x[0].length/3.0))]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("split", "min_samples_split", true, "S number of instances in a node below which the tree will not split [default: 5]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
@@ -241,7 +240,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         SmileExtUtils.shuffle(x, y, seed);
 
         Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
-        int numInputVars = (numVars <= 0) ? Math.max(1, x[0].length / 3) : numVars;
+        int numInputVars = (numVars <= 0)
+                ? (int) Math.floor(Math.max(Math.sqrt(x[0].length), x[0].length / 3.d)) : numVars;
 
         if(logger.isInfoEnabled()) {
             logger.info("numTrees: " + numTrees + ", numVars: " + numInputVars
@@ -285,7 +285,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 if(oob[i] > 0) {
                     oobTests++;
                     double pred = prediction[i] / oob[i];
-                    oobErrors += Math.sqr(pred - y[i]);
+                    oobErrors += smile.math.Math.sqr(pred - y[i]);
                 }
             }
         }
