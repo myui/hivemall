@@ -597,7 +597,7 @@ public class RegressionTree implements Regression<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(tc > _S && trueChild.findBestSplit()) {
+            if(tc >= _S && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -606,7 +606,7 @@ public class RegressionTree implements Regression<double[]> {
             }
 
             falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(fc > _S && falseChild.findBestSplit()) {
+            if(fc >= _S && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {

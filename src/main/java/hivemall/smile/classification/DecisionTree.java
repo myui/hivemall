@@ -605,7 +605,7 @@ public class DecisionTree implements Classifier<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(tc > _S && trueChild.findBestSplit()) {
+            if(tc >= _S && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -614,7 +614,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(fc > _S && falseChild.findBestSplit()) {
+            if(fc >= _S && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -641,7 +641,7 @@ public class DecisionTree implements Classifier<double[]> {
         double impurity = 0.0;
 
         switch (_rule) {
-            case GINI:
+            case GINI: {
                 impurity = 1.0;
                 for(int i = 0; i < count.length; i++) {
                     if(count[i] > 0) {
@@ -650,8 +650,8 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 }
                 break;
-
-            case ENTROPY:
+            }
+            case ENTROPY: {
                 for(int i = 0; i < count.length; i++) {
                     if(count[i] > 0) {
                         double p = (double) count[i] / n;
@@ -659,6 +659,7 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 }
                 break;
+            }
         }
 
         return impurity;
