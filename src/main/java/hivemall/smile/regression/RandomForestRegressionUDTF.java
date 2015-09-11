@@ -33,7 +33,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -71,25 +70,26 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     /**
      * The number of trees for each task
      */
-    private int numTrees;
+    private int _numTrees;
     /**
      * The number of random selected features
      */
-    private int numVars;
+    private float _numVars;
     /**
      * The maximum number of leaf nodes
      */
-    private int maxLeafNodes;
-    private int minSamplesSplit;
-    private long seed;
-    private Attribute[] attributes;
-    private OutputType outputType;
+    private int _maxLeafNodes;
+    private int _minSamplesSplit;
+    private long _seed;
+    private Attribute[] _attributes;
+    private OutputType _outputType;
 
     @Override
     protected Options getOptions() {
         Options opts = new Options();
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
-        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: floor(max(sqrt(x[0].length),x[0].length/3.0))]");
+        opts.addOption("vars", "num_variables", true, "The number of random selected features [default: round(max(sqrt(x[0].length),x[0].length/3.0))]."
+                + " If a floating number is specified, int(num_variables * x[0].length) is considered if num_variable is (0,1]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("split", "min_split", true, "A node that has greater than or equals to `min_split` examples will split [default: 5]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
@@ -101,7 +101,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        int T = 50, M = -1, J = Integer.MAX_VALUE, S = 5;
+        int T = 50, J = Integer.MAX_VALUE, S = 5;
+        float M = -1.f;
         Attribute[] attrs = null;
         long seed = -1L;
         String output = "opscode";
@@ -115,7 +116,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             if(T < 1) {
                 throw new IllegalArgumentException("Invlaid number of trees: " + T);
             }
-            M = Primitives.parseInt(cl.getOptionValue("num_variables"), M);
+            M = Primitives.parseFloat(cl.getOptionValue("num_variables"), M);
             J = Primitives.parseInt(cl.getOptionValue("max_leaf_nodes"), J);
             S = Primitives.parseInt(cl.getOptionValue("min_split"), S);
             seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
@@ -123,13 +124,13 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             output = cl.getOptionValue("output", output);
         }
 
-        this.numTrees = T;
-        this.numVars = M;
-        this.maxLeafNodes = J;
-        this.minSamplesSplit = S;
-        this.seed = seed;
-        this.attributes = attrs;
-        this.outputType = OutputType.resolve(output);
+        this._numTrees = T;
+        this._numVars = M;
+        this._maxLeafNodes = J;
+        this._minSamplesSplit = S;
+        this._seed = seed;
+        this._attributes = attrs;
+        this._outputType = OutputType.resolve(output);
 
         return cl;
     }
@@ -204,14 +205,14 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             this.targets = null;
 
             // run training
-            train(x, y, attributes, numTrees, numVars, maxLeafNodes, minSamplesSplit, seed);
+            train(x, y);
         }
 
         // clean up
         this.featureListOI = null;
         this.featureElemOI = null;
         this.targetOI = null;
-        this.attributes = null;
+        this._attributes = null;
     }
 
     /**
@@ -228,36 +229,34 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
      * @param seed
      *            The seed number for Random Forest
      */
-    private void train(@Nonnull final double[][] x, @Nonnull final double[] y, @Nullable final Attribute[] attrs, final int numTrees, final int numVars, final int maxLeafs, final int minSamplesSplit, final long seed)
-            throws HiveException {
+    private void train(@Nonnull final double[][] x, @Nonnull final double[] y) throws HiveException {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        if(minSamplesSplit <= 0) {
-            throw new HiveException("Invalid minSamplesSplit: " + minSamplesSplit);
+        if(_minSamplesSplit <= 0) {
+            throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
         }
         // Shuffle training samples 
-        SmileExtUtils.shuffle(x, y, seed);
+        SmileExtUtils.shuffle(x, y, _seed);
 
-        Attribute[] attributes = SmileExtUtils.attributeTypes(attrs, x);
-        int numInputVars = (numVars <= 0)
-                ? (int) Math.floor(Math.max(Math.sqrt(x[0].length), x[0].length / 3.d)) : numVars;
+        Attribute[] attributes = SmileExtUtils.attributeTypes(_attributes, x);
+        int numInputVars = SmileExtUtils.computeNumInputVars(_numVars, x);
 
         if(logger.isInfoEnabled()) {
-            logger.info("numTrees: " + numTrees + ", numVars: " + numInputVars
-                    + ", minSamplesSplit: " + minSamplesSplit + ", maxLeafs: " + maxLeafs
-                    + ", nodeCapacity: " + minSamplesSplit + ", seed: " + seed);
+            logger.info("numTrees: " + _numTrees + ", numVars: " + numInputVars
+                    + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: " + _maxLeafNodes
+                    + ", nodeCapacity: " + _minSamplesSplit + ", seed: " + _seed);
         }
 
         final int numExamples = x.length;
         double[] prediction = new double[numExamples]; // placeholder for out-of-bag prediction
         int[] oob = new int[numExamples];
         int[][] order = SmileExtUtils.sort(attributes, x);
-        AtomicInteger remainingTasks = new AtomicInteger(numTrees);
+        AtomicInteger remainingTasks = new AtomicInteger(_numTrees);
         List<TrainingTask> tasks = new ArrayList<TrainingTask>();
-        for(int i = 0; i < numTrees; i++) {
-            long s = (seed == -1L) ? -1L : seed + i;
-            tasks.add(new TrainingTask(this, attributes, x, y, numInputVars, maxLeafs, minSamplesSplit, order, prediction, oob, s, remainingTasks));
+        for(int i = 0; i < _numTrees; i++) {
+            long s = (_seed == -1L) ? -1L : _seed + i;
+            tasks.add(new TrainingTask(this, attributes, x, y, numInputVars, _maxLeafNodes, _minSamplesSplit, order, prediction, oob, s, remainingTasks));
         }
 
         MapredContext mapredContext = MapredContextAccessor.get();
@@ -384,7 +383,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 }
             }
 
-            String model = getModel(tree, udtf.outputType);
+            String model = getModel(tree, udtf._outputType);
             double[] importance = tree.importance();
             int remain = remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
@@ -405,7 +404,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                     break;
                 }
                 default: {
-                    logger.warn("Unexpected output type: " + udtf.outputType
+                    logger.warn("Unexpected output type: " + udtf._outputType
                             + ". Use javascript for the output instead");
                     model = tree.predictCodegen();
                     break;

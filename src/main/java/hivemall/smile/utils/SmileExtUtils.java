@@ -127,6 +127,19 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
         }
     }
 
+    public static int computeNumInputVars(final float numVars, final double[][] x) {
+        final int numInputVars;
+        if(numVars <= 0.f) {
+            int dims = x[0].length;
+            numInputVars = (int) Math.round(Math.max(Math.sqrt(dims), dims / 3.0d));
+        } else if(numVars > 0.f && numVars <= 1.f) {
+            numInputVars = (int) (numVars * x[0].length);
+        } else {
+            numInputVars = (int) numVars;
+        }
+        return numInputVars;
+    }
+
     public static long generateSeed() {
         return Thread.currentThread().getId() * System.currentTimeMillis();
     }
