@@ -277,10 +277,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     }
 
     /**
-     * Synchronized because {@link #forward(Object)} should be called from a
-     * single thread.
+     * Synchronized because {@link #forward(Object)} should be called from a single thread.
      */
-    public synchronized void forward(@Nonnull final String model, @Nonnull final double[] importance, final int[] y, final int[][] prediction, final boolean lastTask)
+    synchronized void forward(@Nonnull final String model, @Nonnull final double[] importance, final int[] y, final int[][] prediction, final boolean lastTask)
             throws HiveException {
         int oobErrors = 0;
         int oobTests = 0;
