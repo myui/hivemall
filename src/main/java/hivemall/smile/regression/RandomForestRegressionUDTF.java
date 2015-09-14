@@ -392,7 +392,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             return Integer.valueOf(remain);
         }
 
-        private String getModel(@Nonnull final RegressionTree tree, @Nonnull final OutputType outputType) {
+        private static String getModel(@Nonnull final RegressionTree tree, @Nonnull final OutputType outputType) {
             final String model;
             switch (outputType) {
                 case opscode: {
@@ -404,7 +404,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                     break;
                 }
                 default: {
-                    logger.warn("Unexpected output type: " + udtf._outputType
+                    logger.warn("Unexpected output type: " + outputType
                             + ". Use javascript for the output instead");
                     model = tree.predictCodegen();
                     break;

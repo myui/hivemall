@@ -399,7 +399,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             return Integer.valueOf(remain);
         }
 
-        private String getModel(@Nonnull final DecisionTree tree, @Nonnull final OutputType outputType) {
+        private static String getModel(@Nonnull final DecisionTree tree, @Nonnull final OutputType outputType) {
             final String model;
             switch (outputType) {
                 case opscode: {
@@ -411,7 +411,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                     break;
                 }
                 default: {
-                    logger.warn("Unexpected output type: " + _udtf._outputType
+                    logger.warn("Unexpected output type: " + outputType
                             + ". Use javascript for the output instead");
                     model = tree.predictCodegen();
                     break;
