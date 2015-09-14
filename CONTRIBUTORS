@@ -33,3 +33,9 @@
 
 * Daniel Dai
         - Pig support
+        
+* Kai Sasaki
+        - Minor fixes about travisCI and unit tests.
+
+* Ritta Narita
+        - Stack Machine implementation for RandomForest
