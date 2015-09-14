@@ -35,8 +35,7 @@ public final class Operation {
     }
 
     public enum OperationEnum {
-        // FUNCTION is pseudo operation. it will never be executed and don't have IP itself.
-        FUNCTION, ADD, SUB, DIV, MUL, DUP, // reserved
+        ADD, SUB, DIV, MUL, DUP, // reserved
         PUSH, POP, GOTO, IFEQ, IFEQ2, IFGE, IFGT, IFLE, IFLT, CALL; // used
 
         static OperationEnum valueOfLowerCase(String op) {
