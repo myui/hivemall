@@ -50,7 +50,8 @@ public final class SmileTaskExecutor {
                 String tdJarVersion = conf.get("td.jar.version");
                 if(tdJarVersion != null) {
                     String tdHivemallNprocs = conf.get("td.hivemall.smile.nprocs");
-                    threads = Primitives.parseInt(tdHivemallNprocs, 2);
+                    // invokes in the caller's thread if `td.hivemall.smile.nprocs` is not set
+                    threads = Primitives.parseInt(tdHivemallNprocs, 1);
                 }
             }
         }
