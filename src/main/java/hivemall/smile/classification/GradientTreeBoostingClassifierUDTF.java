@@ -321,9 +321,6 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         final smile.math.Random rnd1 = new smile.math.Random(s);
         final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
 
-        // out-of-bag prediction
-        final double[] prediction = new double[n];
-
         for(int m = 0; m < _numTrees; m++) {
             Arrays.fill(samples, 0);
             SmileExtUtils.shuffle(perm, rnd1);
@@ -337,10 +334,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
             RegressionTree tree = new RegressionTree(_attributes, x, response, numVars, _maxDepth, _maxLeafNodes, _minSamplesSplit, order, samples, output, rnd2);
 
-            Arrays.fill(prediction, 0.d);
             for(int i = 0; i < n; i++) {
                 h[i] += _eta * tree.predict(x[i]);
-                prediction[i] = h[i];
             }
 
             // out-of-bag error estimate
@@ -348,7 +343,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             for(int i = 0; i < n; i++) {
                 if(samples[i] == 0) {
                     oobTests++;
-                    final int pred = (prediction[i] > 0.d) ? 1 : 0;
+                    final int pred = (h[i] > 0.d) ? 1 : 0;
                     if(pred != y[i]) {
                         oobErrors++;
                     }
