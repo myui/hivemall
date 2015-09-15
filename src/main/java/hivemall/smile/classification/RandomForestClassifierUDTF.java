@@ -221,6 +221,12 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this._attributes = null;
     }
 
+    private void checkOptions() throws HiveException {
+        if(_minSamplesSplit <= 0) {
+            throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
+        }
+    }
+
     /**
      * @param x
      *            features
@@ -239,9 +245,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        if(_minSamplesSplit <= 0) {
-            throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
-        }
+        checkOptions();
+
         // Shuffle training samples    
         SmileExtUtils.shuffle(x, y, _seed);
 

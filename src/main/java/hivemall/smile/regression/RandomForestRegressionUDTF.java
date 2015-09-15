@@ -222,6 +222,15 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         this._attributes = null;
     }
 
+    private void checkOptions() throws HiveException {
+        if(_minSamplesSplit <= 0) {
+            throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
+        }
+        if(_maxDepth < 1) {
+            throw new HiveException("Invalid maxDepth: " + _maxDepth);
+        }
+    }
+
     /**
      * @param x
      *            features
@@ -240,9 +249,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         if(x.length != y.length) {
             throw new HiveException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        if(_minSamplesSplit <= 0) {
-            throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
-        }
+        checkOptions();
+
         // Shuffle training samples 
         SmileExtUtils.shuffle(x, y, _seed);
 
@@ -251,8 +259,9 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
         if(logger.isInfoEnabled()) {
             logger.info("numTrees: " + _numTrees + ", numVars: " + numInputVars
-                    + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: " + _maxLeafNodes
-                    + ", nodeCapacity: " + _minSamplesSplit + ", seed: " + _seed);
+                    + ", minSamplesSplit: " + _minSamplesSplit + ", maxDepth: " + _maxDepth
+                    + ", maxLeafs: " + _maxLeafNodes + ", nodeCapacity: " + _minSamplesSplit
+                    + ", seed: " + _seed);
         }
 
         final int numExamples = x.length;

@@ -715,7 +715,7 @@ public class RegressionTree implements Regression<double[]> {
 
         this._root = new Node(sum / n);
 
-        TrainNode trainRoot = new TrainNode(_root, x, y, samples, 0);
+        TrainNode trainRoot = new TrainNode(_root, x, y, samples, 1);
         if(maxLeafs == Integer.MAX_VALUE) {
             if(trainRoot.findBestSplit()) {
                 trainRoot.split(null);
