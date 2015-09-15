@@ -114,15 +114,19 @@ public class RegressionTree implements Regression<double[]> {
      */
     private final Node _root;
     /**
+     * The maximum number of the tree depth
+     */
+    private final int _maxDepth;
+    /**
      * The number of instances in a node below which the tree will not split,
      * setting S = 5 generally gives good results.
      */
-    private final int _S;
+    private final int _minSplit;
     /**
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
-    private final int _M;
+    private final int _numVars;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
@@ -325,10 +329,11 @@ public class RegressionTree implements Regression<double[]> {
      * Regression tree node for training purpose.
      */
     class TrainNode implements Comparable<TrainNode> {
+
         /**
          * The associated regression tree node.
          */
-        Node node;
+        final Node node;
         /**
          * Child node that passes the test.
          */
@@ -340,27 +345,30 @@ public class RegressionTree implements Regression<double[]> {
         /**
          * Training dataset.
          */
-        double[][] x;
+        final double[][] x;
         /**
          * Training data response value.
          */
-        double[] y;
+        final double[] y;
         /**
          * The samples for training this node. Note that samples[i] is the
          * number of sampling of dataset[i]. 0 means that the datum is not
          * included and values of greater than 1 are possible because of
          * sampling with replacement.
          */
-        int[] samples;
+        final int[] samples;
+
+        final int depth;
 
         /**
          * Constructor.
          */
-        public TrainNode(Node node, double[][] x, double[] y, int[] samples) {
+        public TrainNode(Node node, double[][] x, double[] y, int[] samples, int depth) {
             this.node = node;
             this.x = x;
             this.y = y;
             this.samples = samples;
+            this.depth = depth;
         }
 
         @Override
@@ -392,12 +400,16 @@ public class RegressionTree implements Regression<double[]> {
          * true if a split exists to reduce squared error, false otherwise.
          */
         public boolean findBestSplit() {
+            if(depth >= _maxDepth) {
+                return false;
+            }
+
             int n = 0;
             for(int s : samples) {
                 n += s;
             }
 
-            if(n <= _S) {
+            if(n <= _minSplit) {
                 return false;
             }
 
@@ -410,12 +422,12 @@ public class RegressionTree implements Regression<double[]> {
 
             // Loop through features and compute the reduction of squared error,
             // which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2                    
-            if(_M < p) {
+            if(_numVars < p) {
                 // Training of Random Forest will get into this race condition.
                 // smile.math.Math uses a static object of random number generator.
                 SmileExtUtils.shuffle(variables, _rnd);
             }
-            for(int j = 0; j < _M; j++) {
+            for(int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(n, sum, variables[j]);
                 if(split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
@@ -596,8 +608,8 @@ public class RegressionTree implements Regression<double[]> {
             node.trueChild = new Node(node.trueChildOutput);
             node.falseChild = new Node(node.falseChildOutput);
 
-            trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(tc >= _S && trueChild.findBestSplit()) {
+            trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
+            if(tc >= _minSplit && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -605,8 +617,8 @@ public class RegressionTree implements Regression<double[]> {
                 }
             }
 
-            falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(fc >= _S && falseChild.findBestSplit()) {
+            falseChild = new TrainNode(node.falseChild, x, y, falseSamples, depth + 1);
+            if(fc >= _minSplit && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -621,14 +633,11 @@ public class RegressionTree implements Regression<double[]> {
     }
 
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int maxLeafs) {
-        this(attributes, x, y, x[0].length, maxLeafs, 5, null, null, null);
+        this(attributes, x, y, x[0].length, Integer.MAX_VALUE, maxLeafs, 5, null, null, null);
     }
 
-    /**
-     * @see RegressionTree#RegressionTree(Attribute[], double[][], double[], int, int, int, int[][], int[], NodeOutput, Random)
-     */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
-        this(attributes, x, y, numVars, maxLeafs, minSplits, order, samples, null, rand);
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
+        this(attributes, x, y, numVars, maxDepth, maxLeafs, minSplits, order, samples, null, rand);
     }
 
     /**
@@ -659,7 +668,7 @@ public class RegressionTree implements Regression<double[]> {
      * @param output
      *            An interface to calculate node output.
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
         if(x.length != y.length) {
             throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
@@ -681,8 +690,9 @@ public class RegressionTree implements Regression<double[]> {
                     + Arrays.toString(attributes));
         }
 
-        this._M = numVars;
-        this._S = minSplits;
+        this._numVars = numVars;
+        this._maxDepth = maxDepth;
+        this._minSplit = minSplits;
         this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this._importance = new double[attributes.length];
         this._rnd = (rand == null) ? new smile.math.Random() : rand;
@@ -705,7 +715,7 @@ public class RegressionTree implements Regression<double[]> {
 
         this._root = new Node(sum / n);
 
-        TrainNode trainRoot = new TrainNode(_root, x, y, samples);
+        TrainNode trainRoot = new TrainNode(_root, x, y, samples, 0);
         if(maxLeafs == Integer.MAX_VALUE) {
             if(trainRoot.findBestSplit()) {
                 trainRoot.split(null);
