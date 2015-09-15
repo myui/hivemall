@@ -142,11 +142,11 @@ public class DecisionTree implements Classifier<double[]> {
      * The number of input variables to be used to determine the decision at a
      * node of the tree.
      */
-    private final int _M;
+    private final int _numVars;
     /**
      * The number of instances in a node below which the tree will not split.
      */
-    private final int _S;
+    private final int _minSplit;
     /**
      * The index of training values in ascending order. Note that only numeric
      * attributes will be sorted.
@@ -346,22 +346,22 @@ public class DecisionTree implements Classifier<double[]> {
         /**
          * The associated regression tree node.
          */
-        Node node;
+        final Node node;
         /**
          * Training dataset.
          */
-        double[][] x;
+        final double[][] x;
         /**
          * class labels.
          */
-        int[] y;
+        final int[] y;
         /**
          * The samples for training this node. Note that samples[i] is the
          * number of sampling of dataset[i]. 0 means that the datum is not
          * included and values of greater than 1 are possible because of
          * sampling with replacement.
          */
-        int[] samples;
+        final int[] samples;
 
         /**
          * Constructor.
@@ -421,10 +421,10 @@ public class DecisionTree implements Classifier<double[]> {
                 variables[i] = i;
             }
 
-            if(_M < p) {
+            if(_numVars < p) {
                 SmileExtUtils.shuffle(variables, _rnd);
             }
-            for(int j = 0; j < _M; j++) {
+            for(int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(n, count, falseCount, impurity, variables[j]);
                 if(split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
@@ -605,7 +605,7 @@ public class DecisionTree implements Classifier<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples);
-            if(tc >= _S && trueChild.findBestSplit()) {
+            if(tc >= _minSplit && trueChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
@@ -614,7 +614,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples);
-            if(fc >= _S && falseChild.findBestSplit()) {
+            if(fc >= _minSplit && falseChild.findBestSplit()) {
                 if(nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
@@ -735,8 +735,8 @@ public class DecisionTree implements Classifier<double[]> {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
-        this._M = numVars;
-        this._S = minSplits;
+        this._numVars = numVars;
+        this._minSplit = minSplits;
         this._rule = rule;
         this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this._importance = new double[attributes.length];
