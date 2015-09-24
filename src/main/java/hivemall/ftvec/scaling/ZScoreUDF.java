@@ -39,7 +39,7 @@ public final class ZScoreUDF extends UDF {
     }
 
     public FloatWritable evaluate(float value, float mean, float stddev) {
-        if(stddev == 0.d) {
+        if(stddev == 0.f) {
             return new FloatWritable(0.f);
         }
         float v = (value - mean) / stddev;
