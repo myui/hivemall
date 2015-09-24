@@ -37,7 +37,7 @@ public final class L2NormalizationUDF extends UDF {
         if(ftvecs == null) {
             return null;
         }
-        double squaredSum = 0d;
+        double squaredSum = 0.d;
         final int numFeatures = ftvecs.size();
         final String[] features = new String[numFeatures];
         final float[] weights = new float[numFeatures];
@@ -51,10 +51,10 @@ public final class L2NormalizationUDF extends UDF {
             final int ftlen = ft.length;
             if(ftlen == 1) {
                 features[i] = ft[0];
-                weights[i] = 1f;
-                squaredSum += 1d;
+                weights[i] = 1.f;
+                squaredSum += 1.d;
             } else if(ftlen == 2) {
-                features[i] = ft[0];               
+                features[i] = ft[0];
                 float v = Float.parseFloat(ft[1]);
                 weights[i] = v;
                 squaredSum += (v * v);
@@ -64,10 +64,17 @@ public final class L2NormalizationUDF extends UDF {
         }
         final float norm = (float) Math.sqrt(squaredSum);
         final Text[] t = new Text[numFeatures];
-        for(int i = 0; i < numFeatures; i++) {
-            String f = features[i];
-            float v = weights[i] / norm;
-            t[i] = new Text(f + ':' + v);
+        if(norm == 0.f) {
+            for(int i = 0; i < numFeatures; i++) {
+                String f = features[i];
+                t[i] = new Text(f + ':' + 0.f);
+            }
+        } else {
+            for(int i = 0; i < numFeatures; i++) {
+                String f = features[i];
+                float v = weights[i] / norm;
+                t[i] = new Text(f + ':' + v);
+            }
         }
         return Arrays.asList(t);
     }
