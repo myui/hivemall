@@ -46,9 +46,6 @@ public abstract class FactorizationMachineModel {
     protected final float _lambdaW;
     protected final float _lambdaV;
 
-    // LEARNING PARAMS
-    protected float _w0;
-
     public FactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         this._classification = classification;
         this._factor = factor;
@@ -64,7 +61,6 @@ public abstract class FactorizationMachineModel {
         this._lambdaW = lambda0;
         this._lambdaV = lambda0;
 
-        this._w0 = 0.f;
         initLearningParams();
     }
 
@@ -82,13 +78,14 @@ public abstract class FactorizationMachineModel {
 
     public void updateW0(@Nonnull Feature[] x, double y, float eta) {
         float grad0 = gLoss0(x, y);
-        float nextW0 = _w0 - eta * (grad0 + 2.f * _lambdaW0 * _w0);
-        this._w0 = nextW0;
+        float prevW0 = getW(0);
+        float nextW0 = prevW0 - eta * (grad0 + 2.f * _lambdaW0 * prevW0);
+        setW(0, nextW0);
     }
 
     protected double predict(@Nonnull final Feature[] x) {
         // w0
-        double ret = _w0;
+        double ret = getW(0);
 
         // W
         for(Feature e : x) {

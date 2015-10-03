@@ -20,6 +20,7 @@ package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
 import hivemall.fm.FactorizationMachineUDTF.Feature;
+import hivemall.utils.collections.Int2FloatOpenHash;
 import hivemall.utils.collections.IntOpenHashMap;
 import hivemall.utils.math.MathUtils;
 
@@ -32,10 +33,10 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 public final class FMMapModel extends FactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 1000;
-    private static final Float FLOAT_ZERO = Float.valueOf(0.f);
 
     // LEARNING PARAMS
-    private IntOpenHashMap<Float> _w;
+    private float _w0;
+    private Int2FloatOpenHash _w;
     private IntOpenHashMap<float[]> _V;
 
     public FMMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
@@ -43,7 +44,9 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     protected void initLearningParams() {
-        this._w = new IntOpenHashMap<Float>(DEFAULT_MAPSIZE);
+        this._w0 = 0.f;
+        this._w = new Int2FloatOpenHash(DEFAULT_MAPSIZE);
+        _w.defaultReturnValue(0.f);
         this._V = new IntOpenHashMap<float[]>(DEFAULT_MAPSIZE);
     }
 
@@ -53,10 +56,11 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float getW(int i) {
+    public float getW(final int i) {
         if(i == 0) {
             return _w0;
         } else {
+            assert (i >= 1) : i;
             return _w.get(i);
         }
     }
@@ -72,14 +76,15 @@ public final class FMMapModel extends FactorizationMachineModel {
 
     @Override
     protected void setW(int i, float nextWi) {
-        assert (i >= 1) : i;
+        assert (i >= 0) : i;
         _w.put(i, nextWi);
     }
 
     @Override
     public void setV(int i, int f, float nextVif) {
-        assert (i >= 1) : i;
+        assert (i >= 0) : i;
         float[] vi = _V.get(i);
+        assert (vi != null) : "V[" + i + "] was null";
         vi[f] = nextVif;
     }
 
@@ -95,7 +100,7 @@ public final class FMMapModel extends FactorizationMachineModel {
                         + Arrays.toString(x));
             }
             if(!_w.containsKey(idx)) {
-                _w.put(idx, FLOAT_ZERO);
+                _w.put(idx, 0.f);
             }
             if(!_V.containsKey(idx)) {
                 float[] tmp = getRandomFloatArray(_factor, _sigma, _rnd);
@@ -104,9 +109,10 @@ public final class FMMapModel extends FactorizationMachineModel {
         }
     }
 
+    @Nonnull
     private static float[] getRandomFloatArray(final int factor, final double sigma, @Nonnull final Random rnd) {
         final float[] ret = new float[factor];
-        for(int i = 0, k = factor; i < k; i++) {
+        for(int i = 0; i < factor; i++) {
             ret[i] = (float) MathUtils.gaussian(0.d, sigma, rnd);
         }
         return ret;

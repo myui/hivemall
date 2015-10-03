@@ -38,7 +38,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     protected void initLearningParams() {
-        this._w = new float[_p];
+        this._w = new float[_p + 1];
         this._V = new float[_p][_factor];
         for(int i = 0; i < _p; i++) {
             for(int j = 0; j < _factor; j++) {
@@ -54,11 +54,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public float getW(int i) {
-        if(i == 0) {
-            return _w0;
-        } else {
-            return _w[i - 1];
-        }
+        assert (i >= 0) : i;
+        return _w[i];
     }
 
     @Override
@@ -68,7 +65,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     protected void setW(int i, float nextWi) {
-        assert (i >= 1) : i;
+        assert (i >= 0) : i;
         _w[i] = nextWi;
     }
 
