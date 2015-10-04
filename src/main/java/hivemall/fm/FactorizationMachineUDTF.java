@@ -171,10 +171,12 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     @Override
     public void process(Object[] args) throws HiveException {
         Feature[] x = parseFeatures(args[0], _xOI);
-        double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
-
         if(x == null) {
             return;
+        }
+        double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
+        if(_classification) {
+            y = (y > 0.d) ? 1.d : -1.d;
         }
 
         ++_t;
@@ -186,9 +188,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.check(x);
 
         final float eta = _etaEstimator.eta(_t);
-        
+        final double dlossMultiplier = _model.dlossMultiplier(x, y);
+
         // w0 update
-        _model.updateW0(x, y, eta);
+        _model.updateW0(x, dlossMultiplier, eta);
 
         for(Feature e : x) {
             if(e == null) {
@@ -197,54 +200,46 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
             int i = e.index;
             double xi = e.value;
             // wi update
-            _model.updateWi(x, y, i, xi, eta);
+            _model.updateWi(x, dlossMultiplier, i, xi, eta);
             for(int f = 0, k = _factor; f < k; f++) {
                 // Vif update
-                _model.updateV(x, y, i, f, eta);
+                _model.updateV(x, dlossMultiplier, i, f, eta);
             }
         }
     }
 
     @Override
     public void close() throws HiveException {
-        int P = _model.getSize();
-
+        final int P = _model.getSize();
         if(P <= 0) {
             throw new HiveException("Invalid P SIZE:" + P);
         }
 
-        final Object[] forwardObjs = new Object[3];
-
         final IntWritable idx = new IntWritable(0);
         final FloatWritable Wi = new FloatWritable(0.f);
-        final FloatWritable[] Vif = HiveUtils.newFloatArray(_factor, 0.f);
+        final FloatWritable[] Vi = HiveUtils.newFloatArray(_factor, 0.f);
 
+        final Object[] forwardObjs = new Object[3];
         forwardObjs[0] = idx;
         forwardObjs[1] = Wi;
-        forwardObjs[2] = Vif;
-
+        forwardObjs[2] = null;
         // W0
         idx.set(0);
-        // ViF is null
+        // V0
         Wi.set(_model.getW(0));
-        for(int f = 0; f < _factor; f++) {
-            Vif[f].set(0f);
-        }
         forward(forwardObjs);
 
-        // Wi, Wif (i starts from 1..P)
-        forwardObjs[2] = Arrays.asList(Vif);
+        // Wi, Vif (i starts from 1..P)
+        forwardObjs[2] = Arrays.asList(Vi);
         for(int i = 1; i <= P; i++) {
             idx.set(i);
             // set Wi
-            Wi.set(_model.getW(i));
+            float w = _model.getW(i);
+            Wi.set(w);
             // set Vif
             for(int f = 0; f < _factor; f++) {
-                try {
-                    Vif[f].set(_model.getV(i, f));
-                } catch (Exception e) {
-                    // FIXME
-                }
+                float v = _model.getV(i, f);
+                Vi[f].set(v);
             }
             forward(forwardObjs);
         }

@@ -66,7 +66,14 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
+    protected void setW(int i, float nextWi) {
+        assert (i >= 0) : i;
+        _w.put(i, nextWi);
+    }
+
+    @Override
     public float getV(int i, int f) {
+        assert (i >= 1) : i;
         final float[] Vi = _V.get(i);
         if(Vi == null) {
             return 0.f;
@@ -75,14 +82,8 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    protected void setW(int i, float nextWi) {
-        assert (i >= 0) : i;
-        _w.put(i, nextWi);
-    }
-
-    @Override
     public void setV(int i, int f, float nextVif) {
-        assert (i >= 0) : i;
+        assert (i >= 1) : i;
         float[] vi = _V.get(i);
         assert (vi != null) : "V[" + i + "] was null";
         vi[f] = nextVif;

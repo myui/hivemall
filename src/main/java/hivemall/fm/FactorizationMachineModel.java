@@ -68,22 +68,40 @@ public abstract class FactorizationMachineModel {
 
     public abstract int getSize();
 
+    /**
+     * @param i index value >= 0
+     */
     public abstract float getW(int i);
 
-    public abstract float getV(int i, int f);
-
+    /**
+     * @param i index value >= 0
+     */
     protected abstract void setW(int i, float nextWi);
 
+    /**
+     * @param i index value >= 1
+     */
+    public abstract float getV(int i, int f);
+
+    /**
+     * @param i index value >= 1
+     */
     protected abstract void setV(int i, int f, float nextVif);
 
-    public void updateW0(@Nonnull Feature[] x, double y, float eta) {
-        float grad0 = gLoss0(x, y);
-        float prevW0 = getW(0);
-        float nextW0 = prevW0 - eta * (grad0 + 2.f * _lambdaW0 * prevW0);
-        setW(0, nextW0);
+    public final double dlossMultiplier(@Nonnull Feature[] x, double y) {
+        final double ret;
+        double p = predict(x);
+        if(_classification) {
+            ret = (MathUtils.sigmoid(p * y) - 1.d) * y;
+        } else { // regression            
+            p = Math.min(p, _max_target);
+            p = Math.max(p, _min_target);
+            ret = 2.d * (p - y);
+        }
+        return ret;
     }
 
-    protected double predict(@Nonnull final Feature[] x) {
+    protected final double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW(0);
 
@@ -103,8 +121,9 @@ public abstract class FactorizationMachineModel {
                 int j = e.index;
                 double xj = e.value;
                 float vjf = getV(j, f);
-                sumVjfXj += vjf * xj;
-                sumV2X2 += (vjf * vjf * xj * xj);
+                double vx = vjf * xj;
+                sumVjfXj += vx;
+                sumV2X2 += (vx * vx);
             }
             ret += 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
             assert (Double.isNaN(ret) == false);
@@ -113,72 +132,41 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    public void updateWi(@Nonnull Feature[] x, double y, int i, double xi, float eta) {
-        float gradWi = gLossWi(x, y, xi);
+    public final void updateW0(@Nonnull Feature[] x, double dlossMultiplier, float eta) {
+        float gradW0 = (float) dlossMultiplier;
+        float prevW0 = getW(0);
+        float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
+        setW(0, nextW0);
+    }
+
+    public final void updateWi(@Nonnull Feature[] x, double dlossMultiplier, int i, double xi, float eta) {
+        float gradWi = (float) (dlossMultiplier * xi);
         float wi = getW(i);
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
         setW(i, nextWi);
     }
 
-    private float gLoss0(Feature[] x, double y) {
-        double ret = -1.d;
-        double predict0 = predict(x);
-        if(_classification) {
-            ret = (MathUtils.sigmoid(predict0 * y) - 1.d) * y;
-        } else {// regression
-            predict0 = Math.min(predict0, _max_target);
-            predict0 = Math.max(predict0, _min_target);
-            ret = 2.d * (predict0 - y);
-        }
-        return (float) ret;
-    }
-
-    private float gLossWi(@Nonnull Feature[] x, double y, double xi) {
-        double ret = -1.d;
-        double predictWi = predict(x);
-        if(_classification) {
-            ret = (MathUtils.sigmoid(predictWi * y) - 1.d) * y * xi;
-        } else {
-            double diff = predictWi - y;
-            ret = 2.d * diff * xi;
-        }
-        return (float) ret;
-    }
-
-    public void updateV(@Nonnull Feature[] x, double y, int i, int f, float eta) {
-        float gradV = gLossV(x, y, i, f);
-        float vif = getV(i, f);
-        float nextVif = vif - eta * (gradV + 2 * _lambdaV * vif);
+    public final void updateV(@Nonnull Feature[] x, double dlossMultiplier, int i, int f, float eta) {
+        float Vif = getV(i, f);
+        float gradV = (float) (dlossMultiplier * gradV(x, i, Vif));
+        float nextVif = Vif - eta * (gradV + 2.f * _lambdaV * Vif);
         setV(i, f, nextVif);
     }
 
-    private float gLossV(@Nonnull Feature[] x, double y, int i, int f) {
-        double ret = -1.d;
-        double predictV = predict(x);
-        if(!_classification) {
-            double diff = predictV - y;
-            ret = 2.d * diff * gradV(x, i, f);
-        } else {
-            ret = (MathUtils.sigmoid(predictV * y) - 1.d) * y * gradV(x, i, f);
-        }
-        return (float) ret;
-    }
-
-    private float gradV(@Nonnull Feature[] x, int i, int f) {
+    private static double gradV(@Nonnull final Feature[] x, final int i, final float Vif) {
         double ret = 0.d;
         double xi = 1.d;
         for(Feature e : x) {
             int j = e.index;
             double xj = e.value;
-
             if(j == i) {
-                xi = xj; // REVIEWME
+                xi = xj;
             } else {
-                ret += getV(i, f) * xj;
+                ret += Vif * xj;
             }
         }
         ret *= xi;
-        return (float) ret;
+        return ret;
     }
 
     public void check(@Nonnull Feature[] x) throws HiveException {
