@@ -67,7 +67,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
     @Override
     public float getV(int i, int f) {
         if(i < 1 || i > _p) {
-            throw new IllegalArgumentException("Index i should be in rage [1," + _p + "]: " + i);
+            throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         return _V[i - 1][f];
     }
@@ -75,7 +75,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
     @Override
     public void setV(int i, int f, float nextVif) {
         if(i < 1 || i > _p) {
-            throw new IllegalArgumentException("Index i should be in rage [1," + _p + "]: " + i);
+            throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         _V[i - 1][f] = nextVif;
     }
