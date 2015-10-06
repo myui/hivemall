@@ -38,11 +38,11 @@ public class NioSegment implements Segments {
     @Nonnull
     protected final FileChannel channel;
 
-    public NioSegment(@Nonnull File file, int recordLength) {
-        this(file, recordLength, false);
+    public NioSegment(@Nonnull File file) {
+        this(file, false);
     }
 
-    public NioSegment(@Nonnull File file, int recordLength, boolean readOnly) {
+    public NioSegment(@Nonnull File file, boolean readOnly) {
         this.file = file;
         final RandomAccessFile raf;
         try {

@@ -35,7 +35,7 @@ public final class NioFixedSegment extends NioSegment {
     }
 
     public NioFixedSegment(@Nonnull File file, int recordLength, boolean readOnly) {
-        super(file, recordLength, readOnly);
+        super(file, readOnly);
         this.recordLength = recordLength;
     }
 
