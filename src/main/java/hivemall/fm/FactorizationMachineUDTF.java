@@ -43,7 +43,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-public class FactorizationMachineUDTF extends UDTFWithOptions {
+public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     private ListObjectInspector _xOI;
     private PrimitiveObjectInspector _yOI;
@@ -188,7 +188,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.check(x);
 
         final float eta = _etaEstimator.eta(_t);
-        final double dlossMultiplier = _model.dlossMultiplier(x, y);
+        final double dlossMultiplier = _model.dloss(x, y);
 
         // w0 update
         _model.updateW0(x, dlossMultiplier, eta);

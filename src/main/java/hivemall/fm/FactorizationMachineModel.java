@@ -88,7 +88,7 @@ public abstract class FactorizationMachineModel {
      */
     protected abstract void setV(int i, int f, float nextVif);
 
-    public final double dlossMultiplier(@Nonnull Feature[] x, double y) {
+    public final double dloss(@Nonnull Feature[] x, double y) {
         final double ret;
         double p = predict(x);
         if(_classification) {
