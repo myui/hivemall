@@ -59,11 +59,22 @@ public final class NIOUtils {
         }
     }
 
-    public static void writeFully(@Nonnull final FileChannel dst, @Nonnull final ByteBuffer src, @Nonnegative final long position)
+    public static int writeFully(@Nonnull final FileChannel dst, @Nonnull final ByteBuffer src, @Nonnegative final long position)
             throws IOException {
+        int count = 0;
         while(src.remaining() > 0) {
-            dst.write(src, position + src.position());
+            count += dst.write(src, position + src.position());
         }
+        return count;
+    }
+
+    public static int writeFully(@Nonnull final FileChannel dst, @Nonnull final ByteBuffer src)
+            throws IOException {
+        int count = 0;
+        while(src.remaining() > 0) {
+            count += dst.write(src);
+        }
+        return count;
     }
 
 }
