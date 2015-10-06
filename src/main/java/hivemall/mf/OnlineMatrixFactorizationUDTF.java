@@ -26,7 +26,6 @@ import hivemall.io.Rating;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
 import hivemall.utils.io.NioFixedSegment;
-import hivemall.utils.io.Segments;
 import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
@@ -100,7 +99,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected MapredContext mapredContext;
 
     // Used for iterations
-    protected Segments fileIO;
+    protected NioFixedSegment fileIO;
     protected ByteBuffer inputBuf;
     private long lastWritePos;
 
@@ -458,7 +457,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         }
     }
 
-    protected static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final Segments dst, final long lastWritePos)
+    protected static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final NioFixedSegment dst, final long lastWritePos)
             throws HiveException {
         // TODO asynchronous write in the background
         srcBuf.flip();
@@ -473,7 +472,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected final void runIterativeTraining(@Nonnegative final int iterations)
             throws HiveException {
         final ByteBuffer inputBuf = this.inputBuf;
-        final Segments fileIO = this.fileIO;
+        final NioFixedSegment fileIO = this.fileIO;
         assert (inputBuf != null);
         assert (fileIO != null);
 
