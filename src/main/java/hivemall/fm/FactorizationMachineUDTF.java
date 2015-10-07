@@ -19,10 +19,17 @@
 package hivemall.fm;
 
 import hivemall.UDTFWithOptions;
+import hivemall.common.ConversionState;
 import hivemall.common.EtaEstimator;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.io.FileUtils;
+import hivemall.utils.io.NioStatefullSegment;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -31,6 +38,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -44,6 +53,8 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
 public final class FactorizationMachineUDTF extends UDTFWithOptions {
+    private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
+    private static final int INT_BYTES = Integer.SIZE / 8;
 
     private ListObjectInspector _xOI;
     private PrimitiveObjectInspector _yOI;
@@ -72,6 +83,11 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
      * The number of training examples processed
      */
     private long _t;
+    private ConversionState _cvState;
+
+    // file IO
+    private ByteBuffer _inputBuf;
+    private NioStatefullSegment _fileIO;
 
     @Override
     protected Options getOptions() {
@@ -91,6 +107,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
         opts.addOption("t", "total_steps", true, "The total number of training examples");
         opts.addOption("power_t", true, "The exponent for inverse scaling learning rate [default 0.1]");
+        // conversion check
+        opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: enabled]");
+        opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
         return opts;
     }
 
@@ -104,6 +123,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         float lambda0 = 0.01f;
         double sigma = 0.1d;
         double min_target = Double.MAX_VALUE, max_target = Double.MIN_VALUE;
+        boolean conversionCheck = true;
+        double convergenceRate = 0.005d;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -118,6 +139,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
             min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), _min_target);
             max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), _max_target);
+            conversionCheck = !cl.hasOption("disable_cvtest");
+            convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
         }
 
         this._classification = classication;
@@ -130,6 +153,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         this._min_target = min_target;
         this._max_target = max_target;
         this._etaEstimator = EtaEstimator.get(cl);
+        this._cvState = new ConversionState(conversionCheck, convergenceRate);
 
         return cl;
     }
@@ -180,7 +204,61 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         }
 
         ++_t;
+        recordTrain(x, y);
         train(x, y);
+    }
+
+    protected void recordTrain(@Nonnull final Feature[] x, final double y) throws HiveException {
+        if(_iterations <= 1) {
+            return;
+        }
+
+        ByteBuffer inputBuf = _inputBuf;
+        NioStatefullSegment dst = _fileIO;
+        if(inputBuf == null) {
+            final File file;
+            try {
+                file = File.createTempFile("hivemall_fm", ".sgmt");
+                file.deleteOnExit();
+                if(!file.canWrite()) {
+                    throw new UDFArgumentException("Cannot write a temporary file: "
+                            + file.getAbsolutePath());
+                }
+            } catch (IOException ioe) {
+                throw new UDFArgumentException(ioe);
+            } catch (Throwable e) {
+                throw new UDFArgumentException(e);
+            }
+
+            this._inputBuf = inputBuf = ByteBuffer.allocateDirect(65536); // 64 KiB
+            this._fileIO = dst = new NioStatefullSegment(file, false);
+        }
+
+        int xBytes = requiredBytes(x);
+        int recordBytes = (Integer.SIZE + Double.SIZE) / 8 + xBytes;
+        int requiredBytes = (Integer.SIZE / 8) + recordBytes;
+        int remain = inputBuf.remaining();
+        if(remain < requiredBytes) {
+            writeBuffer(inputBuf, dst);
+        }
+
+        inputBuf.putInt(recordBytes);
+        inputBuf.putInt(x.length);
+        for(Feature f : x) {
+            f.writeTo(inputBuf);
+        }
+        inputBuf.putDouble(y);
+    }
+
+    private static void writeBuffer(@Nonnull ByteBuffer srcBuf, @Nonnull NioStatefullSegment dst)
+            throws HiveException {
+        srcBuf.flip();
+        try {
+            dst.write(srcBuf);
+        } catch (IOException e) {
+            throw new HiveException("Exception causes while writing a buffer to file", e);
+        }
+        srcBuf.clear();
     }
 
     public void train(@Nonnull final Feature[] x, final double y) throws HiveException {
@@ -188,10 +266,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.check(x);
 
         final float eta = _etaEstimator.eta(_t);
-        final double dlossMultiplier = _model.dloss(x, y);
+        final double dloss = _model.dloss(x, y);
 
         // w0 update
-        _model.updateW0(x, dlossMultiplier, eta);
+        _model.updateW0(x, dloss, eta);
 
         for(Feature e : x) {
             if(e == null) {
@@ -200,16 +278,24 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             int i = e.index;
             double xi = e.value;
             // wi update
-            _model.updateWi(x, dlossMultiplier, i, xi, eta);
+            _model.updateWi(x, dloss, i, xi, eta);
             for(int f = 0, k = _factor; f < k; f++) {
                 // Vif update
-                _model.updateV(x, dlossMultiplier, i, f, eta);
+                _model.updateV(x, dloss, i, f, eta);
             }
         }
     }
 
     @Override
     public void close() throws HiveException {
+        if(_t == 0) {
+            this._model = null;
+            return;
+        }
+        if(_iterations > 1) {
+            runTrainingIteration(_iterations);
+        }
+
         final int P = _model.getSize();
         if(P <= 0) {
             throw new HiveException("Invalid P SIZE:" + P);
@@ -245,6 +331,128 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         }
     }
 
+    protected void runTrainingIteration(int iterations) throws HiveException {
+        final ByteBuffer inputBuf = this._inputBuf;
+        final NioStatefullSegment fileIO = this._fileIO;
+        assert (inputBuf != null);
+        assert (fileIO != null);
+
+        try {
+            if(fileIO.getPosition() == 0L) {// run iterations w/o temporary file
+                if(inputBuf.position() == 0) {
+                    return; // no training example
+                }
+                inputBuf.flip();
+                for(int i = 1; i < iterations; i++) {
+                    while(inputBuf.remaining() > 0) {
+                        int bytes = inputBuf.getInt();
+                        assert (bytes > 0) : bytes;
+                        int xLength = inputBuf.getInt();
+                        final Feature[] x = new Feature[xLength];
+                        for(int j = 0; j < xLength; j++) {
+                            x[j] = new Feature(inputBuf);
+                        }
+                        double y = inputBuf.getDouble();
+                        // invoke train
+                        ++_t;
+                        train(x, y);
+                    }
+                    inputBuf.rewind();
+                }
+            } else {// read training examples in the temporary file and invoke train for each example
+
+                // write training examples in buffer to a temporary file
+                if(inputBuf.remaining() > 0) {
+                    writeBuffer(inputBuf, fileIO);
+                }
+                try {
+                    fileIO.flush();
+                } catch (IOException e) {
+                    throw new HiveException("Failed to flush a file: "
+                            + fileIO.getFile().getAbsolutePath(), e);
+                }
+                final long numTrainingExamples = _t;
+                if(logger.isInfoEnabled()) {
+                    File tmpFile = fileIO.getFile();
+                    logger.info("Wrote " + numTrainingExamples
+                            + " records to a temporary file for iterative training: "
+                            + tmpFile.getAbsolutePath() + " (" + FileUtils.prettyFileSize(tmpFile)
+                            + ")");
+                }
+
+                // run iterations
+                int i = 1;
+                for(; i < iterations; i++) {
+                    _cvState.multiplyLoss(0.5d);
+                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
+
+                    inputBuf.clear();
+                    fileIO.resetPosition();
+                    while(true) {
+                        // TODO prefetch
+                        // writes training examples to a buffer in the temporary file
+                        final int bytesRead;
+                        try {
+                            bytesRead = fileIO.read(inputBuf);
+                        } catch (IOException e) {
+                            throw new HiveException("Failed to read a file: "
+                                    + fileIO.getFile().getAbsolutePath(), e);
+                        }
+                        if(bytesRead == 0) { // reached file EOF
+                            break;
+                        }
+                        assert (bytesRead > 0) : bytesRead;
+
+                        // reads training examples from a buffer
+                        inputBuf.flip();
+                        int remain = inputBuf.remaining();
+                        if(remain < INT_BYTES) {
+                            throw new HiveException("Illegal file format was detected");
+                        }
+                        while(remain >= INT_BYTES) {
+                            int recordBytes = inputBuf.getInt();
+                            remain -= INT_BYTES;
+                            if(remain < recordBytes) {
+                                break;
+                            }
+
+                            final int xLength = inputBuf.getInt();
+                            final Feature[] x = new Feature[xLength];
+                            for(int j = 0; j < xLength; j++) {
+                                x[j] = new Feature(inputBuf);
+                            }
+                            double y = inputBuf.getDouble();
+
+                            // invoke training
+                            ++_t;
+                            train(x, y);
+
+                            remain -= recordBytes;
+                        }
+                        inputBuf.compact();
+                    }
+
+                }
+                logger.info("Performed " + i + " iterations of "
+                        + NumberUtils.formatNumber(numTrainingExamples)
+                        + " training examples (thus " + NumberUtils.formatNumber(_t)
+                        + " training updates in total)");
+            }
+        } finally {
+            // delete the temporary file and release resources
+            try {
+                fileIO.close(true);
+            } catch (IOException e) {
+                throw new HiveException("Failed to close a file: "
+                        + fileIO.getFile().getAbsolutePath(), e);
+            }
+            this._inputBuf = null;
+            this._fileIO = null;
+        }
+    }
+
     @Nullable
     private static Feature[] parseFeatures(@Nonnull final Object arg, @Nonnull final ListObjectInspector listOI)
             throws HiveException {
@@ -253,6 +461,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         }
         final int length = listOI.getListLength(arg);
         final Feature[] ary = new Feature[length];
+        int j = 0;
         for(int i = 0; i < length; i++) {
             Object o = listOI.getListElement(arg, i);
             if(o == null) {
@@ -260,9 +469,16 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             }
             String s = o.toString();
             Feature f = Feature.parse(s);
-            ary[i] = f;
+            ary[j] = f;
+            j++;
         }
-        return ary;
+        if(j == length) {
+            return ary;
+        } else {
+            Feature[] dst = new Feature[j];
+            System.arraycopy(ary, 0, dst, 0, j);
+            return dst;
+        }
     }
 
     public static final class Feature {
@@ -272,6 +488,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         public Feature(int index, double value) {
             this.index = index;
             this.value = value;
+        }
+
+        public Feature(@Nonnull ByteBuffer src) {
+            readFrom(src);
         }
 
         @Nonnull
@@ -300,6 +520,29 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             probe.index = index;
             probe.value = value;
         }
+
+        int bytes() {
+            return (Integer.SIZE + Double.SIZE) / 8;
+        }
+
+        void writeTo(@Nonnull final ByteBuffer dst) {
+            dst.putInt(index);
+            dst.putDouble(value);
+        }
+
+        void readFrom(@Nonnull final ByteBuffer src) {
+            this.index = src.getInt();
+            this.value = src.getDouble();
+        }
+
     }
 
+    private static int requiredBytes(@Nonnull final Feature[] x) {
+        int ret = 0;
+        for(Feature f : x) {
+            assert (f != null);
+            ret += f.bytes();
+        }
+        return ret;
+    }
 }
