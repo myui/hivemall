@@ -37,6 +37,10 @@ public final class NioStatefullSegment extends NioSegment {
         this.curPos = 0L;
     }
 
+    public void resetPosition() {
+        this.curPos = 0L;
+    }
+
     public long getCurrentPosition() {
         return curPos;
     }
@@ -60,14 +64,14 @@ public final class NioStatefullSegment extends NioSegment {
     @Override
     public int read(long filePos, @Nonnull ByteBuffer buf) throws IOException {
         int bytes = super.read(filePos, buf);
-        this.curPos += bytes;
+        this.curPos = filePos + bytes;
         return bytes;
     }
 
     @Override
     public int write(long filePos, @Nonnull ByteBuffer buf) throws IOException {
         int bytes = super.write(filePos, buf);
-        this.curPos += bytes;
+        this.curPos = filePos + bytes;
         return bytes;
     }
 
