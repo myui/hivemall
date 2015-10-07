@@ -60,13 +60,12 @@ public class NioSegment implements Segments {
     }
 
     @Override
-    public final int directRead(long filePos, @Nonnull ByteBuffer buf) throws IOException {
+    public int read(long filePos, @Nonnull ByteBuffer buf) throws IOException {
         return NIOUtils.read(channel, buf, filePos);
     }
 
     @Override
-    public final int directWrite(final long filePos, @Nonnull final ByteBuffer buf)
-            throws IOException {
+    public int write(final long filePos, @Nonnull final ByteBuffer buf) throws IOException {
         return NIOUtils.writeFully(channel, buf, filePos);
     }
 

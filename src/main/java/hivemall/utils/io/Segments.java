@@ -33,12 +33,12 @@ public interface Segments extends Closeable {
     /**    
      * @return The number of read bytes
      */
-    public int directRead(long filePos, @Nonnull ByteBuffer buf) throws IOException;
+    public int read(long filePos, @Nonnull ByteBuffer buf) throws IOException;
 
     /**    
      * @return The number of bytes written
      */
-    public int directWrite(long filePos, @Nonnull ByteBuffer buf) throws IOException;
+    public int write(long filePos, @Nonnull ByteBuffer buf) throws IOException;
 
     public void flush() throws IOException;
 

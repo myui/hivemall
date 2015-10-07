@@ -39,13 +39,13 @@ public final class NioFixedSegment extends NioSegment {
         this.recordLength = recordLength;
     }
 
-    public int read(final long idx, final ByteBuffer buf) throws IOException {
+    public int readRecords(final long idx, final ByteBuffer buf) throws IOException {
         long ptr = toPhysicalAddr(idx);
         int readBytes = NIOUtils.read(channel, buf, ptr);
         return readBytes == 0 ? 0 : readBytes / recordLength;
     }
 
-    public long write(final long idx, final ByteBuffer buf) throws IOException {
+    public long writeRecords(final long idx, final ByteBuffer buf) throws IOException {
         long ptr = toPhysicalAddr(idx);
         NIOUtils.writeFully(channel, buf, ptr);
         return ptr;

@@ -462,7 +462,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         // TODO asynchronous write in the background
         srcBuf.flip();
         try {
-            dst.write(lastWritePos, srcBuf);
+            dst.writeRecords(lastWritePos, srcBuf);
         } catch (IOException e) {
             throw new HiveException("Exception causes while writing records to : " + lastWritePos, e);
         }
@@ -531,7 +531,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;
                         try {
-                            bytesRead = fileIO.directRead(seekPos, inputBuf);
+                            bytesRead = fileIO.read(seekPos, inputBuf);
                         } catch (IOException e) {
                             throw new HiveException("Failed to read a file: "
                                     + fileIO.getFile().getAbsolutePath(), e);
