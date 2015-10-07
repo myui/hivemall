@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.NotThreadSafe;
 
+@NotThreadSafe
 public final class NioStatefullSegment extends NioSegment {
 
     private long curPos;
