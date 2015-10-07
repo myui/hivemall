@@ -20,10 +20,7 @@ package hivemall.mf;
 
 import hivemall.UDTFWithOptions;
 import hivemall.common.ConversionState;
-import hivemall.common.RatingInitilizer;
-import hivemall.io.FactorizedModel;
-import hivemall.io.FactorizedModel.RankInitScheme;
-import hivemall.io.Rating;
+import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
 import hivemall.utils.io.NioFixedSegment;

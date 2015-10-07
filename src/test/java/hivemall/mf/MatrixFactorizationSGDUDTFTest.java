@@ -18,7 +18,7 @@
  */
 package hivemall.mf;
 
-import hivemall.io.FactorizedModel.RankInitScheme;
+import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.lang.mutable.MutableInt;
 
 import java.io.File;

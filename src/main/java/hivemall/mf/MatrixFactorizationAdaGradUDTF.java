@@ -18,8 +18,7 @@
  */
 package hivemall.mf;
 
-import hivemall.io.Rating;
-import hivemall.io.Rating.RatingWithSquaredGrad;
+import hivemall.mf.Rating.RatingWithSquaredGrad;
 import hivemall.utils.lang.Primitives;
 
 import org.apache.commons.cli.CommandLine;
