@@ -43,11 +43,11 @@ public final class NioStatefullSegment extends NioSegment {
         this.curPos = 0L;
     }
 
-    public long getCurrentPosition() {
+    public long getPosition() {
         return curPos;
     }
 
-    public void setCurrentPosition(long pos) {
+    public void setPosition(long pos) {
         this.curPos = pos;
     }
 
