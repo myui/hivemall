@@ -34,7 +34,6 @@ import java.util.ArrayList;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -80,9 +79,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     // Variable managing status of learning
     /** The number of processed training examples */
     protected long count;
-    @Nullable
     protected ConversionState cvState;
-    
+
     // Input OIs and Context
     protected PrimitiveObjectInspector userOI;
     protected PrimitiveObjectInspector itemOI;
@@ -131,7 +129,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         double initStdDev = 0.1d;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
-        
+
         if(argOIs.length >= 4) {
             String rawArgs = HiveUtils.getConstString(argOIs[3]);
             cl = parseOptions(rawArgs);
@@ -158,7 +156,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         this.rankInit = RankInitScheme.resolve(rankInitOpt);
         rankInit.setMaxInitValue(maxInitValue);
         initStdDev = Math.max(initStdDev, 1.0d / factor);
-        rankInit.setInitStdDev(initStdDev);        
+        rankInit.setInitStdDev(initStdDev);
         this.cvState = new ConversionState(conversionCheck, convergenceRate);
         return cl;
     }
@@ -279,7 +277,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         final double err = rating - predict(user, item, userProbe, itemProbe);
         cvState.incrError(Math.abs(err));
         cvState.incrLoss(err * err);
-        
+
         final float eta = eta();
         for(int k = 0, size = factor; k < size; k++) {
             float Pu = userProbe[k];
@@ -441,8 +439,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             }
             this.model = null; // help GC
             logger.info("Forwarded the prediction model of " + numForwarded
-                    + " rows. [totalErrors=" + cvState.getTotalErrors() + ", lastLosses=" + cvState.getCumulativeLoss()
-                    + ", #trainingExamples=" + count + "]");
+                    + " rows. [totalErrors=" + cvState.getTotalErrors() + ", lastLosses="
+                    + cvState.getCumulativeLoss() + ", #trainingExamples=" + count + "]");
         }
     }
 
