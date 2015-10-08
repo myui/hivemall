@@ -21,6 +21,9 @@ package hivemall.fm;
 import hivemall.UDTFWithOptions;
 import hivemall.common.ConversionState;
 import hivemall.common.EtaEstimator;
+import hivemall.common.LossFunctions;
+import hivemall.common.LossFunctions.LossFunction;
+import hivemall.common.LossFunctions.LossType;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
 import hivemall.utils.io.NioStatefullSegment;
@@ -71,6 +74,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private double _min_target;
     private double _max_target;
 
+    private LossFunction _lossFunction;
     private EtaEstimator _etaEstimator;
     /**
      * The size of x
@@ -152,6 +156,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         this._sigma = sigma;
         this._min_target = min_target;
         this._max_target = max_target;
+        this._lossFunction = classication ? LossFunctions.getLossFunction(LossType.LogLoss)
+                : LossFunctions.getLossFunction(LossType.SquaredLoss);
         this._etaEstimator = EtaEstimator.get(cl);
         this._cvState = new ConversionState(conversionCheck, convergenceRate);
 
@@ -266,10 +272,14 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.check(x);
 
         final float eta = _etaEstimator.eta(_t);
-        final double dloss = _model.dloss(x, y);
+
+        final double p = _model.predict(x);
+        final double lossGrad = _model.dloss(p, y);
+        double loss = _lossFunction.loss(p, y);
+        _cvState.incrLoss(loss);
 
         // w0 update
-        _model.updateW0(x, dloss, eta);
+        _model.updateW0(x, lossGrad, eta);
 
         for(Feature e : x) {
             if(e == null) {
@@ -278,10 +288,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             int i = e.index;
             double xi = e.value;
             // wi update
-            _model.updateWi(x, dloss, i, xi, eta);
+            _model.updateWi(x, lossGrad, i, xi, eta);
             for(int f = 0, k = _factor; f < k; f++) {
                 // Vif update
-                _model.updateV(x, dloss, i, f, eta);
+                _model.updateV(x, lossGrad, i, f, eta);
             }
         }
     }
@@ -383,7 +393,6 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                 // run iterations
                 int i = 1;
                 for(; i < iterations; i++) {
-                    _cvState.multiplyLoss(0.5d);
                     if(_cvState.isConverged(i + 1, numTrainingExamples)) {
                         break;
                     }

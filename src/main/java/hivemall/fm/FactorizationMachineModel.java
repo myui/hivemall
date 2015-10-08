@@ -88,9 +88,13 @@ public abstract class FactorizationMachineModel {
      */
     protected abstract void setV(int i, int f, float nextVif);
 
-    public final double dloss(@Nonnull Feature[] x, double y) {
-        final double ret;
+    public final double dloss(@Nonnull final Feature[] x, final double y) {
         double p = predict(x);
+        return dloss(p, y);
+    }
+
+    public final double dloss(double p, final double y) {
+        final double ret;
         if(_classification) {
             ret = (MathUtils.sigmoid(p * y) - 1.d) * y;
         } else { // regression            
