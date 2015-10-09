@@ -495,6 +495,15 @@ create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDT
 drop temporary function train_mf_adagrad;
 create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
 
+---------------------------
+-- Factorization Machine --
+---------------------------
+
+drop temporary function fm_predict;
+create temporary function fm_predict as 'hivemall.fm.FMPredictUDAF';
+
+drop temporary function train_fm;
+create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
 
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0

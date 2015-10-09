@@ -48,6 +48,16 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
+    public int getMinIndex() {
+        return 1;
+    }
+
+    @Override
+    public int getMaxIndex() {
+        return _p - 1;
+    }
+
+    @Override
     public int getSize() {
         return _p;
     }
@@ -62,6 +72,14 @@ public final class FMArrayModel extends FactorizationMachineModel {
     protected void setW(int i, float nextWi) {
         assert (i >= 0) : i;
         _w[i] = nextWi;
+    }
+
+    @Override
+    public float[] getV(int i) {
+        if(i < 1 || i > _p) {
+            throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
+        }
+        return _V[i - 1];
     }
 
     @Override

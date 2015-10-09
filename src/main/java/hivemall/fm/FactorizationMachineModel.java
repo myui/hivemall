@@ -19,13 +19,13 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
-import hivemall.fm.FactorizationMachineUDTF.Feature;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
 import java.util.Random;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
@@ -68,6 +68,10 @@ public abstract class FactorizationMachineModel {
 
     public abstract int getSize();
 
+    public abstract int getMinIndex();
+
+    public abstract int getMaxIndex();
+
     /**
      * @param i index value >= 0
      */
@@ -77,6 +81,12 @@ public abstract class FactorizationMachineModel {
      * @param i index value >= 0
      */
     protected abstract void setW(int i, float nextWi);
+
+    /**
+     * @param i index value >= 1
+     */
+    @Nullable
+    public abstract float[] getV(int i);
 
     /**
      * @param i index value >= 1

@@ -19,7 +19,6 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
-import hivemall.fm.FactorizationMachineUDTF.Feature;
 import hivemall.utils.collections.Int2FloatOpenHash;
 import hivemall.utils.collections.IntOpenHashMap;
 import hivemall.utils.math.MathUtils;
@@ -39,8 +38,12 @@ public final class FMMapModel extends FactorizationMachineModel {
     private Int2FloatOpenHash _w;
     private IntOpenHashMap<float[]> _V;
 
+    private int minIndex, maxIndex;
+
     public FMMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
+        this.minIndex = 0;
+        this.maxIndex = 0;
     }
 
     protected void initLearningParams() {
@@ -53,6 +56,16 @@ public final class FMMapModel extends FactorizationMachineModel {
     @Override
     public int getSize() {
         return _w.size();
+    }
+
+    @Override
+    public int getMinIndex() {
+        return minIndex;
+    }
+
+    @Override
+    public int getMaxIndex() {
+        return maxIndex;
     }
 
     @Override
@@ -69,6 +82,12 @@ public final class FMMapModel extends FactorizationMachineModel {
     protected void setW(int i, float nextWi) {
         assert (i >= 0) : i;
         _w.put(i, nextWi);
+    }
+
+    @Override
+    public float[] getV(int i) {
+        assert (i >= 1) : i;
+        return _V.get(i);
     }
 
     @Override
@@ -107,6 +126,8 @@ public final class FMMapModel extends FactorizationMachineModel {
                 float[] tmp = getRandomFloatArray(_factor, _sigma, _rnd);
                 _V.put(idx, tmp);
             }
+            this.maxIndex = Math.max(maxIndex, idx);
+            this.minIndex = Math.min(minIndex, idx);
         }
     }
 

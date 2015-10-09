@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -43,6 +44,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -55,6 +57,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "train_fm", value = "_FUNC_(array<string> x, double y) - Returns a prediction value")
 public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
@@ -74,14 +77,26 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private double _min_target;
     private double _max_target;
 
+    // adaptive regularization
+    @Nullable
+    private Random _va_rand;
+    private float _validationRatio;
+
     private LossFunction _lossFunction;
     private EtaEstimator _etaEstimator;
+
     /**
      * The size of x
      */
     private int _p;
 
     private FactorizationMachineModel _model;
+
+    /**
+     * Probe for the input X
+     */
+    @Nullable
+    private Feature[] probes;
 
     /**
      * The number of training examples processed
@@ -114,6 +129,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         // conversion check
         opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: enabled]");
         opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
+        // adaptive regularization
+        opts.addOption("disable_adareg", "disable_adaptive_regularizaion", false, "Whether to disable adaptive regularization [default: enabled]");
+        opts.addOption("va_ratio", "validation_ratio", true, "Ratio of training data used for validation [default: 0.05f]");
         return opts;
     }
 
@@ -129,6 +147,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         double min_target = Double.MAX_VALUE, max_target = Double.MIN_VALUE;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
+        boolean adaptiveReglarization = true;
+        float validationRatio = 0.05f;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -145,6 +165,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), _max_target);
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
+            adaptiveReglarization = !cl.hasOption("disable_adaptive_regularizaion");
+            validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"), validationRatio);
         }
 
         this._classification = classication;
@@ -156,6 +178,14 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         this._sigma = sigma;
         this._min_target = min_target;
         this._max_target = max_target;
+        if(adaptiveReglarization) {
+            this._va_rand = new Random(seed + 31L);
+        }
+        this._validationRatio = validationRatio;
+        if(_validationRatio < 0.f || _validationRatio >= 1.f) {
+            throw new UDFArgumentException("validation_ratio should be in range [0, 1): "
+                    + _validationRatio);
+        }
         this._lossFunction = classication ? LossFunctions.getLossFunction(LossType.LogLoss)
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
         this._etaEstimator = EtaEstimator.get(cl);
@@ -200,10 +230,12 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        Feature[] x = parseFeatures(args[0], _xOI);
+        Feature[] x = Feature.parseFeatures(args[0], _xOI, probes);
         if(x == null) {
             return;
         }
+        this.probes = x;
+
         double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
         if(_classification) {
             y = (y > 0.d) ? 1.d : -1.d;
@@ -240,7 +272,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             this._fileIO = dst = new NioStatefullSegment(file, false);
         }
 
-        int xBytes = requiredBytes(x);
+        int xBytes = Feature.requiredBytes(x);
         int recordBytes = (Integer.SIZE + Double.SIZE) / 8 + xBytes;
         int requiredBytes = (Integer.SIZE / 8) + recordBytes;
         int remain = inputBuf.remaining();
@@ -271,6 +303,19 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         // check
         _model.check(x);
 
+        if(_va_rand == null) {// no adaptive regularization
+            trainTheta(x, y);
+        } else {
+            float rnd = _va_rand.nextFloat();
+            if(rnd < _validationRatio) {
+                trainLambda(x, y); // adaptive regularization
+            } else {
+                trainTheta(x, y);
+            }
+        }
+    }
+
+    protected void trainTheta(final Feature[] x, final double y) throws HiveException {
         final float eta = _etaEstimator.eta(_t);
 
         final double p = _model.predict(x);
@@ -296,6 +341,18 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         }
     }
 
+    /**
+     * Update lambda as follows:
+     * <pre>
+     *      grad_lambdaw0 = (grad l(y(x),y)) * (-2 * alpha * w_0)
+     *      grad_lambdawg = (grad l(y(x),y)) * (-2 * alpha * (\sum_{l \in group(g)} x_l * w_l))
+     *      grad_lambdafg = (grad l(y(x),y)) * (-2 * alpha * (\sum_{l} x_l * v'_lf) * \sum_{l \in group(g)} x_l * v_lf) - \sum_{l \in group(g)} x^2_l * v_lf * v'_lf)
+     * </pre>
+     */
+    protected void trainLambda(final Feature[] x, final double y) throws HiveException {
+        // TODO
+    }
+
     @Override
     public void close() throws HiveException {
         if(_t == 0) {
@@ -308,34 +365,40 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         final int P = _model.getSize();
         if(P <= 0) {
-            throw new HiveException("Invalid P SIZE:" + P);
+            logger.warn("Model size P was less than zero: " + P);
+            return;
         }
 
-        final IntWritable idx = new IntWritable(0);
-        final FloatWritable Wi = new FloatWritable(0.f);
-        final FloatWritable[] Vi = HiveUtils.newFloatArray(_factor, 0.f);
+        final IntWritable f_idx = new IntWritable(0);
+        final FloatWritable f_Wi = new FloatWritable(0.f);
+        final FloatWritable[] f_Vi = HiveUtils.newFloatArray(_factor, 0.f);
 
         final Object[] forwardObjs = new Object[3];
-        forwardObjs[0] = idx;
-        forwardObjs[1] = Wi;
+        forwardObjs[0] = f_idx;
+        forwardObjs[1] = f_Wi;
         forwardObjs[2] = null;
         // W0
-        idx.set(0);
-        // V0
-        Wi.set(_model.getW(0));
+        f_idx.set(0);
+        f_Wi.set(_model.getW(0));
+        // V0 is null
         forward(forwardObjs);
 
         // Wi, Vif (i starts from 1..P)
-        forwardObjs[2] = Arrays.asList(Vi);
-        for(int i = 1; i <= P; i++) {
-            idx.set(i);
+        forwardObjs[2] = Arrays.asList(f_Vi);
+
+        for(int i = _model.getMinIndex(), maxIdx = _model.getMaxIndex(); i <= maxIdx; i++) {
+            float[] vi = _model.getV(i);
+            if(vi == null) {
+                continue;
+            }
+            f_idx.set(i);
             // set Wi
             float w = _model.getW(i);
-            Wi.set(w);
+            f_Wi.set(w);
             // set Vif
             for(int f = 0; f < _factor; f++) {
-                float v = _model.getV(i, f);
-                Vi[f].set(v);
+                float v = vi[f];
+                f_Vi[f].set(v);
             }
             forward(forwardObjs);
         }
@@ -460,98 +523,5 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             this._inputBuf = null;
             this._fileIO = null;
         }
-    }
-
-    @Nullable
-    private static Feature[] parseFeatures(@Nonnull final Object arg, @Nonnull final ListObjectInspector listOI)
-            throws HiveException {
-        if(arg == null) {
-            return null;
-        }
-        final int length = listOI.getListLength(arg);
-        final Feature[] ary = new Feature[length];
-        int j = 0;
-        for(int i = 0; i < length; i++) {
-            Object o = listOI.getListElement(arg, i);
-            if(o == null) {
-                continue;
-            }
-            String s = o.toString();
-            Feature f = Feature.parse(s);
-            ary[j] = f;
-            j++;
-        }
-        if(j == length) {
-            return ary;
-        } else {
-            Feature[] dst = new Feature[j];
-            System.arraycopy(ary, 0, dst, 0, j);
-            return dst;
-        }
-    }
-
-    public static final class Feature {
-        int index;
-        double value;
-
-        public Feature(int index, double value) {
-            this.index = index;
-            this.value = value;
-        }
-
-        public Feature(@Nonnull ByteBuffer src) {
-            readFrom(src);
-        }
-
-        @Nonnull
-        static Feature parse(@Nonnull final String s) throws HiveException {
-            int pos = s.indexOf(":");
-            String s1 = s.substring(0, pos);
-            String s2 = s.substring(pos + 1);
-            int index = Integer.parseInt(s1);
-            if(index < 0) {
-                throw new HiveException("Feature index MUST be greater than 0: " + s);
-            }
-            double value = Double.parseDouble(s2);
-            return new Feature(index, value);
-        }
-
-        static void parse(@Nonnull final String s, @Nonnull final Feature probe)
-                throws HiveException {
-            int pos = s.indexOf(":");
-            String s1 = s.substring(0, pos);
-            String s2 = s.substring(pos + 1);
-            int index = Integer.parseInt(s1);
-            if(index < 0) {
-                throw new HiveException("Feature index MUST be greater than 0: " + s);
-            }
-            double value = Double.parseDouble(s2);
-            probe.index = index;
-            probe.value = value;
-        }
-
-        int bytes() {
-            return (Integer.SIZE + Double.SIZE) / 8;
-        }
-
-        void writeTo(@Nonnull final ByteBuffer dst) {
-            dst.putInt(index);
-            dst.putDouble(value);
-        }
-
-        void readFrom(@Nonnull final ByteBuffer src) {
-            this.index = src.getInt();
-            this.value = src.getDouble();
-        }
-
-    }
-
-    private static int requiredBytes(@Nonnull final Feature[] x) {
-        int ret = 0;
-        for(Feature f : x) {
-            assert (f != null);
-            ret += f.bytes();
-        }
-        return ret;
     }
 }
