@@ -264,6 +264,9 @@ create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 drop temporary function categorical_features;
 create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
 
+drop temporary function feature_index;
+create temporary function feature_index as 'hivemall.ftvec.FeatureIndexUDF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
