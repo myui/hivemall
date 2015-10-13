@@ -513,10 +513,6 @@ create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
 -- General Macros --
 --------------------
 
---------------------
--- General Macros --
---------------------
-
 create temporary macro java_min(x DOUBLE, y DOUBLE)
 reflect("java.lang.Math", "min", x, y);
 
