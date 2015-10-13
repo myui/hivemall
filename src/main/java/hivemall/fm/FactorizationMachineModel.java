@@ -204,28 +204,30 @@ public abstract class FactorizationMachineModel {
      * sum_f_dash      := \sum_{j} x_j * v'_lj, this is independent of the groups
      * sum_f(g)        := \sum_{j \in group(g)} x_j * v_jf
      * sum_f_dash_f(g) := \sum_{j \in group(g)} x^2_j * v_jf * v'_jf
-     *                 := \sum_{j \in group(g)} v'_jf * x_j * v_jf * x_j 
+     *                 := \sum_{j \in group(g)} x_j * v'_jf * x_j * v_jf 
      * v_jf'           := v_jf - alpha ( grad_v_jf + 2 * lambda_v_f * v_jf)
      * </pre>
      */
     final void updateLambdaV(@Nonnull final Feature[] x, final double dloss, final float eta) {
         for(int f = 0, k = _factor; f < k; f++) {
             double sum_f_dash = 0.d, sum_f = 0.d, sum_f_dash_f = 0.d;
+            float lambdaVf = getLambdaV(f);
+
             for(Feature e : x) {
                 assert (e != null) : Arrays.toString(x);
                 int j = e.index;
                 double x_j = e.value;
 
                 float v_jf = getV(j, f);
-                double v_dash = v_jf - eta * (gradV(x, j, v_jf) + 2.d * getLambdaV(f) * v_jf);
+                double v_dash = v_jf - eta * (gradV(x, j, v_jf) + 2.d * lambdaVf * v_jf);
 
                 sum_f_dash += x_j * v_dash;
                 sum_f += x_j * v_jf;
-                sum_f_dash_f += v_dash * x_j * v_jf * x_j;
+                sum_f_dash_f += x_j * v_dash * x_j * v_jf;
             }
 
             double lambda_v_grad = -2.f * eta * (sum_f_dash * sum_f - sum_f_dash_f);
-            float lambdaVf = _lambdaV[f] - (float) (eta * dloss * lambda_v_grad);
+            lambdaVf -= eta * dloss * lambda_v_grad;
             _lambdaV[f] = Math.max(0.f, lambdaVf);
         }
     }
