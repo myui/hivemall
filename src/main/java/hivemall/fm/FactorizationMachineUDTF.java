@@ -146,7 +146,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         int factor = 10;
         float lambda0 = 0.01f;
         double sigma = 0.1d;
-        double min_target = Double.MAX_VALUE, max_target = Double.MIN_VALUE;
+        double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
         boolean adaptiveReglarization = true;
@@ -164,8 +164,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             factor = Primitives.parseInt(cl.getOptionValue("factor"), factor);
             lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
             sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
-            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), _min_target);
-            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), _max_target);
+            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), min_target);
+            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             adaptiveReglarization = !cl.hasOption("disable_adaptive_regularizaion");
@@ -344,9 +344,6 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.updateW0(lossGrad, eta);
 
         for(Feature e : x) {
-            if(e == null) {
-                continue;
-            }
             int i = e.index;
             double xi = e.value;
             // wi update

@@ -119,7 +119,7 @@ public abstract class FactorizationMachineModel {
             p = Math.min(p, _max_target);
             p = Math.max(p, _min_target);
             //ret = 2.d * (p - y);
-            ret = (p - y);
+            ret = p - y;
         }
         return ret;
     }
@@ -149,9 +149,9 @@ public abstract class FactorizationMachineModel {
                 sumV2X2 += (vx * vx);
             }
             ret += 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
-            assert (Double.isNaN(ret) == false);
+            assert (!Double.isNaN(ret));
         }
-        assert (Double.isNaN(ret) == false);
+        assert (!Double.isNaN(ret));
         return ret;
     }
 
@@ -170,9 +170,11 @@ public abstract class FactorizationMachineModel {
     }
 
     final void updateV(@Nonnull final Feature[] x, final double dloss, final int i, final int f, final float eta) {
+        double h = gradV(x, i, f);
+        float gradV = (float) (dloss * h);
         float Vif = getV(i, f);
-        float gradV = (float) (dloss * gradV(x, i, Vif));
-        float nextVif = Vif - eta * (gradV + 2.f * getLambdaV(f) * Vif);
+        float LambdaVf = getLambdaV(f);
+        float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
         setV(i, f, nextVif);
     }
 
@@ -219,7 +221,7 @@ public abstract class FactorizationMachineModel {
                 double x_j = e.value;
 
                 float v_jf = getV(j, f);
-                double v_dash = v_jf - eta * (gradV(x, j, v_jf) + 2.d * lambdaVf * v_jf);
+                double v_dash = v_jf - eta * (gradV(x, j, f) + 2.d * lambdaVf * v_jf);
 
                 sum_f_dash += x_j * v_dash;
                 sum_f += x_j * v_jf;
@@ -232,7 +234,13 @@ public abstract class FactorizationMachineModel {
         }
     }
 
-    private static double gradV(@Nonnull final Feature[] x, final int i, final float Vif) {
+    /**
+     * <pre>
+     * grad_v_if := multi * (x_i * (sum_f - v_if * x_i))
+     * sum_f     := \sum_j v_jf * x_j
+     * </pre>
+     */
+    private double gradV(@Nonnull final Feature[] x, final int i, final int f) {
         double ret = 0.d;
         double xi = 1.d;
         for(Feature e : x) {
@@ -241,7 +249,8 @@ public abstract class FactorizationMachineModel {
             if(j == i) {
                 xi = xj;
             } else {
-                ret += Vif * xj;
+                float Vjf = getV(j, f);
+                ret += Vjf * xj;
             }
         }
         ret *= xi;
