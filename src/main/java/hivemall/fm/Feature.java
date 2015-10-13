@@ -209,7 +209,7 @@ public final class Feature {
 
     @Override
     public String toString() {
-        return "Feature [index=" + index + ", value=" + value + "]";
+        return index + ":" + value;
     }
 
 }
