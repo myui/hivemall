@@ -28,18 +28,18 @@ public final class FMArrayModel extends FactorizationMachineModel {
     private final int _p;
 
     // LEARNING PARAMS
-    private float[] _w;
-    private float[][] _V;
+    private final float[] _w;
+    private final float[][] _V;
 
     public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
         this._p = p;
+        this._w = new float[p + 1];
+        this._V = new float[p][factor];
     }
 
     @Override
     protected void initLearningParams() {
-        this._w = new float[_p + 1];
-        this._V = new float[_p][_factor];
         for(int i = 0; i < _p; i++) {
             for(int j = 0; j < _factor; j++) {
                 _V[i][j] = (float) MathUtils.gaussian(0.d, _sigma, _rnd);

@@ -243,7 +243,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         ++_t;
         recordTrain(x, y);
-        train(x, y);
+        boolean adaptiveRegularization = (_va_rand != null) && _t >= 1000;
+        train(x, y, adaptiveRegularization);
     }
 
     protected void recordTrain(@Nonnull final Feature[] x, final double y) throws HiveException {
@@ -299,22 +300,27 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         srcBuf.clear();
     }
 
-    public void train(@Nonnull final Feature[] x, final double y) throws HiveException {
+    public void train(@Nonnull final Feature[] x, final double y, final boolean adaptiveRegularization)
+            throws HiveException {
         // check
         _model.check(x);
 
-        if(_va_rand == null) {// no adaptive regularization
-            trainTheta(x, y);
-        } else {
-            float rnd = _va_rand.nextFloat();
+        if(adaptiveRegularization) {
+            assert (_va_rand != null);
+            final float rnd = _va_rand.nextFloat();
             if(rnd < _validationRatio) {
                 trainLambda(x, y); // adaptive regularization
             } else {
                 trainTheta(x, y);
             }
+        } else {
+            trainTheta(x, y);
         }
     }
 
+    /**
+     * Update model parameters
+     */
     protected void trainTheta(final Feature[] x, final double y) throws HiveException {
         final float eta = _etaEstimator.eta(_t);
 
@@ -324,7 +330,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         _cvState.incrLoss(loss);
 
         // w0 update
-        _model.updateW0(x, lossGrad, eta);
+        _model.updateW0(lossGrad, eta);
 
         for(Feature e : x) {
             if(e == null) {
@@ -333,7 +339,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             int i = e.index;
             double xi = e.value;
             // wi update
-            _model.updateWi(x, lossGrad, i, xi, eta);
+            _model.updateWi(lossGrad, i, xi, eta);
             for(int f = 0, k = _factor; f < k; f++) {
                 // Vif update
                 _model.updateV(x, lossGrad, i, f, eta);
@@ -342,15 +348,21 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     }
 
     /**
-     * Update lambda as follows:
+     * Update regularization parameters `lambda` as follows:
      * <pre>
-     *      grad_lambdaw0 = (grad l(y(x),y)) * (-2 * alpha * w_0)
-     *      grad_lambdawg = (grad l(y(x),y)) * (-2 * alpha * (\sum_{l \in group(g)} x_l * w_l))
-     *      grad_lambdafg = (grad l(y(x),y)) * (-2 * alpha * (\sum_{l} x_l * v'_lf) * \sum_{l \in group(g)} x_l * v_lf) - \sum_{l \in group(g)} x^2_l * v_lf * v'_lf)
+     *      grad_lambdaw0 = (grad l(p,y)) * (-2 * alpha * w_0)
+     *      grad_lambdawg = (grad l(p,y)) * (-2 * alpha * (\sum_{l \in group(g)} x_l * w_l))
+     *      grad_lambdafg = (grad l(p,y)) * (-2 * alpha * (\sum_{l} x_l * v'_lf) * \sum_{l \in group(g)} x_l * v_lf) - \sum_{l \in group(g)} x^2_l * v_lf * v'_lf)
      * </pre>
      */
     protected void trainLambda(final Feature[] x, final double y) throws HiveException {
-        // TODO
+        final float eta = _etaEstimator.eta(_t);
+        final double p = _model.predict(x);
+        final double lossGrad = _model.dloss(p, y);
+
+        _model.updateLambdaW0(lossGrad, eta);
+        _model.updateLambdaW(x, lossGrad, eta);
+        _model.updateLambdaV(x, lossGrad, eta);
     }
 
     @Override
@@ -409,6 +421,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         final NioStatefullSegment fileIO = this._fileIO;
         assert (inputBuf != null);
         assert (fileIO != null);
+        final long numTrainingExamples = _t;
 
         try {
             if(fileIO.getPosition() == 0L) {// run iterations w/o temporary file
@@ -416,7 +429,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     return; // no training example
                 }
                 inputBuf.flip();
-                for(int i = 1; i < iterations; i++) {
+
+                int i = 1;
+                for(; i < iterations; i++) {
                     while(inputBuf.remaining() > 0) {
                         int bytes = inputBuf.getInt();
                         assert (bytes > 0) : bytes;
@@ -428,10 +443,17 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         double y = inputBuf.getDouble();
                         // invoke train
                         ++_t;
-                        train(x, y);
+                        train(x, y, true);
+                    }
+                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
                     }
                     inputBuf.rewind();
                 }
+                logger.info("Performed " + i + " iterations of "
+                        + NumberUtils.formatNumber(numTrainingExamples)
+                        + " training examples on memory (thus " + NumberUtils.formatNumber(_t)
+                        + " training updates in total) ");
             } else {// read training examples in the temporary file and invoke train for each example
 
                 // write training examples in buffer to a temporary file
@@ -444,7 +466,6 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                final long numTrainingExamples = _t;
                 if(logger.isInfoEnabled()) {
                     File tmpFile = fileIO.getFile();
                     logger.info("Wrote " + numTrainingExamples
@@ -456,10 +477,6 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                 // run iterations
                 int i = 1;
                 for(; i < iterations; i++) {
-                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
-                        break;
-                    }
-
                     inputBuf.clear();
                     fileIO.resetPosition();
                     while(true) {
@@ -499,18 +516,20 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
                             // invoke training
                             ++_t;
-                            train(x, y);
+                            train(x, y, true);
 
                             remain -= recordBytes;
                         }
                         inputBuf.compact();
                     }
-
+                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
                 }
                 logger.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
-                        + " training examples (thus " + NumberUtils.formatNumber(_t)
-                        + " training updates in total)");
+                        + " training examples on a secondary storage (thus "
+                        + NumberUtils.formatNumber(_t) + " training updates in total)");
             }
         } finally {
             // delete the temporary file and release resources

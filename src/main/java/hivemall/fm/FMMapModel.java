@@ -35,24 +35,21 @@ public final class FMMapModel extends FactorizationMachineModel {
 
     // LEARNING PARAMS
     private float _w0;
-    private Int2FloatOpenHash _w;
-    private IntOpenHashMap<float[]> _V;
+    private final Int2FloatOpenHash _w;
+    private final IntOpenHashMap<float[]> _V;
 
-    private int minIndex, maxIndex;
+    private int _minIndex, _maxIndex;
 
     public FMMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
-        this.minIndex = 0;
-        this.maxIndex = 0;
-    }
-
-    protected void initLearningParams() {
         this._w0 = 0.f;
         this._w = new Int2FloatOpenHash(DEFAULT_MAPSIZE);
         _w.defaultReturnValue(0.f);
         this._V = new IntOpenHashMap<float[]>(DEFAULT_MAPSIZE);
+        this._minIndex = 0;
+        this._maxIndex = 0;
     }
-
+    
     @Override
     public int getSize() {
         return _w.size();
@@ -60,12 +57,12 @@ public final class FMMapModel extends FactorizationMachineModel {
 
     @Override
     public int getMinIndex() {
-        return minIndex;
+        return _minIndex;
     }
 
     @Override
     public int getMaxIndex() {
-        return maxIndex;
+        return _maxIndex;
     }
 
     @Override
@@ -126,8 +123,8 @@ public final class FMMapModel extends FactorizationMachineModel {
                 float[] tmp = getRandomFloatArray(_factor, _sigma, _rnd);
                 _V.put(idx, tmp);
             }
-            this.maxIndex = Math.max(maxIndex, idx);
-            this.minIndex = Math.min(minIndex, idx);
+            this._maxIndex = Math.max(_maxIndex, idx);
+            this._minIndex = Math.min(_minIndex, idx);
         }
     }
 

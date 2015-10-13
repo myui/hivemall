@@ -42,9 +42,9 @@ public abstract class FactorizationMachineModel {
     protected final double _max_target;
 
     // Regulation Variables
-    protected final float _lambdaW0;
-    protected final float _lambdaW;
-    protected final float _lambdaV;
+    protected float _lambdaW0;
+    protected float _lambdaW;
+    private final float[] _lambdaV;
 
     public FactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         this._classification = classification;
@@ -59,12 +59,13 @@ public abstract class FactorizationMachineModel {
         // Regulation Variables
         this._lambdaW0 = lambda0;
         this._lambdaW = lambda0;
-        this._lambdaV = lambda0;
+        this._lambdaV = new float[factor];
+        Arrays.fill(_lambdaV, lambda0);
 
         initLearningParams();
     }
 
-    protected abstract void initLearningParams();
+    protected void initLearningParams() {}
 
     public abstract int getSize();
 
@@ -98,12 +99,19 @@ public abstract class FactorizationMachineModel {
      */
     protected abstract void setV(int i, int f, float nextVif);
 
-    public final double dloss(@Nonnull final Feature[] x, final double y) {
+    /**    
+     * @param f index value >= 0
+     */
+    float getLambdaV(int f) {
+        return _lambdaV[f];
+    }
+
+    final double dloss(@Nonnull final Feature[] x, final double y) {
         double p = predict(x);
         return dloss(p, y);
     }
 
-    public final double dloss(double p, final double y) {
+    final double dloss(double p, final double y) {
         final double ret;
         if(_classification) {
             ret = (MathUtils.sigmoid(p * y) - 1.d) * y;
@@ -116,7 +124,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    protected final double predict(@Nonnull final Feature[] x) {
+    final double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW(0);
 
@@ -147,25 +155,79 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    public final void updateW0(@Nonnull Feature[] x, double dlossMultiplier, float eta) {
-        float gradW0 = (float) dlossMultiplier;
+    final void updateW0(final double dloss, final float eta) {
+        float gradW0 = (float) dloss;
         float prevW0 = getW(0);
         float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
         setW(0, nextW0);
     }
 
-    public final void updateWi(@Nonnull Feature[] x, double dlossMultiplier, int i, double xi, float eta) {
-        float gradWi = (float) (dlossMultiplier * xi);
+    final void updateWi(final double dloss, final int i, final double xi, final float eta) {
+        float gradWi = (float) (dloss * xi);
         float wi = getW(i);
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
         setW(i, nextWi);
     }
 
-    public final void updateV(@Nonnull Feature[] x, double dlossMultiplier, int i, int f, float eta) {
+    final void updateV(@Nonnull final Feature[] x, final double dloss, final int i, final int f, final float eta) {
         float Vif = getV(i, f);
-        float gradV = (float) (dlossMultiplier * gradV(x, i, Vif));
-        float nextVif = Vif - eta * (gradV + 2.f * _lambdaV * Vif);
+        float gradV = (float) (dloss * gradV(x, i, Vif));
+        float nextVif = Vif - eta * (gradV + 2.f * getLambdaV(f) * Vif);
         setV(i, f, nextVif);
+    }
+
+    final void updateLambdaW0(final double dloss, final float eta) {
+        float lambda_w_grad = -2.f * eta * getW(0);
+        float lambdaW0 = _lambdaW0 - (float) (eta * dloss * lambda_w_grad);
+        this._lambdaW0 = Math.max(0.f, lambdaW0);
+    }
+
+    final void updateLambdaW(@Nonnull Feature[] x, double dloss, float eta) {
+        double sumWX = 0.d;
+        for(Feature e : x) {
+            if(e == null) {
+                continue;
+            }
+            int i = e.index;
+            double xi = e.value;
+            sumWX += getW(i) * xi;
+        }
+        double lambda_w_grad = -2.f * eta * sumWX;
+        float lambdaW = _lambdaW - (float) (eta * dloss * lambda_w_grad);
+        this._lambdaW = Math.max(0.f, lambdaW);
+    }
+
+    /**
+     * <pre>
+     * grad_lambdafg   := (grad l(y(x),y)) * -2 * alpha * ((\sum_{j} x_j * v'_jf) * (\sum_{j \in group(g)} x_j * v_jf) - \sum_{j \in group(g)} x^2_j * v_jf * v'_jf)
+     *                 := (grad l(y(x),y)) * -2 * alpha * (sum_f_dash * sum_f(g) - sum_f_dash_f(g))
+     * sum_f_dash      := \sum_{j} x_j * v'_lj, this is independent of the groups
+     * sum_f(g)        := \sum_{j \in group(g)} x_j * v_jf
+     * sum_f_dash_f(g) := \sum_{j \in group(g)} x^2_j * v_jf * v'_jf
+     *                 := \sum_{j \in group(g)} v'_jf * x_j * v_jf * x_j 
+     * v_jf'           := v_jf - alpha ( grad_v_jf + 2 * lambda_v_f * v_jf)
+     * </pre>
+     */
+    final void updateLambdaV(@Nonnull final Feature[] x, final double dloss, final float eta) {
+        for(int f = 0, k = _factor; f < k; f++) {
+            double sum_f_dash = 0.d, sum_f = 0.d, sum_f_dash_f = 0.d;
+            for(Feature e : x) {
+                assert (e != null) : Arrays.toString(x);
+                int j = e.index;
+                double x_j = e.value;
+
+                float v_jf = getV(j, f);
+                double v_dash = v_jf - eta * (gradV(x, j, v_jf) + 2.d * getLambdaV(f) * v_jf);
+
+                sum_f_dash += x_j * v_dash;
+                sum_f += x_j * v_jf;
+                sum_f_dash_f += v_dash * x_j * v_jf * x_j;
+            }
+
+            double lambda_v_grad = -2.f * eta * (sum_f_dash * sum_f - sum_f_dash_f);
+            float lambdaVf = _lambdaV[f] - (float) (eta * dloss * lambda_v_grad);
+            _lambdaV[f] = Math.max(0.f, lambdaVf);
+        }
     }
 
     private static double gradV(@Nonnull final Feature[] x, final int i, final float Vif) {
