@@ -194,6 +194,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         return cl;
     }
 
+    FactorizationMachineModel getModel() {
+        return _model;
+    }
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if(argOIs.length != 2 && argOIs.length != 3) {
@@ -201,13 +205,14 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     + " takes 2 or 3 arguments: array<string> x, double y [, CONSTANT STRING options]: "
                     + Arrays.toString(argOIs));
         }
-
         this._xOI = HiveUtils.asListOI(argOIs[0]);
         if(!HiveUtils.isStringOI(_xOI.getListElementObjectInspector())) {
             throw new UDFArgumentException("Unexpected Object inspector for array<string>: "
                     + argOIs[0]);
         }
         this._yOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
+
+        processOptions(argOIs);
 
         if(_p == -1) {
             this._model = new FMMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator);
