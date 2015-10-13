@@ -81,6 +81,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     @Nullable
     private Random _va_rand;
     private float _validationRatio;
+    private int _validationThreshold;
 
     private LossFunction _lossFunction;
     private EtaEstimator _etaEstimator;
@@ -132,6 +133,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         // adaptive regularization
         opts.addOption("disable_adareg", "disable_adaptive_regularizaion", false, "Whether to disable adaptive regularization [default: enabled]");
         opts.addOption("va_ratio", "validation_ratio", true, "Ratio of training data used for validation [default: 0.05f]");
+        opts.addOption("va_threshold", "validation_threshold", true, "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
         return opts;
     }
 
@@ -149,6 +151,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         double convergenceRate = 0.005d;
         boolean adaptiveReglarization = true;
         float validationRatio = 0.05f;
+        int validationThreshold = 1000;
 
         CommandLine cl = null;
         if(argOIs.length >= 3) {
@@ -167,6 +170,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             adaptiveReglarization = !cl.hasOption("disable_adaptive_regularizaion");
             validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"), validationRatio);
+            validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"), validationThreshold);
         }
 
         this._classification = classication;
@@ -186,6 +190,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             throw new UDFArgumentException("validation_ratio should be in range [0, 1): "
                     + _validationRatio);
         }
+        this._validationThreshold = validationThreshold;
         this._lossFunction = classication ? LossFunctions.getLossFunction(LossType.LogLoss)
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
         this._etaEstimator = EtaEstimator.get(cl);
@@ -248,7 +253,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         ++_t;
         recordTrain(x, y);
-        boolean adaptiveRegularization = (_va_rand != null) && _t >= 1000;
+        boolean adaptiveRegularization = (_va_rand != null) && _t >= _validationThreshold;
         train(x, y, adaptiveRegularization);
     }
 
@@ -268,6 +273,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new UDFArgumentException("Cannot write a temporary file: "
                             + file.getAbsolutePath());
                 }
+                logger.info("Record training examples to a file: " + file.getAbsolutePath());
             } catch (IOException ioe) {
                 throw new UDFArgumentException(ioe);
             } catch (Throwable e) {
@@ -451,6 +457,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         train(x, y, true);
                     }
                     if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                        i++;
                         break;
                     }
                     inputBuf.rewind();
@@ -506,9 +513,11 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                             throw new HiveException("Illegal file format was detected");
                         }
                         while(remain >= INT_BYTES) {
+                            int pos = inputBuf.position();
                             int recordBytes = inputBuf.getInt();
                             remain -= INT_BYTES;
                             if(remain < recordBytes) {
+                                inputBuf.position(pos);
                                 break;
                             }
 
@@ -528,6 +537,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         inputBuf.compact();
                     }
                     if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                        i++;
                         break;
                     }
                 }
@@ -548,4 +558,5 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             this._fileIO = null;
         }
     }
+
 }
