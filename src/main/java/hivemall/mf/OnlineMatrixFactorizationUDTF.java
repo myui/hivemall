@@ -462,6 +462,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         final NioFixedSegment fileIO = this.fileIO;
         assert (inputBuf != null);
         assert (fileIO != null);
+        final long numTrainingExamples = count;
 
         try {
             if(lastWritePos == 0) {// run iterations w/o temporary file
@@ -469,7 +470,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     return; // no training example
                 }
                 inputBuf.flip();
-                for(int i = 1; i < iterations; i++) {
+
+                int i = 1;
+                for(; i < iterations; i++) {
                     while(inputBuf.remaining() > 0) {
                         int user = inputBuf.getInt();
                         int item = inputBuf.getInt();
@@ -478,8 +481,16 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         count++;
                         train(user, item, rating);
                     }
+                    cvState.multiplyLoss(0.5d);
+                    if(cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
                     inputBuf.rewind();
                 }
+                logger.info("Performed " + i + " iterations of "
+                        + NumberUtils.formatNumber(numTrainingExamples)
+                        + " training examples on memory (thus " + NumberUtils.formatNumber(count)
+                        + " training updates in total) ");
             } else {// read training examples in the temporary file and invoke train for each example
 
                 // write training examples in buffer to a temporary file
@@ -494,7 +505,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                final long numTrainingExamples = count;
                 if(logger.isInfoEnabled()) {
                     File tmpFile = fileIO.getFile();
                     logger.info("Wrote " + numTrainingExamples
@@ -506,11 +516,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 // run iterations
                 int i = 1;
                 for(; i < iterations; i++) {
-                    cvState.multiplyLoss(0.5d);
-                    if(cvState.isConverged(i + 1, numTrainingExamples)) {
-                        break;
-                    }
-
                     inputBuf.clear();
                     long seekPos = 0L;
                     while(true) {
@@ -543,11 +548,15 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         }
                         inputBuf.compact();
                     }
+                    cvState.multiplyLoss(0.5d);
+                    if(cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
                 }
                 logger.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
-                        + " training examples (thus " + NumberUtils.formatNumber(count)
-                        + " training updates in total)");
+                        + " training examples using a secondary storage (thus "
+                        + NumberUtils.formatNumber(count) + " training updates in total)");
             }
         } finally {
             // delete the temporary file and release resources
