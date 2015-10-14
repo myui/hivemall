@@ -49,7 +49,7 @@ public final class FMMapModel extends FactorizationMachineModel {
         this._minIndex = 0;
         this._maxIndex = 0;
     }
-    
+
     @Override
     public int getSize() {
         return _w.size();
@@ -66,6 +66,11 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
+    public float getW0() {
+        return _w0;
+    }
+
+    @Override
     public float getW(final int i) {
         if(i == 0) {
             return _w0;
@@ -77,8 +82,12 @@ public final class FMMapModel extends FactorizationMachineModel {
 
     @Override
     protected void setW(int i, float nextWi) {
-        assert (i >= 0) : i;
-        _w.put(i, nextWi);
+        if(i == 0) {
+            this._w0 = nextWi;
+        } else {
+            assert (i >= 1) : i;
+            _w.put(i, nextWi);
+        }
     }
 
     @Override
