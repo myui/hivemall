@@ -60,16 +60,16 @@ public class MapModelTest {
                 for(int j = 1; j <= COL; j++) {
                     if(i < (0.5f * ROW)) {
                         if(j == 1) {
-                            feature.add(new Feature(j, 1));
+                            feature.add(new Feature(j, 1.d));
                         } else if(j < 0.5 * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextFloat()));
+                                feature.add(new Feature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
                         if(j > 0.5f * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextFloat()));
+                                feature.add(new Feature(j, rnd.nextDouble()));
                             }
                         }
                     }
@@ -117,7 +117,7 @@ public class MapModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-factor 20 -seed 31");
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-disable_adaptive_regularizaion -factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
 
@@ -131,16 +131,16 @@ public class MapModelTest {
                 for(int j = 1; j <= COL; j++) {
                     if(i < (0.5f * ROW)) {
                         if(j == 1) {
-                            feature.add(new Feature(j, 1));
+                            feature.add(new Feature(j, 1.d));
                         } else if(j < 0.5 * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextFloat()));
+                                feature.add(new Feature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
-                        if(j > 0.5f * COL) {
+                        if(j > (0.5f * COL)) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextFloat()));
+                                feature.add(new Feature(j, rnd.nextDouble()));
                             }
                         }
                     }
@@ -165,11 +165,11 @@ public class MapModelTest {
                 double predicted = model.predict(fArrayList.get(i));
                 double actual = ans.get(i);
                 double tmpDiff = predicted - actual;
-                diff += Math.abs(tmpDiff);
+                diff += tmpDiff * tmpDiff;
             }
             println("diff = " + diff);
         }
-        Assert.assertTrue(diff < 60.d);
+        Assert.assertTrue("diff = " + diff, diff < 5.d);
     }
 
     private static String[] toStringArray(Feature[] x) {
