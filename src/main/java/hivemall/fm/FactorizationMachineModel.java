@@ -73,6 +73,8 @@ public abstract class FactorizationMachineModel {
 
     public abstract int getMaxIndex();
 
+    public abstract float getW0();
+
     /**
      * @param i index value >= 0
      */
@@ -126,7 +128,7 @@ public abstract class FactorizationMachineModel {
 
     final double predict(@Nonnull final Feature[] x) {
         // w0
-        double ret = getW(0);
+        double ret = getW0();
 
         // W
         for(Feature e : x) {
@@ -157,7 +159,7 @@ public abstract class FactorizationMachineModel {
 
     final void updateW0(final double dloss, final float eta) {
         float gradW0 = (float) dloss;
-        float prevW0 = getW(0);
+        float prevW0 = getW0();
         float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
         setW(0, nextW0);
     }
@@ -179,7 +181,7 @@ public abstract class FactorizationMachineModel {
     }
 
     final void updateLambdaW0(final double dloss, final float eta) {
-        float lambda_w_grad = -2.f * eta * getW(0);
+        float lambda_w_grad = -2.f * eta * getW0();
         float lambdaW0 = _lambdaW0 - (float) (eta * dloss * lambda_w_grad);
         this._lambdaW0 = Math.max(0.f, lambdaW0);
     }

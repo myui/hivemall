@@ -63,6 +63,11 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
+    public float getW0() {
+        return _w[0];
+    }
+
+    @Override
     public float getW(int i) {
         assert (i >= 0) : i;
         return _w[i];

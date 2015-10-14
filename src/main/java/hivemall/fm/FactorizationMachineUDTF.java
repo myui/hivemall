@@ -399,7 +399,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         forwardObjs[2] = null;
         // W0
         f_idx.set(0);
-        f_Wi.set(_model.getW(0));
+        f_Wi.set(_model.getW0());
         // V0 is null
         forward(forwardObjs);
 
