@@ -120,8 +120,7 @@ public abstract class FactorizationMachineModel {
         } else { // regression            
             p = Math.min(p, _max_target);
             p = Math.max(p, _min_target);
-            //ret = 2.d * (p - y);
-            ret = p - y;
+            ret = 2.d * (p - y);
         }
         return ret;
     }
