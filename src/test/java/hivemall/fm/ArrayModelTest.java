@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MapModelTest {
+public class ArrayModelTest {
     private static final boolean DEBUG_PRINT = false;
 
     private static void println(String msg) {
@@ -46,10 +46,11 @@ public class MapModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-factor 20 -classification -seed 31 -iters 10");
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-factor 20 -classification -seed 31 -iters 100 -p "
+                + COL);
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMMapModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMArrayModel);
 
         float accuracy = 0.f;
         final Random rnd = new Random(201L);
@@ -107,7 +108,7 @@ public class MapModelTest {
             accuracy = bingo / (float) total;
             println("Accuracy = " + accuracy);
         }
-        udtf.runTrainingIteration(10);
+        udtf.runTrainingIteration(100);
         Assert.assertTrue(accuracy > 0.95f);
     }
 
@@ -118,10 +119,11 @@ public class MapModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-disable_adaptive_regularizaion -factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-disable_adaptive_regularizaion -factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1 -p "
+                + COL);
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMMapModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMArrayModel);
 
         double diff = 0.d;
         final Random rnd = new Random(201L);
