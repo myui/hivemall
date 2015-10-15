@@ -25,22 +25,22 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
 @Description(name = "extract_weight", value = "_FUNC_(feature_vector in array<string>) - Returns the weights of features in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class ExtractWeightUDF extends UDF {
 
-    public FloatWritable evaluate(String featureVector) throws UDFArgumentException {
+    public DoubleWritable evaluate(String featureVector) throws UDFArgumentException {
         return extractWeights(featureVector);
     }
 
-    public List<FloatWritable> evaluate(List<String> featureVectors) throws UDFArgumentException {
+    public List<DoubleWritable> evaluate(List<String> featureVectors) throws UDFArgumentException {
         if(featureVectors == null) {
             return null;
         }
         final int size = featureVectors.size();
-        final FloatWritable[] output = new FloatWritable[size];
+        final DoubleWritable[] output = new DoubleWritable[size];
         for(int i = 0; i < size; i++) {
             String ftvec = featureVectors.get(i);
             output[i] = extractWeights(ftvec);
@@ -48,16 +48,16 @@ public final class ExtractWeightUDF extends UDF {
         return Arrays.asList(output);
     }
 
-    private static FloatWritable extractWeights(String ftvec) throws UDFArgumentException {
+    private static DoubleWritable extractWeights(String ftvec) throws UDFArgumentException {
         if(ftvec == null) {
             return null;
         }
         final String[] splits = ftvec.split(":");
         if(splits.length == 2) {
-            float f = Float.valueOf(splits[1]);
-            return new FloatWritable(f);
+            double d = Double.parseDouble(splits[1]);
+            return new DoubleWritable(d);
         } else {
-            return new FloatWritable(1.f);
+            return new DoubleWritable(1.d);
         }
     }
 

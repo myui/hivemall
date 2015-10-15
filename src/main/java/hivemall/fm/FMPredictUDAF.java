@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 
 @Description(name = "fm_predict", value = "_FUNC_(Float Wj, array<float> Vjf, float Xj) - Returns a prediction value")
@@ -44,7 +45,7 @@ public final class FMPredictUDAF extends UDAF {
             this.partial = null;
         }
 
-        public boolean iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable FloatWritable Xj)
+        public boolean iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
                 throws HiveException {
             if(partial == null) {
                 this.partial = new PartialResult();
@@ -68,12 +69,12 @@ public final class FMPredictUDAF extends UDAF {
             return true;
         }
 
-        public FloatWritable terminate() {
+        public DoubleWritable terminate() {
             if(partial == null) {
                 return null;
             }
-            float result = partial.getPrediction();
-            return new FloatWritable(result);
+            double result = partial.getPrediction();
+            return new DoubleWritable(result);
         }
 
     }
@@ -89,7 +90,7 @@ public final class FMPredictUDAF extends UDAF {
             this.sumV2X2 = 0.d;
         }
 
-        void iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable FloatWritable Xj)
+        void iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
                 throws HiveException {
             if(Wj != null) {
                 if(Xj == null) {// W0
@@ -103,7 +104,7 @@ public final class FMPredictUDAF extends UDAF {
                 if(Xj == null) {
                     throw new HiveException("Xj should not be null");
                 }
-                final float x = Xj.get();
+                final double x = Xj.get();
                 final int factor = Vjf.size();
                 if(factor < 1) {
                     throw new HiveException("# of Factor should be more than 0: " + Vjf.toString());
@@ -113,7 +114,7 @@ public final class FMPredictUDAF extends UDAF {
                     if(v == null) {
                         throw new HiveException("Vj" + f + " should not be null");
                     }
-                    float vx = v.get() * x;
+                    double vx = v.get() * x;
                     this.sumVjfXj += vx;
                     this.sumV2X2 += (vx * vx);
                 }
@@ -126,9 +127,8 @@ public final class FMPredictUDAF extends UDAF {
             this.sumV2X2 += other.sumV2X2;
         }
 
-        float getPrediction() {
-            double p = ret + 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
-            return (float) p;
+        double getPrediction() {
+            return ret + 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
         }
 
     }

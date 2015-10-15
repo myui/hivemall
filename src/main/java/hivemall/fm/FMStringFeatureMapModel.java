@@ -1,0 +1,147 @@
+/*
+ * Hivemall: Hive scalable Machine Learning Library
+ *
+ * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package hivemall.fm;
+
+import hivemall.common.EtaEstimator;
+import hivemall.utils.collections.IMapIterator;
+import hivemall.utils.collections.OpenHashTable;
+import hivemall.utils.math.MathUtils;
+
+import java.util.Random;
+
+import javax.annotation.Nonnull;
+
+public final class FMStringFeatureMapModel extends FactorizationMachineModel {
+    private static final int DEFAULT_MAPSIZE = 4096;
+
+    // LEARNING PARAMS
+    private float _w0;
+    private OpenHashTable<String, Entry> _map;
+
+    public FMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
+        this._w0 = 0.f;
+        this._map = new OpenHashTable<String, FMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+    }
+
+    @Override
+    public int getSize() {
+        return _map.size();
+    }
+
+    IMapIterator<String, Entry> entries() {
+        return _map.entries();
+    }
+
+    @Override
+    public float getW0() {
+        return _w0;
+    }
+
+    @Override
+    protected void setW0(float nextW0) {
+        this._w0 = nextW0;
+    }
+
+    @Override
+    public float getW(@Nonnull Feature x) {
+        String j = x.getFeature();
+        assert (j != null);
+
+        Entry entry = _map.get(j);
+        if(entry == null) {
+            return 0.f;
+        }
+        return entry.W;
+    }
+
+    @Override
+    protected void setW(@Nonnull Feature x, float nextWi) {
+        String j = x.getFeature();
+        assert (j != null);
+
+        Entry entry = _map.get(j);
+        if(entry == null) {
+            float[] Vf = getRandomFloatArray(_factor, _sigma, _rnd);
+            entry = new Entry(nextWi, Vf);
+            _map.put(j, entry);
+        } else {
+            entry.W = nextWi;
+        }
+    }
+
+    @Override
+    public float getV(@Nonnull Feature x, int f) {
+        String j = x.getFeature();
+        assert (j != null);
+
+        final float[] V;
+        Entry entry = _map.get(j);
+        if(entry == null) {
+            V = getRandomFloatArray(_factor, _sigma, _rnd);
+            entry = new Entry(0.f, V);
+            _map.put(j, entry);
+        } else {
+            V = entry.Vf;
+            assert (V != null);
+        }
+        return V[f];
+    }
+
+    @Override
+    protected void setV(@Nonnull Feature x, int f, float nextVif) {
+        String j = x.getFeature();
+        assert (j != null);
+
+        final float[] V;
+        Entry entry = _map.get(j);
+        if(entry == null) {
+            V = getRandomFloatArray(_factor, _sigma, _rnd);
+            entry = new Entry(0.f, V);
+            _map.put(j, entry);
+        } else {
+            V = entry.Vf;
+            assert (V != null);
+        }
+        V[f] = nextVif;
+    }
+
+    @Nonnull
+    private static float[] getRandomFloatArray(final int factor, final double sigma, @Nonnull final Random rnd) {
+        final float[] ret = new float[factor];
+        for(int i = 0; i < factor; i++) {
+            ret[i] = (float) MathUtils.gaussian(0.d, sigma, rnd);
+        }
+        return ret;
+    }
+
+    static final class Entry {
+
+        float W;
+        @Nonnull
+        final float[] Vf;
+
+        Entry(float W, @Nonnull float[] Vf) {
+            this.W = W;
+            this.Vf = Vf;
+        }
+
+    }
+
+}

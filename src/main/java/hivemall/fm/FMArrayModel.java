@@ -21,7 +21,11 @@ package hivemall.fm;
 import hivemall.common.EtaEstimator;
 import hivemall.utils.math.MathUtils;
 
+import java.util.Arrays;
+
 import javax.annotation.Nonnull;
+
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 public final class FMArrayModel extends FactorizationMachineModel {
 
@@ -48,12 +52,12 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
-    public int getMinIndex() {
+    protected int getMinIndex() {
         return 1;
     }
 
     @Override
-    public int getMaxIndex() {
+    protected int getMaxIndex() {
         return _p - 1;
     }
 
@@ -68,19 +72,32 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float getW(int i) {
+    protected void setW0(float nextW0) {
+        _w[0] = nextW0;
+    }
+
+    @Override
+    protected float getW(int i) {
+        assert (i >= 1) : i;
+        return _w[i];
+    }
+
+    @Override
+    public float getW(@Nonnull final Feature x) {
+        int i = x.getIndex();
         assert (i >= 0) : i;
         return _w[i];
     }
 
     @Override
-    protected void setW(int i, float nextWi) {
+    protected void setW(@Nonnull Feature x, float nextWi) {
+        int i = x.getIndex();
         assert (i >= 0) : i;
         _w[i] = nextWi;
     }
 
     @Override
-    public float[] getV(int i) {
+    protected float[] getV(int i) {
         if(i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
@@ -88,7 +105,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float getV(int i, int f) {
+    public float getV(@Nonnull final Feature x, int f) {
+        final int i = x.getIndex();
         if(i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
@@ -96,11 +114,22 @@ public final class FMArrayModel extends FactorizationMachineModel {
     }
 
     @Override
-    public void setV(int i, int f, float nextVif) {
+    protected void setV(@Nonnull Feature x, int f, float nextVif) {
+        final int i = x.getIndex();
         if(i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         _V[i - 1][f] = nextVif;
+    }
+
+    @Override
+    public void check(@Nonnull Feature[] x) throws HiveException {
+        for(Feature e : x) {
+            if(e != null && e.getIndex() < 1) {
+                throw new HiveException("Index of x should be greater than or equals to 1: "
+                        + Arrays.toString(x));
+            }
+        }
     }
 
 }

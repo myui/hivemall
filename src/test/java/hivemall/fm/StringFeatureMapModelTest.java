@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MapModelTest {
+public class StringFeatureMapModelTest {
     private static final boolean DEBUG_PRINT = false;
 
     private static void println(String msg) {
@@ -49,33 +49,33 @@ public class MapModelTest {
         ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-factor 20 -classification -seed 31 -iters 10");
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMMapModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMStringFeatureMapModel);
 
         float accuracy = 0.f;
         final Random rnd = new Random(201L);
         for(int numberOfIteration = 0; numberOfIteration < 10000; numberOfIteration++) {
-            ArrayList<Feature[]> fArrayList = new ArrayList<Feature[]>();
+            ArrayList<StringFeature[]> fArrayList = new ArrayList<StringFeature[]>();
             ArrayList<Double> ans = new ArrayList<Double>();
             for(int i = 0; i < ROW; i++) {
-                ArrayList<Feature> feature = new ArrayList<Feature>();
+                ArrayList<StringFeature> feature = new ArrayList<StringFeature>();
                 for(int j = 1; j <= COL; j++) {
                     if(i < (0.5f * ROW)) {
                         if(j == 1) {
-                            feature.add(new Feature(j, 1.d));
+                            feature.add(new StringFeature(j, 1.d));
                         } else if(j < 0.5 * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextDouble()));
+                                feature.add(new StringFeature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
                         if(j > 0.5f * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextDouble()));
+                                feature.add(new StringFeature(j, rnd.nextDouble()));
                             }
                         }
                     }
                 }
-                Feature[] x = new Feature[feature.size()];
+                StringFeature[] x = new StringFeature[feature.size()];
                 feature.toArray(x);
                 fArrayList.add(x);
 
@@ -121,33 +121,33 @@ public class MapModelTest {
         ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-disable_adaptive_regularizaion -factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMMapModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMStringFeatureMapModel);
 
         double diff = 0.d;
         final Random rnd = new Random(201L);
         for(int numberOfIteration = 0; numberOfIteration < 100; numberOfIteration++) {
-            ArrayList<Feature[]> fArrayList = new ArrayList<Feature[]>();
+            ArrayList<StringFeature[]> fArrayList = new ArrayList<StringFeature[]>();
             ArrayList<Double> ans = new ArrayList<Double>();
             for(int i = 0; i < ROW; i++) {
-                ArrayList<Feature> feature = new ArrayList<Feature>();
+                ArrayList<StringFeature> feature = new ArrayList<StringFeature>();
                 for(int j = 1; j <= COL; j++) {
                     if(i < (0.5f * ROW)) {
                         if(j == 1) {
-                            feature.add(new Feature(j, 1.d));
+                            feature.add(new StringFeature(j, 1.d));
                         } else if(j < 0.5 * COL) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextDouble()));
+                                feature.add(new StringFeature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
                         if(j > (0.5f * COL)) {
                             if(rnd.nextFloat() < 0.2f) {
-                                feature.add(new Feature(j, rnd.nextDouble()));
+                                feature.add(new StringFeature(j, rnd.nextDouble()));
                             }
                         }
                     }
                 }
-                Feature[] x = new Feature[feature.size()];
+                StringFeature[] x = new StringFeature[feature.size()];
                 feature.toArray(x);
                 fArrayList.add(x);
 
@@ -174,7 +174,7 @@ public class MapModelTest {
         Assert.assertTrue("diff = " + diff, diff < 5.d);
     }
 
-    private static String[] toStringArray(Feature[] x) {
+    private static String[] toStringArray(StringFeature[] x) {
         final int size = x.length;
         final String[] ret = new String[size];
         for(int i = 0; i < size; i++) {

@@ -30,8 +30,8 @@ import javax.annotation.Nonnull;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
-public final class FMMapModel extends FactorizationMachineModel {
-    private static final int DEFAULT_MAPSIZE = 1000;
+public final class FMIntFeatureMapModel extends FactorizationMachineModel {
+    private static final int DEFAULT_MAPSIZE = 4096;
 
     // LEARNING PARAMS
     private float _w0;
@@ -40,7 +40,7 @@ public final class FMMapModel extends FactorizationMachineModel {
 
     private int _minIndex, _maxIndex;
 
-    public FMMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
+    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
         this._w0 = 0.f;
         this._w = new Int2FloatOpenHash(DEFAULT_MAPSIZE);
@@ -56,12 +56,12 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public int getMinIndex() {
+    protected int getMinIndex() {
         return _minIndex;
     }
 
     @Override
-    public int getMaxIndex() {
+    protected int getMaxIndex() {
         return _maxIndex;
     }
 
@@ -71,7 +71,19 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float getW(final int i) {
+    protected void setW0(float nextW0) {
+        this._w0 = nextW0;
+    }
+
+    @Override
+    protected float getW(final int i) {
+        assert (i >= 1) : i;
+        return _w.get(i);
+    }
+
+    @Override
+    public float getW(@Nonnull final Feature x) {
+        final int i = x.getIndex();
         if(i == 0) {
             return _w0;
         } else {
@@ -81,7 +93,8 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    protected void setW(int i, float nextWi) {
+    protected void setW(@Nonnull Feature x, float nextWi) {
+        final int i = x.getIndex();
         if(i == 0) {
             this._w0 = nextWi;
         } else {
@@ -91,13 +104,14 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float[] getV(int i) {
+    protected float[] getV(int i) {
         assert (i >= 1) : i;
         return _V.get(i);
     }
 
     @Override
-    public float getV(int i, int f) {
+    public float getV(@Nonnull final Feature x, final int f) {
+        int i = x.getIndex();
         assert (i >= 1) : i;
         final float[] Vi = _V.get(i);
         if(Vi == null) {
@@ -107,7 +121,8 @@ public final class FMMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public void setV(int i, int f, float nextVif) {
+    protected void setV(@Nonnull Feature x, int f, float nextVif) {
+        final int i = x.getIndex();
         assert (i >= 1) : i;
         float[] vi = _V.get(i);
         assert (vi != null) : "V[" + i + "] was null";
@@ -120,7 +135,7 @@ public final class FMMapModel extends FactorizationMachineModel {
             if(e == null) {
                 continue;
             }
-            final int idx = e.index;
+            final int idx = e.getIndex();
             if(idx < 1) {
                 throw new HiveException("Index of x should be greater than or equals to 1: "
                         + Arrays.toString(x));
