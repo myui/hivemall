@@ -27,8 +27,33 @@ import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 
 public final class NIOUtils {
+    private static final int INT_BYTES = Integer.SIZE / 8;
+    private static final int CHAR_BYTES = Character.SIZE / 8;
 
     private NIOUtils() {}
+
+    public static int requiredBytes(@Nonnull final String s) {
+        int size = s.length();
+        return INT_BYTES + CHAR_BYTES * size;
+    }
+
+    public static void putString(@Nonnull final String s, @Nonnull final ByteBuffer dst) {
+        final char[] array = s.toCharArray();
+        final int size = array.length;
+        dst.putInt(size);
+        for(int i = 0; i < size; i++) {
+            dst.putChar(array[i]);
+        }
+    }
+
+    public static String getString(@Nonnull final ByteBuffer src) {
+        final int size = src.getInt();
+        final char[] array = new char[size];
+        for(int i = 0; i < size; i++) {
+            array[i] = src.getChar();
+        }
+        return new String(array);
+    }
 
     /**
      * Read until dst buffer is filled or src channel is reached end.

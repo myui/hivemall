@@ -69,37 +69,40 @@ public abstract class FactorizationMachineModel {
 
     public abstract int getSize();
 
-    public abstract int getMinIndex();
+    protected int getMinIndex() {
+        throw new UnsupportedOperationException();
+    }
 
-    public abstract int getMaxIndex();
+    protected int getMaxIndex() {
+        throw new UnsupportedOperationException();
+    }
 
     public abstract float getW0();
 
-    /**
-     * @param i index value >= 0
-     */
-    public abstract float getW(int i);
+    protected abstract void setW0(float nextW0);
 
     /**
-     * @param i index value >= 0
+     * @param i index value >= 1
      */
-    protected abstract void setW(int i, float nextWi);
+    protected float getW(int i) {
+        throw new UnsupportedOperationException();
+    }
+
+    public abstract float getW(@Nonnull Feature x);
+
+    protected abstract void setW(@Nonnull Feature x, float nextWi);
 
     /**
      * @param i index value >= 1
      */
     @Nullable
-    public abstract float[] getV(int i);
+    protected float[] getV(int i) {
+        throw new UnsupportedOperationException();
+    }
 
-    /**
-     * @param i index value >= 1
-     */
-    public abstract float getV(int i, int f);
+    public abstract float getV(@Nonnull Feature x, int f);
 
-    /**
-     * @param i index value >= 1
-     */
-    protected abstract void setV(int i, int f, float nextVif);
+    protected abstract void setV(@Nonnull Feature x, int f, float nextVif);
 
     /**    
      * @param f index value >= 0
@@ -131,9 +134,8 @@ public abstract class FactorizationMachineModel {
 
         // W
         for(Feature e : x) {
-            int j = e.index;
-            double xj = e.value;
-            ret += getW(j) * xj;
+            double xj = e.getValue();
+            ret += getW(e) * xj;
         }
 
         // V
@@ -142,9 +144,8 @@ public abstract class FactorizationMachineModel {
             double sumV2X2 = 0.d;
 
             for(Feature e : x) {
-                int j = e.index;
-                double xj = e.value;
-                float vjf = getV(j, f);
+                double xj = e.getValue();
+                float vjf = getV(e, f);
                 double vx = vjf * xj;
                 sumVjfXj += vx;
                 sumV2X2 += (vx * vx);
@@ -160,33 +161,25 @@ public abstract class FactorizationMachineModel {
         float gradW0 = (float) dloss;
         float prevW0 = getW0();
         float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
-        setW(0, nextW0);
+        setW0(nextW0);
     }
 
-    final void updateWi(final double dloss, final int i, final double xi, final float eta) {
-        float gradWi = (float) (dloss * xi);
-        float wi = getW(i);
+    final void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
+        final double Xi = x.getValue();
+        float gradWi = (float) (dloss * Xi);
+        float wi = getW(x);
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
-        setW(i, nextWi);
+        setW(x, nextWi);
     }
 
-    @Deprecated
-    final void updateV(@Nonnull final Feature[] x, final double dloss, final int i, final int f, final float eta) {
-        double h = gradV(x, i, f);
-        float gradV = (float) (dloss * h);
-        float Vif = getV(i, f);
-        float LambdaVf = getLambdaV(f);
-        float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
-        setV(i, f, nextVif);
-    }
-
-    final void updateV(final double dloss, final int i, final int f, final double Xi, final double sumViX, final float eta) {
-        float Vif = getV(i, f);
+    final void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX, final float eta) {
+        final double Xi = x.getValue();
+        float Vif = getV(x, f);
         double h = gradV(Xi, Vif, sumViX);
         float gradV = (float) (dloss * h);
         float LambdaVf = getLambdaV(f);
         float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
-        setV(i, f, nextVif);
+        setV(x, f, nextVif);
     }
 
     final void updateLambdaW0(final double dloss, final float eta) {
@@ -198,12 +191,9 @@ public abstract class FactorizationMachineModel {
     final void updateLambdaW(@Nonnull Feature[] x, double dloss, float eta) {
         double sumWX = 0.d;
         for(Feature e : x) {
-            if(e == null) {
-                continue;
-            }
-            int i = e.index;
-            double xi = e.value;
-            sumWX += getW(i) * xi;
+            assert (e != null) : Arrays.toString(x);
+            double xi = e.getValue();
+            sumWX += getW(e) * xi;
         }
         double lambda_w_grad = -2.f * eta * sumWX;
         float lambdaW = _lambdaW - (float) (eta * dloss * lambda_w_grad);
@@ -229,12 +219,10 @@ public abstract class FactorizationMachineModel {
             final double sumVfX = sumVfX(x, f);
             for(Feature e : x) {
                 assert (e != null) : Arrays.toString(x);
-                int j = e.index;
-                double x_j = e.value;
+                double x_j = e.getValue();
 
-                float v_jf = getV(j, f);
+                float v_jf = getV(e, f);
                 double gradV = gradV(x_j, v_jf, sumVfX);
-                //double gradV = gradV(x, j, f);
                 double v_dash = v_jf - eta * (gradV + 2.d * lambdaVf * v_jf);
 
                 sum_f_dash += x_j * v_dash;
@@ -248,45 +236,20 @@ public abstract class FactorizationMachineModel {
         }
     }
 
-    /**
-     * <pre>
-     * grad_v_if := multi * (x_i * (sum_f - v_if * x_i))
-     * sum_f     := \sum_j v_jf * x_j
-     * </pre>
-     */
-    @Deprecated
-    private double gradV(@Nonnull final Feature[] x, final int i, final int f) {
-        double ret = 0.d;
-        double xi = 1.d;
-        for(Feature e : x) {
-            int j = e.index;
-            double xj = e.value;
-            if(j == i) {
-                xi = xj;
-            } else {
-                float Vjf = getV(j, f);
-                ret += Vjf * xj;
-            }
-        }
-        ret *= xi;
-        return ret;
-    }
-
     double[] sumVfX(@Nonnull final Feature[] x) {
         final int k = _factor;
         final double[] ret = new double[k];
-        for(int f = 0 ; f < k; f++) {
+        for(int f = 0; f < k; f++) {
             ret[f] = sumVfX(x, f);
         }
         return ret;
     }
-    
+
     private double sumVfX(@Nonnull final Feature[] x, final int f) {
         double ret = 0.d;
         for(Feature e : x) {
-            int j = e.index;
-            double xj = e.value;
-            float Vjf = getV(j, f);
+            double xj = e.getValue();
+            float Vjf = getV(e, f);
             ret += Vjf * xj;
         }
         return ret;
@@ -302,13 +265,6 @@ public abstract class FactorizationMachineModel {
         return Xj * (sumVfX - Vjf * Xj);
     }
 
-    public void check(@Nonnull Feature[] x) throws HiveException {
-        for(Feature e : x) {
-            if(e != null && e.index < 1) {
-                throw new HiveException("Index of x should be greater than or equals to 1: "
-                        + Arrays.toString(x));
-            }
-        }
-    }
+    public void check(@Nonnull Feature[] x) throws HiveException {}
 
 }
