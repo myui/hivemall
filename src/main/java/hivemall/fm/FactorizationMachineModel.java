@@ -216,13 +216,16 @@ public abstract class FactorizationMachineModel {
             double sum_f_dash = 0.d, sum_f = 0.d, sum_f_dash_f = 0.d;
             float lambdaVf = getLambdaV(f);
 
+            final double sumVfX = sumVfX(x, f);
             for(Feature e : x) {
                 assert (e != null) : Arrays.toString(x);
                 int j = e.index;
                 double x_j = e.value;
 
                 float v_jf = getV(j, f);
-                double v_dash = v_jf - eta * (gradV(x, j, f) + 2.d * lambdaVf * v_jf);
+                double gradV = gradV(x_j, v_jf, sumVfX);
+                //double gradV = gradV(x, j, f);
+                double v_dash = v_jf - eta * (gradV + 2.d * lambdaVf * v_jf);
 
                 sum_f_dash += x_j * v_dash;
                 sum_f += x_j * v_jf;
@@ -256,6 +259,27 @@ public abstract class FactorizationMachineModel {
         }
         ret *= xi;
         return ret;
+    }
+
+    private double sumVfX(@Nonnull final Feature[] x, final int f) {
+        double ret = 0.d;
+        for(Feature e : x) {
+            int j = e.index;
+            double xj = e.value;
+            float Vjf = getV(j, f);
+            ret += Vjf * xj;
+        }
+        return ret;
+    }
+
+    /**
+     * <pre>
+     * grad_v_if := multi * (x_i * (sum_f - v_if * x_i))
+     * sum_f     := \sum_j v_jf * x_j
+     * </pre>
+     */
+    private double gradV(@Nonnull final double Xj, final float Vjf, final double sumVfX) {
+        return Xj * (sumVfX - Vjf * Xj);
     }
 
     public void check(@Nonnull Feature[] x) throws HiveException {
