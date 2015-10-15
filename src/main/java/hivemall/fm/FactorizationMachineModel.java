@@ -170,10 +170,20 @@ public abstract class FactorizationMachineModel {
         setW(i, nextWi);
     }
 
+    @Deprecated
     final void updateV(@Nonnull final Feature[] x, final double dloss, final int i, final int f, final float eta) {
         double h = gradV(x, i, f);
         float gradV = (float) (dloss * h);
         float Vif = getV(i, f);
+        float LambdaVf = getLambdaV(f);
+        float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
+        setV(i, f, nextVif);
+    }
+
+    final void updateV(final double dloss, final int i, final int f, final double Xi, final double sumViX, final float eta) {
+        float Vif = getV(i, f);
+        double h = gradV(Xi, Vif, sumViX);
+        float gradV = (float) (dloss * h);
         float LambdaVf = getLambdaV(f);
         float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
         setV(i, f, nextVif);
@@ -244,6 +254,7 @@ public abstract class FactorizationMachineModel {
      * sum_f     := \sum_j v_jf * x_j
      * </pre>
      */
+    @Deprecated
     private double gradV(@Nonnull final Feature[] x, final int i, final int f) {
         double ret = 0.d;
         double xi = 1.d;
@@ -261,6 +272,15 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
+    double[] sumVfX(@Nonnull final Feature[] x) {
+        final int k = _factor;
+        final double[] ret = new double[k];
+        for(int f = 0 ; f < k; f++) {
+            ret[f] = sumVfX(x, f);
+        }
+        return ret;
+    }
+    
     private double sumVfX(@Nonnull final Feature[] x, final int f) {
         double ret = 0.d;
         for(Feature e : x) {

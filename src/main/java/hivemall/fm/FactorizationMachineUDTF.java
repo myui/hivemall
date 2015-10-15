@@ -343,14 +343,16 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         // w0 update
         _model.updateW0(lossGrad, eta);
 
+        final double[] sumVfx = _model.sumVfX(x);
         for(Feature e : x) {
-            int i = e.index;
-            double xi = e.value;
+            final int i = e.index;
+            final double xi = e.value;
             // wi update
             _model.updateWi(lossGrad, i, xi, eta);
             for(int f = 0, k = _factor; f < k; f++) {
                 // Vif update
-                _model.updateV(x, lossGrad, i, f, eta);
+                //_model.updateV(x, lossGrad, i, f, eta);
+                _model.updateV(lossGrad, i, f, xi, sumVfx[f], eta);
             }
         }
     }
