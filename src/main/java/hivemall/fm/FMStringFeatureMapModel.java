@@ -32,7 +32,7 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
 
     // LEARNING PARAMS
     private float _w0;
-    private OpenHashTable<String, Entry> _map;
+    private final OpenHashTable<String, Entry> _map;
 
     public FMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
