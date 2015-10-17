@@ -5,3 +5,6 @@
 *.swp
 .idea
 *.iml
+core/target/*
+commons/target/*
+mix/target/*
