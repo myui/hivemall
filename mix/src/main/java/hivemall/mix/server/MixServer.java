@@ -18,6 +18,7 @@
  */
 package hivemall.mix.server;
 
+import hivemall.mix.MixEnv;
 import hivemall.mix.metrics.MetricsRegistry;
 import hivemall.mix.metrics.MixServerMetrics;
 import hivemall.mix.metrics.ThroughputCounter;
@@ -48,7 +49,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 public final class MixServer implements Runnable {
-    public static final int DEFAULT_PORT = 11212;
 
     private final int port;
     private final boolean ssl;
@@ -64,7 +64,7 @@ public final class MixServer implements Runnable {
     }
 
     public MixServer(CommandLine cl) {
-        this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
+        this.port = Primitives.parseInt(cl.getOptionValue("port"), MixEnv.DEFAULT_PORT);
         this.ssl = cl.hasOption("ssl");
         this.scale = Primitives.parseFloat(cl.getOptionValue("scale"), 1.f);
         this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
