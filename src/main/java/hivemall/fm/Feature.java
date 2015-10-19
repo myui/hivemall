@@ -114,40 +114,63 @@ public abstract class Feature {
     @Nonnull
     private static Feature parse(@Nonnull final String s, final boolean asIntFeature)
             throws HiveException {
-        int pos = s.indexOf(":");
-        String s1 = s.substring(0, pos);
-        String s2 = s.substring(pos + 1);
-
-        if(asIntFeature) {
-            int index = Integer.parseInt(s1);
-            if(index < 0) {
-                throw new HiveException("Feature index MUST be greater than 0: " + s);
+        final int pos = s.indexOf(":");
+        if(pos == -1) {
+            if(asIntFeature) {
+                int index = Integer.parseInt(s);
+                if(index < 0) {
+                    throw new HiveException("Feature index MUST be greater than 0: " + s);
+                }
+                return new IntFeature(index, 1.d);
+            } else {
+                return new StringFeature(s, 1.d);
             }
-            double value = Double.parseDouble(s2);
-            return new IntFeature(index, value);
         } else {
-            double value = Double.parseDouble(s2);
-            return new StringFeature(s1, value);
+            String s1 = s.substring(0, pos);
+            String s2 = s.substring(pos + 1);
+            if(asIntFeature) {
+                int index = Integer.parseInt(s1);
+                if(index < 0) {
+                    throw new HiveException("Feature index MUST be greater than 0: " + s);
+                }
+                double value = Double.parseDouble(s2);
+                return new IntFeature(index, value);
+            } else {
+                double value = Double.parseDouble(s2);
+                return new StringFeature(s1, value);
+            }
         }
     }
 
     private static void parse(@Nonnull final String s, @Nonnull final Feature probe, final boolean asIntFeature)
             throws HiveException {
-        int pos = s.indexOf(":");
-        String s1 = s.substring(0, pos);
-        String s2 = s.substring(pos + 1);
-
-        if(asIntFeature) {
-            int index = Integer.parseInt(s1);
-            if(index < 0) {
-                throw new HiveException("Feature index MUST be greater than 0: " + s);
+        final int pos = s.indexOf(":");
+        if(pos == -1) {
+            if(asIntFeature) {
+                int index = Integer.parseInt(s);
+                if(index < 0) {
+                    throw new HiveException("Feature index MUST be greater than 0: " + s);
+                }
+                probe.setIndex(index);
+            } else {
+                probe.setFeature(s);
             }
-            double value = Double.parseDouble(s2);
-            probe.setIndex(index);
-            probe.value = value;
+            probe.value = 1.d;
         } else {
-            probe.setFeature(s1);
-            probe.value = Double.parseDouble(s2);
+            String s1 = s.substring(0, pos);
+            String s2 = s.substring(pos + 1);
+            if(asIntFeature) {
+                int index = Integer.parseInt(s1);
+                if(index < 0) {
+                    throw new HiveException("Feature index MUST be greater than 0: " + s);
+                }
+                double value = Double.parseDouble(s2);
+                probe.setIndex(index);
+                probe.value = value;
+            } else {
+                probe.setFeature(s1);
+                probe.value = Double.parseDouble(s2);
+            }
         }
     }
 
