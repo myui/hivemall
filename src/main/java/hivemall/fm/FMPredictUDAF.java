@@ -45,7 +45,7 @@ public final class FMPredictUDAF extends UDAF {
             this.partial = null;
         }
 
-        public boolean iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
+        public boolean iterate(@Nullable DoubleWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
                 throws HiveException {
             if(partial == null) {
                 this.partial = new PartialResult();
@@ -90,7 +90,7 @@ public final class FMPredictUDAF extends UDAF {
             this.sumV2X2 = 0.d;
         }
 
-        void iterate(@Nullable FloatWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
+        void iterate(@Nullable DoubleWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
                 throws HiveException {
             if(Wj != null) {
                 if(Xj == null) {// W0
