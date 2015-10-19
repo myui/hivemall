@@ -60,7 +60,7 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "train_fm", value = "_FUNC_(array<string> x, double y) - Returns a prediction value")
+@Description(name = "train_fm", value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
 public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
