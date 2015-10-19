@@ -498,6 +498,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         assert (inputBuf != null);
         assert (fileIO != null);
         final long numTrainingExamples = _t;
+        final boolean adaregr = _va_rand != null;
 
         try {
             if(fileIO.getPosition() == 0L) {// run iterations w/o temporary file
@@ -519,7 +520,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         double y = inputBuf.getDouble();
                         // invoke train
                         ++_t;
-                        train(x, y, true);
+                        train(x, y, adaregr);
                     }
                     if(_cvState.isConverged(i + 1, numTrainingExamples)) {
                         i++;
@@ -595,7 +596,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
                             // invoke training
                             ++_t;
-                            train(x, y, true);
+                            train(x, y, adaregr);
 
                             remain -= recordBytes;
                         }
