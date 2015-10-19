@@ -18,8 +18,10 @@
  */
 package hivemall.fm;
 
+import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -81,13 +83,14 @@ public final class FMPredictUDAF extends UDAF {
 
     private static final class PartialResult {
         private double ret;
-        private double sumVjfXj;
-        private double sumV2X2;
+        // note that primitive array cannot be serialized by JDK serializer
+        private List<Double> sumVjXj;
+        private List<Double> sumV2X2;
 
         PartialResult() {
             this.ret = 0.d;
-            this.sumVjfXj = 0.d;
-            this.sumV2X2 = 0.d;
+            this.sumVjXj = null;
+            this.sumV2X2 = null;
         }
 
         void iterate(@Nullable DoubleWritable Wj, @Nullable List<FloatWritable> Vjf, @Nullable DoubleWritable Xj)
@@ -104,6 +107,12 @@ public final class FMPredictUDAF extends UDAF {
                 if(Xj == null) {
                     throw new HiveException("Xj should not be null");
                 }
+                if(sumVjXj == null) {
+                    int factors = Vjf.size();
+                    this.sumVjXj = Arrays.asList(new Double[factors]);
+                    this.sumV2X2 = Arrays.asList(new Double[factors]);
+                }
+
                 final double x = Xj.get();
                 final int factor = Vjf.size();
                 if(factor < 1) {
@@ -115,20 +124,56 @@ public final class FMPredictUDAF extends UDAF {
                         throw new HiveException("Vj" + f + " should not be null");
                     }
                     double vx = v.get() * x;
-                    this.sumVjfXj += vx;
-                    this.sumV2X2 += (vx * vx);
+                    sumVjXj.set(f, Double.valueOf(vx));
+                    sumV2X2.set(f, Double.valueOf(vx * vx));
                 }
             }
         }
 
         void merge(PartialResult other) {
             this.ret += other.ret;
-            this.sumVjfXj += other.sumVjfXj;
-            this.sumV2X2 += other.sumV2X2;
+            if(this.sumVjXj == null) {
+                this.sumVjXj = other.sumVjXj;
+                this.sumV2X2 = other.sumV2X2;
+            } else {
+                add(other.sumVjXj, sumVjXj);
+                add(other.sumV2X2, sumV2X2);
+            }
         }
 
         double getPrediction() {
-            return ret + 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
+            if(sumVjXj == null) {
+                return ret;
+            }
+
+            final int factor = sumVjXj.size();
+            for(int f = 0; f < factor; f++) {
+                Double v1 = sumVjXj.get(f);
+                if(v1 == null) {
+                    continue; // REVIEWME should never happen?
+                }
+                double d1 = v1.doubleValue();
+                Double v2 = sumV2X2.get(f);
+                assert (v2 != null);
+                double d2 = v2.doubleValue();
+                ret += 0.5d * (d1 * d1 - d2);
+            }
+            return ret;
+        }
+
+        private static void add(@Nonnull final List<Double> src, @Nonnull final List<Double> dst) {
+            for(int i = 0, size = src.size(); i < size; i++) {
+                final Double v1 = src.get(i);
+                if(v1 != null) {
+                    final Double v2 = dst.get(i);
+                    if(v2 == null) {
+                        dst.set(i, v1);
+                    } else {
+                        double new_v = v2.doubleValue() + v1.doubleValue();
+                        dst.set(i, Double.valueOf(new_v));
+                    }
+                }
+            }
         }
 
     }
