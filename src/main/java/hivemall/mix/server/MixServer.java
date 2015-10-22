@@ -57,7 +57,12 @@ public final class MixServer implements Runnable {
     private final long sessionTTLinSec;
     private final long sweepIntervalInSec;
     private final boolean jmx;
+
     private volatile ServerState state;
+
+    public enum ServerState {
+        INITIALIZING, RUNNING, STOPPING,
+    }
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
@@ -171,9 +176,4 @@ public final class MixServer implements Runnable {
             bossGroup.shutdownGracefully();
         }
     }
-
-    public enum ServerState {
-        INITIALIZING, RUNNING, STOPPING,
-    }
-
 }

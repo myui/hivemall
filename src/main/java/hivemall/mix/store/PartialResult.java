@@ -26,13 +26,18 @@ import javax.annotation.concurrent.GuardedBy;
 
 public abstract class PartialResult {
 
-    private final Lock lock;
+    // Assuming the overflow/underflow behaviours of short-typed values,
+    // map range [currentClock - FREEZE_CLOCK_GAP, currentClock - FREEZE_CLOCK_GAP - 1]
+    // to range [0, 65535].
+    public static short FREEZE_CLOCK_GAP = 8192;
 
     @GuardedBy("lock()")
-    protected short totalClock;
+    private short currentClock;
+
+    private final Lock lock;
 
     public PartialResult() {
-        this.totalClock = 0;
+        this.currentClock = 0;
         this.lock = new TTASLock();
     }
 
@@ -44,25 +49,41 @@ public abstract class PartialResult {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale);
+    public final short getClock() {
+        return this.currentClock;
+    }
 
-    public abstract void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
+    public final void incrClock(short clock) {
+        if (FREEZE_CLOCK_GAP < clock)
+            throw new IllegalArgumentException("Too large value added to clock:" + clock);
+        this.currentClock += clock;
+    }
+
+    public final int diffClock(short clock) {
+        short baseClock = diffClockWithUnderflow(currentClock, FREEZE_CLOCK_GAP);
+        short diffClock = diffClockWithUnderflow(clock, currentClock);
+        if (diffClockWithUnderflow(clock, baseClock) >= 0) {
+            return diffClock;
+        } else {
+            return 65535 + diffClock;
+        }
+    }
+
+    private short diffClockWithUnderflow(short clock1, short clock2) {
+        clock1 -= clock2;
+        return clock1;
+    }
+
+    // Implemented for each mixing value
+    public abstract void add(
+            float localWeight,float covar, short clock, @Nonnegative int deltaUpdates,
+            float scale);
+
+    public abstract void subtract(
+            float localWeight, float covar, @Nonnegative int deltaUpdates,
+            float scale);
 
     public abstract float getWeight(float scale);
 
     public abstract float getCovariance(float scale);
-
-    public final short getClock() {
-        return totalClock;
-    }
-
-    protected final void incrClock(short clock) {
-        totalClock += clock;
-    }
-
-    public final int diffClock(short clock) {
-        short diff = (short) (totalClock - clock);
-        return diff < 0 ? -diff : diff;
-    }
-
 }
