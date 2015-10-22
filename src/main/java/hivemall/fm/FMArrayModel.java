@@ -19,7 +19,6 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
-import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
 
@@ -35,8 +34,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
     private final float[] _w;
     private final float[][] _V;
 
-    public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
+    public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._p = p;
         this._w = new float[p + 1];
         this._V = new float[p][factor];
@@ -45,9 +44,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
     @Override
     protected void initLearningParams() {
         for(int i = 0; i < _p; i++) {
-            for(int j = 0; j < _factor; j++) {
-                _V[i][j] = (float) MathUtils.gaussian(0.d, _sigma, _rnd);
-            }
+            _V[i] = initV();
         }
     }
 

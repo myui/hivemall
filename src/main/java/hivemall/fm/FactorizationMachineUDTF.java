@@ -25,6 +25,7 @@ import hivemall.common.LossFunctions;
 import hivemall.common.LossFunctions.LossFunction;
 import hivemall.common.LossFunctions.LossType;
 import hivemall.fm.FMStringFeatureMapModel.Entry;
+import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
@@ -96,6 +97,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     private FactorizationMachineModel _model;
 
+    private VInitScheme _vInit;
+
     /**
      * Probe for the input X
      */
@@ -138,6 +141,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("adareg", "adaptive_regularizaion", false, "Whether to enable adaptive regularization [default: OFF]");
         opts.addOption("va_ratio", "validation_ratio", true, "Ratio of training data used for validation [default: 0.05f]");
         opts.addOption("va_threshold", "validation_threshold", true, "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
+        // initialization of V
+        opts.addOption("init_v", true, "Initialization strategy of matrix V [random, gaussian] (default: random)");
+        opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the matrix V [default: 1.0]");
+        opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial matrix V [default: 0.1]");
         // feature representation
         opts.addOption("int_feature", "feature_as_integer", false, "Parse a feature as integer [default: OFF, ON if -p option is specified]");
         return opts;
@@ -158,6 +165,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         boolean adaptiveReglarization = false;
         float validationRatio = 0.05f;
         int validationThreshold = 1000;
+        String vInitOpt = null;
+        float maxInitValue = 1.f;
+        double initStdDev = 0.1d;
         boolean parseFeatureAsInt = false;
 
         CommandLine cl = null;
@@ -178,6 +188,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             adaptiveReglarization = cl.hasOption("adaptive_regularizaion");
             validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"), validationRatio);
             validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"), validationThreshold);
+            vInitOpt = cl.getOptionValue("init_v");
+            maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
+            initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
             if(p == -1) {
                 parseFeatureAsInt = cl.hasOption("feature_as_integer");
             } else {
@@ -207,6 +220,11 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
         this._etaEstimator = EtaEstimator.get(cl);
         this._cvState = new ConversionState(conversionCheck, convergenceRate);
+        this._vInit = VInitScheme.resolve(vInitOpt);
+        _vInit.setMaxInitValue(maxInitValue);
+        initStdDev = Math.max(initStdDev, 1.0d / factor);
+        _vInit.setInitStdDev(initStdDev);
+        _vInit.initRandom(factor, seed);
         this._parseFeatureAsInt = parseFeatureAsInt;
 
         return cl;
@@ -234,12 +252,12 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         if(_parseFeatureAsInt) {
             if(_p == -1) {
-                this._model = new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator);
+                this._model = new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit);
             } else {
-                this._model = new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p, _seed, _min_target, _max_target, _etaEstimator);
+                this._model = new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p, _seed, _min_target, _max_target, _etaEstimator, _vInit);
             }
         } else {
-            this._model = new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator);
+            this._model = new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit);
         }
         this._t = 0L;
 

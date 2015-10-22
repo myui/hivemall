@@ -24,6 +24,7 @@ import hivemall.utils.math.MathUtils;
 import java.util.Arrays;
 import java.util.Random;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -35,6 +36,7 @@ public abstract class FactorizationMachineModel {
     protected final int _factor;
     protected final double _sigma;
     protected final EtaEstimator _eta;
+    protected final VInitScheme _initScheme;
     protected final Random _rnd;
 
     // Hyperparameter for regression
@@ -44,13 +46,14 @@ public abstract class FactorizationMachineModel {
     // Regulation Variables
     protected float _lambdaW0;
     protected float _lambdaW;
-    private final float[] _lambdaV;
+    protected final float[] _lambdaV;
 
-    public FactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
+    public FactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
         this._classification = classification;
         this._factor = factor;
         this._sigma = sigma;
         this._eta = eta;
+        this._initScheme = vInit;
         this._rnd = new Random(seed);
 
         this._min_target = minTarget;
@@ -267,5 +270,74 @@ public abstract class FactorizationMachineModel {
     }
 
     public void check(@Nonnull Feature[] x) throws HiveException {}
+
+    public enum VInitScheme {
+        random /* default */, gaussian;
+
+        @Nonnegative
+        float maxInitValue;
+        @Nonnegative
+        double initStdDev;
+        Random[] rand;
+
+        @Nonnull
+        public static VInitScheme resolve(@Nullable String opt) {
+            if(opt == null) {
+                return random;
+            } else if("gaussian".equalsIgnoreCase(opt)) {
+                return gaussian;
+            } else if("random".equalsIgnoreCase(opt)) {
+                return random;
+            }
+            return random;
+        }
+
+        public void setMaxInitValue(float maxInitValue) {
+            this.maxInitValue = maxInitValue;
+        }
+
+        public void setInitStdDev(double initStdDev) {
+            this.initStdDev = initStdDev;
+        }
+
+        public void initRandom(int factor, long seed) {
+            int size = (this == random) ? 1 : factor;
+            this.rand = new Random[size];
+            for(int i = 0; i < size; i++) {
+                rand[i] = new Random(seed + i);
+            }
+        }
+    }
+
+    @Nonnull
+    protected final float[] initV() {
+        final float[] ret = new float[_factor];
+        switch (_initScheme) {
+            case random:
+                uniformFill(ret, _initScheme.rand[0], _initScheme.maxInitValue);
+                break;
+            case gaussian:
+                gaussianFill(ret, _initScheme.rand, _initScheme.initStdDev);
+                break;
+            default:
+                throw new IllegalStateException("Unsupported V initialization scheme: "
+                        + _initScheme);
+        }
+        return ret;
+    }
+
+    protected static final void uniformFill(final float[] a, final Random rand, final float maxInitValue) {
+        for(int i = 0, len = a.length; i < len; i++) {
+            float v = rand.nextFloat() * maxInitValue / len;
+            a[i] = v;
+        }
+    }
+
+    protected static final void gaussianFill(final float[] a, final Random[] rand, final double stddev) {
+        for(int i = 0, len = a.length; i < len; i++) {
+            float v = (float) MathUtils.gaussian(0.d, stddev, rand[i]);
+            a[i] = v;
+        }
+    }
 
 }

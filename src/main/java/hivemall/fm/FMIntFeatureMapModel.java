@@ -21,10 +21,8 @@ package hivemall.fm;
 import hivemall.common.EtaEstimator;
 import hivemall.utils.collections.Int2FloatOpenHash;
 import hivemall.utils.collections.IntOpenHashMap;
-import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
-import java.util.Random;
 
 import javax.annotation.Nonnull;
 
@@ -40,8 +38,8 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
 
     private int _minIndex, _maxIndex;
 
-    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta);
+    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._w0 = 0.f;
         this._w = new Int2FloatOpenHash(DEFAULT_MAPSIZE);
         _w.defaultReturnValue(0.f);
@@ -144,21 +142,11 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
                 _w.put(idx, 0.f);
             }
             if(!_V.containsKey(idx)) {
-                float[] tmp = getRandomFloatArray(_factor, _sigma, _rnd);
+                float[] tmp = initV();
                 _V.put(idx, tmp);
             }
             this._maxIndex = Math.max(_maxIndex, idx);
             this._minIndex = Math.min(_minIndex, idx);
         }
     }
-
-    @Nonnull
-    private static float[] getRandomFloatArray(final int factor, final double sigma, @Nonnull final Random rnd) {
-        final float[] ret = new float[factor];
-        for(int i = 0; i < factor; i++) {
-            ret[i] = (float) MathUtils.gaussian(0.d, sigma, rnd);
-        }
-        return ret;
-    }
-
 }
