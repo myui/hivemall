@@ -18,6 +18,8 @@
  */
 package hivemall.fm;
 
+import hivemall.utils.lang.mutable.MutableDouble;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -84,8 +86,8 @@ public final class FMPredictUDAF extends UDAF {
     private static final class PartialResult {
         private double ret;
         // note that primitive array cannot be serialized by JDK serializer
-        private List<Double> sumVjXj;
-        private List<Double> sumV2X2;
+        private List<MutableDouble> sumVjXj;
+        private List<MutableDouble> sumV2X2;
 
         PartialResult() {
             this.ret = 0.d;
@@ -109,8 +111,8 @@ public final class FMPredictUDAF extends UDAF {
                 }
                 if(sumVjXj == null) {
                     int factors = Vjf.size();
-                    this.sumVjXj = Arrays.asList(new Double[factors]);
-                    this.sumV2X2 = Arrays.asList(new Double[factors]);
+                    this.sumVjXj = Arrays.asList(MutableDouble.initArray(factors, 0.d));
+                    this.sumV2X2 = Arrays.asList(MutableDouble.initArray(factors, 0.d));
                 }
 
                 final double x = Xj.get();
@@ -124,8 +126,10 @@ public final class FMPredictUDAF extends UDAF {
                         throw new HiveException("Vj" + f + " should not be null");
                     }
                     double vx = v.get() * x;
-                    sumVjXj.set(f, Double.valueOf(vx));
-                    sumV2X2.set(f, Double.valueOf(vx * vx));
+                    MutableDouble sumVXf = sumVjXj.get(f);
+                    sumVXf.addValue(vx);
+                    MutableDouble sumVX2f = sumV2X2.get(f);
+                    sumVX2f.addValue(vx * vx);
                 }
             }
         }
@@ -148,12 +152,10 @@ public final class FMPredictUDAF extends UDAF {
 
             final int factor = sumVjXj.size();
             for(int f = 0; f < factor; f++) {
-                Double v1 = sumVjXj.get(f);
-                if(v1 == null) {
-                    continue; // REVIEWME should never happen?
-                }
+                MutableDouble v1 = sumVjXj.get(f);
+                assert (v1 != null);
                 double d1 = v1.doubleValue();
-                Double v2 = sumV2X2.get(f);
+                MutableDouble v2 = sumV2X2.get(f);
                 assert (v2 != null);
                 double d2 = v2.doubleValue();
                 ret += 0.5d * (d1 * d1 - d2);
@@ -161,18 +163,13 @@ public final class FMPredictUDAF extends UDAF {
             return ret;
         }
 
-        private static void add(@Nonnull final List<Double> src, @Nonnull final List<Double> dst) {
+        private static void add(@Nonnull final List<MutableDouble> src, @Nonnull final List<MutableDouble> dst) {
             for(int i = 0, size = src.size(); i < size; i++) {
-                final Double v1 = src.get(i);
-                if(v1 != null) {
-                    final Double v2 = dst.get(i);
-                    if(v2 == null) {
-                        dst.set(i, v1);
-                    } else {
-                        double new_v = v2.doubleValue() + v1.doubleValue();
-                        dst.set(i, Double.valueOf(new_v));
-                    }
-                }
+                MutableDouble s = src.get(i);
+                assert (s != null);
+                MutableDouble d = dst.get(i);
+                assert (d != null);
+                d.addValue(s.getValue());
             }
         }
 
