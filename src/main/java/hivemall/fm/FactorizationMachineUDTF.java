@@ -135,7 +135,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: OFF]");
         opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
         // adaptive regularization
-        opts.addOption("disable_adareg", "disable_adaptive_regularizaion", false, "Whether to disable adaptive regularization [default: OFF]");
+        opts.addOption("adareg", "adaptive_regularizaion", false, "Whether to enable adaptive regularization [default: OFF]");
         opts.addOption("va_ratio", "validation_ratio", true, "Ratio of training data used for validation [default: 0.05f]");
         opts.addOption("va_threshold", "validation_threshold", true, "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
         // feature representation
@@ -155,7 +155,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
-        boolean adaptiveReglarization = true;
+        boolean adaptiveReglarization = false;
         float validationRatio = 0.05f;
         int validationThreshold = 1000;
         boolean parseFeatureAsInt = false;
@@ -175,7 +175,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
-            adaptiveReglarization = !cl.hasOption("disable_adaptive_regularizaion");
+            adaptiveReglarization = cl.hasOption("adaptive_regularizaion");
             validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"), validationRatio);
             validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"), validationThreshold);
             if(p == -1) {
