@@ -19,14 +19,11 @@
 package hivemall.mf;
 
 import hivemall.UDTFWithOptions;
-import hivemall.common.RatingInitilizer;
-import hivemall.io.FactorizedModel;
-import hivemall.io.FactorizedModel.RankInitScheme;
-import hivemall.io.Rating;
+import hivemall.common.ConversionState;
+import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
 import hivemall.utils.io.NioFixedSegment;
-import hivemall.utils.io.Segments;
 import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
@@ -70,12 +67,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected boolean updateMeanRating;
     /** The number of iterations */
     protected int iterations;
-    /** Whether to check conversion */
-    protected boolean conversionCheck;
-    /** Threshold to determine convergence */
-    protected double convergenceRate;
-    /** being ready to end iteration */
-    protected boolean readyToFinishIterations;
     /** Whether to use bias clause */
     protected boolean useBiasClause;
 
@@ -88,10 +79,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     // Variable managing status of learning
     /** The number of processed training examples */
     protected long count;
-    /** The cumulative errors in the training */
-    protected double totalErrors;
-    /** The cumulative losses in an iteration */
-    protected double currLosses, prevLosses;
+    protected ConversionState cvState;
 
     // Input OIs and Context
     protected PrimitiveObjectInspector userOI;
@@ -100,7 +88,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected MapredContext mapredContext;
 
     // Used for iterations
-    protected Segments fileIO;
+    protected NioFixedSegment fileIO;
     protected ByteBuffer inputBuf;
     private long lastWritePos;
 
@@ -113,9 +101,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         this.meanRating = 0.f;
         this.updateMeanRating = false;
         this.iterations = 1;
-        this.conversionCheck = true;
-        this.convergenceRate = 0.005d;
-        this.readyToFinishIterations = false;
         this.useBiasClause = true;
     }
 
@@ -142,6 +127,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         String rankInitOpt = null;
         float maxInitValue = 1.f;
         double initStdDev = 0.1d;
+        boolean conversionCheck = true;
+        double convergenceRate = 0.005d;
+
         if(argOIs.length >= 4) {
             String rawArgs = HiveUtils.getConstString(argOIs[3]);
             cl = parseOptions(rawArgs);
@@ -157,8 +145,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 throw new UDFArgumentException("'-iterations' must be greater than or equals to 1: "
                         + iterations);
             }
-            this.conversionCheck = !cl.hasOption("disable_cvtest");
-            this.convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), 0.005d);
+            conversionCheck = !cl.hasOption("disable_cvtest");
+            convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             boolean noBias = cl.hasOption("no_bias");
             this.useBiasClause = !noBias;
             if(noBias && updateMeanRating) {
@@ -169,6 +157,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         rankInit.setMaxInitValue(maxInitValue);
         initStdDev = Math.max(initStdDev, 1.0d / factor);
         rankInit.setInitStdDev(initStdDev);
+        this.cvState = new ConversionState(conversionCheck, convergenceRate);
         return cl;
     }
 
@@ -211,9 +200,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
         this.count = 0L;
-        this.totalErrors = 0.d;
-        this.currLosses = 0.d;
-        this.prevLosses = Double.POSITIVE_INFINITY;
         this.lastWritePos = 0L;
         this.userProbe = new float[factor];
         this.itemProbe = new float[factor];
@@ -289,8 +275,8 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         final float[] itemProbe = copyToItemProbe(items);
 
         final double err = rating - predict(user, item, userProbe, itemProbe);
-        this.totalErrors += Math.abs(err);
-        this.currLosses += err * err;
+        cvState.incrError(Math.abs(err));
+        cvState.incrLoss(err * err);
 
         final float eta = eta();
         for(int k = 0, size = factor; k < size; k++) {
@@ -367,14 +353,14 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         double grad = err * Pu - lambda * Qi;
         float newQi = Qi + (float) (eta * grad);
         rating.setWeight(newQi);
-        this.currLosses += lambda * Qi * Qi;
+        cvState.incrLoss(lambda * Qi * Qi);
     }
 
     protected void updateUserRating(final Rating rating, final float Pu, final float Qi, final double err, final float eta) {
         double grad = err * Qi - lambda * Pu;
         float newPu = Pu + (float) (eta * grad);
         rating.setWeight(newPu);
-        this.currLosses += lambda * Pu * Pu;
+        cvState.incrLoss(lambda * Pu * Pu);
     }
 
     protected void updateMeanRating(final double err, final float eta) {
@@ -390,13 +376,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         double Gu = err - lambda * Bu;
         Bu += eta * Gu;
         model.setUserBias(user, Bu);
-        this.currLosses += lambda * Bu * Bu;
+        cvState.incrLoss(lambda * Bu * Bu);
 
         float Bi = model.getItemBias(item);
         double Gi = err - lambda * Bi;
         Bi += eta * Gi;
         model.setItemBias(item, Bi);
-        this.currLosses += lambda * Bi * Bi;
+        cvState.incrLoss(lambda * Bi * Bi);
     }
 
     @Override
@@ -453,17 +439,17 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             }
             this.model = null; // help GC
             logger.info("Forwarded the prediction model of " + numForwarded
-                    + " rows. [totalErrors=" + totalErrors + ", lastLosses=" + currLosses
-                    + ", #trainingExamples=" + count + "]");
+                    + " rows. [totalErrors=" + cvState.getTotalErrors() + ", lastLosses="
+                    + cvState.getCumulativeLoss() + ", #trainingExamples=" + count + "]");
         }
     }
 
-    protected static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final Segments dst, final long lastWritePos)
+    protected static void writeBuffer(@Nonnull final ByteBuffer srcBuf, @Nonnull final NioFixedSegment dst, final long lastWritePos)
             throws HiveException {
         // TODO asynchronous write in the background
         srcBuf.flip();
         try {
-            dst.write(lastWritePos, srcBuf);
+            dst.writeRecords(lastWritePos, srcBuf);
         } catch (IOException e) {
             throw new HiveException("Exception causes while writing records to : " + lastWritePos, e);
         }
@@ -473,9 +459,10 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
     protected final void runIterativeTraining(@Nonnegative final int iterations)
             throws HiveException {
         final ByteBuffer inputBuf = this.inputBuf;
-        final Segments fileIO = this.fileIO;
+        final NioFixedSegment fileIO = this.fileIO;
         assert (inputBuf != null);
         assert (fileIO != null);
+        final long numTrainingExamples = count;
 
         try {
             if(lastWritePos == 0) {// run iterations w/o temporary file
@@ -483,7 +470,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     return; // no training example
                 }
                 inputBuf.flip();
-                for(int i = 1; i < iterations; i++) {
+
+                int i = 1;
+                for(; i < iterations; i++) {
                     while(inputBuf.remaining() > 0) {
                         int user = inputBuf.getInt();
                         int item = inputBuf.getInt();
@@ -492,8 +481,16 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         count++;
                         train(user, item, rating);
                     }
+                    cvState.multiplyLoss(0.5d);
+                    if(cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
                     inputBuf.rewind();
                 }
+                logger.info("Performed " + i + " iterations of "
+                        + NumberUtils.formatNumber(numTrainingExamples)
+                        + " training examples on memory (thus " + NumberUtils.formatNumber(count)
+                        + " training updates in total) ");
             } else {// read training examples in the temporary file and invoke train for each example
 
                 // write training examples in buffer to a temporary file
@@ -508,7 +505,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                final long numTrainingExamples = count;
                 if(logger.isInfoEnabled()) {
                     File tmpFile = fileIO.getFile();
                     logger.info("Wrote " + numTrainingExamples
@@ -520,11 +516,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 // run iterations
                 int i = 1;
                 for(; i < iterations; i++) {
-                    this.currLosses /= 2.0d;
-                    if(conversionCheck && isConverged(i + 1)) {
-                        break;
-                    }
-
                     inputBuf.clear();
                     long seekPos = 0L;
                     while(true) {
@@ -532,7 +523,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;
                         try {
-                            bytesRead = fileIO.directRead(seekPos, inputBuf);
+                            bytesRead = fileIO.read(seekPos, inputBuf);
                         } catch (IOException e) {
                             throw new HiveException("Failed to read a file: "
                                     + fileIO.getFile().getAbsolutePath(), e);
@@ -557,11 +548,15 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         }
                         inputBuf.compact();
                     }
+                    cvState.multiplyLoss(0.5d);
+                    if(cvState.isConverged(i + 1, numTrainingExamples)) {
+                        break;
+                    }
                 }
                 logger.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
-                        + " training examples (thus " + NumberUtils.formatNumber(count)
-                        + " training updates in total)");
+                        + " training examples using a secondary storage (thus "
+                        + NumberUtils.formatNumber(count) + " training updates in total)");
             }
         } finally {
             // delete the temporary file and release resources
@@ -574,43 +569,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
             this.inputBuf = null;
             this.fileIO = null;
         }
-    }
-
-    private boolean isConverged(final int iter) {
-        assert conversionCheck;
-        if(currLosses > prevLosses) {
-            if(logger.isInfoEnabled()) {
-                logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
-            }
-            this.prevLosses = currLosses;
-            this.currLosses = 0.d;
-            this.readyToFinishIterations = false;
-            return false;
-        }
-
-        final double changeRate = (prevLosses - currLosses) / prevLosses;
-        if(changeRate < convergenceRate) {
-            if(readyToFinishIterations) {
-                // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
-                logger.info("Training converged at " + iter + "-th iteration. [curLosses="
-                        + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
-                        + "]");
-                return true;
-            } else {
-                this.readyToFinishIterations = true;
-            }
-        } else {
-            if(logger.isDebugEnabled()) {
-                logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
-                        + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
-                        + count + "]");
-            }
-            this.readyToFinishIterations = false;
-        }
-
-        this.prevLosses = currLosses;
-        this.currLosses = 0.d;
-        return false;
     }
 
     private static void copyTo(@Nonnull final Rating[] rating, @Nonnull final FloatWritable[] dst) {

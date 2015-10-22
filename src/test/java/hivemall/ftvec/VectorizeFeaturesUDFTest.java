@@ -43,7 +43,7 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b", "c");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
 
@@ -56,11 +56,11 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[2];
         List<String> featureNames = Arrays.asList("a");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         udf.initialize(argOIs);
 
         DeferredObject[] arguments = new DeferredObject[2];
-        arguments[1] = new DeferredJavaObject(new Float(0.1));
+        arguments[1] = new DeferredJavaObject(new Double(0.1));
 
         List<Text> actuals = udf.evaluate(arguments);
         //System.out.println(actuals);
@@ -76,12 +76,12 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
 
         DeferredObject[] arguments = new DeferredObject[3];
-        arguments[1] = new DeferredJavaObject(new Float(0.1));
+        arguments[1] = new DeferredJavaObject(new Double(0.1));
         arguments[2] = new DeferredJavaObject("1.1");
 
         List<Text> actuals = udf.evaluate(arguments);
@@ -98,12 +98,12 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
 
         DeferredObject[] arguments = new DeferredObject[3];
-        arguments[1] = new DeferredJavaObject(new Float(0.1));
+        arguments[1] = new DeferredJavaObject(new Double(0.1));
         arguments[2] = new DeferredJavaObject("0");
 
         List<Text> actuals = udf.evaluate(arguments);
@@ -120,12 +120,12 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaBooleanObjectInspector;
         udf.initialize(argOIs);
 
         DeferredObject[] arguments = new DeferredObject[3];
-        arguments[1] = new DeferredJavaObject(new Float(0.1));
+        arguments[1] = new DeferredJavaObject(new Double(0.1));
         arguments[2] = new DeferredJavaObject(new Boolean(false));
 
         List<Text> actuals = udf.evaluate(arguments);
@@ -148,12 +148,12 @@ public class VectorizeFeaturesUDFTest {
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
         argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
-        argOIs[1] = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
+        argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
 
         DeferredObject[] arguments = new DeferredObject[3];
-        arguments[1] = new DeferredJavaObject(new Float(0.1));
+        arguments[1] = new DeferredJavaObject(new Double(0.1));
         arguments[2] = new DeferredJavaObject("dayofweek");
 
         List<Text> actuals = udf.evaluate(arguments);

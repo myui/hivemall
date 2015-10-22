@@ -27,38 +27,21 @@ import javax.annotation.Nonnull;
 
 public interface Segments extends Closeable {
 
-    /**
-     * @return The file position of the written record
-     */
-    public long write(long idx, @Nonnull byte[] b) throws IOException;
-
-    /**
-     * @return The file position of the written record
-     */
-    public long write(long idx, @Nonnull ByteBuffer buf) throws IOException;
-
     @Nonnull
-    public byte[] read(long idx) throws IOException;
-
-    /**    
-     * @return The number of read records
-     */
-    public int read(long idx, @Nonnull ByteBuffer buf) throws IOException;
-
-    @Nonnull
-    public byte[][] readv(@Nonnull long[] idx) throws IOException;
+    public File getFile();
 
     /**    
      * @return The number of read bytes
      */
-    public int directRead(long filePos, @Nonnull ByteBuffer buf) throws IOException;
+    public int read(long filePos, @Nonnull ByteBuffer buf) throws IOException;
+
+    /**    
+     * @return The number of bytes written
+     */
+    public int write(long filePos, @Nonnull ByteBuffer buf) throws IOException;
 
     public void flush() throws IOException;
-
-    @Nonnull
-    public File getFile();
 
     public void close(boolean deleteFile) throws IOException;
 
 }
-

@@ -18,12 +18,10 @@
  */
 package hivemall.mf;
 
-import hivemall.io.FactorizedModel.RankInitScheme;
+import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.lang.mutable.MutableInt;
 
 import java.io.File;
-
-import junit.framework.Assert;
 
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
@@ -32,6 +30,7 @@ import org.apache.hadoop.hive.ql.udf.generic.Collector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class MatrixFactorizationSGDUDTFTest {

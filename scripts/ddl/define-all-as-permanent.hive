@@ -268,6 +268,12 @@ CREATE FUNCTION feature as 'hivemall.ftvec.FeatureUDF' USING JAR '${hivemall_jar
 DROP FUNCTION IF EXISTS categorical_features;
 CREATE FUNCTION categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS quantitative_features;
+CREATE FUNCTION quantitative_features as 'hivemall.ftvec.QuantitativeFeaturesUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS feature_index;
+CREATE FUNCTION feature_index as 'hivemall.ftvec.FeatureIndexUDF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -495,4 +501,15 @@ CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING J
 
 DROP FUNCTION IF EXISTS train_mf_adagrad;
 CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
+
+---------------------------
+-- Factorization Machine --
+---------------------------
+
+DROP FUNCTION IF EXISTS fm_predict;
+CREATE FUNCTION fm_predict as 'hivemall.fm.FMPredictUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_fm;
+CREATE FUNCTION train_fm as 'hivemall.fm.FactorizationMachineUDTF' USING JAR '${hivemall_jar}';
+
 

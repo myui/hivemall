@@ -47,7 +47,7 @@ public final class LossFunctions {
     }
 
     public static LossFunction getLossFunction(LossType type) {
-        switch(type) {
+        switch (type) {
             case SquaredLoss:
                 return new SquaredLoss();
             case LogLoss:
@@ -76,6 +76,8 @@ public final class LossFunctions {
          */
         public float loss(float p, float y);
 
+        public double loss(double p, double y);
+
         /**
          * Evaluate the derivative of the loss function with respect to the prediction `p`.
          * 
@@ -95,6 +97,12 @@ public final class LossFunctions {
 
         protected static void checkTarget(float y) {
             if(!(y == 1.f || y == -1.f)) {
+                throw new IllegalArgumentException("target must be [+1,-1]: " + y);
+            }
+        }
+
+        protected static void checkTarget(double y) {
+            if(!(y == 1.d || y == -1.d)) {
                 throw new IllegalArgumentException("target must be [+1,-1]: " + y);
             }
         }
@@ -133,7 +141,14 @@ public final class LossFunctions {
 
         @Override
         public float loss(float p, float y) {
-            return ((p - y) * (p - y)) / 2.f;
+            final float z = p - y;
+            return z * z * 0.5f;
+        }
+
+        @Override
+        public double loss(double p, double y) {
+            final double z = p - y;
+            return z * z * 0.5d;
         }
 
         @Override
@@ -154,7 +169,7 @@ public final class LossFunctions {
         public float loss(float p, float y) {
             checkTarget(y);
 
-            float z = y * p;
+            final float z = y * p;
             if(z > 18.f) {
                 return (float) Math.exp(-z);
             }
@@ -162,6 +177,20 @@ public final class LossFunctions {
                 return -z;
             }
             return (float) Math.log(1.d + Math.exp(-z));
+        }
+
+        @Override
+        public double loss(double p, double y) {
+            checkTarget(y);
+
+            final double z = y * p;
+            if(z > 18.d) {
+                return Math.exp(-z);
+            }
+            if(z < -18.d) {
+                return -z;
+            }
+            return Math.log(1.d + Math.exp(-z));
         }
 
         @Override
@@ -210,6 +239,12 @@ public final class LossFunctions {
         }
 
         @Override
+        public double loss(double p, double y) {
+            double loss = hingeLoss(p, y, threshold);
+            return (loss > 0.d) ? loss : 0.d;
+        }
+
+        @Override
         public float dloss(float p, float y) {
             float loss = hingeLoss(p, y, threshold);
             return (loss > 0.f) ? -y : 0.f;
@@ -223,6 +258,11 @@ public final class LossFunctions {
 
         @Override
         public float loss(float p, float y) {
+            return squaredHingeLoss(p, y);
+        }
+
+        @Override
+        public double loss(double p, double y) {
             return squaredHingeLoss(p, y);
         }
 
@@ -272,6 +312,16 @@ public final class LossFunctions {
         }
 
         @Override
+        public double loss(double p, double y) {
+            double e = y - p;
+            if(e > 0.d) {
+                return tau * e;
+            } else {
+                return -(1.d - tau) * e;
+            }
+        }
+
+        @Override
         public float dloss(float p, float y) {
             float e = y - p;
             if(e == 0.f) {
@@ -309,6 +359,12 @@ public final class LossFunctions {
         }
 
         @Override
+        public double loss(double p, double y) {
+            double loss = Math.abs(y - p) - epsilon;
+            return (loss > 0.d) ? loss : 0.d;
+        }
+
+        @Override
         public float dloss(float p, float y) {
             if((y - p) > epsilon) {// real value > predicted value - epsilon
                 return -1.f;
@@ -329,6 +385,42 @@ public final class LossFunctions {
         }
     }
 
+    public static float logLoss(final float p, final float y) {
+        BinaryLoss.checkTarget(y);
+
+        final float z = y * p;
+        if(z > 18.f) {
+            return (float) Math.exp(-z);
+        }
+        if(z < -18.f) {
+            return -z;
+        }
+        return (float) Math.log(1.d + Math.exp(-z));
+    }
+
+    public static double logLoss(final double p, final double y) {
+        BinaryLoss.checkTarget(y);
+
+        final double z = y * p;
+        if(z > 18.d) {
+            return Math.exp(-z);
+        }
+        if(z < -18.d) {
+            return -z;
+        }
+        return Math.log(1.d + Math.exp(-z));
+    }
+
+    public static float squaredLoss(float p, float y) {
+        final float z = p - y;
+        return z * z * 0.5f;
+    }
+
+    public static double squaredLoss(double p, double y) {
+        final double z = p - y;
+        return z * z * 0.5d;
+    }
+
     public static float hingeLoss(final float p, final float y, final float threshold) {
         BinaryLoss.checkTarget(y);
 
@@ -336,8 +428,19 @@ public final class LossFunctions {
         return threshold - z;
     }
 
+    public static double hingeLoss(final double p, final double y, final double threshold) {
+        BinaryLoss.checkTarget(y);
+
+        double z = y * p;
+        return threshold - z;
+    }
+
     public static float hingeLoss(float p, float y) {
         return hingeLoss(p, y, 1.f);
+    }
+
+    public static double hingeLoss(double p, double y) {
+        return hingeLoss(p, y, 1.d);
     }
 
     public static float squaredHingeLoss(final float p, final float y) {
@@ -346,6 +449,14 @@ public final class LossFunctions {
         float z = y * p;
         float d = 1.f - z;
         return (d > 0.f) ? (d * d) : 0.f;
+    }
+
+    public static double squaredHingeLoss(final double p, final double y) {
+        BinaryLoss.checkTarget(y);
+
+        double z = y * p;
+        double d = 1.d - z;
+        return (d > 0.d) ? d * d : 0.d;
     }
 
     /**

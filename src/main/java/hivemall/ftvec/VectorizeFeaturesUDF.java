@@ -99,8 +99,8 @@ public final class VectorizeFeaturesUDF extends GenericUDF {
                     continue;
                 }
             }
-            float v = PrimitiveObjectInspectorUtils.getFloat(argument, oi);
-            if(v != 0.f) {
+            final double v = PrimitiveObjectInspectorUtils.getDouble(argument, oi);
+            if(v != 0.d) {
                 String featureName = featureNames[i];
                 Text f = new Text(featureName + ':' + v);
                 result.add(f);

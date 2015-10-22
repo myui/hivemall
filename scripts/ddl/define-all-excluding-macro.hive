@@ -257,6 +257,12 @@ create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 drop temporary function categorical_features;
 create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
 
+drop temporary function quantitative_features;
+create temporary function quantitative_features as 'hivemall.ftvec.QuantitativeFeaturesUDF';
+
+drop temporary function feature_index;
+create temporary function feature_index as 'hivemall.ftvec.FeatureIndexUDF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -482,5 +488,14 @@ create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
 drop temporary function train_mf_sgd;
 create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
 
+---------------------------
+-- Factorization Machine --
+---------------------------
+
+drop temporary function fm_predict;
+create temporary function fm_predict as 'hivemall.fm.FMPredictUDAF';
+
+drop temporary function train_fm;
+create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
 
 

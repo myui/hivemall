@@ -19,7 +19,6 @@
 package hivemall.ftvec;
 
 import hivemall.utils.hadoop.HiveUtils;
-import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +34,6 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
@@ -90,25 +88,11 @@ public final class CategoricalFeaturesUDF extends GenericUDF {
             }
 
             PrimitiveObjectInspector oi = inputOIs[i];
-            if(oi.getPrimitiveCategory() == PrimitiveCategory.STRING) {
-                String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
-                if(StringUtils.isNumber(s) == false) {// categorical feature representation                    
-                    String featureName = featureNames[i];
-                    Text f = new Text(featureName + '#' + s);
-                    result.add(f);
-                    continue;
-                }
-            }
-            final float v = PrimitiveObjectInspectorUtils.getFloat(argument, oi);
-            if(v == 1.f) {
-                String featureName = featureNames[i];
-                Text f = new Text(featureName + "#T");
-                result.add(f);
-            } else if(v == 0.f || v == -1.f) {
-                String featureName = featureNames[i];
-                Text f = new Text(featureName + "#F");
-                result.add(f);
-            }
+            String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
+            // categorical feature representation                    
+            String featureName = featureNames[i];
+            Text f = new Text(featureName + '#' + s);
+            result.add(f);
         }
         return result;
     }
