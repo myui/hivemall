@@ -124,8 +124,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("sigma", true, "The standard deviation for initializing V [default: 0.1]");
         opts.addOption("lambda", "lambda0", true, "The initial lambda value for regularization [default: 0.01]");
         // regression
-        opts.addOption("min_target", true, "The minimum value of target variable");
-        opts.addOption("max_target", true, "The maximum value of target variable");
+        opts.addOption("min", "min_target", true, "The minimum value of target variable");
+        opts.addOption("max", "max_target", true, "The maximum value of target variable");
         // learning rates
         opts.addOption("eta", true, "The initial learning rate");
         opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
