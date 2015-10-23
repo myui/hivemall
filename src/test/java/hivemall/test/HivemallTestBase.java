@@ -24,11 +24,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-public class HivemallTest {
-    private static final Log logger = LogFactory.getLog(HivemallTest.class);
-
-    private final String packageName =
-            this.getClass().getPackage().getName();
+public abstract class HivemallTestBase {
+    private final Log logger = LogFactory.getLog(this.getClass());
+    private final String packageName = this.getClass().getPackage().getName();
 
     @Rule
     public final TestName testName = new TestName();
