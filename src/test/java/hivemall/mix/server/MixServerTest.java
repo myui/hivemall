@@ -25,6 +25,7 @@ import hivemall.io.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
 import hivemall.mix.server.MixServer.ServerState;
+import hivemall.test.HivemallTest;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.net.NetUtils;
@@ -40,7 +41,7 @@ import org.apache.commons.cli.CommandLine;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MixServerTest {
+public class MixServerTest extends HivemallTest {
 
     @Test
     public void testSimpleScenario() throws InterruptedException {
