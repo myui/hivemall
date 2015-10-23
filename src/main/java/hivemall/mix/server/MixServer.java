@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.net.ssl.SSLException;
 
@@ -51,6 +52,7 @@ public final class MixServer implements Runnable {
     public static final int DEFAULT_PORT = 11212;
 
     private final int port;
+    private final int numWorkers;
     private final boolean ssl;
     private final float scale;
     private final short syncThreshold;
@@ -61,6 +63,9 @@ public final class MixServer implements Runnable {
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
+        int procs = Runtime.getRuntime().availableProcessors();
+        int workers = Math.max(1, (int) Math.round(procs * 1.5f));
+        this.numWorkers = Primitives.parseInt(cl.getOptionValue("num_workers"), workers);
         this.ssl = cl.hasOption("ssl");
         this.scale = Primitives.parseFloat(cl.getOptionValue("scale"), 1.f);
         this.syncThreshold = Primitives.parseShort(cl.getOptionValue("sync"), (short) 30);
@@ -79,6 +84,7 @@ public final class MixServer implements Runnable {
     static Options getOptions() {
         Options opts = new Options();
         opts.addOption("p", "port", true, "port number of the mix server [default: 11212]");
+        opts.addOption("workers", "num_workers", true, "The number of MIX workers [default: max(1, round(procs * 1.5))] ");
         opts.addOption("ssl", false, "Use SSL for the mix communication [default: false]");
         opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
         opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
@@ -134,7 +140,7 @@ public final class MixServer implements Runnable {
             // start idle session sweeper
             idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
             // accept connections
-            acceptConnections(initializer, port);
+            acceptConnections(initializer, port, numWorkers);
         } finally {
             // release threads
             idleSessionChecker.shutdownNow();
@@ -145,10 +151,10 @@ public final class MixServer implements Runnable {
         }
     }
 
-    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port)
+    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port, @Nonnegative int numWorkers)
             throws InterruptedException {
         final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        final EventLoopGroup workerGroup = new NioEventLoopGroup();
+        final EventLoopGroup workerGroup = new NioEventLoopGroup(numWorkers);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_KEEPALIVE, true);
