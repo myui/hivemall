@@ -18,7 +18,6 @@
  */
 package hivemall.mix.server;
 
-import com.google.common.annotations.VisibleForTesting;
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.store.PartialArgminKLD;
@@ -143,7 +142,6 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
      * @param partial accumulator for each feature
      * @return true if sync needed; otherwise false
      */
-    @VisibleForTesting
     public boolean mix(final MixMessage requestMsg, final PartialResult partial) {
         final float weight = requestMsg.getWeight();
         final float covar = requestMsg.getCovariance();

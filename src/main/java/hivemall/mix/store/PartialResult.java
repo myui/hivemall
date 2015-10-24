@@ -27,17 +27,17 @@ import javax.annotation.concurrent.GuardedBy;
 public abstract class PartialResult {
 
     // Assuming the overflow/underflow behaviours of short-typed values,
-    // map range [currentClock - FREEZE_CLOCK_GAP, currentClock - FREEZE_CLOCK_GAP - 1]
+    // map range [globalClock - FREEZE_CLOCK_GAP, globalClock - FREEZE_CLOCK_GAP - 1]
     // to range [0, 65535].
     public static short FREEZE_CLOCK_GAP = 8192;
 
     @GuardedBy("lock()")
-    private short currentClock;
+    private short globalClock;
 
     private final Lock lock;
 
     public PartialResult() {
-        this.currentClock = 0;
+        this.globalClock = 0;
         this.lock = new TTASLock();
     }
 
@@ -50,18 +50,18 @@ public abstract class PartialResult {
     }
 
     public final short getClock() {
-        return this.currentClock;
+        return this.globalClock;
     }
 
     public final void incrClock(short clock) {
         if (FREEZE_CLOCK_GAP < clock)
             throw new IllegalArgumentException("Too large value added to clock:" + clock);
-        this.currentClock += clock;
+        this.globalClock += clock;
     }
 
     public final int diffClock(short clock) {
-        short baseClock = diffClockWithUnderflow(currentClock, FREEZE_CLOCK_GAP);
-        short diffClock = diffClockWithUnderflow(clock, currentClock);
+        short baseClock = diffClockWithUnderflow(globalClock, FREEZE_CLOCK_GAP);
+        short diffClock = diffClockWithUnderflow(clock, globalClock);
         if (diffClockWithUnderflow(clock, baseClock) >= 0) {
             return diffClock;
         } else {
