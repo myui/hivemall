@@ -173,14 +173,13 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
     @Override
     public void close() throws IOException {
-        if(workers != null) {
-            for(Channel ch : channelMap.values()) {
-                ch.close();
-            }
-            channelMap.clear();
+        if (initialized) {
+            // We simply shut down the created EventLoopGroups for netty 4.x applications.
+            // http://netty.io/wiki/user-guide-for-4.x.html#wiki-h3-16
             workers.shutdownGracefully();
-            this.workers = null;
+            channelMap.clear();
+            workers = null;
+            initialized = false;
         }
     }
-
 }
