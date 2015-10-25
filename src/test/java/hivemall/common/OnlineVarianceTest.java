@@ -24,9 +24,10 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 
-public class OnlineVarianceTest {
+public class OnlineVarianceTest extends HivemallTestBase {
 
     @Test
     public void testSimple() {

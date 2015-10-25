@@ -21,6 +21,7 @@ package hivemall.fm;
 import java.util.ArrayList;
 import java.util.Random;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -31,7 +32,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class IntFeatureMapModelTest {
+public class IntFeatureMapModelTest extends HivemallTestBase {
     private static final boolean DEBUG_PRINT = false;
 
     private static void println(String msg) {

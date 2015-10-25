@@ -19,6 +19,8 @@
 package hivemall.ftvec.scaling;
 
 import static org.junit.Assert.assertEquals;
+
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.math.MathUtils;
 
@@ -28,7 +30,7 @@ import java.util.List;
 import org.apache.hadoop.io.Text;
 import org.junit.Test;
 
-public class L2NormalizationUDFTest {
+public class L2NormalizationUDFTest extends HivemallTestBase {
 
     @Test
     public void test() {

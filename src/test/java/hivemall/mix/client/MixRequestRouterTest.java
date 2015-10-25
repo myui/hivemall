@@ -20,10 +20,11 @@ package hivemall.mix.client;
 
 import hivemall.mix.NodeInfo;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class MixRequestRouterTest {
+public class MixRequestRouterTest extends HivemallTestBase {
 
     @Test
     public void test() {

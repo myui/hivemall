@@ -18,6 +18,7 @@
  */
 package hivemall.utils;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.lang.ArrayUtils;
 
 import java.util.Random;
@@ -25,7 +26,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class ArrayUtilsTest {
+public class ArrayUtilsTest extends HivemallTestBase {
 
     @Test
     public void test() {

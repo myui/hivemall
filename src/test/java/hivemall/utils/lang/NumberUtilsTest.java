@@ -20,9 +20,10 @@ package hivemall.utils.lang;
 
 import static org.junit.Assert.assertEquals;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 
-public class NumberUtilsTest {
+public class NumberUtilsTest extends HivemallTestBase {
 
     @Test
     public void testParseInt() {

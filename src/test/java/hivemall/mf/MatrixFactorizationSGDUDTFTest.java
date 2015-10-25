@@ -19,6 +19,7 @@
 package hivemall.mf;
 
 import hivemall.mf.FactorizedModel.RankInitScheme;
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.lang.mutable.MutableInt;
 
 import java.io.File;
@@ -33,7 +34,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MatrixFactorizationSGDUDTFTest {
+public class MatrixFactorizationSGDUDTFTest extends HivemallTestBase {
     private static final boolean DEBUG_PRINT = false;
 
     private static void print(String msg) {

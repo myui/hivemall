@@ -18,12 +18,13 @@
  */
 package hivemall.utils.collections;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.lang.mutable.MutableInt;
 import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class OpenHashTableTest {
+public class OpenHashTableTest extends HivemallTestBase {
 
     @Test
     public void testPutAndGet() {

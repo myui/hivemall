@@ -25,11 +25,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class RandomizedAmplifierTest {
+public class RandomizedAmplifierTest extends HivemallTestBase {
 
     @Test
     public void test() throws HiveException {

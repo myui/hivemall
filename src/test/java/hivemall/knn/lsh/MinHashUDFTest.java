@@ -18,16 +18,14 @@
  */
 package hivemall.knn.lsh;
 
-import hivemall.knn.lsh.MinHashesUDF;
-
 import java.util.Arrays;
 
-
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class MinHashUDFTest {
+public class MinHashUDFTest extends HivemallTestBase {
 
     @Test
     public void testEvaluate() throws HiveException {

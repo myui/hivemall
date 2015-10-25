@@ -18,6 +18,7 @@
  */
 package hivemall.utils;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.lang.BitUtils;
 
 import java.util.BitSet;
@@ -26,7 +27,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class BitUtilsTest {
+public class BitUtilsTest extends HivemallTestBase {
 
     @Test
     public void test() {

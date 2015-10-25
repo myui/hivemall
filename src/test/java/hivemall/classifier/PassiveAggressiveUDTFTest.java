@@ -24,6 +24,7 @@ import hivemall.io.PredictionResult;
 import java.util.ArrayList;
 import java.util.List;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -34,7 +35,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.junit.Test;
 
-public class PassiveAggressiveUDTFTest {
+public class PassiveAggressiveUDTFTest extends HivemallTestBase {
 
     @Test
     public void testInitialize() throws UDFArgumentException {

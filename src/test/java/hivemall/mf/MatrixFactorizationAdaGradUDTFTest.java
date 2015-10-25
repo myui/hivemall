@@ -18,6 +18,7 @@
  */
 package hivemall.mf;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -25,7 +26,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class MatrixFactorizationAdaGradUDTFTest {
+public class MatrixFactorizationAdaGradUDTFTest extends HivemallTestBase {
     private static final boolean DEBUG_PRINT = false;
 
     private static void print(String msg) {

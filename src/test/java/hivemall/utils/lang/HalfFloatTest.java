@@ -22,9 +22,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 
-public class HalfFloatTest {
+public class HalfFloatTest extends HivemallTestBase {
 
     @Test
     public void testZero() {

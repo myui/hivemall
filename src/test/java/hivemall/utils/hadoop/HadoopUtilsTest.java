@@ -18,10 +18,11 @@
  */
 package hivemall.utils.hadoop;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class HadoopUtilsTest {
+public class HadoopUtilsTest extends HivemallTestBase {
 
     @Test
     public void testGetJobIdFromTaskId() {

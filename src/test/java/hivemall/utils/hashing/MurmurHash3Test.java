@@ -20,10 +20,11 @@ package hivemall.utils.hashing;
 
 import java.util.Random;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 import org.junit.Assert;
 
-public class MurmurHash3Test {
+public class MurmurHash3Test extends HivemallTestBase {
 
     @Test
     public void testMurmurhash3String() {
