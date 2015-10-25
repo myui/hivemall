@@ -21,10 +21,11 @@ package hivemall.knn.similarity;
 import java.util.Arrays;
 import java.util.List;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class CosineSimilarityUDFTest {
+public class CosineSimilarityUDFTest extends HivemallTestBase {
 
     @Test
     public void testEvaluate() {

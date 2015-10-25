@@ -20,6 +20,7 @@ package hivemall.regression;
 
 import static org.junit.Assert.assertEquals;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -28,7 +29,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.junit.Test;
 
-public class AdaGradUDTFTest {
+public class AdaGradUDTFTest extends HivemallTestBase {
 
     @Test
     public void testInitialize() throws UDFArgumentException {

@@ -24,9 +24,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 
-public class Sha1UDFTest {
+public class Sha1UDFTest extends HivemallTestBase {
 
     @Test
     public void testEvaluate() {

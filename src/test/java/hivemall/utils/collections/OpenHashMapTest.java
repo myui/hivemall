@@ -18,6 +18,7 @@
  */
 package hivemall.utils.collections;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.lang.mutable.MutableInt;
 
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OpenHashMapTest {
+public class OpenHashMapTest extends HivemallTestBase {
 
     @Test
     public void testPutAndGet() {

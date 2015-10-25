@@ -18,10 +18,11 @@
  */
 package hivemall.utils.collections;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class IntOpenHashMapTest {
+public class IntOpenHashMapTest extends HivemallTestBase {
 
     @Test
     public void testSize() {

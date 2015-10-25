@@ -23,11 +23,12 @@ import hivemall.knn.distance.PopcountUDF;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class bBitMinHashUDFTest {
+public class bBitMinHashUDFTest extends HivemallTestBase {
 
     @Test
     public void test() throws HiveException {

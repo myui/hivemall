@@ -18,6 +18,7 @@
  */
 package hivemall.ftvec.pairing;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.hadoop.WritableUtils;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class PolynomialFeaturesUDFTest {
+public class PolynomialFeaturesUDFTest extends HivemallTestBase {
 
     @Test(expected = HiveException.class)
     public void testIllegalDegree() throws HiveException {

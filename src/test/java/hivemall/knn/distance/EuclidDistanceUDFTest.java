@@ -21,10 +21,11 @@ package hivemall.knn.distance;
 import java.util.Arrays;
 import java.util.List;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class EuclidDistanceUDFTest {
+public class EuclidDistanceUDFTest extends HivemallTestBase {
 
     @Test
     public void test1() {

@@ -22,10 +22,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.junit.Test;
 
-public class MurmurHash3UDFTest {
+public class MurmurHash3UDFTest extends HivemallTestBase {
 
     @Test
     public void testEvaluate() throws UDFArgumentException {

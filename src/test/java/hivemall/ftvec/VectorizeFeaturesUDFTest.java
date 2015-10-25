@@ -18,6 +18,7 @@
  */
 package hivemall.ftvec;
 
+import hivemall.test.HivemallTestBase;
 import hivemall.utils.hadoop.WritableUtils;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class VectorizeFeaturesUDFTest {
+public class VectorizeFeaturesUDFTest extends HivemallTestBase {
 
     @Test(expected = UDFArgumentException.class)
     public void testMismatch() throws HiveException, IOException {

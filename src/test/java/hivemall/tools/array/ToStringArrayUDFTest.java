@@ -21,11 +21,12 @@ package hivemall.tools.array;
 import java.util.ArrayList;
 import java.util.List;
 
+import hivemall.test.HivemallTestBase;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ToStringArrayUDFTest {
+public class ToStringArrayUDFTest extends HivemallTestBase {
 
     @Test
     public void testTextArrayInput() {

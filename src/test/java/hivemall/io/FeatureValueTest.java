@@ -21,9 +21,10 @@ package hivemall.io;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import hivemall.test.HivemallTestBase;
 import org.junit.Test;
 
-public class FeatureValueTest {
+public class FeatureValueTest extends HivemallTestBase {
 
     @Test
     public void testParseWithoutWeight() {
