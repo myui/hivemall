@@ -28,13 +28,11 @@ import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hivemall.utils.logging.Logging;
 
 @ThreadSafe
-public final class SessionStore {
+public final class SessionStore extends Logging {
     private static final int EXPECTED_MODEL_SIZE = 4194305; /* 2^22+1=4194304+1=4194305 */
-    private static final Log logger = LogFactory.getLog(SessionStore.class);
 
     private final ConcurrentMap<String, SessionObject> sessions;
 
@@ -64,13 +62,13 @@ public final class SessionStore {
     public void remove(@Nonnull String groupID) {
         SessionObject removedSession = sessions.remove(groupID);
         if(removedSession != null) {
-            logger.info("Removed an idle session group: " + groupID + "\t"
+            logInfo("Removed an idle session group: " + groupID + "\t"
                     + removedSession.getSessionInfo());
         }
     }
 
     @ThreadSafe
-    public static final class IdleSessionSweeper implements Runnable {
+    public static final class IdleSessionSweeper extends Logging implements Runnable {
 
         private final ConcurrentMap<String, SessionObject> sessions;
         private final long ttl;
@@ -90,14 +88,11 @@ public final class SessionStore {
                 long elapsedTime = System.currentTimeMillis() - lastAccessed;
                 if(elapsedTime > ttl) {
                     itor.remove();
-                    if(logger.isInfoEnabled()) {
-                        logger.info("Removed an idle session group: " + e.getKey() + "\t"
-                                + sessionObj.getSessionInfo());
-                    }
+                    logInfo("Removed an idle session group: " + e.getKey() + "\t"
+                            + sessionObj.getSessionInfo());
                 }
             }
 
         }
     }
-
 }

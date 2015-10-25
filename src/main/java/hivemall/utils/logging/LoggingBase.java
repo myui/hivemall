@@ -16,29 +16,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.test;
+package hivemall.utils.logging;
 
-import hivemall.utils.logging.Logging;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TestName;
+public interface LoggingBase {
 
-public abstract class HivemallTestBase extends Logging {
+    // Log messages in each given log level
+    void logDebug(String msg);
+    void logInfo(String msg);
+    void logTrace(String msg);
+    void logWarning(String msg);
+    void logError(String msg);
 
-    private final String packageName = this.getClass().getPackage().getName();
+    // Log methods that take Throwables (Exceptions/Errors)
+    void logDebug(String msg, Throwable e);
+    void logInfo(String msg, Throwable e);
+    void logTrace(String msg, Throwable e);
+    void logWarning(String msg, Throwable e);
+    void logError(String msg, Throwable e);
 
-    @Rule
-    public final TestName testName = new TestName();
-
-    @Before
-    public void beforeEachTest() {
-        logInfo("\n\n===== TEST OUTPUT FOR " + packageName
-                + ": '" + testName.getMethodName() + "' =====\n");
-    }
-
-    @Before
-    public void afterEachTest() {
-        logInfo("\n\n===== FINISHED " + packageName
-                + ": '" + testName.getMethodName() + "' =====\n");
-    }
+    boolean isDebugEnabled();
+    boolean isInfoEnabled();
+    boolean isTraceEnabled();
+    boolean isWarningEnabled();
+    boolean isErrorEnabled();
 }

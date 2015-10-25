@@ -27,18 +27,17 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hivemall.utils.logging.Logging;
 
 public final class MetricsRegistry {
-    private static final Log logger = LogFactory.getLog(MetricsRegistry.class);
+    private static final Logging logger = new Logging() {};
 
     public static void registerMBeans(@Nonnull MixServerMetrics metrics, int port) {
         final StandardMBean mbean;
         try {
             mbean = new StandardMBean(metrics, MixServerMetricsMBean.class);
         } catch (NotCompliantMBeanException e) {
-            logger.error("Unexpected as GridNodeMetricsMBean: " + metrics.getClass().getName(), e);
+            logger.logError("Unexpected as GridNodeMetricsMBean: " + metrics.getClass().getName(), e);
             return;
         }
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -46,9 +45,9 @@ public final class MetricsRegistry {
                 + port);
         try {
             server.registerMBean(mbean, name);
-            logger.info("Registered MBean: " + name);
+            logger.logInfo("Registered MBean: " + name);
         } catch (Exception e) {
-            logger.error("Failed registering mbean: " + name, e);
+            logger.logError("Failed registering mbean: " + name, e);
         }
     }
 
@@ -58,9 +57,9 @@ public final class MetricsRegistry {
                 + port);
         try {
             server.unregisterMBean(name);
-            logger.info("Unregistered MBean: " + name);
+            logger.logInfo("Unregistered MBean: " + name);
         } catch (Exception e) {
-            logger.warn("Failed unregistering mbean: " + name);
+            logger.logWarning("Failed unregistering mbean: " + name);
         }
     }
 

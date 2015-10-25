@@ -18,6 +18,7 @@
  */
 package hivemall.mix.metrics;
 
+import hivemall.utils.logging.Logging;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.traffic.GlobalTrafficShapingHandler;
@@ -28,11 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 public final class ThroughputCounter extends GlobalTrafficShapingHandler {
-    private static final Log logger = LogFactory.getLog(ThroughputCounter.class);
+    private static final Logging logger = new Logging() {};
 
     @Nonnull
     private final MixServerMetrics metrics;

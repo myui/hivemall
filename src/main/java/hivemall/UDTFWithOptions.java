@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import hivemall.utils.logging.UDTFWithLogging;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -35,7 +36,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.io.Writable;
 
-public abstract class UDTFWithOptions extends GenericUDTF {
+public abstract class UDTFWithOptions extends UDTFWithLogging {
 
     protected abstract Options getOptions();
 

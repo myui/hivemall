@@ -25,11 +25,10 @@ import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 
-import org.apache.commons.logging.LogFactory;
+import hivemall.utils.logging.UDTFWithLogging;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -37,7 +36,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.Object
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.mapred.JobConf;
 
-public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
+public class RandomAmplifierUDTF extends UDTFWithLogging implements DropoutListener<Object[]> {
 
     private boolean useSeed;
     private long seed;
@@ -78,7 +77,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         amplifier.setDropoutListener(this);
 
         if(useSeed) {
-            LogFactory.getLog(RandomAmplifierUDTF.class).info("rand_amplify() using seed: " + seed);
+            logInfo("rand_amplify() using seed: " + seed);
         }
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
@@ -113,5 +112,4 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
     public void onDrop(Object[] row) throws HiveException {
         forward(row);
     }
-
 }
