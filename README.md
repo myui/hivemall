@@ -45,6 +45,8 @@ _My recommendation is AROW, SCW1, AdaGradRDA, and Factorization Machine while it
 
 * Soft Confidence Weighted (SCW1, SCW2)
 
+* Gradient Tree Boosting (_Experimental_)
+
 _My recommendation is AROW and SCW while it depends._
 
 ## Regression
