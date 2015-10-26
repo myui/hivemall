@@ -18,8 +18,6 @@
  */
 package hivemall.ftvec.scaling;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
@@ -33,12 +31,19 @@ import org.apache.hadoop.io.FloatWritable;
 public final class ZScoreUDF extends UDF {
 
     public FloatWritable evaluate(double value, double mean, double stddev) {
+        if(stddev == 0.d) {
+            return new FloatWritable(0.f);
+        }
         float v = (float) ((value - mean) / stddev);
-        return val(v);
+        return new FloatWritable(v);
     }
 
     public FloatWritable evaluate(float value, float mean, float stddev) {
-        return val((value - mean) / stddev);
+        if(stddev == 0.f) {
+            return new FloatWritable(0.f);
+        }
+        float v = (value - mean) / stddev;
+        return new FloatWritable(v);
     }
 
 }

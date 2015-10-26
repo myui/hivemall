@@ -27,11 +27,27 @@ import org.apache.hadoop.io.Text;
 @UDFType(deterministic = true, stateful = false)
 public final class FeatureUDF extends UDF {
 
+    public Text evaluate(int feature, int weight) {
+        return new Text(feature + ":" + weight);
+    }
+
+    public Text evaluate(int feature, long weight) {
+        return new Text(feature + ":" + weight);
+    }
+
     public Text evaluate(int feature, float weight) {
         return new Text(feature + ":" + weight);
     }
 
     public Text evaluate(int feature, double weight) {
+        return new Text(feature + ":" + weight);
+    }
+
+    public Text evaluate(long feature, int weight) {
+        return new Text(feature + ":" + weight);
+    }
+
+    public Text evaluate(long feature, long weight) {
         return new Text(feature + ":" + weight);
     }
 
@@ -41,6 +57,20 @@ public final class FeatureUDF extends UDF {
 
     public Text evaluate(long feature, double weight) {
         return new Text(feature + ":" + weight);
+    }
+
+    public Text evaluate(String feature, int weight) {
+        if(feature == null) {
+            return null;
+        }
+        return new Text(feature + ':' + weight);
+    }
+
+    public Text evaluate(String feature, long weight) {
+        if(feature == null) {
+            return null;
+        }
+        return new Text(feature + ':' + weight);
     }
 
     public Text evaluate(String feature, float weight) {

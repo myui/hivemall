@@ -23,7 +23,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import javax.annotation.Nonnull;
+
 public final class ArrayUtils {
+
+    /**
+     * The index value when an element is not found in a list or array:
+     * <code>-1</code>. This value is returned by methods in this class and can
+     * also be used in comparisons with values returned by various method from
+     * {@link java.util.List}.
+     */
+    public static final int INDEX_NOT_FOUND = -1;
 
     private ArrayUtils() {}
 
@@ -123,15 +133,28 @@ public final class ArrayUtils {
      * 
      * @link http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
      */
-    public static <T> void shuffle(final T[] array, final int size, final Random rnd) {
+    public static <T> void shuffle(@Nonnull final T[] array, final int size, @Nonnull final Random rnd) {
         for(int i = size; i > 1; i--) {
             int randomPosition = rnd.nextInt(i);
             swap(array, i - 1, randomPosition);
         }
     }
 
-    public static void swap(final Object[] arr, final int i, final int j) {
+    public static void shuffle(@Nonnull final int[] array, @Nonnull final Random rnd) {
+        for(int i = array.length; i > 1; i--) {
+            int randomPosition = rnd.nextInt(i);
+            swap(array, i - 1, randomPosition);
+        }
+    }
+
+    public static void swap(@Nonnull final Object[] arr, final int i, final int j) {
         Object tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+    }
+
+    public static void swap(@Nonnull final int[] arr, final int i, final int j) {
+        int tmp = arr[i];
         arr[i] = arr[j];
         arr[j] = tmp;
     }
@@ -160,6 +183,22 @@ public final class ArrayUtils {
         for(int i = 0, len = a.length; i < len; i++) {
             a[i] = rand.nextFloat();
         }
+    }
+
+    public static int indexOf(final int[] array, final int valueToFind, int startIndex, int endIndex) {
+        if(array == null) {
+            return INDEX_NOT_FOUND;
+        }
+        final int til = Math.min(endIndex, array.length);
+        if(startIndex < 0 || startIndex > til) {
+            throw new IllegalArgumentException("Illegal startIndex: " + startIndex);
+        }
+        for(int i = startIndex; i < til; i++) {
+            if(valueToFind == array[i]) {
+                return i;
+            }
+        }
+        return INDEX_NOT_FOUND;
     }
 
 }

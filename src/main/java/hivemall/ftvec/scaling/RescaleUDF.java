@@ -67,10 +67,16 @@ public final class RescaleUDF extends UDF {
     }
 
     private static float min_max_normalization(final float value, final float min, final float max) {
+        if(min == max) {
+            return 0.5f;
+        }
         return (value - min) / (max - min);
     }
 
     private static float min_max_normalization(final double value, final double min, final double max) {
+        if(min == max) {
+            return 0.5f;
+        }
         return (float) ((value - min) / (max - min));
     }
 

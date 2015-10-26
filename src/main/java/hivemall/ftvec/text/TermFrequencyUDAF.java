@@ -58,12 +58,12 @@ public final class TermFrequencyUDAF extends UDAF {
 
             if(partial == null) {
                 this.partial = new PartialResult();
-                partial.map.put(term, new MutableInt(1));
+                partial.map.put(new Text(term), new MutableInt(1));
             } else {
                 final Map<Text, MutableInt> map = partial.map;
                 MutableInt count = map.get(term);
                 if(count == null) {
-                    map.put(term, new MutableInt(1));
+                    map.put(new Text(term), new MutableInt(1));
                 } else {
                     int newcount = count.getValue() + 1;
                     count.setValue(newcount);
