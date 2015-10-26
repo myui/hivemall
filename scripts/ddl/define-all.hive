@@ -450,7 +450,8 @@ create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap
 ---------------------
 
 drop temporary function sigmoid;
-create temporary function sigmoid as 'hivemall.tools.math.SigmodUDF';
+create temporary function sigmoid as 'hivemall.tools.math.SigmoidGenericUDF';
+-- create temporary function sigmoid as 'hivemall.tools.math.SigmoidUDF';
 
 ----------------------
 -- mapred functions --

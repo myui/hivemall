@@ -454,7 +454,8 @@ CREATE FUNCTION to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap' USING JA
 ---------------------
 
 DROP FUNCTION IF EXISTS sigmoid;
-CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmodUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidGenericUDF' USING JAR '${hivemall_jar}';
+-- CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidUDF' USING JAR '${hivemall_jar}';
 
 ----------------------
 -- mapred functions --
