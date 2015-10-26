@@ -53,7 +53,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
@@ -169,6 +171,26 @@ public final class HiveUtils {
     public static boolean isBooleanOI(@Nonnull final ObjectInspector oi) {
         String typeName = oi.getTypeName();
         return BOOLEAN_TYPE_NAME.equals(typeName);
+    }
+
+    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if(argOI.getCategory() != Category.PRIMITIVE) {
+            return false;
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case SHORT:
+            case INT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+            case BYTE:
+            case TIMESTAMP:
+                return true;
+            default:
+                return false;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -309,6 +331,24 @@ public final class HiveUtils {
     }
 
     @Nonnull
+    public static double[] asDoubleArray(@Nullable Object argObj, @Nonnull ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI) {
+        if(argObj == null) {
+            return null;
+        }
+        final int length = listOI.getListLength(argObj);
+        final double[] ary = new double[length];
+        for(int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if(o == null) {
+                continue;
+            }
+            double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
+            ary[i] = d;
+        }
+        return ary;
+    }
+
+    @Nonnull
     public static ConstantObjectInspector asConstantObjectInspector(@Nonnull final ObjectInspector oi)
             throws UDFArgumentException {
         if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
@@ -325,6 +365,14 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         return (PrimitiveObjectInspector) oi;
+    }
+
+    public static BooleanObjectInspector asBooleanOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if(!BOOLEAN_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be Boolean: " + argOI.getTypeName());
+        }
+        return (BooleanObjectInspector) argOI;
     }
 
     public static IntObjectInspector asIntOI(@Nonnull final ObjectInspector argOI)

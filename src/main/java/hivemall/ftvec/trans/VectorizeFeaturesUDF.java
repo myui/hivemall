@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.ftvec;
+package hivemall.ftvec.trans;
 
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,13 +35,14 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "categorical_features", value = "_FUNC_(array<string> featureNames, ...) - Returns a feature vector array<string>")
+@Description(name = "vectorize_features", value = "_FUNC_(array<string> featureNames, ...) - Returns a feature vector array<string>")
 @UDFType(deterministic = true, stateful = false)
-public final class CategoricalFeaturesUDF extends GenericUDF {
+public final class VectorizeFeaturesUDF extends GenericUDF {
 
     private String[] featureNames;
     private PrimitiveObjectInspector[] inputOIs;
@@ -88,18 +90,28 @@ public final class CategoricalFeaturesUDF extends GenericUDF {
             }
 
             PrimitiveObjectInspector oi = inputOIs[i];
-            String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
-            // categorical feature representation                    
-            String featureName = featureNames[i];
-            Text f = new Text(featureName + '#' + s);
-            result.add(f);
+            if(oi.getPrimitiveCategory() == PrimitiveCategory.STRING) {
+                String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
+                if(StringUtils.isNumber(s) == false) {// categorical feature representation                    
+                    String featureName = featureNames[i];
+                    Text f = new Text(featureName + '#' + s);
+                    result.add(f);
+                    continue;
+                }
+            }
+            float v = PrimitiveObjectInspectorUtils.getFloat(argument, oi);
+            if(v != 0.f) {
+                String featureName = featureNames[i];
+                Text f = new Text(featureName + ':' + v);
+                result.add(f);
+            }
         }
         return result;
     }
 
     @Override
     public String getDisplayString(String[] children) {
-        return "categorical_features(" + Arrays.toString(children) + ")";
+        return "vectorize_features(" + Arrays.toString(children) + ")";
     }
 
 }

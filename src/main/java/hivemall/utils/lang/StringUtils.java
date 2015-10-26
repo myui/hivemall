@@ -18,6 +18,10 @@
  */
 package hivemall.utils.lang;
 
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 public final class StringUtils {
 
     private StringUtils() {}
@@ -142,6 +146,40 @@ public final class StringUtils {
         // allowSigns is true iff the val ends in 'E'
         // found digit it to make sure weird stuff like '.' and '1E-' doesn't pass
         return !allowSigns && foundDigit;
+    }
+
+    public static boolean isInt(@Nonnull final String i) {
+        try {
+            Integer.parseInt(i);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    public static boolean isDouble(@Nonnull final String i) {
+        try {
+            Double.parseDouble(i);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    public static void clear(@Nonnull final StringBuilder buf) {
+        buf.setLength(0);
+    }
+
+    public static String concat(@Nonnull final List<String> list, @Nonnull final String sep) {
+        final StringBuilder buf = new StringBuilder(128);
+        for(String s : list) {
+            if(s == null) {
+                continue;
+            }
+            buf.append(s);
+            buf.append(sep);
+        }
+        return buf.toString();
     }
 
 }

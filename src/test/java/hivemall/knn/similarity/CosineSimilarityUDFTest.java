@@ -18,6 +18,7 @@
  */
 package hivemall.knn.similarity;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import org.junit.Test;
 public class CosineSimilarityUDFTest {
 
     @Test
-    public void testEvaluate() {
+    public void testEvaluate() throws IOException {
         CosineSimilarityUDF cosine = new CosineSimilarityUDF();
 
         {
@@ -71,5 +72,7 @@ public class CosineSimilarityUDFTest {
 
         Assert.assertEquals(0.f, cosine.evaluate(Arrays.asList("1", "2", "3"), Arrays.asList("4", "5")).get(), 0.0);
         Assert.assertEquals(1.f, cosine.evaluate(Arrays.asList("1", "2"), Arrays.asList("1", "2")).get(), 0.0);
+
+        cosine.close();
     }
 }
