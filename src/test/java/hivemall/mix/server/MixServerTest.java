@@ -67,11 +67,10 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 48000, 10000L);
+            Thread.sleep(5000L);
 
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
-            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+            long numMixed = model.getNumMixed();
+            Assert.assertEquals("number of mix events: " + numMixed, numMixed, 0L);
 
             serverExec.shutdown();
         } finally {
@@ -104,11 +103,10 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 48000, 10000L);
+            Thread.sleep(5000L);
 
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
-            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
+            long numMixed = model.getNumMixed();
+            Assert.assertEquals("number of mix events: " + numMixed, numMixed, 0L);
 
             serverExec.shutdown();
         } finally {
@@ -161,10 +159,9 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 48000, 10000L);
+            waitForMixed(model, 48000L, 10000L);
 
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
+            long numMixed = model.getNumMixed();
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
         } finally {
             IOUtils.closeQuietly(client);
@@ -305,10 +302,9 @@ public class MixServerTest {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 100000, 10000L);
+            waitForMixed(model, 100000L, 10000L);
 
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
+            long numMixed = model.getNumMixed();
             Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
 
             for(int i = 0; i < 100; i++) {
@@ -330,11 +326,11 @@ public class MixServerTest {
         Assert.assertEquals("MixServer state is not correct (timed out)", expected, server.getState());
     }
 
-    private static void waitForMixed(PredictionModel model, @Nonnegative int minMixed, @Nonnegative long maxWaitInMillis)
+    private static void waitForMixed(PredictionModel model, @Nonnegative long minMixed, @Nonnegative long maxWaitInMillis)
             throws InterruptedException {
         long startTime = System.currentTimeMillis();
         while(true) {
-            int numMixed = model.getNumMixed();
+            long numMixed = model.getNumMixed();
             if(numMixed >= minMixed) {
                 break;
             }
