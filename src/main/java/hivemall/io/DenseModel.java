@@ -30,11 +30,7 @@ import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 public final class DenseModel extends AbstractPredictionModel {
-    private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;
     private float[] weights;
@@ -120,7 +116,7 @@ public final class DenseModel extends AbstractPredictionModel {
             int bits = MathUtils.bitsRequired(index);
             int newSize = (1 << bits) + 1;
             int oldSize = size;
-            logger.info("Expands internal array size from " + oldSize + " to " + newSize + " ("
+            logInfo("Expands internal array size from " + oldSize + " to " + newSize + " ("
                     + bits + " bits)");
             this.size = newSize;
             this.weights = Arrays.copyOf(weights, newSize);

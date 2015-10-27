@@ -37,8 +37,6 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -53,7 +51,6 @@ import org.apache.hadoop.io.IntWritable;
 
 public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         implements RatingInitilizer {
-    private static final Log logger = LogFactory.getLog(OnlineMatrixFactorizationUDTF.class);
     private static final int RECORD_BYTES = (Integer.SIZE + Integer.SIZE + Double.SIZE) / 8;
 
     // Option variables
@@ -438,7 +435,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                 numForwarded++;
             }
             this.model = null; // help GC
-            logger.info("Forwarded the prediction model of " + numForwarded
+            logInfo("Forwarded the prediction model of " + numForwarded
                     + " rows. [totalErrors=" + cvState.getTotalErrors() + ", lastLosses="
                     + cvState.getCumulativeLoss() + ", #trainingExamples=" + count + "]");
         }
@@ -487,7 +484,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     }
                     inputBuf.rewind();
                 }
-                logger.info("Performed " + i + " iterations of "
+                logInfo("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total) ");
@@ -505,13 +502,12 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                if(logger.isInfoEnabled()) {
-                    File tmpFile = fileIO.getFile();
-                    logger.info("Wrote " + numTrainingExamples
-                            + " records to a temporary file for iterative training: "
-                            + tmpFile.getAbsolutePath() + " (" + FileUtils.prettyFileSize(tmpFile)
-                            + ")");
-                }
+
+                logInfo("Wrote " + numTrainingExamples
+                        + " records to a temporary file for iterative training: "
+                        + fileIO.getFile().getAbsolutePath() + " ("
+                        + FileUtils.prettyFileSize(fileIO.getFile())
+                        + ")");
 
                 // run iterations
                 int i = 1;
@@ -553,7 +549,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
                         break;
                     }
                 }
-                logger.info("Performed " + i + " iterations of "
+                logInfo("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples using a secondary storage (thus "
                         + NumberUtils.formatNumber(count) + " training updates in total)");

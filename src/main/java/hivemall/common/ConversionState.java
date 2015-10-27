@@ -18,11 +18,9 @@
  */
 package hivemall.common;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import hivemall.utils.logging.Logging;
 
-public final class ConversionState {
-    private static final Log logger = LogFactory.getLog(ConversionState.class);
+public final class ConversionState extends Logging {
 
     /** Whether to check conversion */
     protected final boolean conversionCheck;
@@ -76,9 +74,7 @@ public final class ConversionState {
         }
 
         if(currLosses > prevLosses) {
-            if(logger.isInfoEnabled()) {
-                logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
-            }
+            logInfo("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
             this.prevLosses = currLosses;
             this.currLosses = 0.d;
             this.readyToFinishIterations = false;
@@ -89,7 +85,7 @@ public final class ConversionState {
         if(changeRate < convergenceRate) {
             if(readyToFinishIterations) {
                 // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
-                logger.info("Training converged at " + iter + "-th iteration. [curLosses="
+                logInfo("Training converged at " + iter + "-th iteration. [curLosses="
                         + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
                         + "]");
                 return true;
@@ -97,11 +93,9 @@ public final class ConversionState {
                 this.readyToFinishIterations = true;
             }
         } else {
-            if(logger.isDebugEnabled()) {
-                logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
-                        + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
-                        + obserbedTrainingExamples + "]");
-            }
+            logDebug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
+                    + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
+                    + obserbedTrainingExamples + "]");
             this.readyToFinishIterations = false;
         }
 
@@ -109,5 +103,4 @@ public final class ConversionState {
         this.currLosses = 0.d;
         return false;
     }
-
 }

@@ -44,8 +44,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -59,7 +57,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObje
 import org.apache.hadoop.io.Text;
 
 public abstract class LearnerBaseUDTF extends UDTFWithOptions {
-    private static final Log logger = LogFactory.getLog(LearnerBaseUDTF.class);
 
     protected String preloadedModelFile;
     protected boolean dense_model;
@@ -154,17 +151,17 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         final boolean useCovar = useCovariance();
         if(dense_model) {
             if(disable_halffloat == false && model_dims > 16777216) {
-                logger.info("Build a space efficient dense model with " + model_dims
+                logInfo("Build a space efficient dense model with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
                 model = new SpaceEfficientDenseModel(model_dims, useCovar);
             } else {
-                logger.info("Build a dense model with initial with " + model_dims
+                logInfo("Build a dense model with initial with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
                 model = new DenseModel(model_dims, useCovar);
             }
         } else {
             int initModelSize = getInitialModelSize();
-            logger.info("Build a sparse model with initial with " + initModelSize
+            logInfo("Build a sparse model with initial with " + initModelSize
                     + " initial dimensions");
             model = new SparseModel(initModelSize, useCovar);
         }
@@ -188,7 +185,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
         MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
-        logger.info("Successfully configured mix client: " + connectURIs);
+        logInfo("Successfully configured mix client: " + connectURIs);
         return client;
     }
 
@@ -211,7 +208,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
         if(model.size() > 0) {
-            logger.info("Loaded " + model.size() + " features from distributed cache '" + filename
+            logInfo("Loaded " + model.size() + " features from distributed cache '" + filename
                     + "' (" + lines + " lines) in " + elapsed);
         }
     }

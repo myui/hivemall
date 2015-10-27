@@ -47,8 +47,6 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -68,7 +66,6 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
 public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
-    private static final Log logger = LogFactory.getLog(MulticlassOnlineClassifierUDTF.class);
 
     private ListObjectInspector featureListOI;
     private boolean parseFeature;
@@ -425,9 +422,9 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 }
             }
             this.label2model = null;
-            logger.info("Trained a prediction model using " + count + " training examples"
+            logInfo("Trained a prediction model using " + count + " training examples"
                     + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
-            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
+            logInfo("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 
@@ -454,7 +451,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 statsBuf.append('\n').append("Label: ").append(label).append(", Number of Features: ").append(numFeatures);
                 totalFeatures += numFeatures;
             }
-            logger.info("Loaded total " + totalFeatures + " features from distributed cache '"
+            logInfo("Loaded total " + totalFeatures + " features from distributed cache '"
                     + filename + "' (" + lines + " lines) in " + elapsed + statsBuf);
         }
     }

@@ -37,8 +37,6 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -53,7 +51,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 
 public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
-    private static final Log logger = LogFactory.getLog(OnlineRegressionUDTF.class);
 
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureInputOI;
@@ -294,10 +291,9 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
             }
             long numMixed = model.getNumMixed();
             this.model = null;
-            logger.info("Trained a prediction model using " + count + " training examples"
+            logInfo("Trained a prediction model using " + count + " training examples"
                     + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
-            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
+            logInfo("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
-
 }

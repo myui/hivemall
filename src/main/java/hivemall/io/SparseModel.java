@@ -26,11 +26,7 @@ import hivemall.utils.collections.OpenHashMap;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 public final class SparseModel extends AbstractPredictionModel {
-    private static final Log logger = LogFactory.getLog(SparseModel.class);
 
     private final OpenHashMap<Object, IWeightValue> weights;
     private final boolean hasCovar;
@@ -139,7 +135,7 @@ public final class SparseModel extends AbstractPredictionModel {
     protected void _set(final Object feature, final float weight, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
-            logger.warn("Previous weight not found: " + feature);
+            logInfo("Previous weight not found: " + feature);
             throw new IllegalStateException("Previous weight not found " + feature);
         }
         w.set(weight);
@@ -151,7 +147,7 @@ public final class SparseModel extends AbstractPredictionModel {
     protected void _set(final Object feature, final float weight, final float covar, final short clock) {
         final IWeightValue w = weights.get(feature);
         if(w == null) {
-            logger.warn("Previous weight not found: " + feature);
+            logWarning("Previous weight not found: " + feature);
             throw new IllegalStateException("Previous weight not found: " + feature);
         }
         w.set(weight);

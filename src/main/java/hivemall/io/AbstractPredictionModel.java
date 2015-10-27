@@ -23,10 +23,11 @@ import hivemall.mix.MixedWeight.WeightWithCovar;
 import hivemall.mix.MixedWeight.WeightWithDelta;
 import hivemall.utils.collections.IntOpenHashMap;
 import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.logging.Logging;
 
 import javax.annotation.Nonnull;
 
-public abstract class AbstractPredictionModel implements PredictionModel {
+public abstract class AbstractPredictionModel extends Logging implements PredictionModel {
     public static final byte BYTE0 = 0;
 
     protected ModelUpdateHandler handler;

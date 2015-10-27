@@ -45,8 +45,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -63,7 +61,6 @@ import org.apache.hadoop.io.Text;
 
 @Description(name = "train_fm", value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
 public final class FactorizationMachineUDTF extends UDTFWithOptions {
-    private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
 
     private ListObjectInspector _xOI;
@@ -312,7 +309,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new UDFArgumentException("Cannot write a temporary file: "
                             + file.getAbsolutePath());
                 }
-                logger.info("Record training examples to a file: " + file.getAbsolutePath());
+                logInfo("Record training examples to a file: " + file.getAbsolutePath());
             } catch (IOException ioe) {
                 throw new UDFArgumentException(ioe);
             } catch (Throwable e) {
@@ -424,7 +421,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         final int P = _model.getSize();
         if(P <= 0) {
-            logger.warn("Model size P was less than zero: " + P);
+            logWarning("Model size P was less than zero: " + P);
             return;
         }
 
@@ -546,7 +543,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     }
                     inputBuf.rewind();
                 }
-                logger.info("Performed " + i + " iterations of "
+                logInfo("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(_t)
                         + " training updates in total) ");
@@ -562,13 +559,12 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                if(logger.isInfoEnabled()) {
-                    File tmpFile = fileIO.getFile();
-                    logger.info("Wrote " + numTrainingExamples
-                            + " records to a temporary file for iterative training: "
-                            + tmpFile.getAbsolutePath() + " (" + FileUtils.prettyFileSize(tmpFile)
-                            + ")");
-                }
+
+                logInfo("Wrote " + numTrainingExamples
+                        + " records to a temporary file for iterative training: "
+                        + fileIO.getFile().getAbsolutePath() + " ("
+                        + FileUtils.prettyFileSize(fileIO.getFile())
+                        + ")");
 
                 // run iterations
                 int i = 1;
@@ -625,7 +621,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         break;
                     }
                 }
-                logger.info("Performed " + i + " iterations of "
+                logInfo("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on a secondary storage (thus "
                         + NumberUtils.formatNumber(_t) + " training updates in total)");
@@ -642,5 +638,4 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             this._fileIO = null;
         }
     }
-
 }
