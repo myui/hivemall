@@ -73,13 +73,13 @@ public abstract class PartialResult {
             int diff;
             if(globalClock < 0) {
                 diff = globalClock - Short.MIN_VALUE;
-                assert (diff >= 0) : "diff: " + diff + ", globalClock: " + globalClock;
+                assert (diff >= 0) : "diff clock: " + diff + ", globalClock: " + globalClock;
             } else {
                 diff = Short.MAX_VALUE - globalClock;
             }
             if(localClock < 0) {
                 int tmp = localClock - Short.MIN_VALUE;
-                assert (tmp >= 0) : "diff localCkicj: " + tmp + ", localClock: " + localClock;
+                assert (tmp >= 0) : "diff clock: " + tmp + ", localClock: " + localClock;
                 diff += tmp;
             } else {
                 diff += Short.MAX_VALUE - localClock;
