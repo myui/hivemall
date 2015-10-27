@@ -203,4 +203,8 @@ public final class MathUtils {
         return Math.exp(gaussian(mean, stddev, rnd));
     }
 
+    public static int sign(final short v) {
+        return v < 0 ? -1 : 1;
+    }
+
 }

@@ -145,7 +145,6 @@ public final class SparseModel extends AbstractPredictionModel {
         w.set(weight);
         w.setClock(clock);
         w.setDeltaUpdates(BYTE0);
-        numMixed++;
     }
 
     @Override
@@ -159,7 +158,6 @@ public final class SparseModel extends AbstractPredictionModel {
         w.setCovariance(covar);
         w.setClock(clock);
         w.setDeltaUpdates(BYTE0);
-        numMixed++;
     }
 
     @Override

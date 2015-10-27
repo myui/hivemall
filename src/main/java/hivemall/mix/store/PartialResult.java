@@ -20,6 +20,7 @@ package hivemall.mix.store;
 
 import hivemall.utils.lock.Lock;
 import hivemall.utils.lock.TTASLock;
+import hivemall.utils.math.MathUtils;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.GuardedBy;
@@ -29,10 +30,10 @@ public abstract class PartialResult {
     private final Lock lock;
 
     @GuardedBy("lock()")
-    protected short totalClock;
+    protected short globalClock;
 
     public PartialResult() {
-        this.totalClock = 0;
+        this.globalClock = 0;
         this.lock = new TTASLock();
     }
 
@@ -44,7 +45,7 @@ public abstract class PartialResult {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale);
+    public abstract void add(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
 
     public abstract void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
 
@@ -53,16 +54,44 @@ public abstract class PartialResult {
     public abstract float getCovariance(float scale);
 
     public final short getClock() {
-        return totalClock;
+        return globalClock;
     }
 
-    protected final void incrClock(short clock) {
-        totalClock += clock;
+    protected final void incrClock(int deltaUpdates) {
+        globalClock += deltaUpdates;
     }
 
-    public final int diffClock(short clock) {
-        short diff = (short) (totalClock - clock);
-        return diff < 0 ? -diff : diff;
+    public final short diffClock(short localClock) {
+        int dist = globalClock - localClock;
+        if(dist < 0) {
+            dist = -dist;
+        }
+        final short ret;
+        if(MathUtils.sign(globalClock) == MathUtils.sign(localClock)) {
+            ret = (short) dist;
+        } else {
+            int diff;
+            if(globalClock < 0) {
+                diff = globalClock - Short.MIN_VALUE;
+                assert (diff >= 0) : "diff clock: " + diff + ", globalClock: " + globalClock;
+            } else {
+                diff = Short.MAX_VALUE - globalClock;
+            }
+            if(localClock < 0) {
+                int tmp = localClock - Short.MIN_VALUE;
+                assert (tmp >= 0) : "diff clock: " + tmp + ", localClock: " + localClock;
+                diff += tmp;
+            } else {
+                diff += Short.MAX_VALUE - localClock;
+            }
+            assert (diff >= 0) : diff;
+            if(dist < diff) {
+                ret = (short) dist;
+            } else {
+                ret = (short) diff;
+            }
+        }
+        return ret;
     }
 
 }

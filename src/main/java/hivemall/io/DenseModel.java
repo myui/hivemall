@@ -247,7 +247,6 @@ public final class DenseModel extends AbstractPredictionModel {
         weights[i] = weight;
         clocks[i] = clock;
         deltaUpdates[i] = 0;
-        numMixed++;
     }
 
     @Override
@@ -258,7 +257,6 @@ public final class DenseModel extends AbstractPredictionModel {
         covars[i] = covar;
         clocks[i] = clock;
         deltaUpdates[i] = 0;
-        numMixed++;
     }
 
     @Override
