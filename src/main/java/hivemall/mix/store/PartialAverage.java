@@ -40,9 +40,10 @@ public final class PartialAverage extends PartialResult {
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates, float scale) {
+    public void add(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
+        assert (deltaUpdates > 0) : deltaUpdates;
         addWeight(localWeight, deltaUpdates, scale);
-        incrClock(clock);
+        incrClock(deltaUpdates);
     }
 
     private void addWeight(float localWeight, int deltaUpdates, float scale) {

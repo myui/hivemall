@@ -40,10 +40,10 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     @Override
-    public void add(float localWeight, float covar, short clock, int deltaUpdates, float scale) {
+    public void add(float localWeight, float covar, int deltaUpdates, float scale) {
         assert (deltaUpdates > 0) : deltaUpdates;
         addWeight(localWeight, covar, scale);
-        incrClock(clock);
+        incrClock(deltaUpdates);
     }
 
     private void addWeight(float localWeight, float covar, float scale) {

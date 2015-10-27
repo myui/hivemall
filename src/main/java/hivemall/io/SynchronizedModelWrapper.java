@@ -53,7 +53,7 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
-    public int getNumMixed() {
+    public long getNumMixed() {
         return model.getNumMixed();
     }
 

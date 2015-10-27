@@ -52,7 +52,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MixMessage msg) throws Exception {
         final MixEventName event = msg.getEvent();
-        switch(event) {
+        switch (event) {
             case average:
             case argminKLD: {
                 SessionObject session = getSession(msg);
@@ -96,7 +96,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         PartialResult partial = map.get(feature);
         if(partial == null) {
             final MixEventName event = msg.getEvent();
-            switch(event) {
+            switch (event) {
                 case average:
                     partial = new PartialAverage();
                     break;
@@ -119,7 +119,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final Object feature = requestMsg.getFeature();
         final float weight = requestMsg.getWeight();
         final float covar = requestMsg.getCovariance();
-        final short clock = requestMsg.getClock();
+        final short localClock = requestMsg.getClock();
         final int deltaUpdates = requestMsg.getDeltaUpdates();
         final boolean cancelRequest = requestMsg.isCancelRequest();
 
@@ -130,14 +130,14 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             if(cancelRequest) {
                 partial.subtract(weight, covar, deltaUpdates, scale);
             } else {
-                int diffClock = partial.diffClock(clock);
-                partial.add(weight, covar, clock, deltaUpdates, scale);
+                short diffClock = partial.diffClock(localClock);
+                partial.add(weight, covar, deltaUpdates, scale);
 
                 if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
                     float averagedWeight = partial.getWeight(scale);
                     float meanCovar = partial.getCovariance(scale);
-                    short totalClock = partial.getClock();
-                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, totalClock, 0 /* deltaUpdates */);
+                    short globalClock = partial.getClock();
+                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, globalClock, 0 /* deltaUpdates */);
                 }
             }
 

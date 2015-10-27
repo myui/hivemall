@@ -53,10 +53,6 @@ public final class CosineSimilarityUDF extends GenericUDF {
         return PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
     }
 
-    public FloatWritable evaluate(List<String> ftvec1, List<String> ftvec2) {
-        return new FloatWritable(cosineSimilarity(ftvec1, ftvec2));
-    }
-
     @Override
     public FloatWritable evaluate(DeferredObject[] arguments) throws HiveException {
         List<String> ftvec1 = HiveUtils.asStringList(arguments[0], arg0ListOI);
