@@ -337,6 +337,7 @@
 								<include>commons-logging:commons-logging</include>
 								<include>log4j:log4j</include>
 								<include>com.google.code.findbugs:jsr305</include>
+								<include>io.netty:netty-all</include>
 								<include>org.apache.hadoop.thirdparty.guava:guava</include>
 							</includes>
 							<excludes>
