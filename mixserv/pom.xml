@@ -43,6 +43,12 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>io.netty</groupId>
 			<!-- required for mixing -->
 			<artifactId>netty-all</artifactId>
@@ -104,24 +110,40 @@
 			</plugin>
 			<!-- hivemall-mixserv-xx-fat.jar including all dependencies -->
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>jarjar-maven-plugin</artifactId>
-				<version>1.9</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.3</version>
 				<executions>
 					<execution>
+						<id>jar-with-dependencies</id>
 						<phase>package</phase>
 						<goals>
-							<goal>jarjar</goal>
+							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<output>${project.parent.build.directory}/${project.artifactId}-${project.version}-fat.jar</output>
-							<includes>
-								<include>io.github.myui:hivemall-core</include>
-								<include>commons-cli:commons-cli</include>
-								<include>commons-logging:commons-logging</include>
-								<include>io.netty:netty-all</include>
-							</includes>
-							<rules></rules>
+							<finalName>${project.artifactId}-${project.version}-fat</finalName>
+							<outputDirectory>${project.parent.build.directory}</outputDirectory>
+							<minimizeJar>false</minimizeJar>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<artifactSet>
+								<includes>
+									<include>io.github.myui:hivemall-core</include>
+									<include>commons-cli:commons-cli</include>
+									<include>commons-logging:commons-logging</include>
+									<include>log4j:log4j</include>
+									<include>io.netty:netty-all</include>
+								</includes>
+							</artifactSet>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<manifestEntries>
+										<Main-Class>${jar.mainclass}</Main-Class>
+										<Implementation-Title>${project.name}</Implementation-Title>
+										<Implementation-Version>${project.version}</Implementation-Version>
+										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+									</manifestEntries>
+								</transformer>
+							</transformers>
 						</configuration>
 					</execution>
 				</executions>
