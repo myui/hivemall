@@ -68,13 +68,11 @@ public class MixServerTest extends HivemallTestBase {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 48000, 10000L);
-
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
-            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
+            // Block untill the server thread finished
             serverExec.shutdown();
+
+            // No weight synchronization happens for the single MixClient
+            Assert.assertEquals(0, model.getNumMixed());
         } finally {
             IOUtils.closeQuietly(client);
         }
@@ -105,13 +103,11 @@ public class MixServerTest extends HivemallTestBase {
                 model.set(feature, new WeightValue(weight));
             }
 
-            waitForMixed(model, 48000, 10000L);
-
-            int numMixed = model.getNumMixed();
-            //System.out.println("number of mix events: " + numMixed);
-            Assert.assertTrue("number of mix events: " + numMixed, numMixed > 0);
-
+            // Block untill the server thread finished
             serverExec.shutdown();
+
+            // No weight synchronization happens for the single MixClient
+            Assert.assertEquals(0, model.getNumMixed());
         } finally {
             IOUtils.closeQuietly(client);
         }
@@ -346,5 +342,4 @@ public class MixServerTest extends HivemallTestBase {
             }
         }
     }
-
 }
