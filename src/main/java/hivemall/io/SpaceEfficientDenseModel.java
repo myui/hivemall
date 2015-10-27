@@ -273,7 +273,6 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         setWeight(i, weight);
         clocks[i] = clock;
         deltaUpdates[i] = 0;
-        numMixed++;
     }
 
     @Override
@@ -284,7 +283,6 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         setCovar(i, covar);
         clocks[i] = clock;
         deltaUpdates[i] = 0;
-        numMixed++;
     }
 
     @Override

@@ -30,7 +30,7 @@ public interface PredictionModel extends MixedModel {
 
     void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest);
 
-    int getNumMixed();
+    long getNumMixed();
 
     boolean hasCovariance();
 

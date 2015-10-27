@@ -30,14 +30,15 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     public static final byte BYTE0 = 0;
 
     protected ModelUpdateHandler handler;
-    protected int numMixed;
+    
+    private long numMixed;
     private boolean cancelMixRequest;
 
     private IntOpenHashMap<MixedWeight> mixedRequests_i;
     private OpenHashMap<Object, MixedWeight> mixedRequests_o;
 
     public AbstractPredictionModel() {
-        this.numMixed = 0;
+        this.numMixed = 0L;
         this.cancelMixRequest = false;
     }
 
@@ -62,7 +63,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     @Override
-    public final int getNumMixed() {
+    public final long getNumMixed() {
         return numMixed;
     }
 
@@ -182,6 +183,9 @@ public abstract class AbstractPredictionModel implements PredictionModel {
         }
     }
 
+    /**
+     * 
+     */
     @Override
     public void set(@Nonnull Object feature, float weight, float covar, short clock) {
         if(hasCovariance()) {
@@ -189,6 +193,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
         } else {
             _set(feature, weight, clock);
         }
+        numMixed++;
     }
 
     protected abstract void _set(@Nonnull Object feature, float weight, short clock);
