@@ -4,7 +4,7 @@
 
 	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall</artifactId>
-	<version>0.4</version>
+	<version>0.4.0</version>
 
 	<name>Hivemall</name>
 	<description>Scalable Machine Learning Library for Apache Hive</description>
@@ -291,8 +291,11 @@
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<artifactSet>
 								<includes>
-									<include>io.netty:netty-all</include>
 									<include>com.google.code.findbugs:jsr305</include>
+									<include>io.netty:netty-all</include>
+									<include>com.github.haifengl:smile-core</include>
+									<include>com.github.haifengl:smile-math</include>
+									<include>com.github.haifengl:smile-data</include>
 								</includes>
 								<excludes>
 									<exclude>junit:junit</exclude>
@@ -336,9 +339,12 @@
 								<include>commons-cli:commons-cli</include>
 								<include>commons-logging:commons-logging</include>
 								<include>log4j:log4j</include>
+								<include>org.apache.hadoop.thirdparty.guava:guava</include>
 								<include>com.google.code.findbugs:jsr305</include>
 								<include>io.netty:netty-all</include>
-								<include>org.apache.hadoop.thirdparty.guava:guava</include>
+								<include>com.github.haifengl:smile-core</include>
+								<include>com.github.haifengl:smile-math</include>
+								<include>com.github.haifengl:smile-data</include>
 							</includes>
 							<excludes>
 								<exclude>junit:junit</exclude>
