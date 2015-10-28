@@ -589,3 +589,6 @@ CREATE FUNCTION js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascript
 DROP FUNCTION IF EXISTS rf_ensemble;
 CREATE FUNCTION rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS guess_attribute_types;
+CREATE FUNCTION guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUDF' USING JAR '${hivemall_jar}';
+

@@ -596,6 +596,9 @@ create temporary function train_gradient_boosting_classifier as 'hivemall.smile.
 drop temporary function train_gradient_boosting;
 create temporary function train_gradient_boosting as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';
 
+drop temporary function guess_attribute_types;
+create temporary function guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUDF';
+
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0
 -- see https://issues.apache.org/jira/browse/HIVE-2655
