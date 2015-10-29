@@ -38,12 +38,17 @@ public final class MFPredictionUDF extends UDF {
         if(Pu == null || Qi == null) {
             return null; //throw new HiveException("Pu should not be NULL");
         }
-        final int factor = Pu.size();
-        if(Qi.size() != factor) {
-            throw new HiveException("|Pu| " + factor + " was not equal to |Qi| " + Qi.size());
+        final int PuSize = Pu.size();
+        final int QiSize = Qi.size();
+        if(QiSize != PuSize) {
+            throw new HiveException("|Pu| " + PuSize + " was not equal to |Qi| " + QiSize);
         }
+        if(PuSize == 0) {// workaround for TD
+            return null;
+        }
+
         float ret = (float) mu;
-        for(int k = 0; k < factor; k++) {
+        for(int k = 0; k < PuSize; k++) {
             ret += Pu.get(k) * Qi.get(k);
         }
         return new FloatWritable(ret);
@@ -68,12 +73,17 @@ public final class MFPredictionUDF extends UDF {
             return new FloatWritable(ret);
         }
 
-        final int factor = Pu.size();
-        if(Qi.size() != factor) {
-            throw new HiveException("|Pu| " + factor + " was not equal to |Qi| " + Qi.size());
+        final int PuSize = Pu.size();
+        final int QiSize = Qi.size();
+        if(QiSize != PuSize) {
+            throw new HiveException("|Pu| " + PuSize + " was not equal to |Qi| " + QiSize);
         }
+        if(PuSize == 0) {// workaround for TD
+            return null;
+        }
+
         float ret = (float) (mu + Bu + Bi);
-        for(int k = 0; k < factor; k++) {
+        for(int k = 0; k < PuSize; k++) {
             ret += Pu.get(k) * Qi.get(k);
         }
         return new FloatWritable(ret);
