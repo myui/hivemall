@@ -109,6 +109,11 @@ public final class FMPredictUDAF extends UDAF {
                 if(Xj == null) {
                     throw new HiveException("Xj should not be null");
                 }
+                final int factor = Vjf.size();
+                if(factor == 0) {// workaround for TD
+                    return;
+                }
+
                 if(sumVjXj == null) {
                     int factors = Vjf.size();
                     this.sumVjXj = Arrays.asList(MutableDouble.initArray(factors, 0.d));
@@ -116,7 +121,6 @@ public final class FMPredictUDAF extends UDAF {
                 }
 
                 final double x = Xj.get();
-                final int factor = Vjf.size();
                 if(factor < 1) {
                     throw new HiveException("# of Factor should be more than 0: " + Vjf.toString());
                 }
@@ -141,6 +145,7 @@ public final class FMPredictUDAF extends UDAF {
                 this.sumV2X2 = other.sumV2X2;
             } else {
                 add(other.sumVjXj, sumVjXj);
+                assert (sumV2X2 != null);
                 add(other.sumV2X2, sumV2X2);
             }
         }
@@ -163,7 +168,10 @@ public final class FMPredictUDAF extends UDAF {
             return ret;
         }
 
-        private static void add(@Nonnull final List<MutableDouble> src, @Nonnull final List<MutableDouble> dst) {
+        private static void add(@Nullable final List<MutableDouble> src, @Nonnull final List<MutableDouble> dst) {
+            if(src == null) {
+                return;
+            }
             for(int i = 0, size = src.size(); i < size; i++) {
                 MutableDouble s = src.get(i);
                 assert (s != null);
