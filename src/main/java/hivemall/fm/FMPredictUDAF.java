@@ -115,9 +115,8 @@ public final class FMPredictUDAF extends UDAF {
                 }
 
                 if(sumVjXj == null) {
-                    int factors = Vjf.size();
-                    this.sumVjXj = Arrays.asList(MutableDouble.initArray(factors, 0.d));
-                    this.sumV2X2 = Arrays.asList(MutableDouble.initArray(factors, 0.d));
+                    this.sumVjXj = Arrays.asList(MutableDouble.initArray(factor, 0.d));
+                    this.sumV2X2 = Arrays.asList(MutableDouble.initArray(factor, 0.d));
                 }
 
                 final double x = Xj.get();
