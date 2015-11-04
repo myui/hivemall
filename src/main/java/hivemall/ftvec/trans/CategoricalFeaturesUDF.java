@@ -84,11 +84,15 @@ public final class CategoricalFeaturesUDF extends GenericUDF {
         for(int i = 0; i < size; i++) {
             Object argument = arguments[i + 1].get();
             if(argument == null) {
-                return null;
+                continue;
             }
 
             PrimitiveObjectInspector oi = inputOIs[i];
             String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
+            if(s.isEmpty()) {
+                continue;
+            }
+            
             // categorical feature representation                    
             String featureName = featureNames[i];
             Text f = new Text(featureName + '#' + s);

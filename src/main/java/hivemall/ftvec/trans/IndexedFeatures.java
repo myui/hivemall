@@ -19,8 +19,8 @@ package hivemall.ftvec.trans;
 
 import hivemall.utils.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -39,8 +39,6 @@ public final class IndexedFeatures extends GenericUDF {
 
     // KryoException java.lang.NullPointerException if initialized in {@link #initialize(ObjectInspector[])}
     // serialized and sent to mappers/reducers
-    private boolean evaluateCalled;
-    private String[] array;
     private List<String> list;
 
     @Override
@@ -51,43 +49,35 @@ public final class IndexedFeatures extends GenericUDF {
                     + argOIs.length);
         }
 
-        this.evaluateCalled = false;
+        this.list = null;
         return ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
     }
 
     @Override
     public List<String> evaluate(DeferredObject[] arguments) throws HiveException {
         final int size = arguments.length;
-        if(evaluateCalled == false) {
-            this.array = new String[size];
-            this.list = Arrays.asList(array);
-            this.evaluateCalled = true;
+        if(list == null) {
+            this.list = new ArrayList<String>(size);
+        } else {
+            list.clear();
         }
 
         final StringBuilder buf = new StringBuilder(64);
-        final String[] array = this.array;
-
-        int i, j;
-        for(i = 0, j = 0; i < size; i++) {
+        for(int i = 0; i < size; i++) {
             Object o = arguments[i].get();
             if(o == null) {
                 continue;
             }
             String s1 = o.toString();
+            if(s1.isEmpty()) {
+                continue;
+            }
             String s2 = buf.append(i + 1).append(':').append(s1).toString();
-            array[j++] = s2;
+            list.add(s2);
             StringUtils.clear(buf);
         }
 
-        if(j == 0) {
-            return Collections.emptyList();
-        }
-        if(i == j) {
-            return this.list;
-        } else {
-            String[] copyed = Arrays.copyOf(array, j);
-            return Arrays.asList(copyed);
-        }
+        return list;
     }
 
     @Override

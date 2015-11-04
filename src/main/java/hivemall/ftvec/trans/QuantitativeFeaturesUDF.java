@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
@@ -84,10 +85,17 @@ public final class QuantitativeFeaturesUDF extends GenericUDF {
         for(int i = 0; i < size; i++) {
             Object argument = arguments[i + 1].get();
             if(argument == null) {
-                return null;
+                continue;
             }
 
             PrimitiveObjectInspector oi = inputOIs[i];
+            if(oi.getPrimitiveCategory() == PrimitiveCategory.STRING) {
+                String s = argument.toString();
+                if(s.isEmpty()) {
+                    continue;
+                }             
+             }
+            
             final double v = PrimitiveObjectInspectorUtils.getDouble(argument, oi);
             if(v != 0.d) {
                 String featureName = featureNames[i];
