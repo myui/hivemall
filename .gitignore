@@ -1,5 +1,7 @@
 /.fatjar
 /build
+core/target/*
+mixserv/target/*
 .git
 .settings
 *.swp
