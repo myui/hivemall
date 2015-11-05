@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
-		<version>0.3.2-3</version>
+		<version>0.4.0-2</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall-mixserv</artifactId>
-	<version>0.3.2-3</version>
+	<version>0.4.0-2</version>
 	<name>Hivemall Mix Server</name>
 	<packaging>jar</packaging>
 
@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>io.github.myui</groupId>
 			<artifactId>hivemall-core</artifactId>
-			<version>0.3.2-3</version>
+			<version>0.4.0-2</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
