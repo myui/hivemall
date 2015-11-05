@@ -15,7 +15,7 @@ Supported Algorithms
 
 Hivemall provides machine learning functionality as well as feature engineering functions through UDFs/UDAFs/UDTFs of Hive. 
 
-## Classfication
+## Binary Classfication
 
 * [Perceptron](http://en.wikipedia.org/wiki/Perceptron)
 
@@ -27,29 +27,51 @@ Hivemall provides machine learning functionality as well as feature engineering 
 
 * Soft Confidence Weighted (SCW1, SCW2)
 
-* AdaGradRDA (with hinge loss)
+* AdaGradRDA (w/ hinge loss)
 
-_My recommendation is AROW, SCW1, and AdaGradRDA, while it depends._
+* Factorization Machine (w/ logistic loss)
+
+_My recommendation is AROW, SCW1, AdaGradRDA, and Factorization Machine while it depends._
+
+## Multi-class Classfication
+
+* [Perceptron](http://en.wikipedia.org/wiki/Perceptron)
+
+* Passive Aggressive (PA, PA1, PA2)
+
+* Confidence Weighted (CW)
+
+* Adaptive Regularization of Weight Vectors (AROW)
+
+* Soft Confidence Weighted (SCW1, SCW2)
+
+* Gradient Tree Boosting (_Experimental_)
+
+_My recommendation is AROW and SCW while it depends._
 
 ## Regression
 
 * [Logistic Regression](http://en.wikipedia.org/wiki/Logistic_regression) using [Stochastic Gradient Descent](http://en.wikipedia.org/wiki/Stochastic_gradient_descent)
 
-* AdaGrad / AdaDelta (with Logistic Loss)
+* AdaGrad, AdaDelta (w/ logistic Loss)
   
 * Passive Aggressive Regression (PA1, PA2)
 
 * AROW regression
 
+* Factorization Machine (w/ squared loss)
+
 * [Polynomial Regression](http://en.wikipedia.org/wiki/Polynomial_regression)
 
-_My recommendation for is AROW regression, AdaDelta, and AdaGrad while it depends._
+_My recommendation for is AROW regression, AdaDelta, and Factorization Machine while it depends._
 
 ## Recommendation
 
+* [Minhash](http://en.wikipedia.org/wiki/MinHash) ([LSH](http://en.wikipedia.org/wiki/Locality-sensitive_hashing) with jaccard index)
+
 * [Matrix Factorization](http://en.wikipedia.org/wiki/Matrix_decomposition) (sgd, adagrad)
 
-* [Minhash](http://en.wikipedia.org/wiki/MinHash) ([LSH](http://en.wikipedia.org/wiki/Locality-sensitive_hashing) with jaccard index)
+* Factorization Machine (squared loss for rating prediction)
 
 ## k-Nearest Neighbor
 
@@ -94,9 +116,10 @@ Find more examples on [our wiki page](https://github.com/myui/hivemall/wiki/) an
 Copyright
 ---------
 
+```
 Copyright (C) 2015 Makoto YUI
-
 Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)  
+```
 
 Put the above copyrights for the services/softwares that use Hivemall.
 

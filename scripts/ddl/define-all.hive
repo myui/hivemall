@@ -9,12 +9,12 @@ create temporary function hivemall_version as 'hivemall.HivemallVersionUDF';
 -- binary classification --
 ---------------------------
 
-drop temporary function perceptron;
-create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
-
--- alias
 drop temporary function train_perceptron;
 create temporary function train_perceptron as 'hivemall.classifier.PerceptronUDTF';
+
+-- alias
+drop temporary function perceptron;
+create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
 
 drop temporary function train_pa;
 create temporary function train_pa as 'hivemall.classifier.PassiveAggressiveUDTF';
@@ -100,10 +100,6 @@ create temporary function euclid_similarity as 'hivemall.knn.similarity.EuclidSi
 
 drop temporary function distance2similarity;
 create temporary function distance2similarity as 'hivemall.knn.similarity.Distance2SimilarityUDF';
-
--- alias
-drop temporary function d2s;
-create temporary function d2s as 'hivemall.knn.similarity.Distance2SimilarityUDF';
 
 ------------------------
 -- distance functions --
@@ -229,9 +225,6 @@ create temporary function amplify as 'hivemall.ftvec.amplify.AmplifierUDTF';
 drop temporary function rand_amplify;
 create temporary function rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF';
 
-drop temporary function conv2dense;
-create temporary function conv2dense as 'hivemall.ftvec.ConvertToDenseModelUDAF';
-
 -- for backward compatibility
 drop temporary function addBias;
 create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
@@ -255,14 +248,54 @@ create temporary function extract_weight as 'hivemall.ftvec.ExtractWeightUDF';
 drop temporary function add_feature_index;
 create temporary function add_feature_index as 'hivemall.ftvec.AddFeatureIndexUDF';
 
-drop temporary function vectorize_features;
-create temporary function vectorize_features as 'hivemall.ftvec.VectorizeFeaturesUDF';
-
 drop temporary function feature;
 create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 
+drop temporary function feature_index;
+create temporary function feature_index as 'hivemall.ftvec.FeatureIndexUDF';
+
+----------------------------------
+-- feature converting functions --
+----------------------------------
+
+drop temporary function conv2dense;
+create temporary function conv2dense as 'hivemall.ftvec.conv.ConvertToDenseModelUDAF';
+
+drop temporary function to_dense_features;
+create temporary function to_dense_features as 'hivemall.ftvec.conv.ToDenseFeaturesUDF';
+
+-- alias
+drop temporary function to_dense;
+create temporary function to_dense as 'hivemall.ftvec.conv.ToDenseFeaturesUDF';
+
+drop temporary function to_sparse_features;
+create temporary function to_sparse_features as 'hivemall.ftvec.conv.ToSparseFeaturesUDF';
+
+-- alias
+drop temporary function to_sparse;
+create temporary function to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF';
+
+drop temporary function quantify;
+create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
+
+--------------------------
+-- feature transformers --
+--------------------------
+
+drop temporary function vectorize_features;
+create temporary function vectorize_features as 'hivemall.ftvec.trans.VectorizeFeaturesUDF';
+
 drop temporary function categorical_features;
-create temporary function categorical_features as 'hivemall.ftvec.CategoricalFeaturesUDF';
+create temporary function categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF';
+
+drop temporary function indexed_features;
+create temporary function indexed_features as 'hivemall.ftvec.trans.IndexedFeatures';
+
+drop temporary function quantified_features;
+create temporary function quantified_features as 'hivemall.ftvec.trans.QuantifiedFeaturesUDTF';
+
+drop temporary function quantitative_features;
+create temporary function quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeaturesUDF';
 
 --------------------------
 -- ftvec/text functions --
@@ -281,72 +314,84 @@ create temporary function tokenize as 'hivemall.ftvec.text.TokenizeUDF';
 drop temporary function train_logregr;
 create temporary function train_logregr as 'hivemall.regression.LogressUDTF';
 
+-- alias for backward compatibility
+drop temporary function logress;
+create temporary function logress as 'hivemall.regression.LogressUDTF';
+
 drop temporary function train_pa1_regr;
 create temporary function train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+-- alias for backward compatibility
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
 
 drop temporary function train_pa1a_regr;
 create temporary function train_pa1a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
 
+-- alias for backward compatibility
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
 drop temporary function train_pa2_regr;
 create temporary function train_pa2_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+-- alias for backward compatibility
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
 
 drop temporary function train_pa2a_regr;
 create temporary function train_pa2a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
 
+-- alias for backward compatibility
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
 drop temporary function train_arow_regr;
 create temporary function train_arow_regr as 'hivemall.regression.AROWRegressionUDTF';
+
+-- alias for backward compatibility
+drop temporary function arow_regress;
+create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
 
 drop temporary function train_arowe_regr;
 create temporary function train_arowe_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe';
 
+-- alias for backward compatibility
+drop temporary function arowe_regress;
+create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
+
 drop temporary function train_arowe2_regr;
 create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
+-- alias for backward compatibility
+drop temporary function arowe2_regress;
+create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
 
 drop temporary function train_adagrad;
 create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';
 
-drop temporary function train_adadelta;
-create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
-
 -- alias for backward compatibility
+drop temporary function adagrad_regr;
+create temporary function adagrad_regr as 'hivemall.regression.AdaGradUDTF';
 
-drop temporary function logress;
-create temporary function logress as 'hivemall.regression.LogressUDTF';
-
-drop temporary function pa1_regress;
-create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
-
-drop temporary function pa1a_regress;
-create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
-
-drop temporary function pa2_regress;
-create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
-
-drop temporary function pa2a_regress;
-create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
-
-drop temporary function arow_regress;
-create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
-
-drop temporary function arowe_regress;
-create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
-
-drop temporary function arowe2_regress;
-create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
-
+-- alias
 drop temporary function adagrad;
 create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
 
+drop temporary function train_adadelta_regr;
+create temporary function train_adadelta_regr as 'hivemall.regression.AdaDeltaUDTF';
+
+-- alias
+drop temporary function train_adadelta;
+create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
+
+-- alias
 drop temporary function adadelta;
 create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
 
 ---------------------
 -- array functions --
 ---------------------
-
--- alias for backward compatibility
-drop temporary function AllocFloatArray;
-create temporary function AllocFloatArray as 'hivemall.tools.array.AllocFloatArrayUDF';
 
 drop temporary function float_array;
 create temporary function float_array as 'hivemall.tools.array.AllocFloatArrayUDF';
@@ -372,11 +417,14 @@ create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
 drop temporary function subarray;
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 
+drop temporary function array_avg;
+create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
+
 -- drop temporary function array_avg;
 -- create temporary function array_avg as 'hivemall.tools.array.ArrayAvgUDAF';
 
-drop temporary function array_avg;
-create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
+drop temporary function array_sum;
+create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
@@ -402,7 +450,8 @@ create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap
 ---------------------
 
 drop temporary function sigmoid;
-create temporary function sigmoid as 'hivemall.tools.math.SigmodUDF';
+create temporary function sigmoid as 'hivemall.tools.math.SigmoidGenericUDF';
+-- create temporary function sigmoid as 'hivemall.tools.math.SigmoidUDF';
 
 ----------------------
 -- mapred functions --
@@ -492,14 +541,67 @@ create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDT
 drop temporary function train_mf_adagrad;
 create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
 
+---------------------------
+-- Factorization Machine --
+---------------------------
+
+drop temporary function fm_predict;
+create temporary function fm_predict as 'hivemall.fm.FMPredictUDAF';
+
+drop temporary function train_fm;
+create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
+
+----------------------------
+-- Smile related features --
+----------------------------
+
+drop temporary function train_randomforest_classifier;
+create temporary function train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+-- alias
+drop temporary function train_rf_classifier;
+create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+-- alias
+drop temporary function train_randomforest;
+create temporary function train_randomforest as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+
+drop temporary function train_randomforest_regr;
+create temporary function train_randomforest_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+
+drop temporary function train_rf_regr;
+create temporary function train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
+
+drop temporary function tree_predict;
+create temporary function tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+-- alias
+drop temporary function vm_tree_predict;
+create temporary function vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+drop temporary function js_tree_predict;
+create temporary function js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF';
+
+drop temporary function rf_ensemble;
+create temporary function rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF';
+
+drop temporary function train_gradient_tree_boosting_classifier;
+create temporary function train_gradient_tree_boosting_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';
+
+-- alias
+drop temporary function train_gradient_boosting_classifier;
+create temporary function train_gradient_boosting_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';
+
+-- alias
+drop temporary function train_gradient_boosting;
+create temporary function train_gradient_boosting as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';
+
+drop temporary function guess_attribute_types;
+create temporary function guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUDF';
 
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0
 -- see https://issues.apache.org/jira/browse/HIVE-2655
-
---------------------
--- General Macros --
---------------------
 
 --------------------
 -- General Macros --
