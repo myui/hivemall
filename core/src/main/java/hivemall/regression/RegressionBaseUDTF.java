@@ -33,6 +33,7 @@ import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,8 +53,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.FloatWritable;
 
-public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
-    private static final Log logger = LogFactory.getLog(OnlineRegressionUDTF.class);
+/**
+ * The base class for regression algorithms. RegressionBaseUDTF provides
+ * general implementation for online training and batch training.
+ */
+public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
+    private static final Log logger = LogFactory.getLog(RegressionBaseUDTF.class);
 
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureInputOI;
@@ -62,6 +67,11 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
 
     protected PredictionModel model;
     protected int count;
+    // The accumulated delta of each weight values.
+    protected FeatureValue[] accDelta;
+    // The number of samples which picked up through mini batch training.
+    protected int sampled;
+    protected Random rnd;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -82,6 +92,9 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         }
 
         this.count = 0;
+        this.accDelta = null;
+        this.rnd = new Random(42);
+        this.sampled = 0;
         return getReturnOI(featureOutputOI);
     }
 
@@ -123,10 +136,14 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
         if(featureVector == null) {
             return;
         }
+        if (accDelta == null) {
+            accDelta = new FeatureValue[featureVector.length];
+        }
         float target = PrimitiveObjectInspectorUtils.getFloat(args[1], targetOI);
         checkTargetValue(target);
 
         count++;
+
         train(featureVector, target);
     }
 
@@ -228,14 +245,61 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
 
     protected void update(@Nonnull final FeatureValue[] features, float target, float predicted) {
         float d = computeUpdate(target, predicted);
-        update(features, d);
+
+        if (this.is_mini_batch) {
+            batchUpdate(features, d);
+        } else {
+            onlineUpdate(features, d);
+        }
     }
 
     protected float computeUpdate(float target, float predicted) {
         throw new IllegalStateException();
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, float coeff) {
+    protected IWeightValue getNewWeight(IWeightValue old_w, float delta) {
+        throw new IllegalStateException();
+    }
+    /**
+     * Accumulates the delta calculated from each samples
+     * @param features
+     * @param coeff
+     */
+    protected void accumulateDelta(@Nonnull final FeatureValue[] features, float coeff) {
+        for (int i = 0; i < features.length; i++) {
+            if (features[i] == null) {
+                continue;
+            }
+            final Object x = features[i].getFeature();
+            final float xi = features[i].getValue();
+            float delta = xi * coeff;
+            if (accDelta[i] == null) {
+                accDelta[i] = new FeatureValue(x, delta);
+            } else {
+                accDelta[i].setValue(accDelta[i].getValue() + delta);
+            }
+        }
+    }
+
+    /**
+     * Calculate the update value for batch training.
+     * @param features
+     * @param coeff
+     */
+    protected void batchUpdate(@Nonnull final FeatureValue[] features, float coeff) {
+        if (rnd.nextFloat() <= this.mini_batch_ratio) {
+            assert features.length == accDelta.length;
+            accumulateDelta(features, coeff);
+            sampled += 1;
+        }
+    }
+
+    /**
+     * Calculate the update value for online training.
+     * @param features
+     * @param coeff
+     */
+    protected void onlineUpdate(@Nonnull final FeatureValue[] features, float coeff) {
         for(FeatureValue f : features) {// w[i] += y * x[i]
             if(f == null) {
                 continue;
@@ -253,6 +317,17 @@ public abstract class OnlineRegressionUDTF extends LearnerBaseUDTF {
     public final void close() throws HiveException {
         super.close();
         if(model != null) {
+            // Update model with accumulated delta. This is done
+            // at the end of iteration only in case of batch training.
+            if (this.is_mini_batch) {
+                for (int i = 0; i < accDelta.length; i++) {
+                    final Object x = accDelta[i].getFeature();
+                    final float delta = accDelta[i].getValue();
+                    IWeightValue old_w = model.get(x);
+                    IWeightValue new_w = getNewWeight(old_w, delta);
+                    model.set(x, new_w);
+                }
+            }
             int numForwarded = 0;
             if(useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
