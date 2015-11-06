@@ -18,6 +18,7 @@
  */
 package hivemall.mix.server;
 
+import hivemall.mix.MixEnv;
 import hivemall.mix.metrics.MetricsRegistry;
 import hivemall.mix.metrics.MixServerMetrics;
 import hivemall.mix.metrics.ThroughputCounter;
@@ -49,7 +50,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 public final class MixServer implements Runnable {
-    public static final int DEFAULT_PORT = 11212;
 
     private final int port;
     private final int numWorkers;
@@ -62,7 +62,7 @@ public final class MixServer implements Runnable {
     private volatile ServerState state;
 
     public MixServer(CommandLine cl) {
-        this.port = Primitives.parseInt(cl.getOptionValue("port"), DEFAULT_PORT);
+        this.port = Primitives.parseInt(cl.getOptionValue("port"), MixEnv.MIXSERV_DEFAULT_PORT);
         int procs = Runtime.getRuntime().availableProcessors();
         int workers = Math.max(1, (int) Math.round(procs * 1.5f));
         this.numWorkers = Primitives.parseInt(cl.getOptionValue("num_workers"), workers);

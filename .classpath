@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/java"/>
-	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="src" path="core/src/test/java"/>
+	<classpathentry kind="src" path="core/src/test/resources"/>
+	<classpathentry kind="src" path="mixserv/src/test/java"/>
+	<classpathentry kind="src" path="mixserv/src/main/java"/>
+	<classpathentry kind="src" path="mixserv/src/main/resources"/>
+	<classpathentry kind="src" path="mixserv/src/test/resources"/>
+	<classpathentry kind="src" path="core/src/main/java"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>

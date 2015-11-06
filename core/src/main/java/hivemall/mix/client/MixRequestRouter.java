@@ -18,9 +18,9 @@
  */
 package hivemall.mix.client;
 
+import hivemall.mix.MixEnv;
 import hivemall.mix.MixMessage;
 import hivemall.mix.NodeInfo;
-import hivemall.mix.server.MixServer;
 import hivemall.utils.net.NetUtils;
 
 import java.net.InetSocketAddress;
@@ -42,7 +42,7 @@ public final class MixRequestRouter {
         this.numNodes = numEndpoints;
         NodeInfo[] nodes = new NodeInfo[numEndpoints];
         for(int i = 0; i < numEndpoints; i++) {
-            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixServer.DEFAULT_PORT);
+            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
             nodes[i] = new NodeInfo(addr);
         }
         this.nodes = nodes;
