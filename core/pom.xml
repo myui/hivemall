@@ -5,13 +5,11 @@
 	<parent>
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
-		<version>0.4.0-2</version>
+		<version>0.4.1-alpha.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall-core</artifactId>
-	<version>0.4.0-2</version>
 	<name>Hivemall Core</name>
 	<packaging>jar</packaging>
 
@@ -65,10 +63,23 @@
 			<version>1.2.17</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>javax.jdo</groupId>
+			<artifactId>jdo2-api</artifactId>
+			<version>2.3-eb</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop.thirdparty.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>r09-jarjar</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- compile scope -->
 		<dependency>
-			<groupId>io.netty</groupId>
 			<!-- required for mixing client -->
+			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
 			<version>4.0.23.Final</version>
 			<scope>compile</scope>
@@ -79,14 +90,7 @@
 			<version>1.0.3</version>
 			<scope>compile</scope>
 		</dependency>
-		<!--
-		<dependency>
-			<groupId>org.mozilla</groupId>
-			<artifactId>rhino</artifactId>
-			<version>1.7.7</version>
-			<scope>compile</scope>
-		</dependency>
-		-->
+
 		<!-- test scope -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -125,7 +129,7 @@
 				<artifactId>license-maven-plugin</artifactId>
 				<version>2.8</version>
 				<configuration>
-					<header>${project.parent.basedir}/license-header.txt</header>
+					<header>${project.parent.basedir}/resources/license-header.txt</header>
 					<properties>
 						<currentYear>${build.year}</currentYear>
 						<copyrightOwner>${project.organization.name}</copyrightOwner>
@@ -136,7 +140,7 @@
 					</includes>
 					<encoding>UTF-8</encoding>
 					<headerDefinitions>
-						<headerDefinition>${project.parent.basedir}/header-definition.xml</headerDefinition>
+						<headerDefinition>${project.parent.basedir}/resources/header-definition.xml</headerDefinition>
 					</headerDefinitions>
 				</configuration>
 			</plugin>
@@ -180,7 +184,8 @@
 								</includes>
 							</artifactSet>
 							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<manifestEntries>
 										<Main-Class>${jar.mainclass}</Main-Class>
 										<Implementation-Title>${project.name}</Implementation-Title>

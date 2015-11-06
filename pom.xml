@@ -4,7 +4,7 @@
 
 	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall</artifactId>
-	<version>0.4.0-2</version>
+	<version>0.4.1-alpha.1</version>
 
 	<name>Hivemall</name>
 	<description>Scalable Machine Learning Library for Apache Hive</description>
@@ -12,6 +12,7 @@
 	<inceptionYear>2013</inceptionYear>
 	<organization>
 		<name>Makoto YUI</name>
+		<url>http://myui.github.io/</url>
 	</organization>
 
 	<licenses>
@@ -41,6 +42,7 @@
 
 	<modules>
 		<module>core</module>
+		<module>mixserv</module>
 	</modules>
 
 	<properties>
@@ -67,11 +69,13 @@
 
 	<profiles>
 		<profile>
-			<id>mixserv</id>
-			<modules>
-				<module>core</module>
-				<module>mixserv</module>
-			</modules>
+			<id>doclint-java8-disable</id>
+			<activation>
+				<jdk>[1.8,)</jdk>
+			</activation>
+			<properties>
+				<javadoc.opts>-Xdoclint:none</javadoc.opts>
+			</properties>
 		</profile>
 		<!-- start maven central -->
 		<profile>
@@ -108,7 +112,9 @@
 									<goal>jar</goal>
 								</goals>
 								<configuration>
-									<additionalparam>-Xdoclint:none</additionalparam>
+									<!-- workaround for Java 8 -->
+									<!-- see http://stackoverflow.com/questions/15886209/maven-is-not-working-in-java-8-when-javadoc-tags-are-incomplete -->
+									<additionalparam>${javadoc.opts}</additionalparam>
 								</configuration>
 							</execution>
 						</executions>
@@ -212,7 +218,7 @@
 				</configuration>
 			</plugin>
 			<!-- end sonatype deploy -->
-        </plugins>
+		</plugins>
 	</build>
 
 </project>
