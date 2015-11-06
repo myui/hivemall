@@ -42,8 +42,7 @@ public final class MixRequestRouter {
         this.numNodes = numEndpoints;
         NodeInfo[] nodes = new NodeInfo[numEndpoints];
         for(int i = 0; i < numEndpoints; i++) {
-            InetSocketAddress addr = NetUtils.getInetSocketAddress(
-                    endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
+            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
             nodes[i] = new NodeInfo(addr);
         }
         this.nodes = nodes;
