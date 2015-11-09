@@ -111,7 +111,7 @@ public class KuromojiUDFTest {
     }
 
     @Test
-    public void testEvalaute() throws IOException, HiveException {
+    public void testEvalauteOneRow() throws IOException, HiveException {
         KuromojiUDF udf = new KuromojiUDF();
         ObjectInspector[] argOIs = new ObjectInspector[1];
         // line
@@ -127,6 +127,36 @@ public class KuromojiUDFTest {
         List<Text> tokens = udf.evaluate(args);
         Assert.assertNotNull(tokens);
         Assert.assertEquals(5, tokens.size());
+        udf.close();
+    }
+
+    @Test
+    public void testEvalauteTwoRows() throws IOException, HiveException {
+        KuromojiUDF udf = new KuromojiUDF();
+        ObjectInspector[] argOIs = new ObjectInspector[1];
+        // line
+        argOIs[0] = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+        udf.initialize(argOIs);
+
+        DeferredObject[] args = new DeferredObject[1];
+        args[0] = new DeferredObject() {
+            public Text get() throws HiveException {
+                return new Text("クロモジのJapaneseAnalyzerを使ってみる。テスト。");
+            }
+        };
+        List<Text> tokens = udf.evaluate(args);
+        Assert.assertNotNull(tokens);
+        Assert.assertEquals(5, tokens.size());
+
+        args[0] = new DeferredObject() {
+            public Text get() throws HiveException {
+                return new Text("クロモジのJapaneseAnalyzerを使ってみる。");
+            }
+        };
+        tokens = udf.evaluate(args);
+        Assert.assertNotNull(tokens);
+        Assert.assertEquals(4, tokens.size());
+
         udf.close();
     }
 }
