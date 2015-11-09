@@ -30,11 +30,13 @@ import org.apache.hadoop.hive.ql.udf.generic.Collector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.mapred.JobConf;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class MatrixFactorizationSGDUDTFTest {
     private static final boolean DEBUG_PRINT = false;
+    private static final JobConf conf = new JobConf();
 
     private static void print(String msg) {
         if(DEBUG_PRINT)
@@ -173,7 +175,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
-        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        MapredContext mrContext = MapredContextAccessor.create(true, conf);
         mf.configure(mrContext);
         mf.initialize(argOIs);
         Assert.assertTrue(mf.rankInit == RankInitScheme.random);
@@ -212,7 +214,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
-        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        MapredContext mrContext = MapredContextAccessor.create(true, conf);
         mf.configure(mrContext);
         mf.initialize(argOIs);
         final MutableInt numCollected = new MutableInt(0);
@@ -257,7 +259,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
-        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        MapredContext mrContext = MapredContextAccessor.create(true, conf);
         mf.configure(mrContext);
         mf.initialize(argOIs);
         final MutableInt numCollected = new MutableInt(0);
@@ -305,7 +307,7 @@ public class MatrixFactorizationSGDUDTFTest {
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String("-disable_cv -factor 3 -iterations "
                 + iters));
         ObjectInspector[] argOIs = new ObjectInspector[] { intOI, intOI, floatOI, param };
-        MapredContext mrContext = MapredContextAccessor.create(true, null);
+        MapredContext mrContext = MapredContextAccessor.create(true, conf);
         mf.configure(mrContext);
         mf.initialize(argOIs);
         final MutableInt numCollected = new MutableInt(0);
