@@ -61,37 +61,17 @@ public abstract class PartialResult {
         globalClock += deltaUpdates;
     }
 
-    public final short diffClock(short localClock) {
-        int dist = globalClock - localClock;
-        if(dist < 0) {
-            dist = -dist;
-        }
-        final short ret;
-        if(MathUtils.sign(globalClock) == MathUtils.sign(localClock)) {
-            ret = (short) dist;
-        } else {
-            int diff;
-            if(globalClock < 0) {
-                diff = globalClock - Short.MIN_VALUE;
-                assert (diff >= 0) : "diff clock: " + diff + ", globalClock: " + globalClock;
-            } else {
-                diff = Short.MAX_VALUE - globalClock;
-            }
-            if(localClock < 0) {
-                int tmp = localClock - Short.MIN_VALUE;
-                assert (tmp >= 0) : "diff clock: " + tmp + ", localClock: " + localClock;
-                diff += tmp;
-            } else {
-                diff += Short.MAX_VALUE - localClock;
-            }
-            assert (diff >= 0) : diff;
-            if(dist < diff) {
-                ret = (short) dist;
-            } else {
-                ret = (short) diff;
-            }
-        }
-        return ret;
+    // Return diff between global and local clocks.
+    // This implementation depends on the overflow/underflow beauvoir of short-typed values.
+    // i.e., [-32768...l...g...32768) is one of clock examples.
+    // Label 'l' and 'g' represent local and global clocks, respectively.
+    // In this case, it returns a minimum value, l...g or g...l.
+    public final int diffClock(short localClock) {
+        short tempValue1 = globalClock;
+        tempValue1 -= localClock;
+        short tempValue2 = localClock;
+        tempValue2 -= globalClock;
+        return Math.min(Math.abs(tempValue1), Math.abs(tempValue2));
     }
 
 }
