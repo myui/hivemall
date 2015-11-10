@@ -175,6 +175,8 @@
 								<includes>
 									<include>io.netty:netty-all</include>
 									<include>com.github.haifengl:smile-core</include>
+									<include>com.github.haifengl:smile-math</include>
+									<include>com.github.haifengl:smile-data</include>
 								</includes>
 							</artifactSet>
 							<transformers>
