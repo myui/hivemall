@@ -48,7 +48,10 @@ public final class SmileTaskExecutor {
             JobConf conf = mapredContext.getJobConf();
             if(conf != null) {
                 String tdJarVersion = conf.get("td.jar.version");
-                if(tdJarVersion != null) {
+                if(tdJarVersion == null) {
+                    String hivemallNprocs = conf.get("hivemall.smile.nprocs");
+                    threads = Primitives.parseInt(hivemallNprocs, 1);
+                } else {
                     String tdHivemallNprocs = conf.get("td.hivemall.smile.nprocs");
                     // invokes in the caller's thread if `td.hivemall.smile.nprocs` is not set
                     threads = Primitives.parseInt(tdHivemallNprocs, 1);
