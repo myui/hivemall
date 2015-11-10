@@ -40,6 +40,18 @@ public final class IOUtils {
         }
     }
 
+    public static void closeQuietly(final Closeable... channels) {
+        for(Closeable c : channels) {
+            if(c != null) {
+                try {
+                    c.close();
+                } catch (IOException e) {
+                    ;
+                }
+            }
+        }
+    }
+
     /**
      * Serialize given InputStream as String.
      */

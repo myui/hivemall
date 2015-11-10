@@ -206,7 +206,7 @@ public final class HiveUtils {
         return (T) v;
     }
 
-    @Nonnull
+    @Nullable
     public static String[] getConstStringArray(@Nonnull final ObjectInspector oi)
             throws UDFArgumentException {
         if(!ObjectInspectorUtils.isConstantObjectInspector(oi)) {
@@ -214,7 +214,14 @@ public final class HiveUtils {
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         ConstantObjectInspector constOI = (ConstantObjectInspector) oi;
+        if(constOI.getCategory() != Category.LIST) {
+            throw new UDFArgumentException("argument must be an array: "
+                    + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
+        }
         final List<?> lst = (List<?>) constOI.getWritableConstantValue();
+        if(lst == null) {
+            return null;
+        }
         final int size = lst.size();
         final String[] ary = new String[size];
         for(int i = 0; i < size; i++) {

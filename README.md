@@ -106,6 +106,10 @@ System requirements
 
 * Hive 0.11 or later
 
+* Java 7 or later
+
+  _Note: It would work for Java 6 except hivemall-nlp but we recommend to use Java 7 or later._
+
 Basic Usage
 ------------
 

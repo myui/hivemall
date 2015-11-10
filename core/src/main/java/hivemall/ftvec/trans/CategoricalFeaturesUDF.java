@@ -55,6 +55,9 @@ public final class CategoricalFeaturesUDF extends GenericUDF {
                     + numArgOIs);
         }
         this.featureNames = HiveUtils.getConstStringArray(argOIs[0]);
+        if(featureNames == null) {
+            throw new UDFArgumentException("#featureNames should not be null");
+        }
         int numFeatureNames = featureNames.length;
         if(numFeatureNames < 1) {
             throw new UDFArgumentException("#featureNames must be greater than or equals to 1: "

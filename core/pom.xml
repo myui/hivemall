@@ -152,12 +152,6 @@
 				<configuration>
 					<finalName>${project.artifactId}-${project.version}</finalName>
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
-					<archive>
-						<manifest>
-							<mainClass>${jar.mainclass}</mainClass>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-						</manifest>
-					</archive>
 				</configuration>
 			</plugin>
 			<!-- hivemall-core-xx-with-dependencies.jar including minimum dependencies -->
@@ -181,13 +175,14 @@
 								<includes>
 									<include>io.netty:netty-all</include>
 									<include>com.github.haifengl:smile-core</include>
+									<include>com.github.haifengl:smile-math</include>
+									<include>com.github.haifengl:smile-data</include>
 								</includes>
 							</artifactSet>
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<manifestEntries>
-										<Main-Class>${jar.mainclass}</Main-Class>
 										<Implementation-Title>${project.name}</Implementation-Title>
 										<Implementation-Version>${project.version}</Implementation-Version>
 										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>

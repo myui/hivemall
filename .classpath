@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="core/src/test/java"/>
+	<classpathentry kind="src" path="core/src/main/resources"/>
+	<classpathentry kind="src" path="nlp/src/test/resources"/>
+	<classpathentry kind="src" path="nlp/src/test/java"/>
+	<classpathentry kind="src" path="nlp/src/main/java"/>
 	<classpathentry kind="src" path="core/src/test/resources"/>
 	<classpathentry kind="src" path="mixserv/src/test/java"/>
 	<classpathentry kind="src" path="mixserv/src/main/java"/>
 	<classpathentry kind="src" path="mixserv/src/main/resources"/>
 	<classpathentry kind="src" path="mixserv/src/test/resources"/>
 	<classpathentry kind="src" path="core/src/main/java"/>
-	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/hadoop-core-0.20.2-cdh3u6.jar"/>
 	<classpathentry kind="lib" path="lib/optional/guava-r09-jarjar.jar"/>
@@ -20,5 +24,8 @@
 	<classpathentry kind="lib" path="lib/smile-data-1.0.3.jar" sourcepath="lib/source/smile-data-1.0.3-sources.jar"/>
 	<classpathentry kind="lib" path="lib/smile-math-1.0.3.jar" sourcepath="lib/source/smile-math-1.0.3-sources.jar"/>
 	<classpathentry kind="lib" path="lib/smile-core-1.0.3.jar" sourcepath="lib/source/smile-core-1.0.3-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-analyzers-kuromoji-5.3.1.jar" sourcepath="lib/source/lucene-analyzers-kuromoji-5.3.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-analyzers-common-5.3.1.jar" sourcepath="lib/source/lucene-analyzers-common-5.3.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-core-5.3.1.jar" sourcepath="lib/source/lucene-core-5.3.1-sources.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

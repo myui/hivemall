@@ -5,4 +5,4 @@ JMXOPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010
 VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $VMOPTS"
 # VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $JMXOPTS $VMOPTS"
 
-java ${VMOPTS} -jar hivemall-fat.jar $@
+java ${VMOPTS} -jar hivemall-mixserv.jar $@

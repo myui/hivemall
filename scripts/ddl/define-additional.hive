@@ -1,0 +1,11 @@
+-----------------------------------------------------------------------------
+-- Hivemall: Hive scalable Machine Learning Library
+-----------------------------------------------------------------------------
+
+------------------
+-- NLP features --
+------------------
+
+drop temporary function tokenize_ja;
+create temporary function tokenize_ja as 'hivemall.nlp.tokenizer.KuromojiUDF';
+
