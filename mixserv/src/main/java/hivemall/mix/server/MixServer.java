@@ -124,7 +124,8 @@ public final class MixServer implements Runnable {
         // configure metrics
         ScheduledExecutorService metricCollector = Executors.newScheduledThreadPool(1);
         MixServerMetrics metrics = new MixServerMetrics();
-        ThroughputCounter throughputCounter = new ThroughputCounter(metricCollector, 5000L, metrics);
+        ThroughputCounter throughputCounter =
+                new ThroughputCounter(metricCollector, 5000L, metrics);
         if(jmx) {// register mbean
             MetricsRegistry.registerMBeans(metrics, port);
         }
@@ -132,13 +133,15 @@ public final class MixServer implements Runnable {
         // configure initializer
         SessionStore sessionStore = new SessionStore();
         MixServerHandler msgHandler = new MixServerHandler(sessionStore, syncThreshold, scale);
-        MixServerInitializer initializer = new MixServerInitializer(msgHandler, throughputCounter, sslCtx);
+        MixServerInitializer initializer =
+                new MixServerInitializer(msgHandler, throughputCounter, sslCtx);
 
         Runnable cleanSessionTask = new IdleSessionSweeper(sessionStore, sessionTTLinSec * 1000L);
         ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
         try {
             // start idle session sweeper
-            idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
+            idleSessionChecker.scheduleAtFixedRate(
+                    cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
             // accept connections
             acceptConnections(initializer, port, numWorkers);
         } finally {
@@ -151,8 +154,10 @@ public final class MixServer implements Runnable {
         }
     }
 
-    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port, @Nonnegative int numWorkers)
-            throws InterruptedException {
+    private void acceptConnections(
+            @Nonnull MixServerInitializer initializer,
+            int port,
+            @Nonnegative int numWorkers) throws InterruptedException {
         final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         final EventLoopGroup workerGroup = new NioEventLoopGroup(numWorkers);
         try {

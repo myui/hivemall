@@ -44,7 +44,10 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
     private long lastReads;
     private long lastWrites;
 
-    public ThroughputCounter(@Nonnull ScheduledExecutorService executor, long checkInterval, @Nonnull MixServerMetrics metrics) {
+    public ThroughputCounter(
+            @Nonnull ScheduledExecutorService executor,
+            long checkInterval,
+            @Nonnull MixServerMetrics metrics) {
         super(executor, checkInterval);
         this.metrics = metrics;
     }

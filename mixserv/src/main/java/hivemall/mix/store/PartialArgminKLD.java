@@ -24,19 +24,19 @@ import javax.annotation.concurrent.GuardedBy;
 public final class PartialArgminKLD extends PartialResult {
 
     @GuardedBy("lock()")
-    private double sum_mean_div_covar;
+    private double sumMeanDivCovar;
     @GuardedBy("lock()")
-    private float sum_inv_covar;
+    private float sumInvCovar;
 
     public PartialArgminKLD() {
         super();
-        this.sum_mean_div_covar = 0.f;
-        this.sum_inv_covar = 0.f;
+        this.sumMeanDivCovar = 0.f;
+        this.sumInvCovar = 0.f;
     }
 
     @Override
     public float getCovariance(float scale) {
-        return 1.f / (sum_inv_covar * scale);
+        return 1.f / (sumInvCovar * scale);
     }
 
     @Override
@@ -47,19 +47,20 @@ public final class PartialArgminKLD extends PartialResult {
     }
 
     private void addWeight(float localWeight, float covar, float scale) {
-        this.sum_mean_div_covar += (localWeight / covar) / scale;
-        this.sum_inv_covar += (1.f / covar) / scale;
+        this.sumMeanDivCovar += (localWeight / covar) / scale;
+        this.sumInvCovar += (1.f / covar) / scale;
     }
 
     @Override
-    public void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
-        this.sum_mean_div_covar -= (localWeight / covar) / scale;
-        this.sum_inv_covar -= (1.f / covar) / scale;
+    public void subtract(
+            float localWeight, float covar, @Nonnegative int deltaUpdates, float scale) {
+        this.sumMeanDivCovar -= (localWeight / covar) / scale;
+        this.sumInvCovar -= (1.f / covar) / scale;
     }
 
     @Override
     public float getWeight(float scale) {
-        return (float) (sum_mean_div_covar / sum_inv_covar);
+        return (float) (sumMeanDivCovar / sumInvCovar);
     }
 
 }

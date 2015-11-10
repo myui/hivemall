@@ -30,7 +30,7 @@ public abstract class PartialResult {
     private final Lock lock;
 
     @GuardedBy("lock()")
-    protected short globalClock;
+    private short globalClock;
 
     public PartialResult() {
         this.globalClock = 0;
@@ -45,9 +45,11 @@ public abstract class PartialResult {
         lock.unlock();
     }
 
-    public abstract void add(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
+    public abstract void add(
+            float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
 
-    public abstract void subtract(float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
+    public abstract void subtract(
+            float localWeight, float covar, @Nonnegative int deltaUpdates, float scale);
 
     public abstract float getWeight(float scale);
 

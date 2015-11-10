@@ -38,7 +38,10 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
     @Nullable
     private final SslContext sslCtx;
 
-    public MixServerInitializer(@Nonnull MixServerHandler msgHandler, @Nullable ThroughputCounter throughputCounter, @Nullable SslContext sslCtx) {
+    public MixServerInitializer(
+            @Nonnull MixServerHandler msgHandler,
+            @Nullable ThroughputCounter throughputCounter,
+            @Nullable SslContext sslCtx) {
         this.requestHandler = msgHandler;
         this.throughputCounter = throughputCounter;
         this.sslCtx = sslCtx;

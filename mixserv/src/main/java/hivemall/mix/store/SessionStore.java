@@ -51,7 +51,8 @@ public final class SessionStore {
     public SessionObject get(@Nonnull String groupID) {
         SessionObject sessionObj = sessions.get(groupID);
         if(sessionObj == null) {
-            ConcurrentMap<Object, PartialResult> map = new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
+            ConcurrentMap<Object, PartialResult> map =
+                    new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
             sessionObj = new SessionObject(map);
             SessionObject existing = sessions.putIfAbsent(groupID, sessionObj);
             if(existing != null) {
@@ -75,7 +76,9 @@ public final class SessionStore {
         private final ConcurrentMap<String, SessionObject> sessions;
         private final long ttl;
 
-        public IdleSessionSweeper(@Nonnull SessionStore sessionStore, @Nonnegative long ttlInMillis) {
+        public IdleSessionSweeper(
+                @Nonnull SessionStore sessionStore,
+                @Nonnegative long ttlInMillis) {
             this.sessions = sessionStore.getSessions();
             this.ttl = ttlInMillis;
         }
@@ -96,7 +99,6 @@ public final class SessionStore {
                     }
                 }
             }
-
         }
     }
 
