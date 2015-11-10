@@ -27,7 +27,7 @@ public class PartialResultTest {
     @Test
     public void OverflowUnderflowClockTest() {
         // The clock implementation inside PartialResult depends
-        // on the overflow/underflow beauvoir of short-typed values
+        // on the overflow/underflow behavior of short-typed values
         // in the JVM specification.
         // Related discussion can be found in a link below;
         //

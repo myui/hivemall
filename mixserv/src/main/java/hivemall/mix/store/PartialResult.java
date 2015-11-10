@@ -62,7 +62,7 @@ public abstract class PartialResult {
     }
 
     // Return diff between global and local clocks.
-    // This implementation depends on the overflow/underflow beauvoir of short-typed values.
+    // This implementation depends on the overflow/underflow behavior of short-typed values.
     // i.e., [-32768...l...g...32768) is one of clock examples.
     // Label 'l' and 'g' represent local and global clocks, respectively.
     // In this case, it returns a minimum value, l...g or g...l.
