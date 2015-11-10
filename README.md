@@ -45,6 +45,8 @@ _My recommendation is AROW, SCW1, AdaGradRDA, and Factorization Machine while it
 
 * Soft Confidence Weighted (SCW1, SCW2)
 
+* Random Forest Classifier
+
 * Gradient Tree Boosting (_Experimental_)
 
 _My recommendation is AROW and SCW while it depends._
@@ -58,6 +60,8 @@ _My recommendation is AROW and SCW while it depends._
 * Passive Aggressive Regression (PA1, PA2)
 
 * AROW regression
+
+* Random Forest Regressor
 
 * Factorization Machine (w/ squared loss)
 
@@ -84,6 +88,10 @@ _My recommendation for is AROW regression, AdaDelta, and Factorization Machine w
 ## Anomaly Detection
 
 * [Local Outlier Factor (LOF)](http://en.wikipedia.org/wiki/Local_outlier_factor)
+
+## Natural Language Processing
+
+* English/Japanese Text Tokenzier
 
 ## Feature engineering
   
