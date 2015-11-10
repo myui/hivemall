@@ -18,7 +18,8 @@ env:
 
 language: java
 jdk:
-  - openjdk6
+# kuromoji requires Java 7 and later
+# - openjdk6
   - openjdk7
   - oraclejdk7
   - oraclejdk8
