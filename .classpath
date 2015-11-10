@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="core/src/test/java"/>
+	<classpathentry kind="src" path="core/src/main/resources"/>
 	<classpathentry kind="src" path="nlp/src/test/resources"/>
 	<classpathentry kind="src" path="nlp/src/test/java"/>
 	<classpathentry kind="src" path="nlp/src/main/java"/>
