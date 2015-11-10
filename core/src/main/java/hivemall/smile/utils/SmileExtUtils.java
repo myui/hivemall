@@ -141,7 +141,7 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
     }
 
     public static long generateSeed() {
-        return Thread.currentThread().getId() * System.currentTimeMillis();
+        return Thread.currentThread().getId() * System.nanoTime();
     }
 
     public static void shuffle(@Nonnull final int[] x, @Nonnull final smile.math.Random rnd) {
