@@ -3,6 +3,7 @@
 /build
 core/target/*
 mixserv/target/*
+nlp/target/*
 .git
 .settings
 *.swp

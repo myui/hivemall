@@ -308,9 +308,6 @@ CREATE FUNCTION quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeatu
 DROP FUNCTION IF EXISTS tf;
 CREATE FUNCTION tf as 'hivemall.ftvec.text.TermFrequencyUDAF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS tokenize;
-CREATE FUNCTION tokenize as 'hivemall.ftvec.text.TokenizeUDF' USING JAR '${hivemall_jar}';
-
 --------------------------
 -- Regression functions --
 --------------------------
@@ -492,22 +489,21 @@ CREATE FUNCTION x_rank as 'hivemall.tools.RankSequenceUDF' USING JAR '${hivemall
 DROP FUNCTION IF EXISTS each_top_k;
 CREATE FUNCTION each_top_k as 'hivemall.tools.EachTopKUDTF' USING JAR '${hivemall_jar}';
 
-----------------------
--- string functions --
-----------------------
+-------------------------------
+-- Text processing functions --
+-------------------------------
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS isStopword;
-CREATE FUNCTION isStopword as 'hivemall.tools.string.StopwordUDF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS tokenize;
+CREATE FUNCTION tokenize as 'hivemall.tools.text.TokenizeUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS is_stopword;
-CREATE FUNCTION is_stopword as 'hivemall.tools.string.StopwordUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION is_stopword as 'hivemall.tools.text.StopwordUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS split_words;
-CREATE FUNCTION split_words as 'hivemall.tools.string.SplitWordsUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION split_words as 'hivemall.tools.text.SplitWordsUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS normalize_unicode;
-CREATE FUNCTION normalize_unicode as 'hivemall.tools.string.NormalizeUnicodeUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION normalize_unicode as 'hivemall.tools.text.NormalizeUnicodeUDF' USING JAR '${hivemall_jar}';
 
 ---------------------------------
 -- Dataset generator functions --

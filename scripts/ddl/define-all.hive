@@ -304,9 +304,6 @@ create temporary function quantitative_features as 'hivemall.ftvec.trans.Quantit
 drop temporary function tf;
 create temporary function tf as 'hivemall.ftvec.text.TermFrequencyUDAF';
 
-drop temporary function tokenize;
-create temporary function tokenize as 'hivemall.ftvec.text.TokenizeUDF';
-
 --------------------------
 -- Regression functions --
 --------------------------
@@ -488,22 +485,21 @@ create temporary function x_rank as 'hivemall.tools.RankSequenceUDF';
 drop temporary function each_top_k;
 create temporary function each_top_k as 'hivemall.tools.EachTopKUDTF';
 
-----------------------
--- string functions --
-----------------------
+-------------------------------
+-- Text processing functions --
+-------------------------------
 
--- alias for backward compatibility
-drop temporary function isStopword;
-create temporary function isStopword as 'hivemall.tools.string.StopwordUDF';
+drop temporary function tokenize;
+create temporary function tokenize as 'hivemall.tools.text.TokenizeUDF';
 
 drop temporary function is_stopword;
-create temporary function is_stopword as 'hivemall.tools.string.StopwordUDF';
+create temporary function is_stopword as 'hivemall.tools.text.StopwordUDF';
 
 drop temporary function split_words;
-create temporary function split_words as 'hivemall.tools.string.SplitWordsUDF';
+create temporary function split_words as 'hivemall.tools.text.SplitWordsUDF';
 
 drop temporary function normalize_unicode;
-create temporary function normalize_unicode as 'hivemall.tools.string.NormalizeUnicodeUDF';
+create temporary function normalize_unicode as 'hivemall.tools.text.NormalizeUnicodeUDF';
 
 ---------------------------------
 -- Dataset generator functions --
