@@ -1,3 +1,4 @@
+!.gitkeep
 /.fatjar
 /build
 core/target/*
