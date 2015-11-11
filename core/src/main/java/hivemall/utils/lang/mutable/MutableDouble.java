@@ -116,7 +116,7 @@ public final class MutableDouble extends Number
     public static MutableDouble[] initArray(int size, double defaultValue) {
         final MutableDouble[] array = new MutableDouble[size];
         for(int i = 0; i < size; i++) {
-            array[i] = new MutableDouble(0.d);
+            array[i] = new MutableDouble(defaultValue);
         }
         return array;
     }
