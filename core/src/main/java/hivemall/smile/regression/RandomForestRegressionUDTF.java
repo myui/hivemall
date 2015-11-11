@@ -56,7 +56,7 @@ import org.apache.hadoop.io.Text;
 
 import smile.data.Attribute;
 
-@Description(name = "train_randomforest_regression", value = "_FUNC_(double[] features, int label [, string options]) - "
+@Description(name = "train_randomforest_regression", value = "_FUNC_(double[] features, double target [, string options]) - "
         + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
 public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(RandomForestRegressionUDTF.class);
@@ -159,7 +159,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if(argOIs.length != 2 && argOIs.length != 3) {
             throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 or 3 arguments: double[] features, int label [, const string options]: "
+                    + " takes 2 or 3 arguments: double[] features, double target [, const string options]: "
                     + argOIs.length);
         }
 
