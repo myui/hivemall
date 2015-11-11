@@ -95,7 +95,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         opts.addOption("splits", "min_split", true, "A node that has greater than or equals to `min_split` examples will split [default: 2]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
-                + "(Q for quantative variable and C for categorical variable. e.g., [Q,C,Q,C])");
+                + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true, "The output type (opscode/vm or javascript/js) [default: opscode]");
         opts.addOption("rule", "split_rule", true, "Split algorithm [default: GINI, ENTROPY]");
         return opts;

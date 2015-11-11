@@ -99,7 +99,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         opts.addOption("split", "min_split", true, "A node that has greater than or equals to `min_split` examples will split [default: 5]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
-                + "(Q for quantative variable and C for categorical variable. e.g., [Q,C,Q,C])");
+                + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true, "The output type (opscode/vm or javascript/js) [default: opscode]");
         return opts;
     }
