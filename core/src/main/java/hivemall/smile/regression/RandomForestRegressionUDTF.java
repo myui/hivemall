@@ -93,7 +93,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("trees", "num_trees", true, "The number of trees for each task [default: 50]");
         opts.addOption("vars", "num_variables", true, "The number of random selected features [default: round(max(sqrt(x[0].length),x[0].length/3.0))]."
-                + " If a floating number is specified, int(num_variables * x[0].length) is considered if num_variable is (0,1]");
+                + " int(num_variables * x[0].length) is considered if num_variable is (0,1]");
         opts.addOption("depth", "max_depth", true, "The maximum number of the tree depth [default: Integer.MAX_VALUE]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("split", "min_split", true, "A node that has greater than or equals to `min_split` examples will split [default: 5]");

@@ -101,7 +101,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         opts.addOption("eta", "learning_rate", true, "The learning rate (0, 1]  of procedure [default: 0.05]");
         opts.addOption("subsample", "sampling_frac", true, "The fraction of samples to be used for fitting the individual base learners [default: 0.7]");
         opts.addOption("vars", "num_variables", true, "The number of random selected features [default: round(max(sqrt(x[0].length),x[0].length/3.0))]."
-                + " If a floating number is specified, int(num_variables * x[0].length) is considered if num_variable is (0,1]");
+                + " int(num_variables * x[0].length) is considered if num_variable is (0,1]");
         opts.addOption("depth", "max_depth", true, "The maximum number of the tree depth [default: 12]");
         opts.addOption("leafs", "max_leaf_nodes", true, "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("splits", "min_split", true, "A node that has greater than or equals to `min_split` examples will split [default: 5]");
