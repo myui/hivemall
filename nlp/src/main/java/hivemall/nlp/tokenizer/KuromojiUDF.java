@@ -144,14 +144,14 @@ public final class KuromojiUDF extends GenericUDF {
         if(array == null) {
             return JapaneseAnalyzer.getDefaultStopTags();
         }
-        if(array.length == 0) {
+        final int length = array.length;
+        if(length == 0) {
             return Collections.emptySet();
         }
-        final Set<String> results = new HashSet<String>(16);
-        for(int i = 0; i < array.length; i++) {
-            Object o = array[i];
-            if(o != null) {
-                String s = o.toString();
+        final Set<String> results = new HashSet<String>(length);
+        for(int i = 0; i < length; i++) {
+            String s = array[i];
+            if(s != null) {
                 results.add(s);
             }
         }
