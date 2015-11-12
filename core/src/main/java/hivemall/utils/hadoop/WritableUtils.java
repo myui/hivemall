@@ -60,7 +60,7 @@ public final class WritableUtils {
     }
 
     @Nonnull
-    public static List<LongWritable> newLongList(int size) {
+    public static List<LongWritable> newLongList(final int size) {
         final LongWritable[] array = new LongWritable[size];
         for(int i = 0, len = array.length; i < len; i++) {
             array[i] = new LongWritable(0L);
@@ -69,10 +69,15 @@ public final class WritableUtils {
     }
 
     @Nonnull
-    public static List<DoubleWritable> newDoubleList(int size) {
+    public static List<DoubleWritable> newDoubleList(final int size) {
+        return newDoubleList(size, 0.d);
+    }
+
+    @Nonnull
+    public static List<DoubleWritable> newDoubleList(final int size, final double defaultValue) {
         final DoubleWritable[] array = new DoubleWritable[size];
         for(int i = 0, len = array.length; i < len; i++) {
-            array[i] = new DoubleWritable(0.d);
+            array[i] = new DoubleWritable(defaultValue);
         }
         return Arrays.asList(array);
     }

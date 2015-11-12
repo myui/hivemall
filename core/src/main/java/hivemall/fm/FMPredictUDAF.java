@@ -18,9 +18,8 @@
  */
 package hivemall.fm;
 
-import hivemall.utils.lang.mutable.MutableDouble;
+import hivemall.utils.hadoop.WritableUtils;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -86,8 +85,8 @@ public final class FMPredictUDAF extends UDAF {
     private static final class PartialResult {
         private double ret;
         // note that primitive array cannot be serialized by JDK serializer
-        private List<MutableDouble> sumVjXj;
-        private List<MutableDouble> sumV2X2;
+        private List<DoubleWritable> sumVjXj;
+        private List<DoubleWritable> sumV2X2;
 
         PartialResult() {
             this.ret = 0.d;
@@ -115,8 +114,8 @@ public final class FMPredictUDAF extends UDAF {
                 }
 
                 if(sumVjXj == null) {
-                    this.sumVjXj = Arrays.asList(MutableDouble.initArray(factor, 0.d));
-                    this.sumV2X2 = Arrays.asList(MutableDouble.initArray(factor, 0.d));
+                    this.sumVjXj = WritableUtils.newDoubleList(factor, 0.d);
+                    this.sumV2X2 = WritableUtils.newDoubleList(factor, 0.d);
                 }
 
                 final double x = Xj.get();
@@ -129,10 +128,12 @@ public final class FMPredictUDAF extends UDAF {
                         throw new HiveException("Vj" + f + " should not be null");
                     }
                     double vx = v.get() * x;
-                    MutableDouble sumVXf = sumVjXj.get(f);
-                    sumVXf.addValue(vx);
-                    MutableDouble sumVX2f = sumV2X2.get(f);
-                    sumVX2f.addValue(vx * vx);
+                    DoubleWritable sumVXf = sumVjXj.get(f);
+                    double v1 = sumVXf.get() + vx;
+                    sumVXf.set(v1);
+                    DoubleWritable sumVX2f = sumV2X2.get(f);
+                    double v2 = sumVX2f.get() + vx * vx;
+                    sumVX2f.set(v2);
                 }
             }
         }
@@ -156,27 +157,28 @@ public final class FMPredictUDAF extends UDAF {
 
             final int factor = sumVjXj.size();
             for(int f = 0; f < factor; f++) {
-                MutableDouble v1 = sumVjXj.get(f);
+                DoubleWritable v1 = sumVjXj.get(f);
                 assert (v1 != null);
-                double d1 = v1.doubleValue();
-                MutableDouble v2 = sumV2X2.get(f);
+                double d1 = v1.get();
+                DoubleWritable v2 = sumV2X2.get(f);
                 assert (v2 != null);
-                double d2 = v2.doubleValue();
+                double d2 = v2.get();
                 ret += 0.5d * (d1 * d1 - d2);
             }
             return ret;
         }
 
-        private static void add(@Nullable final List<MutableDouble> src, @Nonnull final List<MutableDouble> dst) {
+        private static void add(@Nullable final List<DoubleWritable> src, @Nonnull final List<DoubleWritable> dst) {
             if(src == null) {
                 return;
             }
             for(int i = 0, size = src.size(); i < size; i++) {
-                MutableDouble s = src.get(i);
+                DoubleWritable s = src.get(i);
                 assert (s != null);
-                MutableDouble d = dst.get(i);
+                DoubleWritable d = dst.get(i);
                 assert (d != null);
-                d.addValue(s.getValue());
+                double v = d.get() + s.get();
+                d.set(v);
             }
         }
 
