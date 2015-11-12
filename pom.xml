@@ -175,6 +175,7 @@
 					<reuseForks>false</reuseForks>
 					<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
 					<argLine>-Xmx1536m -XX:+HeapDumpOnOutOfMemoryError</argLine>
+					<failIfNoTests>false</failIfNoTests>
 					<environmentVariables>
 						<JAVA_HOME>${java.home}</JAVA_HOME>
 						<MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
