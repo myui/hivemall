@@ -136,7 +136,10 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         if (deltaUpdates <= 0)
             throw new IllegalArgumentException("Illegal deltaUpdates received: " + deltaUpdates);
 
-        MixMessage responseMsg = null;
+        boolean needSync = false;
+        float syncAveragedWeight = 0.f;
+        float syncMeanCovar = 0.f;
+        short syncGlobalClock = 0;
         try {
             partial.lock();
 
@@ -147,20 +150,23 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
                 partial.add(weight, covar, deltaUpdates, scale);
 
                 if(diffClock >= syncThreshold) { // sync model if clock DIFF is above threshold
-                    float averagedWeight = partial.getWeight(scale);
-                    float meanCovar = partial.getCovariance(scale);
-                    short globalClock = partial.getClock();
-                    responseMsg = new MixMessage(
-                            event, feature, averagedWeight, meanCovar, globalClock,
-                            0 /* deltaUpdates */);
-                    ctx.writeAndFlush(responseMsg);
+                    syncAveragedWeight = partial.getWeight(scale);
+                    syncMeanCovar = partial.getCovariance(scale);
+                    syncGlobalClock = partial.getClock();
+                    needSync = true;
                 }
             }
         } finally {
             partial.unlock();
         }
 
-        return responseMsg != null;
+        if (needSync) {
+            MixMessage syncMsg = new MixMessage(
+                    event, feature, syncAveragedWeight, syncMeanCovar, syncGlobalClock,
+                    0 /* deltaUpdates */);
+            ctx.writeAndFlush(syncMsg);
+        }
+        return needSync;
     }
 
 }
