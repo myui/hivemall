@@ -57,7 +57,9 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             case argminKLD: {
                 SessionObject session = getSession(msg);
                 PartialResult partial = getPartialResult(msg, session);
-                mix(ctx, msg, partial, session);
+                if (mix(ctx, msg, partial)) {
+                    session.incrResponse();
+                }
                 break;
             }
             case closeGroup: {
@@ -114,7 +116,15 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         return partial;
     }
 
-    private void mix(final ChannelHandlerContext ctx, final MixMessage requestMsg, final PartialResult partial, final SessionObject session) {
+    /**
+     * Mix incoming weights with accumulated values.
+     *
+     * @param ctx netty context
+     * @param requestMsg message from multiple learning models
+     * @param partial accumulator for each feature
+     * @return true if sync done; otherwise false
+     */
+    public boolean mix(ChannelHandlerContext ctx, MixMessage requestMsg, PartialResult partial) {
         final MixEventName event = requestMsg.getEvent();
         final Object feature = requestMsg.getFeature();
         final float weight = requestMsg.getWeight();
@@ -123,7 +133,13 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final int deltaUpdates = requestMsg.getDeltaUpdates();
         final boolean cancelRequest = requestMsg.isCancelRequest();
 
-        MixMessage responseMsg = null;
+        if (deltaUpdates <= 0)
+            throw new IllegalArgumentException("Illegal deltaUpdates received: " + deltaUpdates);
+
+        boolean needSync = false;
+        float syncAveragedWeight = 0.f;
+        float syncMeanCovar = 0.f;
+        short syncGlobalClock = 0;
         try {
             partial.lock();
 
@@ -133,22 +149,24 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
                 int diffClock = partial.diffClock(localClock);
                 partial.add(weight, covar, deltaUpdates, scale);
 
-                if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
-                    float averagedWeight = partial.getWeight(scale);
-                    float meanCovar = partial.getCovariance(scale);
-                    short globalClock = partial.getClock();
-                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, globalClock, 0 /* deltaUpdates */);
+                if(diffClock >= syncThreshold) { // sync model if clock DIFF is above threshold
+                    syncAveragedWeight = partial.getWeight(scale);
+                    syncMeanCovar = partial.getCovariance(scale);
+                    syncGlobalClock = partial.getClock();
+                    needSync = true;
                 }
             }
-
         } finally {
             partial.unlock();
         }
 
-        if(responseMsg != null) {
-            session.incrResponse();
-            ctx.writeAndFlush(responseMsg);
+        if (needSync) {
+            MixMessage syncMsg = new MixMessage(
+                    event, feature, syncAveragedWeight, syncMeanCovar, syncGlobalClock,
+                    0 /* deltaUpdates */);
+            ctx.writeAndFlush(syncMsg);
         }
+        return needSync;
     }
 
 }
