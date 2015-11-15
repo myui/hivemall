@@ -20,7 +20,6 @@ package hivemall.mix.store;
 
 import hivemall.utils.lock.Lock;
 import hivemall.utils.lock.TTASLock;
-import hivemall.utils.math.MathUtils;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.GuardedBy;
@@ -66,7 +65,7 @@ public abstract class PartialResult {
     // i.e., [-32768...l...g...32768) is one of clock examples.
     // Label 'l' and 'g' represent local and global clocks, respectively.
     // In this case, it returns a minimum value, l...g or g...l.
-    public final int diffClock(short localClock) {
+    public final int diffClock(final short localClock) {
         short tempValue1 = globalClock;
         tempValue1 -= localClock;
         short tempValue2 = localClock;
