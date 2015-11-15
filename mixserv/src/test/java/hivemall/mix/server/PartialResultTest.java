@@ -19,13 +19,14 @@
 package hivemall.mix.server;
 
 import hivemall.mix.store.PartialResult;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 public class PartialResultTest {
 
     @Test
-    public void OverflowUnderflowClockTest() {
+    public void testOverflowUnderflowClock() {
         // The clock implementation inside PartialResult depends
         // on the overflow/underflow behavior of short-typed values
         // in the JVM specification.
@@ -75,29 +76,68 @@ public class PartialResultTest {
         Assert.assertEquals(0, value.diffClock((short) 12));
         Assert.assertEquals(7, value.diffClock((short) 5));
         Assert.assertEquals(6, value.diffClock((short) 18));
-        Assert.assertEquals(32767, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
-        Assert.assertEquals(32768, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 13))); // -32756
-        Assert.assertEquals(32767, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 14))); // -32755
+        Assert.assertEquals(32767, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
+        Assert.assertEquals(32768, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 13))); // -32756
+        Assert.assertEquals(32767, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 14))); // -32755
 
         // Overflow test
         value.add(0.f, 0.f, Short.MAX_VALUE, 1.f);
 
-        Assert.assertEquals(0, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
-        Assert.assertEquals(2, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 10))); // -32755
-        Assert.assertEquals(4, value.diffClock(
-                addWithUnderOverflow(Short.MAX_VALUE, (short) 16))); // -32761
+        Assert.assertEquals(0, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
+        Assert.assertEquals(2, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 10))); // -32755
+        Assert.assertEquals(4, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 16))); // -32761
         Assert.assertEquals(32767, value.diffClock((short) 10));
         Assert.assertEquals(32768, value.diffClock((short) 11));
         Assert.assertEquals(32767, value.diffClock((short) 12));
     }
 
-    static short addWithUnderOverflow(short value1, short value2) {
+    @Test
+    public void testBoundaries() {
+        Partial partial = new Partial();
+
+        partial.setGlobalClock(Short.MAX_VALUE);
+        Assert.assertEquals(0, partial.diffClock(Short.MAX_VALUE));
+        Assert.assertEquals(1, partial.diffClock(Short.MIN_VALUE));
+    
+        partial.setGlobalClock((short) (Short.MAX_VALUE + 1));
+        Assert.assertEquals(Short.MIN_VALUE, partial.getClock());
+        
+        partial.setGlobalClock((short) (Short.MAX_VALUE - 10));
+        Assert.assertEquals(21, partial.diffClock((short) (Short.MIN_VALUE + 10)));
+    }
+    
+
+    private static short addWithUnderOverflow(short value1, short value2) {
         value1 += value2;
         return value1;
     }
+
+    private static class Partial extends PartialResult {
+
+        public void setGlobalClock(short global) {
+            this.globalClock = global;
+        }
+
+        @Override
+        public void add(float localWeight, float covar, int deltaUpdates, float scale) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void subtract(float localWeight, float covar, int deltaUpdates, float scale) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public float getWeight(float scale) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public float getCovariance(float scale) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
 }
