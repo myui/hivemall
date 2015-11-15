@@ -130,7 +130,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             if(cancelRequest) {
                 partial.subtract(weight, covar, deltaUpdates, scale);
             } else {
-                short diffClock = partial.diffClock(localClock);
+                int diffClock = partial.diffClock(localClock);
                 partial.add(weight, covar, deltaUpdates, scale);
 
                 if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
