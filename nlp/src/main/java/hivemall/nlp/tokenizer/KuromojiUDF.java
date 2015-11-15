@@ -52,7 +52,7 @@ import org.apache.lucene.analysis.util.CharArraySet;
 @UDFType(deterministic = true, stateful = false)
 public final class KuromojiUDF extends GenericUDF {
 
-    private JapaneseAnalyzer analyzer;
+    private transient JapaneseAnalyzer analyzer;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {

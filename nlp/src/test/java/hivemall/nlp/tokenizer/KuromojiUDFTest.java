@@ -32,6 +32,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Output;
 
 public class KuromojiUDFTest {
 
@@ -158,5 +162,19 @@ public class KuromojiUDFTest {
         Assert.assertEquals(4, tokens.size());
 
         udf.close();
+    }
+
+    @Test
+    public void testSerializeByKryo() throws UDFArgumentException {
+        final KuromojiUDF udf = new KuromojiUDF();
+        ObjectInspector[] argOIs = new ObjectInspector[1];
+        argOIs[0] = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+        udf.initialize(argOIs);
+
+        Kryo kryo = new Kryo();
+        kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+        Output output = new Output(1024 * 16);
+        kryo.writeObject(output, udf);
+        output.close();
     }
 }
