@@ -98,14 +98,26 @@ public class PartialResultTest {
         partial.setGlobalClock(Short.MAX_VALUE);
         Assert.assertEquals(0, partial.diffClock(Short.MAX_VALUE));
         Assert.assertEquals(1, partial.diffClock(Short.MIN_VALUE));
-    
+
         partial.setGlobalClock((short) (Short.MAX_VALUE + 1));
         Assert.assertEquals(Short.MIN_VALUE, partial.getClock());
-        
+
         partial.setGlobalClock((short) (Short.MAX_VALUE - 10));
         Assert.assertEquals(21, partial.diffClock((short) (Short.MIN_VALUE + 10)));
     }
-    
+
+    public void testDiff() {
+        Partial partial = new Partial();
+
+        partial.setGlobalClock((short) 2);
+        Assert.assertEquals(2, partial.diffClock((short) 0));
+        Assert.assertEquals(4, partial.diffClock((short) -2));
+
+        partial.setGlobalClock((short) -2);
+        Assert.assertEquals(2, partial.diffClock((short) 0));
+        Assert.assertEquals(0, partial.diffClock((short) -2));
+        Assert.assertEquals(4, partial.diffClock((short) 2));
+    }
 
     private static short addWithUnderOverflow(short value1, short value2) {
         value1 += value2;
