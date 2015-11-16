@@ -30,5 +30,6 @@
 	<classpathentry kind="lib" path="lib/optional/kryo-3.0.3.jar" sourcepath="lib/source/kryo-3.0.3-sources.jar"/>
 	<classpathentry kind="lib" path="lib/optional/minlog-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/optional/objenesis-2.2.jar"/>
+	<classpathentry kind="lib" path="lib/optional/mockito-all-1.10.19.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

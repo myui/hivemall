@@ -123,6 +123,10 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final int deltaUpdates = requestMsg.getDeltaUpdates();
         final boolean cancelRequest = requestMsg.isCancelRequest();
 
+        if(deltaUpdates <= 0) {
+            throw new IllegalArgumentException("Illegal deltaUpdates received: " + deltaUpdates);
+        }
+
         MixMessage responseMsg = null;
         try {
             partial.lock();
