@@ -52,7 +52,12 @@ import org.apache.lucene.analysis.util.CharArraySet;
 @UDFType(deterministic = true, stateful = false)
 public final class KuromojiUDF extends GenericUDF {
 
-    private transient JapaneseAnalyzer analyzer;
+    private Mode _mode;
+    private String[] _stopWordsArray;
+    private Set<String> _stoptags;
+
+    // workaround to avoid org.apache.hive.com.esotericsoftware.kryo.KryoException: java.util.ConcurrentModificationException
+    private transient JapaneseAnalyzer _analyzer;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
@@ -62,18 +67,24 @@ public final class KuromojiUDF extends GenericUDF {
                     + arglen);
         }
 
-        Mode mode = (arglen >= 2) ? tokenizationMode(arguments[1]) : Mode.NORMAL;
-        CharArraySet stopwords = (arglen >= 3) ? stopWords(arguments[2])
-                : JapaneseAnalyzer.getDefaultStopSet();
-        Set<String> stoptags = (arglen >= 4) ? stopTags(arguments[3])
+        this._mode = (arglen >= 2) ? tokenizationMode(arguments[1]) : Mode.NORMAL;
+        this._stopWordsArray = (arglen >= 3) ? HiveUtils.getConstStringArray(arguments[2]) : null;
+        this._stoptags = (arglen >= 4) ? stopTags(arguments[3])
                 : JapaneseAnalyzer.getDefaultStopTags();
-        this.analyzer = new JapaneseAnalyzer(null, mode, stopwords, stoptags);
+        this._analyzer = null;
 
         return ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
     }
 
     @Override
     public List<Text> evaluate(DeferredObject[] arguments) throws HiveException {
+        JapaneseAnalyzer analyzer = _analyzer;
+        if(analyzer == null) {
+            CharArraySet stopwords = stopWords(_stopWordsArray);
+            analyzer = new JapaneseAnalyzer(null, _mode, stopwords, _stoptags);
+            this._analyzer = analyzer;
+        }
+
         Object arg0 = arguments[0].get();
         if(arg0 == null) {
             return null;
@@ -98,7 +109,7 @@ public final class KuromojiUDF extends GenericUDF {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(analyzer);
+        IOUtils.closeQuietly(_analyzer);
     }
 
     @Nonnull
@@ -124,9 +135,8 @@ public final class KuromojiUDF extends GenericUDF {
     }
 
     @Nonnull
-    private static CharArraySet stopWords(@Nonnull final ObjectInspector oi)
+    private static CharArraySet stopWords(@Nonnull final String[] array)
             throws UDFArgumentException {
-        final String[] array = HiveUtils.getConstStringArray(oi);
         if(array == null) {
             return JapaneseAnalyzer.getDefaultStopSet();
         }
