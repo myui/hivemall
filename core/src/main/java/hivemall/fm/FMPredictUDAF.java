@@ -35,13 +35,15 @@ import org.apache.hadoop.io.FloatWritable;
 @Description(name = "fm_predict", value = "_FUNC_(Float Wj, array<float> Vjf, float Xj) - Returns a prediction value")
 public final class FMPredictUDAF extends UDAF {
 
-    public FMPredictUDAF() {}
+    private FMPredictUDAF() {}
 
     public static class Evaluator implements UDAFEvaluator {
 
         private PartialResult partial;
 
-        public Evaluator() {}
+        public Evaluator() {
+            init();
+        }
 
         @Override
         public void init() {
@@ -151,8 +153,9 @@ public final class FMPredictUDAF extends UDAF {
         }
 
         double getPrediction() {
+            double predict = ret;
             if(sumVjXj == null) {
-                return ret;
+                return predict;
             }
 
             final int factor = sumVjXj.size();
@@ -163,9 +166,9 @@ public final class FMPredictUDAF extends UDAF {
                 DoubleWritable v2 = sumV2X2.get(f);
                 assert (v2 != null);
                 double d2 = v2.get();
-                ret += 0.5d * (d1 * d1 - d2);
+                predict += 0.5d * (d1 * d1 - d2);
             }
-            return ret;
+            return predict;
         }
 
         private static void add(@Nullable final List<DoubleWritable> src, @Nonnull final List<DoubleWritable> dst) {
