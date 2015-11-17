@@ -298,8 +298,8 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
                 Object o2 = sumV2X2OI.getListElement(o_sumV2X2, f);
                 double d1 = doubleOI.get(o1);
                 double d2 = doubleOI.get(o2);
-                sumVjXj[f] = d1;
-                sumV2X2[f] = d2;
+                sumVjXj[f] += d1;
+                sumV2X2[f] += d2;
             }
         }
 
