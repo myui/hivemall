@@ -546,7 +546,7 @@ CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF'
 ---------------------------
 
 DROP FUNCTION IF EXISTS fm_predict;
-CREATE FUNCTION fm_predict as 'hivemall.fm.FMPredictUDAF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION fm_predict as 'hivemall.fm.FMPredictGenericUDAF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_fm;
 CREATE FUNCTION train_fm as 'hivemall.fm.FactorizationMachineUDTF' USING JAR '${hivemall_jar}';

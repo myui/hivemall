@@ -542,7 +542,7 @@ create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAd
 ---------------------------
 
 drop temporary function fm_predict;
-create temporary function fm_predict as 'hivemall.fm.FMPredictUDAF';
+create temporary function fm_predict as 'hivemall.fm.FMPredictGenericUDAF';
 
 drop temporary function train_fm;
 create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
