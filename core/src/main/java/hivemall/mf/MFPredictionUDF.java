@@ -36,15 +36,20 @@ public final class MFPredictionUDF extends UDF {
 
     public FloatWritable evaluate(List<Float> Pu, List<Float> Qi, double mu) throws HiveException {
         if(Pu == null || Qi == null) {
-            return null; //throw new HiveException("Pu should not be NULL");
+            return new FloatWritable((float) mu);
         }
+
         final int PuSize = Pu.size();
         final int QiSize = Qi.size();
+        // workaround for TD
+        if(PuSize == 0) {
+            return new FloatWritable((float) mu);
+        } else if(QiSize == 0) {
+            return new FloatWritable((float) mu);
+        }
+
         if(QiSize != PuSize) {
             throw new HiveException("|Pu| " + PuSize + " was not equal to |Qi| " + QiSize);
-        }
-        if(PuSize == 0) {// workaround for TD
-            return null;
         }
 
         float ret = (float) mu;
@@ -62,10 +67,9 @@ public final class MFPredictionUDF extends UDF {
     public FloatWritable evaluate(List<Float> Pu, List<Float> Qi, double Bu, double Bi, double mu)
             throws HiveException {
         if(Pu == null && Qi == null) {
-            return null; //throw new HiveException("Both Pu and Qi was NULL");
+            return new FloatWritable((float) mu);
         }
-
-        if(Pu == null) {// TODO REVIEWME
+        if(Pu == null) {
             float ret = (float) (mu + Bi);
             return new FloatWritable(ret);
         } else if(Qi == null) {
@@ -75,11 +79,21 @@ public final class MFPredictionUDF extends UDF {
 
         final int PuSize = Pu.size();
         final int QiSize = Qi.size();
+        // workaround for TD        
+        if(PuSize == 0) {
+            if(QiSize == 0) {
+                return new FloatWritable((float) mu);
+            } else {
+                float ret = (float) (mu + Bi);
+                return new FloatWritable(ret);
+            }
+        } else if(QiSize == 0) {
+            float ret = (float) (mu + Bu);
+            return new FloatWritable(ret);
+        }
+
         if(QiSize != PuSize) {
             throw new HiveException("|Pu| " + PuSize + " was not equal to |Qi| " + QiSize);
-        }
-        if(PuSize == 0) {// workaround for TD
-            return null;
         }
 
         float ret = (float) (mu + Bu + Bi);
