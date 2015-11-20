@@ -42,7 +42,7 @@ public final class SmileTaskExecutor {
 
     public SmileTaskExecutor(@Nullable MapredContext mapredContext) {
         int nprocs = Runtime.getRuntime().availableProcessors();
-        int threads = nprocs - 1;
+        int threads = Math.max(1, nprocs - 1);
 
         if(mapredContext != null) {
             JobConf conf = mapredContext.getJobConf();
@@ -50,7 +50,7 @@ public final class SmileTaskExecutor {
                 String tdJarVersion = conf.get("td.jar.version");
                 if(tdJarVersion == null) {
                     String hivemallNprocs = conf.get("hivemall.smile.nprocs");
-                    threads = Primitives.parseInt(hivemallNprocs, 1);
+                    threads = Primitives.parseInt(hivemallNprocs, threads);
                 } else {
                     String tdHivemallNprocs = conf.get("td.hivemall.smile.nprocs");
                     // invokes in the caller's thread if `td.hivemall.smile.nprocs` is not set
