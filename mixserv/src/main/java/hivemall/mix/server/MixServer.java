@@ -24,6 +24,7 @@ import hivemall.mix.metrics.MixServerMetrics;
 import hivemall.mix.metrics.ThroughputCounter;
 import hivemall.mix.store.SessionStore;
 import hivemall.mix.store.SessionStore.IdleSessionSweeper;
+import hivemall.mix.utils.StringUtils;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.lang.Primitives;
 import io.netty.bootstrap.ServerBootstrap;
@@ -38,6 +39,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +51,11 @@ import javax.net.ssl.SSLException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public final class MixServer implements Runnable {
+    private static final Log logger = LogFactory.getLog(MixServer.class);
 
     private final int port;
     private final int numWorkers;
@@ -73,6 +79,8 @@ public final class MixServer implements Runnable {
         this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
         this.jmx = cl.hasOption("jmx");
         this.state = ServerState.INITIALIZING;
+        // Print the configurations that this Mix server works with
+        logger.info(this.toString());
     }
 
     public static void main(String[] args) {
@@ -92,6 +100,20 @@ public final class MixServer implements Runnable {
         opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 60 sec]");
         opts.addOption("jmx", "metrics", false, "Toggle this option to enable monitoring metrics using JMX [default: false]");
         return opts;
+    }
+
+    @Override
+    public String toString() {
+        final List<String> configs = new ArrayList<String>();
+        configs.add("port:" + port);
+        configs.add("workers:" + numWorkers);
+        configs.add("ssl:" + ssl);
+        configs.add("scale:" + scale);
+        configs.add("syncThreshold:" + syncThreshold);
+        configs.add("sessionTTLinSec:" + sessionTTLinSec);
+        configs.add("sweepIntervalInSec:" + sweepIntervalInSec);
+        configs.add("jmx:" + jmx);
+        return StringUtils.join(",", configs);
     }
 
     public ServerState getState() {
