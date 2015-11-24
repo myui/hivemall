@@ -26,6 +26,7 @@ import hivemall.mix.store.SessionStore;
 import hivemall.mix.store.SessionStore.IdleSessionSweeper;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.lang.Primitives;
+import hivemall.utils.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -51,7 +52,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class MixServer implements Runnable {
+public class MixServer implements Runnable {
     private static final Log logger = LogFactory.getLog(MixServer.class);
 
     private final int port;
@@ -62,7 +63,17 @@ public final class MixServer implements Runnable {
     private final long sessionTTLinSec;
     private final long sweepIntervalInSec;
     private final boolean jmx;
+
+    /**
+     * If a given port cannot be bound, try to
+     * reassign other available ports.
+     */
+    private volatile int boundPort;
+
     private volatile ServerState state;
+
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
 
     public MixServer(CommandLine cl) {
         this.port = Primitives.parseInt(cl.getOptionValue("port"), MixEnv.MIXSERV_DEFAULT_PORT);
@@ -75,7 +86,11 @@ public final class MixServer implements Runnable {
         this.sessionTTLinSec = Primitives.parseLong(cl.getOptionValue("ttl"), 120L);
         this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
         this.jmx = cl.hasOption("jmx");
+        this.boundPort = -1;
         this.state = ServerState.INITIALIZING;
+        this.bossGroup = new NioEventLoopGroup(1);
+        this.workerGroup = new NioEventLoopGroup(numWorkers);
+
         // Print the configurations that this Mix server works with
         logger.info(this.toString());
     }
@@ -86,7 +101,7 @@ public final class MixServer implements Runnable {
         new MixServer(cl).run();
     }
 
-    static Options getOptions() {
+    protected static Options getOptions() {
         Options opts = new Options();
         opts.addOption("p", "port", true, "port number of the mix server [default: 11212]");
         opts.addOption("workers", "num_workers", true, "The number of MIX workers [default: max(1, round(procs * 1.5))] ");
@@ -107,6 +122,10 @@ public final class MixServer implements Runnable {
                 + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
     }
 
+    public int getBoundPort() {
+        return boundPort;
+    }
+
     public ServerState getState() {
         return state;
     }
@@ -124,7 +143,7 @@ public final class MixServer implements Runnable {
         }
     }
 
-    public void start() throws CertificateException, SSLException, InterruptedException {
+    public void start() throws CertificateException, SSLException, InterruptedException, RuntimeException {
         // Configure SSL.
         final SslContext sslCtx;
         if(ssl) {
@@ -155,6 +174,12 @@ public final class MixServer implements Runnable {
             // accept connections
             acceptConnections(initializer, port, numWorkers);
         } finally {
+            this.state = ServerState.STOPPING;
+
+            // Stop netty daemon
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+
             // release threads
             idleSessionChecker.shutdownNow();
             if(jmx) {
@@ -165,30 +190,40 @@ public final class MixServer implements Runnable {
     }
 
     private void acceptConnections(@Nonnull MixServerInitializer initializer, int port, @Nonnegative int numWorkers)
-            throws InterruptedException {
-        final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        final EventLoopGroup workerGroup = new NioEventLoopGroup(numWorkers);
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.option(ChannelOption.SO_KEEPALIVE, true);
-            b.group(bossGroup, workerGroup);
-            b.channel(NioServerSocketChannel.class);
-            b.handler(new LoggingHandler(LogLevel.INFO));
-            b.childHandler(initializer);
+            throws InterruptedException, RuntimeException {
+        ServerBootstrap b = new ServerBootstrap();
+        b.option(ChannelOption.SO_KEEPALIVE, true);
+        b.group(bossGroup, workerGroup);
+        b.channel(NioServerSocketChannel.class);
+        b.handler(new LoggingHandler(LogLevel.INFO));
+        b.childHandler(initializer);
 
-            // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(port).sync();
-            this.state = ServerState.RUNNING;
+        // First, check if we can bind a given port.
+        // If unavailable, try to bind other available ports.
+        ChannelFuture f;
+        boundPort = port;
+        int retry = 0;
+        while(true) {
+            try {
+                f = b.bind(boundPort).sync();
+                if(f.channel().isActive()) {
+                    this.state = ServerState.RUNNING;
+                    break;
+                }
+            } catch(Exception e) {}
 
-            // Wait until the server socket is closed.
-            // In this example, this does not happen, but you can do that to gracefully
-            // shut down your server.
-            f.channel().closeFuture().sync();
-        } finally {
-            this.state = ServerState.STOPPING;
-            workerGroup.shutdownGracefully();
-            bossGroup.shutdownGracefully();
+            if(++retry > 8) {
+                throw new RuntimeException("Can't bind a port for a MIX server");
+            }
+
+            // Try to bind another port
+            boundPort = NetUtils.getAvailablePort();
         }
+
+        // Wait until the server socket is closed.
+        // In this example, this does not happen, but you can do that to gracefully
+        // shut down your server.
+        f.channel().closeFuture().sync();
     }
 
     public enum ServerState {

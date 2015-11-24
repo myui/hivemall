@@ -19,15 +19,19 @@
 package hivemall.mix.client;
 
 import hivemall.mix.NodeInfo;
+import hivemall.mix.client.router.MixRequestHashRouter;
+import hivemall.mix.client.router.MixRequestRouter;
 
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class MixRequestRouterTest {
 
     @Test
-    public void test() {
-        MixRequestRouter router = new MixRequestRouter("dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
+    public void test() throws Exception {
+        MixRequestRouter router = new MixRequestHashRouter(
+            "dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
+        router.initialize();
         NodeInfo[] nodes = router.getAllNodes();
         Assert.assertEquals(3, nodes.length);
     }

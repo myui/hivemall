@@ -18,6 +18,9 @@
  */
 package hivemall.mix.client;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixedModel;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -27,11 +30,12 @@ import io.netty.channel.SimpleChannelInboundHandler;
 @Sharable
 public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessage> {
 
+    @Nonnull
     private final MixedModel model;
 
-    public MixClientHandler(MixedModel model) {
+    public MixClientHandler(@CheckForNull MixedModel model) {
         super();
-        if(model == null) {
+        if (model == null) {
             throw new IllegalArgumentException("model is null");
         }
         this.model = model;

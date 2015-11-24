@@ -24,6 +24,8 @@ import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.MixedModel;
 import hivemall.mix.MixedWeight;
 import hivemall.mix.NodeInfo;
+import hivemall.mix.client.router.MixRequestHashRouter;
+import hivemall.mix.client.router.MixRequestRouter;
 import hivemall.utils.hadoop.HadoopUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -48,27 +50,34 @@ import javax.net.ssl.SSLException;
 public final class MixClient implements ModelUpdateHandler, Closeable {
     public static final String DUMMY_JOB_ID = "__DUMMY_JOB_ID__";
 
+    @Nonnull
     private final MixEventName event;
+    @Nonnull
     private String groupID;
     private final boolean ssl;
     private final int mixThreshold;
+    @Nonnull
     private final MixRequestRouter router;
+    @Nonnull
     private final MixClientHandler msgHandler;
+    @Nonnull
     private final Map<NodeInfo, Channel> channelMap;
 
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
-        if(groupID == null) {
+    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID,
+            @Nonnull String connectInfo, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
+        if (groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }
-        if(mixThreshold < 1 || mixThreshold > Byte.MAX_VALUE) {
+        if (mixThreshold < 1 || mixThreshold > Byte.MAX_VALUE) {
             throw new IllegalArgumentException("Invalid mixThreshold: " + mixThreshold);
         }
         this.event = event;
         this.groupID = groupID;
-        this.router = new MixRequestRouter(connectURIs);
+        // TODO
+        this.router = new MixRequestHashRouter(connectInfo);
         this.ssl = ssl;
         this.mixThreshold = mixThreshold;
         this.msgHandler = new MixClientHandler(model);
@@ -76,9 +85,10 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     private void initialize() throws Exception {
+        router.initialize();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         NodeInfo[] serverNodes = router.getAllNodes();
-        for(NodeInfo node : serverNodes) {
+        for (NodeInfo node : serverNodes) {
             Bootstrap b = new Bootstrap();
             configureBootstrap(b, workerGroup, node);
         }
@@ -90,7 +100,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
             throws SSLException, InterruptedException {
         // Configure SSL.
         final SslContext sslCtx;
-        if(ssl) {
+        if (ssl) {
             sslCtx = SslContext.newClientContext(InsecureTrustManagerFactory.INSTANCE);
         } else {
             sslCtx = null;
@@ -116,11 +126,11 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     public boolean onUpdate(Object feature, float weight, float covar, short clock, int deltaUpdates)
             throws Exception {
         assert (deltaUpdates > 0) : deltaUpdates;
-        if(deltaUpdates < mixThreshold) {
+        if (deltaUpdates < mixThreshold) {
             return false; // avoid mixing
         }
 
-        if(!initialized) {
+        if (!initialized) {
             replaceGroupIDIfRequired();
             initialize(); // initialize connections to mix servers
         }
@@ -130,7 +140,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
         NodeInfo server = router.selectNode(msg);
         Channel ch = channelMap.get(server);
-        if(!ch.isActive()) {// reconnect
+        if (!ch.isActive()) {// reconnect
             SocketAddress remoteAddr = server.getSocketAddress();
             ch.connect(remoteAddr).sync();
         }
@@ -150,13 +160,12 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         int deltaUpdates = mixed.getDeltaUpdates();
 
         MixMessage msg = new MixMessage(event, feature, weight, covar, deltaUpdates, true);
-        assert (groupID != null);
         msg.setGroupID(groupID);
 
         // TODO REVIEWME consider mix server faults (what if mix server dead? Do not send cancel request?)
         NodeInfo server = router.selectNode(msg);
         Channel ch = channelMap.get(server);
-        if(!ch.isActive()) {// reconnect
+        if (!ch.isActive()) {// reconnect
             SocketAddress remoteAddr = server.getSocketAddress();
             ch.connect(remoteAddr).sync();
         }
@@ -165,7 +174,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     private void replaceGroupIDIfRequired() {
-        if(groupID.startsWith(DUMMY_JOB_ID)) {
+        if (groupID.startsWith(DUMMY_JOB_ID)) {
             String jobId = HadoopUtils.getJobId();
             this.groupID = groupID.replace(DUMMY_JOB_ID, jobId);
         }
@@ -173,8 +182,8 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
 
     @Override
     public void close() throws IOException {
-        if(workers != null) {
-            for(Channel ch : channelMap.values()) {
+        if (workers != null) {
+            for (Channel ch : channelMap.values()) {
                 ch.close();
             }
             channelMap.clear();

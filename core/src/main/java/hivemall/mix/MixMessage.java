@@ -18,14 +18,15 @@
  */
 package hivemall.mix;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public final class MixMessage implements Externalizable {
+public final class MixMessage {
 
+    @Nonnull
     private MixEventName event;
+    @Nonnull
     private Object feature;
     private float weight;
     private float covariance;
@@ -33,27 +34,30 @@ public final class MixMessage implements Externalizable {
     private int deltaUpdates;
     private boolean cancelRequest;
 
+    @Nullable
     private String groupID;
 
-    public MixMessage() {} // for Externalizable
-
-    public MixMessage(MixEventName event, Object feature, float weight, short clock, int deltaUpdates) {
+    public MixMessage(@Nonnull MixEventName event, @CheckForNull Object feature, float weight,
+            short clock, int deltaUpdates) {
         this(event, feature, weight, 0.f, clock, deltaUpdates, false);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates) {
+    public MixMessage(@Nonnull MixEventName event, @CheckForNull Object feature, float weight,
+            float covariance, short clock, int deltaUpdates) {
         this(event, feature, weight, covariance, clock, deltaUpdates, false);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, int deltaUpdates, boolean cancelRequest) {
+    public MixMessage(@Nonnull MixEventName event, @CheckForNull Object feature, float weight,
+            float covariance, int deltaUpdates, boolean cancelRequest) {
         this(event, feature, weight, covariance, (short) 0 /* dummy clock */, deltaUpdates, cancelRequest);
     }
 
-    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates, boolean cancelRequest) {
-        if(feature == null) {
+    MixMessage(@Nonnull MixEventName event, @CheckForNull Object feature, float weight,
+            float covariance, short clock, int deltaUpdates, boolean cancelRequest) {
+        if (feature == null) {
             throw new IllegalArgumentException("feature is null");
         }
-        if(deltaUpdates < 0 || deltaUpdates > Byte.MAX_VALUE) {
+        if (deltaUpdates < 0 || deltaUpdates > Byte.MAX_VALUE) {
             throw new IllegalArgumentException("Illegal deletaUpdates: " + deltaUpdates);
         }
         this.event = event;
@@ -79,7 +83,7 @@ public final class MixMessage implements Externalizable {
         }
 
         public static MixEventName resolve(int b) {
-            switch(b) {
+            switch (b) {
                 case 1:
                     return average;
                 case 2:
@@ -124,39 +128,6 @@ public final class MixMessage implements Externalizable {
 
     public boolean isCancelRequest() {
         return cancelRequest;
-    }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeByte(event.getID());
-        out.writeObject(feature);
-        out.writeFloat(weight);
-        out.writeFloat(covariance);
-        out.writeShort(clock);
-        out.writeInt(deltaUpdates);
-        out.writeBoolean(cancelRequest);
-        if(groupID == null) {
-            out.writeBoolean(false);
-        } else {
-            out.writeBoolean(true);
-            out.writeUTF(groupID);
-        }
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        byte id = in.readByte();
-        this.event = MixEventName.resolve(id);
-        this.feature = in.readObject();
-        this.weight = in.readFloat();
-        this.covariance = in.readFloat();
-        this.clock = in.readShort();
-        this.deltaUpdates = in.readInt();
-        this.cancelRequest = in.readBoolean();
-        boolean hasGroupID = in.readBoolean();
-        if(hasGroupID) {
-            this.groupID = in.readUTF();
-        }
     }
 
     @Override
