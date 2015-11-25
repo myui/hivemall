@@ -121,17 +121,13 @@ public final class MixServerRunner {
 
     @Override
     public String toString() {
-        final List<String> configs = new ArrayList<String>();
-        configs.add("appMasterJar:" + appMasterJar);
-        configs.add("amQueue:" + amQueue);
-        configs.add("amPriority:" + amPriority);
-        configs.add("amVCores:" + amVCores);
-        configs.add("amMemory:" + amMemory);
-        configs.add("mixServJar:" + mixServJar);
-        configs.add("numContainers:" + numContainers);
-        configs.add("containerVCores:" + containerVCores);
-        configs.add("containerMemory:" + containerMemory);
-        return StringUtils.join(",", configs);
+        return "MixServerRunner["
+                + "appMasterJar=" + appMasterJar + ", appMasterJar=" + appMasterJar
+                + ", amQueue=" + amQueue + ", amPriority=" + amPriority
+                + ", amVCores=" + amVCores + ", amMemory=" + amMemory
+                + ", mixServJar=" + mixServJar + ", numContainers=" + numContainers
+                + ", containerVCores=" + containerVCores
+                + ", containerMemory=" + containerMemory + "]";
     }
 
     public boolean init(String[] args) throws ParseException {

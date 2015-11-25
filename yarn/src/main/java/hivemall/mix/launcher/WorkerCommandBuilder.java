@@ -105,16 +105,9 @@ public final class WorkerCommandBuilder {
 
     @Override
     public String toString() {
-        final List<String> command;
-        try {
-            command = buildCommand();
-        } catch (IOException e) {
-            return "";
-        }
-        StringBuilder commandStr = new StringBuilder();
-        for (String s : command) {
-            commandStr.append(s).append(" ");
-        }
-        return commandStr.substring(0, commandStr.length() - 1);
+        return "WorkerCommandBuilder["
+                + "mainClass=" + mainClass + ", extraClassPath=" + extraClassPath
+                + ", memoryMb=" + memoryMb + ", arguments="  + arguments
+                + ", javaOps=" + javaOps + "]";
     }
 }
