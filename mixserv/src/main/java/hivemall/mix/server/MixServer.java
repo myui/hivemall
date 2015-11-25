@@ -48,8 +48,11 @@ import javax.net.ssl.SSLException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public final class MixServer implements Runnable {
+    private static final Log logger = LogFactory.getLog(MixServer.class);
 
     private final int port;
     private final int numWorkers;
@@ -73,6 +76,8 @@ public final class MixServer implements Runnable {
         this.sweepIntervalInSec = Primitives.parseLong(cl.getOptionValue("sweep"), 60L);
         this.jmx = cl.hasOption("jmx");
         this.state = ServerState.INITIALIZING;
+        // Print the configurations that this Mix server works with
+        logger.info(this.toString());
     }
 
     public static void main(String[] args) {
@@ -92,6 +97,14 @@ public final class MixServer implements Runnable {
         opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 60 sec]");
         opts.addOption("jmx", "metrics", false, "Toggle this option to enable monitoring metrics using JMX [default: false]");
         return opts;
+    }
+
+    @Override
+    public String toString() {
+        return "[port=" + port + ", numWorkers=" + numWorkers
+                + ", ssl=" + ssl + ", scale=" + scale + ", syncThreshold=" + syncThreshold
+                + ", sessionTTLinSec=" + sessionTTLinSec + ", sweepIntervalInSec="
+                + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
     }
 
     public ServerState getState() {
