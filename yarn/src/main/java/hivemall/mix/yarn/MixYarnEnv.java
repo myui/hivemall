@@ -18,7 +18,7 @@
  */
 package hivemall.mix.yarn;
 
-public class MixEnv {
+public class MixYarnEnv {
 
     // Default port number for resource requests
     public static final int RESOURCE_REQUEST_PORT = 11213;

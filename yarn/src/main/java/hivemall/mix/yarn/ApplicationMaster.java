@@ -23,7 +23,6 @@ import hivemall.mix.network.HeartbeatHandler.HeartbeatReceiver;
 import hivemall.mix.network.HeartbeatHandler.HeartbeatInitializer;
 import hivemall.mix.network.MixServerRequestHandler.MixServerRequestReceiver;
 import hivemall.mix.network.MixServerRequestHandler.MixServerRequestInitializer;
-import hivemall.utils.StringUtils;
 import hivemall.utils.collections.TimestampedValue;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -174,8 +173,8 @@ public final class ApplicationMaster {
         // Get variables from envs
         appAttemptID = ConverterUtils.toContainerId(getEnv(Environment.CONTAINER_ID.name()))
                 .getApplicationAttemptId();
-        sharedDir = getEnv(MixEnv.MIXSERVER_RESOURCE_LOCATION);
-        mixServJar = getEnv(MixEnv.MIXSERVER_CONTAINER_APP);
+        sharedDir = getEnv(MixYarnEnv.MIXSERVER_RESOURCE_LOCATION);
+        mixServJar = getEnv(MixYarnEnv.MIXSERVER_CONTAINER_APP);
 
         // Get variables from arguments
         containerVCores = Integer.parseInt(cliParser.getOptionValue("container_vcores", "1"));
@@ -251,18 +250,18 @@ public final class ApplicationMaster {
 
         // Accept heartbeats from launched MIX servers
         startNettyServer(new HeartbeatInitializer(new HeartbeatReceiver(activeMixServers)),
-                MixEnv.REPORT_RECEIVER_PORT);
+                MixYarnEnv.REPORT_RECEIVER_PORT);
 
         // Accept resource requests from clients
         startNettyServer(new MixServerRequestInitializer(
                     new MixServerRequestReceiver(activeMixServers)),
-                MixEnv.RESOURCE_REQUEST_PORT);
+                MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
         monitorContainerExecutor.scheduleAtFixedRate(
                 new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers),
-                MixEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30L,
-                MixEnv.MIXSERVER_HEARTBEAT_INTERVAL,
+                MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30L,
+                MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL,
                 TimeUnit.SECONDS);
 
         for (int i = 0; i < numContainers; i++) {
@@ -314,7 +313,7 @@ public final class ApplicationMaster {
                 TimestampedValue<NodeId> value = e.getValue();
                 long elapsedTime = System.currentTimeMillis() - value.getTimestamp();
                 // Wait at most two-times intervals for heartbeats
-                if (elapsedTime > MixEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
+                if (elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
                     // If expired, restart the MIX server
                     ContainerId id = e.getKey();
                     NodeId node = value.getValue();
