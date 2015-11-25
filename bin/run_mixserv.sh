@@ -17,19 +17,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION_FILE="$HIVEMALL_HOME/VERSION"
+# Start a MIX server instance on this machine
 
-# Load a version number from a VERSION file
-if [ -f "$VERSION_FILE" ]; then
-  VERSION=`cat "$VERSION_FILE"`
-  JARFILE="$HIVEMALL_HOME/target/hivemall-mixserv-$VERSION-fat.jar"
-else
-  JARFILE="hivemall-mixserv.jar"
+if [ "$HIVEMALL_HOME" == "" ]; then
+  echo env HIVEMALL_HOME not defined
+  exit 1
 fi
 
-JMXOPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false"
+# Load a version number from a VERSION file
+VERSION=`cat "$HIVEMALL_HOME/VERSION"`
+JARFILE="$HIVEMALL_HOME/target/hivemall-mixserv-$VERSION-fat.jar"
 
-VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $VMOPTS"
-# VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $JMXOPTS $VMOPTS"
+if [ -f "$JARFILE" ]; then
+  JMXOPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false"
+  VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $VMOPTS"
+  # VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $JMXOPTS $VMOPTS"
+  java ${VMOPTS} -jar ${JARFILE} $@
+else
+  echo executable jar ${JARFILE} not found
+fi
 
-java ${VMOPTS} -jar ${JARFILE} $@
