@@ -24,7 +24,6 @@ import hivemall.mix.metrics.MixServerMetrics;
 import hivemall.mix.metrics.ThroughputCounter;
 import hivemall.mix.store.SessionStore;
 import hivemall.mix.store.SessionStore.IdleSessionSweeper;
-import hivemall.mix.utils.StringUtils;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.lang.Primitives;
 import io.netty.bootstrap.ServerBootstrap;
@@ -39,8 +38,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -104,8 +101,7 @@ public final class MixServer implements Runnable {
 
     @Override
     public String toString() {
-        return "MixServer Configurations:["
-                + "port=" + port + ", numWorkers=" + numWorkers
+        return "[port=" + port + ", numWorkers=" + numWorkers
                 + ", ssl=" + ssl + ", scale=" + scale + ", syncThreshold=" + syncThreshold
                 + ", sessionTTLinSec=" + sessionTTLinSec + ", sweepIntervalInSec="
                 + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
