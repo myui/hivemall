@@ -20,7 +20,6 @@ package hivemall.mix.yarn;
 
 import hivemall.mix.launcher.WorkerCommandBuilder;
 
-import hivemall.utils.StringUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -121,8 +120,7 @@ public final class MixServerRunner {
 
     @Override
     public String toString() {
-        return "MixServerRunner["
-                + "appMasterJar=" + appMasterJar + ", appMasterJar=" + appMasterJar
+        return "[appMasterJar=" + appMasterJar + ", appMasterJar=" + appMasterJar
                 + ", amQueue=" + amQueue + ", amPriority=" + amPriority
                 + ", amVCores=" + amVCores + ", amMemory=" + amMemory
                 + ", mixServJar=" + mixServJar + ", numContainers=" + numContainers
@@ -239,8 +237,8 @@ public final class MixServerRunner {
         // where AM will be run.
         Map<String, String> env = new HashMap<String, String>();
 
-        env.put(MixEnv.MIXSERVER_RESOURCE_LOCATION, sharedDir.toString());
-        env.put(MixEnv.MIXSERVER_CONTAINER_APP, mixServJar.getName());
+        env.put(MixYarnEnv.MIXSERVER_RESOURCE_LOCATION, sharedDir.toString());
+        env.put(MixYarnEnv.MIXSERVER_CONTAINER_APP, mixServJar.getName());
 
         // Set yarn-specific classpaths
         StringBuilder yarnAppClassPaths = new StringBuilder();
@@ -269,7 +267,7 @@ public final class MixServerRunner {
         // Set a yarn-specific java home
         cmdBuilder.setJavaHome(Environment.JAVA_HOME.$$());
 
-        logger.debug("Build an executable command for AM: " + cmdBuilder);
+        logger.info("Build an executable command for AM: " + cmdBuilder);
 
         // Set up the container launch context for AM
         ContainerLaunchContext amContainer =

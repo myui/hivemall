@@ -182,7 +182,7 @@ public class MixServerTest {
         EventLoopGroup workers = new NioEventLoopGroup();
         MixServerRequester msgHandler = new MixServerRequester(mixServers);
         Channel ch = startNettyClient(
-                new MixServerRequestInitializer(msgHandler), MixEnv.RESOURCE_REQUEST_PORT, workers);
+                new MixServerRequestInitializer(msgHandler), MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
         ch.writeAndFlush(new MixServerRequest()).sync();
@@ -197,7 +197,7 @@ public class MixServerTest {
         verifyContainerErrLog(numMixServers, "ACTIVE");
 
         // Parse allocated MIX servers
-        String[] hosts = mixServers.get().split(Pattern.quote(MixEnv.MIXSERVER_SEPARATOR));
+        String[] hosts = mixServers.get().split(Pattern.quote(MixYarnEnv.MIXSERVER_SEPARATOR));
         Assert.assertEquals(hosts.length, 1);
 
         // TODO: Issue shutdown requests to MIX servers

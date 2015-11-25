@@ -105,8 +105,7 @@ public final class WorkerCommandBuilder {
 
     @Override
     public String toString() {
-        return "WorkerCommandBuilder["
-                + "mainClass=" + mainClass + ", extraClassPath=" + extraClassPath
+        return "[mainClass=" + mainClass + ", extraClassPath=" + extraClassPath
                 + ", memoryMb=" + memoryMb + ", arguments="  + arguments
                 + ", javaOps=" + javaOps + "]";
     }

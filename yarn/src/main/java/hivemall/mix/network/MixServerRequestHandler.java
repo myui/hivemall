@@ -18,7 +18,7 @@
  */
 package hivemall.mix.network;
 
-import hivemall.mix.yarn.MixEnv;
+import hivemall.mix.yarn.MixYarnEnv;
 import hivemall.utils.collections.TimestampedValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -59,7 +59,7 @@ public final class MixServerRequestHandler {
                 urls.add(node.toString());
             }
             MixServerRequest msg =
-                    new MixServerRequest(numServers, join(MixEnv.MIXSERVER_SEPARATOR, urls));
+                    new MixServerRequest(numServers, join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
             ctx.writeAndFlush(msg);
         }
 
