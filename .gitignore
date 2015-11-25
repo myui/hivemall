@@ -1,6 +1,7 @@
 !.gitkeep
 /.fatjar
 /build
+target/*
 core/target/*
 mixserv/target/*
 nlp/target/*
