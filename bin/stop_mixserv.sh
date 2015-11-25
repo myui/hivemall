@@ -17,12 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script left for backward compatibility
-
 if [ "$HIVEMALL_HOME" == "" ]; then
   echo env HIVEMALL_HOME not defined
   exit 1
 fi
 
-/bin/sh "$HIVEMALL_HOME/bin/mixserv_daemon.sh" start
+/bin/sh "$HIVEMALL_HOME/bin/mixserv_daemon.sh" stop
 

@@ -2,6 +2,7 @@
 /.fatjar
 /build
 target/*
+logs/*
 core/target/*
 mixserv/target/*
 nlp/target/*
