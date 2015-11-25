@@ -104,16 +104,11 @@ public final class MixServer implements Runnable {
 
     @Override
     public String toString() {
-        final List<String> configs = new ArrayList<String>();
-        configs.add("port:" + port);
-        configs.add("workers:" + numWorkers);
-        configs.add("ssl:" + ssl);
-        configs.add("scale:" + scale);
-        configs.add("syncThreshold:" + syncThreshold);
-        configs.add("sessionTTLinSec:" + sessionTTLinSec);
-        configs.add("sweepIntervalInSec:" + sweepIntervalInSec);
-        configs.add("jmx:" + jmx);
-        return StringUtils.join(",", configs);
+        return "MixServer Configurations:["
+                + "port=" + port + ", numWorkers=" + numWorkers
+                + ", ssl=" + ssl + ", scale=" + scale + ", syncThreshold=" + syncThreshold
+                + ", sessionTTLinSec=" + sessionTTLinSec + ", sweepIntervalInSec="
+                + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
     }
 
     public ServerState getState() {
