@@ -1,7 +1,7 @@
 !.gitkeep
 /.fatjar
 /build
-target/*
+target
 core/target/*
 mixserv/target/*
 nlp/target/*
@@ -10,3 +10,5 @@ nlp/target/*
 *.swp
 .idea
 *.iml
+.DS_Store
+*~
