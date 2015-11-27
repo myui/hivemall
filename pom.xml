@@ -44,6 +44,7 @@
 		<module>core</module>
 		<module>nlp</module>
 		<module>mixserv</module>
+		<module>yarn</module>
 	</modules>
 
 	<properties>
@@ -54,13 +55,6 @@
 		<protoc.path>${env.PROTOC_PATH}</protoc.path>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
-	</repositories>
-
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -69,13 +63,6 @@
 	</distributionManagement>
 
 	<profiles>
-		<profile>
-			<id>yarn</id>
-			<modules>
-				<module>mixserv</module>
-				<module>yarn</module>
-			</modules>
-		</profile>
 		<profile>
 			<id>doclint-java8-disable</id>
 			<activation>
