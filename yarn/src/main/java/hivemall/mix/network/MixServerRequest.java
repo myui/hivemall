@@ -46,7 +46,6 @@ public class MixServerRequest {
 
     @Override
     public String toString() {
-        return "numRequest:" + numRequest
-                + " allocatedURIs:" + allocatedURIs;
+        return "numRequest:" + numRequest + " allocatedURIs:" + allocatedURIs;
     }
 }

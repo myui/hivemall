@@ -18,25 +18,22 @@
  */
 package hivemall.utils;
 
-import java.util.Arrays;
+public final class TimestampedValue<T> {
 
-public final class StringUtils {
+    private final T value;
+    private long timestamp;
 
-    // Join a list of strings using the given separator
-    public static String join(String sep, String... elements) {
-        return join(sep, Arrays.asList(elements));
+    public TimestampedValue(T value) {
+        this.value = value;
+        this.timestamp = System.currentTimeMillis();
     }
 
-    public static String join(String sep, Iterable<String> elements) {
-        StringBuilder sb = new StringBuilder();
-        for (String e : elements) {
-            if (e != null) {
-                if (sb.length() > 0) {
-                    sb.append(sep);
-                }
-                sb.append(e);
-            }
-        }
-        return sb.toString();
+    public T getValue() {
+        return value;
     }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
 }

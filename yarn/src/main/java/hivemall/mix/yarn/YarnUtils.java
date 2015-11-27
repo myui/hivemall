@@ -18,6 +18,9 @@
  */
 package hivemall.mix.yarn;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -28,9 +31,6 @@ import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
-
-import java.io.IOException;
-import java.util.Map;
 
 public final class YarnUtils {
 
@@ -49,17 +49,15 @@ public final class YarnUtils {
         classPaths.append(ApplicationConstants.CLASS_PATH_SEPARATOR);
     }
 
-    static void copyFromLocalFile(
-            FileSystem fs, Path src, Path dst, Map<String, LocalResource> resourceMap)
+    static void copyFromLocalFile(FileSystem fs, Path src, Path dst, Map<String, LocalResource> resourceMap)
             throws IOException {
         fs.copyFromLocalFile(src, dst);
-        if (resourceMap != null) {
+        if(resourceMap != null) {
             resourceMap.put(dst.getName(), YarnUtils.createLocalResource(fs, dst));
         }
     }
 
-    static LocalResource createLocalResource(FileSystem fs, Path path)
-            throws IOException {
+    static LocalResource createLocalResource(FileSystem fs, Path path) throws IOException {
         LocalResource resource = Records.newRecord(LocalResource.class);
         FileStatus fileStat = fs.getFileStatus(path);
         resource.setResource(ConverterUtils.getYarnUrlFromPath(path));
@@ -69,4 +67,5 @@ public final class YarnUtils {
         resource.setVisibility(LocalResourceVisibility.APPLICATION);
         return resource;
     }
+
 }

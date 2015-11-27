@@ -18,6 +18,7 @@
  */
 package hivemall.utils.lang;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -182,4 +183,23 @@ public final class StringUtils {
         return buf.toString();
     }
 
+    /**
+     * Join a list of strings using the given separator.
+     */
+    public static String join(String sep, String... elements) {
+        return join(sep, Arrays.asList(elements));
+    }
+
+    public static String join(String sep, Iterable<String> elements) {
+        StringBuilder sb = new StringBuilder();
+        for(String e : elements) {
+            if(e != null) {
+                if(sb.length() > 0) {
+                    sb.append(sep);
+                }
+                sb.append(e);
+            }
+        }
+        return sb.toString();
+    }
 }

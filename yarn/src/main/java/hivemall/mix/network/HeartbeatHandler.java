@@ -18,34 +18,37 @@
  */
 package hivemall.mix.network;
 
-import hivemall.utils.collections.TimestampedValue;
+import hivemall.utils.TimestampedValue;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.NodeId;
 
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ConcurrentMap;
+
+import org.apache.hadoop.yarn.api.records.NodeId;
 
 public final class HeartbeatHandler {
 
     @ChannelHandler.Sharable
     public final static class HeartbeatReceiver extends SimpleChannelInboundHandler<Heartbeat> {
 
-        final ConcurrentMap<ContainerId, TimestampedValue<NodeId>> activeMixServers;
+        final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers;
 
-        public HeartbeatReceiver(ConcurrentMap<ContainerId, TimestampedValue<NodeId>> nodes) {
+        public HeartbeatReceiver(ConcurrentMap<String, TimestampedValue<NodeId>> nodes) {
             this.activeMixServers = nodes;
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg)
-                throws Exception {
-            final ContainerId containerId = ContainerId.fromString(msg.getConainerId());
+        protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
+            final String containerId = msg.getConainerId();
             final NodeId node = NodeId.newInstance(msg.getHost(), msg.getPort());
-            if (activeMixServers.replace(containerId, new TimestampedValue<NodeId>(node)) == null) {
+            if(activeMixServers.replace(containerId, new TimestampedValue<NodeId>(node)) == null) {
                 // If the value does not exist, the MIX server
                 // already has gone.
                 activeMixServers.remove(containerId);
@@ -53,8 +56,7 @@ public final class HeartbeatHandler {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-                throws Exception {
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             super.exceptionCaught(ctx, cause);
         }
     }
@@ -77,13 +79,13 @@ public final class HeartbeatHandler {
     private final static class HeartbeatDecoder extends LengthFieldBasedFrameDecoder {
 
         public HeartbeatDecoder() {
-             super(65536, 0, 4, 0, 4);
+            super(65536, 0, 4, 0, 4);
         }
 
         @Override
         protected Heartbeat decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
             final ByteBuf frame = (ByteBuf) super.decode(ctx, in);
-            if (frame == null) {
+            if(frame == null) {
                 return null;
             }
             String containerId = readString(frame);
@@ -104,6 +106,6 @@ public final class HeartbeatHandler {
             } catch (UnsupportedEncodingException e) {
                 return null;
             }
-         }
-     }
+        }
+    }
 }

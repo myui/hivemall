@@ -18,19 +18,19 @@
  */
 package hivemall.mix.launcher;
 
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import hivemall.utils.io.IOUtils;
 
 import java.io.InputStream;
 import java.util.Arrays;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class WorkerCommandBuilderTest {
 
     @Test
     public void testInvokeProcess() {
-        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(
-                LauncherTest.class, "", 512, Arrays.asList("test"), null);
+        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(Launcher.class, "", 512, Arrays.asList("test"), null);
         String output = null;
         int exitCode = -1;
         try {
@@ -44,4 +44,12 @@ public class WorkerCommandBuilderTest {
         Assert.assertEquals("This is a test program! args=[test]", output);
         Assert.assertEquals(0, exitCode);
     }
+
+    public static class Launcher {
+
+        public static void main(String args[]) {
+            System.out.print("This is a test program! args=" + Arrays.toString(args));
+        }
+    }
+
 }

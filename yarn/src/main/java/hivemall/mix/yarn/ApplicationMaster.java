@@ -19,20 +19,48 @@
 package hivemall.mix.yarn;
 
 import hivemall.mix.launcher.WorkerCommandBuilder;
-import hivemall.mix.network.HeartbeatHandler.HeartbeatReceiver;
 import hivemall.mix.network.HeartbeatHandler.HeartbeatInitializer;
-import hivemall.mix.network.MixServerRequestHandler.MixServerRequestReceiver;
+import hivemall.mix.network.HeartbeatHandler.HeartbeatReceiver;
 import hivemall.mix.network.MixServerRequestHandler.MixServerRequestInitializer;
-import hivemall.utils.collections.TimestampedValue;
-
+import hivemall.mix.network.MixServerRequestHandler.MixServerRequestReceiver;
+import hivemall.utils.TimestampedValue;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.apache.commons.cli.*;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.concurrent.ThreadSafe;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -40,7 +68,19 @@ import org.apache.hadoop.util.ExitUtil;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.ApplicationConstants.Environment;
 import org.apache.hadoop.yarn.api.protocolrecords.RegisterApplicationMasterResponse;
-import org.apache.hadoop.yarn.api.records.*;
+import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
+import org.apache.hadoop.yarn.api.records.Container;
+import org.apache.hadoop.yarn.api.records.ContainerExitStatus;
+import org.apache.hadoop.yarn.api.records.ContainerId;
+import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
+import org.apache.hadoop.yarn.api.records.ContainerState;
+import org.apache.hadoop.yarn.api.records.ContainerStatus;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.NodeId;
+import org.apache.hadoop.yarn.api.records.NodeReport;
+import org.apache.hadoop.yarn.api.records.Priority;
+import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.AMRMClient;
 import org.apache.hadoop.yarn.client.api.AMRMClient.ContainerRequest;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
@@ -49,18 +89,6 @@ import org.apache.hadoop.yarn.client.api.async.impl.NMClientAsyncImpl;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
-import org.apache.htrace.commons.logging.Log;
-import org.apache.htrace.commons.logging.LogFactory;
-import org.apache.log4j.LogManager;
-import io.netty.handler.logging.LogLevel;
-
-import javax.annotation.concurrent.ThreadSafe;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ApplicationMaster {
     private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
@@ -77,7 +105,7 @@ public final class ApplicationMaster {
     private String mixServJar;
 
     // Handle to communicate with RM/NM
-    private AMRMClientAsync amRMClientAsync;
+    private AMRMClientAsync<ContainerRequest> amRMClientAsync;
     private NMClientAsync nmClientAsync;
     private NMCallbackHandler containerListener;
 
@@ -89,25 +117,20 @@ public final class ApplicationMaster {
     private int numRetryForFailedContainers;
 
     // List of allocated containers and alive MIX servers
-    private final ConcurrentMap<ContainerId, Container> allocContainers =
-            new ConcurrentHashMap<ContainerId, Container>();
-    private final ConcurrentMap<ContainerId, TimestampedValue<NodeId>> activeMixServers =
-            new ConcurrentHashMap<ContainerId, TimestampedValue<NodeId>>();
+    private final ConcurrentMap<String, Container> allocContainers = new ConcurrentHashMap<String, Container>();
+    private final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers = new ConcurrentHashMap<String, TimestampedValue<NodeId>>();
 
     // Info. to launch containers
     private ContainerLaunchInfo cmdInfo = new ContainerLaunchInfo();
 
     // Thread pool for container launchers
-    private final ExecutorService containerExecutor =
-            Executors.newFixedThreadPool(1);
+    private final ExecutorService containerExecutor = Executors.newFixedThreadPool(1);
 
     // Check if MIX servers keep alive
-    private final ScheduledExecutorService monitorContainerExecutor =
-            Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService monitorContainerExecutor = Executors.newScheduledThreadPool(1);
 
     // Group for netty workers
-    private final Set<EventLoopGroup> nettyWorkers =
-            new HashSet<EventLoopGroup>();
+    private final Set<EventLoopGroup> nettyWorkers = new HashSet<EventLoopGroup>();
 
     // Trackers for container status
     private final AtomicInteger numAllocatedContainers = new AtomicInteger();
@@ -122,17 +145,16 @@ public final class ApplicationMaster {
         try {
             ApplicationMaster appMaster = new ApplicationMaster();
             boolean doRun = appMaster.init(args);
-            if (!doRun) {
+            if(!doRun) {
                 System.exit(0);
             }
             appMaster.run();
             result = appMaster.finish();
         } catch (Throwable t) {
             logger.fatal("Error running AM", t);
-            LogManager.shutdown();
             ExitUtil.terminate(1, t);
         }
-        if (result) {
+        if(result) {
             logger.info("AM completed successfully");
             System.exit(0);
         } else {
@@ -159,20 +181,18 @@ public final class ApplicationMaster {
     }
 
     public boolean init(String[] args) throws ParseException, IOException {
-        if (args.length == 0) {
-            throw new IllegalArgumentException(
-                    "No args specified for MixServerRunner to initialize");
+        if(args.length == 0) {
+            throw new IllegalArgumentException("No args specified for MixServerRunner to initialize");
         }
 
         CommandLine cliParser = new GnuParser().parse(opts, args);
-        if (cliParser.hasOption("help")) {
+        if(cliParser.hasOption("help")) {
             printUsage();
             return false;
         }
 
         // Get variables from envs
-        appAttemptID = ConverterUtils.toContainerId(getEnv(Environment.CONTAINER_ID.name()))
-                .getApplicationAttemptId();
+        appAttemptID = ConverterUtils.toContainerId(getEnv(Environment.CONTAINER_ID.name())).getApplicationAttemptId();
         sharedDir = getEnv(MixYarnEnv.MIXSERVER_RESOURCE_LOCATION);
         mixServJar = getEnv(MixYarnEnv.MIXSERVER_CONTAINER_APP);
 
@@ -182,36 +202,25 @@ public final class ApplicationMaster {
         numContainers = Integer.parseInt(cliParser.getOptionValue("num_containers", "1"));
         requestPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
         numRetryForFailedContainers = Integer.parseInt(cliParser.getOptionValue("num_retries", "32"));
-        if (numContainers == 0) {
-            throw new IllegalArgumentException(
-                    "Cannot run distributed shell with no containers");
-        }
-
-        try {
-            Log4jPropertyHelper.updateLog4jConfiguration(
-                    ApplicationMaster.class, "log4j.properties");
-        } catch (Exception e) {
-            logger.warn("Can not set up custom log4j properties. " + e);
+        if(numContainers == 0) {
+            throw new IllegalArgumentException("Cannot run distributed shell with no containers");
         }
 
         // Build an executable command for containers
         cmdInfo.init();
 
-        logger.info("Application master for "
-                + "appId:" + appAttemptID.getApplicationId().getId()
+        logger.info("Application master for " + "appId:" + appAttemptID.getApplicationId().getId()
                 + ", clusterTimestamp:" + appAttemptID.getApplicationId().getClusterTimestamp()
-                + ", attemptId:" + appAttemptID.getAttemptId()
-                + ", containerVCores:" + containerVCores
-                + ", containerMemory:" + containerMemory
-                + ", numContainers:" + numContainers
-                + ", requestPriority:" + requestPriority);
+                + ", attemptId:" + appAttemptID.getAttemptId() + ", containerVCores:"
+                + containerVCores + ", containerMemory:" + containerMemory + ", numContainers:"
+                + numContainers + ", requestPriority:" + requestPriority);
 
         return true;
     }
 
     private String getEnv(String key) {
         final String value = System.getenv(key);
-        if (value.isEmpty()) {
+        if(value.isEmpty()) {
             throw new IllegalArgumentException(key + "not set in the environment");
         }
         return value;
@@ -231,47 +240,39 @@ public final class ApplicationMaster {
 
         // Register self with ResourceManager to start
         // heartbeating to the RM.
-        RegisterApplicationMasterResponse response = amRMClientAsync
-            .registerApplicationMaster("", -1, "");
+        RegisterApplicationMasterResponse response = amRMClientAsync.registerApplicationMaster("", -1, "");
 
         // A resource ask cannot exceed the max
         int maxVCores = response.getMaximumResourceCapability().getVirtualCores();
-        if (containerVCores > maxVCores) {
-            logger.warn("cores:" + containerVCores + " requested, but only cores:"
-                    + maxVCores + " available.");
+        if(containerVCores > maxVCores) {
+            logger.warn("cores:" + containerVCores + " requested, but only cores:" + maxVCores
+                    + " available.");
             containerVCores = maxVCores;
         }
         int maxMem = response.getMaximumResourceCapability().getMemory();
-        if (containerMemory > maxMem) {
-            logger.warn("mem:" + containerMemory + " requested, but only mem:"
-                    + maxMem + " available.");
+        if(containerMemory > maxMem) {
+            logger.warn("mem:" + containerMemory + " requested, but only mem:" + maxMem
+                    + " available.");
             containerMemory = maxMem;
         }
 
         // Accept heartbeats from launched MIX servers
-        startNettyServer(new HeartbeatInitializer(new HeartbeatReceiver(activeMixServers)),
-                MixYarnEnv.REPORT_RECEIVER_PORT);
+        startNettyServer(new HeartbeatInitializer(new HeartbeatReceiver(activeMixServers)), MixYarnEnv.REPORT_RECEIVER_PORT);
 
         // Accept resource requests from clients
-        startNettyServer(new MixServerRequestInitializer(
-                    new MixServerRequestReceiver(activeMixServers)),
-                MixYarnEnv.RESOURCE_REQUEST_PORT);
+        startNettyServer(new MixServerRequestInitializer(new MixServerRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
-        monitorContainerExecutor.scheduleAtFixedRate(
-                new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers),
-                MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30L,
-                MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL,
-                TimeUnit.SECONDS);
+        monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30L, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
 
-        for (int i = 0; i < numContainers; i++) {
+        for(int i = 0; i < numContainers; i++) {
             AMRMClient.ContainerRequest containerAsk = setupContainerAskForRM();
             amRMClientAsync.addContainerRequest(containerAsk);
         }
         numRequestedContainers.set(numContainers);
     }
 
-    private void startNettyServer(ChannelInitializer initializer, int port)
+    private void startNettyServer(ChannelInitializer<SocketChannel> initializer, int port)
             throws InterruptedException {
         final EventLoopGroup boss = new NioEventLoopGroup(1);
         final EventLoopGroup workers = new NioEventLoopGroup(1);
@@ -290,14 +291,11 @@ public final class ApplicationMaster {
     @ThreadSafe
     public final class MonitorContainerRunnable implements Runnable {
 
-        private AMRMClientAsync amRMClientAsync;
-        private final ConcurrentMap<ContainerId, TimestampedValue<NodeId>> activeMixServers;
-        private final ConcurrentMap<ContainerId, Container> allocContainers;
+        private AMRMClientAsync<ContainerRequest> amRMClientAsync;
+        private final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers;
+        private final ConcurrentMap<String, Container> allocContainers;
 
-        public MonitorContainerRunnable(
-                AMRMClientAsync amRMClientAsync,
-                ConcurrentMap<ContainerId, TimestampedValue<NodeId>> activeMixServers,
-                ConcurrentMap<ContainerId, Container> allocContainers) {
+        public MonitorContainerRunnable(AMRMClientAsync<ContainerRequest> amRMClientAsync, ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers, ConcurrentMap<String, Container> allocContainers) {
             this.amRMClientAsync = amRMClientAsync;
             this.allocContainers = allocContainers;
             this.activeMixServers = activeMixServers;
@@ -305,22 +303,22 @@ public final class ApplicationMaster {
 
         @Override
         public void run() {
-            final Set<Entry<ContainerId, TimestampedValue<NodeId>>> set =
-                    activeMixServers.entrySet();
-            final Iterator<Entry<ContainerId, TimestampedValue<NodeId>>> itor = set.iterator();
-            while (itor.hasNext()) {
-                Entry<ContainerId, TimestampedValue<NodeId>> e = itor.next();
+            final Set<Entry<String, TimestampedValue<NodeId>>> set = activeMixServers.entrySet();
+            final Iterator<Entry<String, TimestampedValue<NodeId>>> itor = set.iterator();
+            while(itor.hasNext()) {
+                Entry<String, TimestampedValue<NodeId>> e = itor.next();
                 TimestampedValue<NodeId> value = e.getValue();
                 long elapsedTime = System.currentTimeMillis() - value.getTimestamp();
                 // Wait at most two-times intervals for heartbeats
-                if (elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
+                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
                     // If expired, restart the MIX server
-                    ContainerId id = e.getKey();
+                    String id = e.getKey();
                     NodeId node = value.getValue();
                     Container container = allocContainers.get(id);
-                    if (container != null) {
+                    if(container != null) {
                         // TODO: Restart the failed MIX server.
-                        amRMClientAsync.releaseAssignedContainer(id);
+                        ContainerId cid = container.getId();
+                        amRMClientAsync.releaseAssignedContainer(cid);
                         itor.remove();
                     } else {
                         logger.warn(node + " failed though, " + id
@@ -339,22 +337,20 @@ public final class ApplicationMaster {
         public void onContainersCompleted(List<ContainerStatus> completedContainers) {
             logger.info("Got response from RM for container ask, completedCnt="
                     + completedContainers.size());
-            for (ContainerStatus containerStatus : completedContainers) {
+            for(ContainerStatus containerStatus : completedContainers) {
                 final ContainerId containerId = containerStatus.getContainerId();
 
-                logger.info(appAttemptID + " got container status for "
-                        + "containerID:" + containerId
-                        + ", state:" + containerStatus.getState()
-                        + ", exitStatus:" + containerStatus.getExitStatus()
-                        + ", diagnostics:" + containerStatus.getDiagnostics());
-
+                logger.info(appAttemptID + " got container status for " + "containerID:"
+                        + containerId + ", state:" + containerStatus.getState() + ", exitStatus:"
+                        + containerStatus.getExitStatus() + ", diagnostics:"
+                        + containerStatus.getDiagnostics());
 
                 // Non complete containers should not be here
                 assert containerStatus.getState() == ContainerState.COMPLETE;
 
                 // Ignore containers we know nothing about - probably
                 // from a previous attempt.
-                if (!allocContainers.containsKey(containerId)) {
+                if(!allocContainers.containsKey(containerId)) {
                     logger.warn("Ignoring completed status of " + containerId
                             + "; unknown container (probably launched by previous attempt)");
                     continue;
@@ -366,8 +362,8 @@ public final class ApplicationMaster {
 
                 // Increment counters for completed/failed containers
                 int exitStatus = containerStatus.getExitStatus();
-                if (exitStatus != 0) {
-                    if (ContainerExitStatus.ABORTED != exitStatus) {
+                if(exitStatus != 0) {
+                    if(ContainerExitStatus.ABORTED != exitStatus) {
                         numCompletedContainers.incrementAndGet();
                         numFailedContainers.incrementAndGet();
                     } else {
@@ -381,16 +377,16 @@ public final class ApplicationMaster {
 
             // Ask for more containers if any failed
             int askCount = numContainers - numRequestedContainers.get();
-            if (retryRequest++ < numRetryForFailedContainers && askCount > 0) {
+            if(retryRequest++ < numRetryForFailedContainers && askCount > 0) {
                 logger.info("Retry " + askCount + " requests for failed containers");
-                for (int i = 0; i < askCount; ++i) {
+                for(int i = 0; i < askCount; ++i) {
                     ContainerRequest containerAsk = setupContainerAskForRM();
                     amRMClientAsync.addContainerRequest(containerAsk);
                 }
                 numRequestedContainers.addAndGet(askCount);
             }
 
-            if (numCompletedContainers.get() == numContainers) {
+            if(numCompletedContainers.get() == numContainers) {
                 isFinished = true;
             }
         }
@@ -400,23 +396,21 @@ public final class ApplicationMaster {
             logger.info("Got response from RM for container ask, allocatedCnt="
                     + allocatedContainers.size());
             numAllocatedContainers.addAndGet(allocatedContainers.size());
-            for (Container container: allocatedContainers) {
-                logger.info("Launching a MIX server on a new container: "
-                        + "containerId=" + container.getId()
-                        + ", containerNode=" + container.getNodeId().getHost()
-                            + ":" + container.getNodeId().getPort()
-                        + ", containerNodeURI=" + container.getNodeHttpAddress()
-                        + ", containerResourceMemory=" + container.getResource().getMemory()
-                        + ", containerResourceVirtualCores="
-                            + container.getResource().getVirtualCores());
+            for(Container container : allocatedContainers) {
+                logger.info("Launching a MIX server on a new container: " + "containerId="
+                        + container.getId() + ", containerNode=" + container.getNodeId().getHost()
+                        + ":" + container.getNodeId().getPort() + ", containerNodeURI="
+                        + container.getNodeHttpAddress() + ", containerResourceMemory="
+                        + container.getResource().getMemory() + ", containerResourceVirtualCores="
+                        + container.getResource().getVirtualCores());
 
-                allocContainers.put(container.getId(), container);
+                String cid = container.getId().toString();
+                allocContainers.put(cid, container);
 
                 // Launch and start the container on a separate thread to keep
                 // the main thread unblocked as all containers
                 // may not be allocated at one go.
-                containerExecutor.submit(
-                        new LaunchContainerRunnable(container, cmdInfo));
+                containerExecutor.submit(new LaunchContainerRunnable(container, cmdInfo));
             }
         }
 
@@ -452,16 +446,15 @@ public final class ApplicationMaster {
         @Override
         public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> map) {
             logger.info("Succeeded to start Container " + containerId);
-            final Container container =
-                    appMaster.allocContainers.get(containerId);
-            if (container != null) {
+            final Container container = appMaster.allocContainers.get(containerId);
+            if(container != null) {
                 appMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
                 // Create an invalid entry for the MIX server that is not launched yet and
                 // the first heartbeat message makes this entry valid
                 // in HeartbeatHandler#channelRead0.
-                final NodeId node = NodeId.newInstance(container.getNodeId().getHost(), -1);
-                activeMixServers.put(containerId,
-                        new TimestampedValue<NodeId>(node));
+                NodeId node = NodeId.newInstance(container.getNodeId().getHost(), -1);
+                String containerIdString = containerId.toString();
+                activeMixServers.put(containerIdString, new TimestampedValue<NodeId>(node));
             } else {
                 // Ignore containers we know nothing about - probably
                 // from a previous attempt.
@@ -505,7 +498,7 @@ public final class ApplicationMaster {
     }
 
     private boolean finish() throws InterruptedException {
-        while (!isFinished && (numCompletedContainers.get() != numContainers)) {
+        while(!isFinished && (numCompletedContainers.get() != numContainers)) {
             Thread.sleep(60 * 1000L);
         }
 
@@ -517,7 +510,7 @@ public final class ApplicationMaster {
         nmClientAsync.stop();
 
         // Stop all the netty workers
-        for (EventLoopGroup worker : nettyWorkers) {
+        for(EventLoopGroup worker : nettyWorkers) {
             worker.shutdownGracefully();
         }
 
@@ -526,14 +519,12 @@ public final class ApplicationMaster {
         FinalApplicationStatus appStatus;
         String appMessage = null;
         boolean success = true;
-        if (numFailedContainers.get() == 0 && numCompletedContainers.get() == numContainers) {
+        if(numFailedContainers.get() == 0 && numCompletedContainers.get() == numContainers) {
             appStatus = FinalApplicationStatus.SUCCEEDED;
         } else {
             appStatus = FinalApplicationStatus.FAILED;
-            appMessage = "Diagnostics: "
-                    + "total=" + numContainers
-                    + ", completed=" + numCompletedContainers.get()
-                    + ", allocated=" + numAllocatedContainers.get()
+            appMessage = "Diagnostics: " + "total=" + numContainers + ", completed="
+                    + numCompletedContainers.get() + ", allocated=" + numAllocatedContainers.get()
                     + ", failed=" + numFailedContainers.get();
             logger.info(appMessage);
             success = false;
@@ -566,7 +557,7 @@ public final class ApplicationMaster {
 
         public void init() {
             // If already initialized, return
-            if (isInitialized)
+            if(isInitialized)
                 return;
 
             // Set local resources (e.g., local files or archives)
@@ -574,8 +565,7 @@ public final class ApplicationMaster {
             try {
                 final FileSystem fs = FileSystem.get(conf);
                 final Path mixServJarDst = new Path(sharedDir, mixServJar);
-                localResources.put(mixServJarDst.getName(),
-                        YarnUtils.createLocalResource(fs, mixServJarDst));
+                localResources.put(mixServJarDst.getName(), YarnUtils.createLocalResource(fs, mixServJarDst));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -587,8 +577,7 @@ public final class ApplicationMaster {
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
 
             // Create a command executed in NM
-            final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(
-                    containerMainClass, YarnUtils.getClassPaths(""), containerMemory, vargs, null);
+            final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(containerMainClass, YarnUtils.getClassPaths(""), containerMemory, vargs, null);
 
             // Set a yarn-specific java home
             cmdBuilder.setJavaHome(Environment.JAVA_HOME.$$());

@@ -19,32 +19,36 @@
 package hivemall.mix.network;
 
 import hivemall.mix.yarn.MixYarnEnv;
-import hivemall.utils.collections.TimestampedValue;
+import hivemall.utils.TimestampedValue;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import org.apache.hadoop.yarn.api.records.ContainerId;
-import org.apache.hadoop.yarn.api.records.NodeId;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.hadoop.yarn.api.records.NodeId;
+
 public final class MixServerRequestHandler {
 
-    public abstract static class AbstractMixServerRequestHandler
-            extends SimpleChannelInboundHandler<MixServerRequest> {}
+    public abstract static class AbstractMixServerRequestHandler extends
+            SimpleChannelInboundHandler<MixServerRequest> {
+    }
 
     @ChannelHandler.Sharable
     public final static class MixServerRequestReceiver extends AbstractMixServerRequestHandler {
 
-        final ConcurrentMap<ContainerId, TimestampedValue<NodeId>> activeMixServers;
+        final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers;
 
-        public MixServerRequestReceiver(
-                ConcurrentMap<ContainerId, TimestampedValue<NodeId>> nodes) {
+        public MixServerRequestReceiver(ConcurrentMap<String, TimestampedValue<NodeId>> nodes) {
             this.activeMixServers = nodes;
         }
 
@@ -54,20 +58,19 @@ public final class MixServerRequestHandler {
             // TODO: Return only # of requested resources
             int numServers = 0;
             List<String> urls = new ArrayList<String>();
-            for (TimestampedValue<NodeId> value: activeMixServers.values()) {
+            for(TimestampedValue<NodeId> value : activeMixServers.values()) {
                 final NodeId node = value.getValue();
                 urls.add(node.toString());
             }
-            MixServerRequest msg =
-                    new MixServerRequest(numServers, join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
+            MixServerRequest msg = new MixServerRequest(numServers, join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
             ctx.writeAndFlush(msg);
         }
 
         private static String join(String sep, Iterable<String> elements) {
             StringBuilder sb = new StringBuilder();
-            for (String e : elements) {
-                if (e != null) {
-                    if (sb.length() > 0) {
+            for(String e : elements) {
+                if(e != null) {
+                    if(sb.length() > 0) {
                         sb.append(sep);
                     }
                     sb.append(e);
@@ -77,14 +80,12 @@ public final class MixServerRequestHandler {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-                throws Exception {
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             super.exceptionCaught(ctx, cause);
         }
     }
 
-    public final static class MixServerRequestInitializer
-            extends ChannelInitializer<SocketChannel> {
+    public final static class MixServerRequestInitializer extends ChannelInitializer<SocketChannel> {
 
         private final AbstractMixServerRequestHandler handler;
 
@@ -109,8 +110,7 @@ public final class MixServerRequestHandler {
             out.add(new MixServerRequest(numRequest, URIs));
         }
 
-        private String readString(final ByteBuf in)
-                throws UnsupportedEncodingException {
+        private String readString(final ByteBuf in) throws UnsupportedEncodingException {
             int length = in.readInt();
             if(length == -1) {
                 return null;
@@ -136,7 +136,7 @@ public final class MixServerRequestHandler {
 
         private void writeString(final String s, final ByteBuf buf)
                 throws UnsupportedEncodingException {
-            if (s == null) {
+            if(s == null) {
                 buf.writeInt(-1);
                 return;
             }

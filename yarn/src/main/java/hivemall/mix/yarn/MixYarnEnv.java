@@ -37,4 +37,5 @@ public class MixYarnEnv {
 
     // Separator for MIX servers
     public static final String MIXSERVER_SEPARATOR = ",";
+
 }
