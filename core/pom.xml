@@ -76,9 +76,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hadoop.thirdparty.guava</groupId>
+			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>r09-jarjar</version>
+			<version>11.0.2</version>
 			<scope>provided</scope>
 		</dependency>
 
