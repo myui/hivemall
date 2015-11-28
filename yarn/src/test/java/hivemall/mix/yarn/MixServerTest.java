@@ -87,7 +87,7 @@ public class MixServerTest {
 
         org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler sched = new org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler();
         System.out.println(sched.toString());
-        
+
         if(yarnCluster == null) {
             yarnCluster = new MiniYARNCluster(MixServerTest.class.getSimpleName(), 1, numNodeManager, 1, 1);
             yarnCluster.init(conf);
@@ -175,7 +175,7 @@ public class MixServerTest {
                 Thread.sleep(100L);
                 continue;
             }
-            Assert.assertTrue(YarnApplicationState.RUNNING == appReport.getYarnApplicationState());
+            Assert.assertEquals(YarnApplicationState.RUNNING, appReport.getYarnApplicationState());
             break;
         }
 
