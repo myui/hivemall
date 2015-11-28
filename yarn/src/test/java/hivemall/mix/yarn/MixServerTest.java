@@ -81,7 +81,13 @@ public class MixServerTest {
         conf.set("yarn.log.dir", "target");
         conf.setBoolean(YarnConfiguration.TIMELINE_SERVICE_ENABLED, true);
         conf.set(YarnConfiguration.RM_SCHEDULER, CapacityScheduler.class.getName());
+        String NODE_LABELS_PREFIX = YarnConfiguration.YARN_PREFIX + "node-labels.";
+        String NODE_LABELS_ENABLED = NODE_LABELS_PREFIX + "enabled";
+        conf.setBoolean(NODE_LABELS_ENABLED, true);
 
+        org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler sched = new org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler();
+        System.out.println(sched.toString());
+        
         if(yarnCluster == null) {
             yarnCluster = new MiniYARNCluster(MixServerTest.class.getSimpleName(), 1, numNodeManager, 1, 1);
             yarnCluster.init(conf);
