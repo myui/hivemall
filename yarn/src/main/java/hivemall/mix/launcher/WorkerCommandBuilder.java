@@ -60,7 +60,7 @@ public final class WorkerCommandBuilder {
             envJavaHome = javaHome;
         } else {
             envJavaHome = System.getenv("JAVA_HOME");
-            if(envJavaHome != null) {
+            if(envJavaHome == null) {
                 envJavaHome = System.getProperty("java.home");
             }
         }
