@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.launcher;
-
-import hivemall.utils.lang.StringUtils;
+package hivemall.mix.yarn.launcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,9 +62,9 @@ public final class WorkerCommandBuilder {
                 envJavaHome = System.getProperty("java.home");
             }
         }
-        command.add(StringUtils.join(File.separator, envJavaHome, "bin", "java"));
+        command.add(join(File.separator, envJavaHome, "bin", "java"));
         command.add("-cp");
-        command.add(StringUtils.join(File.pathSeparator, buildClassPath(extraClassPath)));
+        command.add(join(File.pathSeparator, buildClassPath(extraClassPath)));
         command.addAll(Arrays.asList("-Xms" + memoryMb + "m", "-Xmx" + memoryMb + "m"));
         if(javaOps != null)
             command.addAll(javaOps);
@@ -74,6 +72,24 @@ public final class WorkerCommandBuilder {
         if(arguments != null)
             command.addAll(arguments);
         return command;
+    }
+
+    // Join a list of strings using the given separator
+    private static String join(String sep, String... elements) {
+        return join(sep, Arrays.asList(elements));
+    }
+
+    private static String join(String sep, Iterable<String> elements) {
+        StringBuilder sb = new StringBuilder();
+        for(String e : elements) {
+            if(e != null) {
+                if(sb.length() > 0) {
+                    sb.append(sep);
+                }
+                sb.append(e);
+            }
+        }
+        return sb.toString();
     }
 
     // Build the classpath for the application

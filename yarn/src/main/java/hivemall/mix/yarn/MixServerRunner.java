@@ -18,8 +18,9 @@
  */
 package hivemall.mix.yarn;
 
-import hivemall.mix.launcher.WorkerCommandBuilder;
-import hivemall.utils.Log4jPropertyHelper;
+import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
+import hivemall.mix.yarn.utils.Log4jPropertyHelper;
+import hivemall.mix.yarn.utils.YarnUtils;
 
 import java.io.IOException;
 import java.net.URL;

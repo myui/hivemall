@@ -16,13 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.launcher;
+package hivemall.mix.yarn.launcher;
 
-import hivemall.utils.io.IOUtils;
+import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
 
 import java.io.InputStream;
 import java.util.Arrays;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

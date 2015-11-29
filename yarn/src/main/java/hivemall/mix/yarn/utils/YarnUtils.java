@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.yarn;
+package hivemall.mix.yarn.utils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,7 +34,7 @@ import org.apache.hadoop.yarn.util.Records;
 
 public final class YarnUtils {
 
-    static String getClassPaths(String appClassPath) {
+    public static String getClassPaths(String appClassPath) {
         // Create application-specific classpaths
         StringBuilder classPaths = new StringBuilder();
         YarnUtils.addClassPath(Environment.CLASSPATH.$$(), classPaths);
@@ -44,12 +44,12 @@ public final class YarnUtils {
         return classPaths.toString();
     }
 
-    static void addClassPath(String path, StringBuilder classPaths) {
+    public static void addClassPath(String path, StringBuilder classPaths) {
         classPaths.append(path);
         classPaths.append(ApplicationConstants.CLASS_PATH_SEPARATOR);
     }
 
-    static void copyFromLocalFile(FileSystem fs, Path src, Path dst, Map<String, LocalResource> resourceMap)
+    public static void copyFromLocalFile(FileSystem fs, Path src, Path dst, Map<String, LocalResource> resourceMap)
             throws IOException {
         fs.copyFromLocalFile(src, dst);
         if(resourceMap != null) {
@@ -57,7 +57,7 @@ public final class YarnUtils {
         }
     }
 
-    static LocalResource createLocalResource(FileSystem fs, Path path) throws IOException {
+    public static LocalResource createLocalResource(FileSystem fs, Path path) throws IOException {
         LocalResource resource = Records.newRecord(LocalResource.class);
         FileStatus fileStat = fs.getFileStatus(path);
         resource.setResource(ConverterUtils.getYarnUrlFromPath(path));

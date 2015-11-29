@@ -16,24 +16,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.utils;
+package hivemall.mix.yarn.network;
 
-public final class TimestampedValue<T> {
+public class Heartbeat {
 
-    private final T value;
-    private long timestamp;
+    private final String conainerId;
+    private final String host;
+    private final int port;
 
-    public TimestampedValue(T value) {
-        this.value = value;
-        this.timestamp = System.currentTimeMillis();
+    // TODO: Add metrics for MIX servers
+
+    public Heartbeat(String containerid, String host, int port) {
+        this.conainerId = containerid;
+        this.host = host;
+        this.port = port;
     }
 
-    public T getValue() {
-        return value;
+    public String getConainerId() {
+        return conainerId;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public String getHost() {
+        return host;
     }
 
+    public int getPort() {
+        return port;
+    }
 }

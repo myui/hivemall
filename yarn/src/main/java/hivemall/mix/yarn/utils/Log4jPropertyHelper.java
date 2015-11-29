@@ -16,15 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.utils;
-
-import hivemall.utils.io.IOUtils;
+package hivemall.mix.yarn.utils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
 

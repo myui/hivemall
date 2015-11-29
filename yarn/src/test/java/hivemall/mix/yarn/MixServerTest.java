@@ -18,10 +18,9 @@
  */
 package hivemall.mix.yarn;
 
-import hivemall.mix.network.MixServerRequest;
-import hivemall.mix.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
-import hivemall.mix.network.MixServerRequestHandler.MixServerRequestInitializer;
-import hivemall.utils.io.IOUtils;
+import hivemall.mix.yarn.network.MixServerRequest;
+import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
+import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -49,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;

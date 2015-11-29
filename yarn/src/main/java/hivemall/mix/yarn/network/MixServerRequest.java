@@ -16,31 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.network;
+package hivemall.mix.yarn.network;
 
-public class Heartbeat {
+public class MixServerRequest {
 
-    private final String conainerId;
-    private final String host;
-    private final int port;
+    private final int numRequest;
+    private final String allocatedURIs;
 
-    // TODO: Add metrics for MIX servers
-
-    public Heartbeat(String containerid, String host, int port) {
-        this.conainerId = containerid;
-        this.host = host;
-        this.port = port;
+    public MixServerRequest() {
+        this(-1, null);
     }
 
-    public String getConainerId() {
-        return conainerId;
+    public MixServerRequest(int numRequest) {
+        this(numRequest, null);
     }
 
-    public String getHost() {
-        return host;
+    public MixServerRequest(int numRequest, String URIs) {
+        this.numRequest = numRequest;
+        this.allocatedURIs = URIs;
     }
 
-    public int getPort() {
-        return port;
+    public int getNumRequest() {
+        return numRequest;
+    }
+
+    public String getAllocatedURIs() {
+        return allocatedURIs;
+    }
+
+    @Override
+    public String toString() {
+        return "numRequest:" + numRequest + " allocatedURIs:" + allocatedURIs;
     }
 }

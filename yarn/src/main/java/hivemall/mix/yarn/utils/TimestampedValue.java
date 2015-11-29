@@ -16,36 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.network;
+package hivemall.mix.yarn.utils;
 
-public class MixServerRequest {
+public final class TimestampedValue<T> {
 
-    private final int numRequest;
-    private final String allocatedURIs;
+    private final T value;
+    private long timestamp;
 
-    public MixServerRequest() {
-        this(-1, null);
+    public TimestampedValue(T value) {
+        this.value = value;
+        this.timestamp = System.currentTimeMillis();
     }
 
-    public MixServerRequest(int numRequest) {
-        this(numRequest, null);
+    public T getValue() {
+        return value;
     }
 
-    public MixServerRequest(int numRequest, String URIs) {
-        this.numRequest = numRequest;
-        this.allocatedURIs = URIs;
+    public long getTimestamp() {
+        return timestamp;
     }
 
-    public int getNumRequest() {
-        return numRequest;
-    }
-
-    public String getAllocatedURIs() {
-        return allocatedURIs;
-    }
-
-    @Override
-    public String toString() {
-        return "numRequest:" + numRequest + " allocatedURIs:" + allocatedURIs;
-    }
 }
