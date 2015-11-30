@@ -36,7 +36,7 @@ public final class WorkerCommandBuilder {
     private String javaHome;
 
     public WorkerCommandBuilder(Class<?> mainClass, String extraClassPath, int memoryMb, List<String> arguments, List<String> javaOps) {
-        this(mainClass.getCanonicalName(), extraClassPath, memoryMb, arguments, javaOps);
+        this(mainClass.getName(), extraClassPath, memoryMb, arguments, javaOps);
     }
 
     public WorkerCommandBuilder(String mainClass, String extraClassPath, int memoryMb, List<String> arguments, List<String> javaOps) {
