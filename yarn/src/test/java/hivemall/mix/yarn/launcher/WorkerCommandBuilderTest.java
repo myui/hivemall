@@ -22,6 +22,7 @@ import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -35,7 +36,8 @@ public class WorkerCommandBuilderTest {
         String output = null;
         int exitCode = -1;
         try {
-            final Process process = new ProcessBuilder(cmdBuilder.buildCommand()).start();
+            List<String> cmd = cmdBuilder.buildCommand();
+            final Process process = new ProcessBuilder(cmd).start();
             InputStream input = process.getInputStream();
             output = IOUtils.toString(input);
             exitCode = process.waitFor();
@@ -48,7 +50,7 @@ public class WorkerCommandBuilderTest {
 
     public static class Launcher {
 
-        public static void main(String args[]) {
+        public static void main(String[] args) {
             System.out.print("This is a test program! args=" + Arrays.toString(args));
         }
     }
