@@ -18,8 +18,6 @@
  */
 package hivemall.mix.yarn.launcher;
 
-import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
-
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
