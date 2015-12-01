@@ -475,16 +475,11 @@ public final class ApplicationMaster {
         @Override
         public void onContainerStopped(ContainerId containerId) {
             logger.info("Succeeded to stop Container " + containerId);
-            appMaster.allocContainers.remove(containerId);
-            appMaster.activeMixServers.remove(containerId);
         }
 
         @Override
         public void onStartContainerError(ContainerId containerId, Throwable throwable) {
             logger.error("Failed to start Container " + containerId);
-            appMaster.allocContainers.remove(containerId);
-            appMaster.activeMixServers.remove(containerId);
-            appMaster.numFailedContainers.incrementAndGet();
         }
 
         @Override
@@ -495,8 +490,6 @@ public final class ApplicationMaster {
         @Override
         public void onStopContainerError(ContainerId containerId, Throwable throwable) {
             logger.error("Failed to stop Container " + containerId);
-            appMaster.allocContainers.remove(containerId);
-            appMaster.activeMixServers.remove(containerId);
         }
     }
 
