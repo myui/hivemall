@@ -88,6 +88,7 @@ public final class MixServerRunner {
             try {
                 boolean doRun = mixServerRunner.init(args);
                 if(!doRun) {
+                    logger.error("MixServer failed to start");
                     System.exit(0);
                 }
             } catch (IllegalArgumentException e) {
@@ -157,7 +158,12 @@ public final class MixServerRunner {
             return false;
         }
 
-        appMasterJar = new Path(cliParser.getOptionValue("jar"));
+        final String appMasterJarPath = cliParser.getOptionValue("jar");
+        if (appMasterJarPath == null) {
+            throw new IllegalArgumentException(
+                    "Jar not specified for an application master with -jar");
+        }
+        appMasterJar = new Path(appMasterJarPath);
         amQueue = cliParser.getOptionValue("queue", "default");
         amPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
         amVCores = Integer.parseInt(cliParser.getOptionValue("master_vcores", "1"));
