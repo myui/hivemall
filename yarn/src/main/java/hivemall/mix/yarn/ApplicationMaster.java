@@ -139,7 +139,7 @@ public final class ApplicationMaster {
     private final AtomicInteger numCompletedContainers = new AtomicInteger();
     private final AtomicInteger numFailedContainers = new AtomicInteger();
 
-    private volatile boolean isFinished = false;
+    private volatile boolean isTerminated = false;
 
     public static void main(String[] args) {
         boolean result = false;
@@ -388,7 +388,7 @@ public final class ApplicationMaster {
             }
 
             if(numCompletedContainers.get() == numContainers) {
-                isFinished = true;
+                isTerminated = true;
             }
         }
 
@@ -417,7 +417,7 @@ public final class ApplicationMaster {
 
         @Override
         public void onShutdownRequest() {
-            isFinished = true;
+            isTerminated = true;
         }
 
         @Override
@@ -432,7 +432,7 @@ public final class ApplicationMaster {
 
         @Override
         public void onError(Throwable throwable) {
-            isFinished = true;
+            isTerminated = true;
             amRMClientAsync.stop();
         }
     }
@@ -500,7 +500,7 @@ public final class ApplicationMaster {
     }
 
     private boolean finish() throws InterruptedException {
-        while(!isFinished && (numCompletedContainers.get() != numContainers)) {
+        while(!isTerminated && (numCompletedContainers.get() != numContainers)) {
             Thread.sleep(60 * 1000L);
         }
 
