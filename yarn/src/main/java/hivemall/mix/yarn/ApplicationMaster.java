@@ -425,8 +425,9 @@ public final class ApplicationMaster {
 
         @Override
         public float getProgress() {
-            // Set progress to deliver to RM on next heartbeat
-            return (float) numCompletedContainers.get() / numContainers;
+            // We assume that MIX servers has no progress,
+            // so this method always returns 0.
+            return 0.0f;
         }
 
         @Override
@@ -578,7 +579,7 @@ public final class ApplicationMaster {
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
 
             // Workaround: Containers killed when the amounts of memory for containers and
-            // mix servers (JVMs) are the same with each other, so mix servers
+            // MIX servers (JVMs) are the same with each other, so MIX servers
             // have smaller memory space than containers.
             int mixServMemory = (int) (containerMemory * 0.80);
 
