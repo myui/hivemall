@@ -36,4 +36,8 @@ public final class TimestampedValue<T> {
         return timestamp;
     }
 
+    @Override
+    public String toString() {
+        return value.toString();
+    }
 }

@@ -37,6 +37,7 @@ import io.netty.handler.logging.LoggingHandler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -502,6 +503,18 @@ public final class ApplicationMaster {
     private boolean finish() throws InterruptedException {
         while(!isTerminated) {
             Thread.sleep(60 * 1000L);
+
+            // Show active MIX servers if info-loglevel enabled
+            if(logger.isInfoEnabled()) {
+                StringBuilder sb = new StringBuilder();
+                for(TimestampedValue<NodeId> node : activeMixServers.values()) {
+                    if(sb.length() > 0) {
+                        sb.append(",");
+                    }
+                    sb.append(node);
+                }
+                logger.info("List of active MIX servers: " + sb.toString());
+            }
         }
 
         // First, shutdown the executor for launchers
@@ -579,7 +592,7 @@ public final class ApplicationMaster {
             // Workaround: Containers killed when the amounts of memory for containers and
             // MIX servers (JVMs) are the same with each other, so MIX servers
             // have smaller memory space than containers.
-            int mixServMemory = (int) (containerMemory * 0.80);
+            int mixServMemory = (int) (containerMemory * 0.70);
 
             // Create a command executed in NM
             final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(containerMainClass, YarnUtils.getClassPaths(""), mixServMemory, vargs, null);
