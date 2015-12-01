@@ -527,7 +527,7 @@ public final class ApplicationMaster {
             appMessage = "Diagnostics: " + "total=" + numContainers + ", completed="
                     + numCompletedContainers.get() + ", allocated=" + numAllocatedContainers.get()
                     + ", failed=" + numFailedContainers.get();
-            logger.info(appMessage);
+            logger.warn(appMessage);
             success = false;
         }
 
