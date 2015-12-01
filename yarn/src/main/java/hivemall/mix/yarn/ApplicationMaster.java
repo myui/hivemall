@@ -312,16 +312,15 @@ public final class ApplicationMaster {
                 // Wait at most two-times intervals for heartbeats
                 if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
                     // If expired, restart the MIX server
-                    String id = e.getKey();
-                    NodeId node = value.getValue();
-                    Container container = allocContainers.get(id);
+                    final String containerId = e.getKey();
+                    final NodeId node = value.getValue();
+                    final Container container = allocContainers.get(containerId);
                     if(container != null) {
-                        // TODO: Restart the failed MIX server.
-                        ContainerId cid = container.getId();
-                        amRMClientAsync.releaseAssignedContainer(cid);
+                        // Released containers exited with ContainerExitStatus.ABORTED
+                        amRMClientAsync.releaseAssignedContainer(container.getId());
                         itor.remove();
                     } else {
-                        logger.warn(node + " failed though, " + id
+                        logger.warn(node + " failed though, " + containerId
                                 + " already has been removed from assigned containers");
                     }
                 }
@@ -370,13 +369,13 @@ public final class ApplicationMaster {
                         break;
                     }
                     case ContainerExitStatus.DISKS_FAILED:
-                    case ContainerExitStatus.PREEMPTED: {
+                    case ContainerExitStatus.PREEMPTED:
+                    case ContainerExitStatus.ABORTED: { // Released by MonitorContainerRunnable#run()
                         numFailedContainers.incrementAndGet();
-                        break; // Retry launching
+                        // Retry launching
+                        break;
                     }
-                    // Exit ASAP if it has conditions below
                     case ContainerExitStatus.INVALID:
-                    case ContainerExitStatus.ABORTED:
                     case 143: // Killed by yarn
                     default: {
                         numFailedContainers.incrementAndGet();
@@ -415,8 +414,7 @@ public final class ApplicationMaster {
                         + container.getResource().getMemory() + ", containerResourceVirtualCores="
                         + container.getResource().getVirtualCores());
 
-                String cid = container.getId().toString();
-                allocContainers.put(cid, container);
+                allocContainers.put(container.getId().toString(), container);
 
                 // Launch and start the container on a separate thread to keep
                 // the main thread unblocked as all containers
@@ -464,8 +462,7 @@ public final class ApplicationMaster {
                 // the first heartbeat message makes this entry valid
                 // in HeartbeatHandler#channelRead0.
                 NodeId node = NodeId.newInstance(container.getNodeId().getHost(), -1);
-                String containerIdString = containerId.toString();
-                activeMixServers.put(containerIdString, new TimestampedValue<NodeId>(node));
+                activeMixServers.put(containerId.toString(), new TimestampedValue<NodeId>(node));
             } else {
                 // Ignore containers we know nothing about - probably
                 // from a previous attempt.
@@ -508,6 +505,10 @@ public final class ApplicationMaster {
             if(logger.isInfoEnabled()) {
                 StringBuilder sb = new StringBuilder();
                 for(TimestampedValue<NodeId> node : activeMixServers.values()) {
+                    if(node.getValue().getPort() == -1) {
+                        // Skip inactive MIX servers
+                        continue;
+                    }
                     if(sb.length() > 0) {
                         sb.append(",");
                     }
