@@ -135,6 +135,7 @@ public final class ApplicationMaster {
     private final Set<EventLoopGroup> nettyWorkers = new HashSet<EventLoopGroup>();
 
     // Trackers for container status
+    private final AtomicInteger numAllocatedContainers = new AtomicInteger();
     private final AtomicInteger numRequestedContainers = new AtomicInteger();
     private final AtomicInteger numFailedContainers = new AtomicInteger();
 
@@ -150,7 +151,7 @@ public final class ApplicationMaster {
             }
             appMaster.run();
             result = appMaster.finish();
-        } catch (Throwable t) {
+        } catch(Throwable t) {
             logger.fatal("Error running AM", t);
             ExitUtil.terminate(1, t);
         }
@@ -359,11 +360,13 @@ public final class ApplicationMaster {
                 allocContainers.remove(containerId);
                 activeMixServers.remove(containerId);
 
+                // Adjust resource metrics
+                numAllocatedContainers.decrementAndGet();
                 numRequestedContainers.decrementAndGet();
 
                 // Retry if container has some exit conditions
                 int exitStatus = containerStatus.getExitStatus();
-                switch (exitStatus) {
+                switch(exitStatus) {
                     case ContainerExitStatus.SUCCESS: {
                         isTerminated = true;
                         break;
@@ -387,10 +390,10 @@ public final class ApplicationMaster {
 
             // Retry launching containers if not terminated
             int reAskCount = numContainers - numRequestedContainers.get();
-            if (!isTerminated && reAskCount > 0) {
-                if (retryRequest++ < numRetryForFailedContainers) {
+            if(!isTerminated && reAskCount > 0) {
+                if(retryRequest++ < numRetryForFailedContainers) {
                     logger.info("Retry " + reAskCount + " requests for failed containers");
-                    for (int i = 0; i < reAskCount; ++i) {
+                    for(int i = 0; i < reAskCount; i++) {
                         ContainerRequest containerAsk = setupContainerAskForRM();
                         amRMClientAsync.addContainerRequest(containerAsk);
                     }
@@ -407,6 +410,12 @@ public final class ApplicationMaster {
             logger.info("Got response from RM for container ask, allocatedCnt="
                     + allocatedContainers.size());
             for(Container container : allocatedContainers) {
+                // TODO: Why this condition below happens?
+                if (numAllocatedContainers.get() >= numContainers) {
+                    logger.warn("# of allocated containers exceeded: " + container.getId());
+                    break;
+                }
+
                 logger.info("Launching a MIX server on a new container: " + "containerId="
                         + container.getId() + ", containerNode=" + container.getNodeId().getHost()
                         + ":" + container.getNodeId().getPort() + ", containerNodeURI="
@@ -415,6 +424,7 @@ public final class ApplicationMaster {
                         + container.getResource().getVirtualCores());
 
                 allocContainers.put(container.getId().toString(), container);
+                numAllocatedContainers.incrementAndGet();
 
                 // Launch and start the container on a separate thread to keep
                 // the main thread unblocked as all containers
@@ -501,20 +511,20 @@ public final class ApplicationMaster {
         while(!isTerminated) {
             Thread.sleep(60 * 1000L);
 
-            // Show active MIX servers if info-loglevel enabled
+            // Show registered MIX servers if info-loglevel enabled
             if(logger.isInfoEnabled()) {
                 StringBuilder sb = new StringBuilder();
                 for(TimestampedValue<NodeId> node : activeMixServers.values()) {
-                    if(node.getValue().getPort() == -1) {
-                        // Skip inactive MIX servers
-                        continue;
-                    }
                     if(sb.length() > 0) {
                         sb.append(",");
                     }
-                    sb.append(node);
+                    if (node.getValue().getPort() == -1) {
+                        sb.append(node.getValue().getHost() + ":UNINITIALIZED");
+                    } else {
+                        sb.append(node);
+                    }
                 }
-                logger.info("List of active MIX servers: " + sb.toString());
+                logger.info("List of registered MIX servers: " + sb.toString());
             }
         }
 
