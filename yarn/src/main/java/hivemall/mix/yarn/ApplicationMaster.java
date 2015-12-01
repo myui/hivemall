@@ -525,7 +525,7 @@ public final class ApplicationMaster {
             appStatus = FinalApplicationStatus.SUCCEEDED;
         } else {
             appStatus = FinalApplicationStatus.FAILED;
-            appMessage = "Diagnostics: failed=" + numFailedContainers.get();
+            appMessage = "Total failed count for counters:" + numFailedContainers.get();
             logger.warn(appMessage);
             success = false;
         }

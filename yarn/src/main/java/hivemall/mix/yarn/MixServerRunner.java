@@ -81,6 +81,9 @@ public final class MixServerRunner {
 
     private ApplicationId appId;
 
+    // Check if AM finished
+    private volatile boolean isFinished = false;
+
     public static void main(String[] args) {
         boolean result = false;
         try {
@@ -296,6 +299,16 @@ public final class MixServerRunner {
         // Submit the application to AM
         yarnClient.submitApplication(appContext);
 
+        // Add a hook in case of shutdown requested by users
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                if (!isFinished) {
+                    forceKillApplication();
+                }
+            }
+        });
+
         return monitorApplication();
     }
 
@@ -311,9 +324,13 @@ public final class MixServerRunner {
      * @throws YarnException
      * @throws IOException
      */
-    public void forceKillApplication() throws YarnException, IOException {
+    public void forceKillApplication() {
         assert appId != null;
-        yarnClient.killApplication(appId);
+        try {
+            yarnClient.killApplication(appId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
