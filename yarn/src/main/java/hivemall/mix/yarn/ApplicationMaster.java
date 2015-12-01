@@ -406,6 +406,7 @@ public final class ApplicationMaster {
 
             // Finish AM if no request
             if(numRequestedContainers.get() == 0) {
+                logger.warn("Allocation request gone for containers");
                 isTerminated = true;
             }
         }

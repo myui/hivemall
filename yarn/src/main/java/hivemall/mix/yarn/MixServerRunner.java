@@ -309,7 +309,9 @@ public final class MixServerRunner {
             }
         });
 
-        return monitorApplication();
+        boolean success = monitorApplication();
+        isFinished = true;
+        return success;
     }
 
     private static Path createTempDir(FileSystem fs, ApplicationId appId) throws IOException {
@@ -348,33 +350,31 @@ public final class MixServerRunner {
             Thread.sleep(60 * 1000L);
 
             // Get application report for the appId we are interested in
-            ApplicationReport report = yarnClient.getApplicationReport(appId);
+            final ApplicationReport report = yarnClient.getApplicationReport(appId);
+            final YarnApplicationState state = report.getYarnApplicationState();
+            final FinalApplicationStatus dsStatus = report.getFinalApplicationStatus();
+
             logger.info("Got application report from ASM for " + "appId:" + appId.getId()
                     + ", clientToAMToken:" + report.getClientToAMToken() + ", appDiagnostics:"
                     + report.getDiagnostics() + ", appMasterHost:" + report.getHost()
                     + ", appQueue:" + report.getQueue() + ", appMasterRpcPort:"
                     + report.getRpcPort() + ", appStartTime:" + report.getStartTime()
-                    + ", yarnAppState:" + report.getYarnApplicationState().toString()
-                    + ", appFinalState:" + report.getFinalApplicationStatus().toString()
+                    + ", yarnAppState:" + state + ", appFinalState:" + dsStatus
                     + ", appTrackingUrl:" + report.getTrackingUrl() + ", appUser:"
                     + report.getUser());
 
-            YarnApplicationState state = report.getYarnApplicationState();
-            FinalApplicationStatus dsStatus = report.getFinalApplicationStatus();
-            String appStateMsg = "(YarnState:" + state.toString() + " DSFinalStatus:"
-                    + dsStatus.toString() + ")";
             if(YarnApplicationState.FINISHED == state) {
                 if(FinalApplicationStatus.SUCCEEDED == dsStatus) {
                     return true;
                 } else {
-                    logger.info("MixServer did finished unsuccessfully " + appStateMsg);
+                    logger.info("MixServer did finished unsuccessfully");
                     return false;
                 }
             } else if(YarnApplicationState.KILLED == state) {
-                logger.info("Killed by the user request " + appStateMsg);
+                logger.info("Killed by the user request");
                 return true;
             } else if(YarnApplicationState.FAILED == state) {
-                logger.info("MixServer did not finish " + appStateMsg);
+                logger.info("MixServer did not finish");
                 return false;
             }
         }
