@@ -106,6 +106,12 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
+						<configuration>
+							<locale>en_US</locale>
+							<docencoding>UTF-8</docencoding>
+							<show>protected</show>
+							<linksource>true</linksource>
+						</configuration>
 						<executions>
 							<execution>
 								<id>attach-javadocs</id>
@@ -146,7 +152,28 @@
 		<outputDirectory>target/classes</outputDirectory>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<testOutputDirectory>target/test-classes</testOutputDirectory>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>net.revelc.code</groupId>
+					<artifactId>formatter-maven-plugin</artifactId>
+					<version>0.5.2</version>
+					<configuration>
+						<configFile>${project.parent.basedir}/resources/eclipse-style.xml</configFile>
+						<encoding>UTF-8</encoding>
+						<lineEnding>LF</lineEnding>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
 		<plugins>
+			<plugin>
+				<!-- mvn formatter:format -->
+				<groupId>net.revelc.code</groupId>
+				<artifactId>formatter-maven-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
@@ -160,8 +187,10 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>${javac.source}</source>
-					<target>${javac.target}</target>
+					<source>1.6</source>
+					<target>1.6</target>
+					<debug>true</debug>
+					<debuglevel>lines,vars,source</debuglevel>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
