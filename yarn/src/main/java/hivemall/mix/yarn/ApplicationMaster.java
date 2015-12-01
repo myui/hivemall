@@ -577,8 +577,13 @@ public final class ApplicationMaster {
             vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
 
+            // Workaround: Containers killed when the amounts of memory for containers and
+            // mix servers (JVMs) are the same with each other, so mix servers
+            // have smaller memory space than containers.
+            int mixServMemory = (int) (containerMemory * 0.80);
+
             // Create a command executed in NM
-            final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(containerMainClass, YarnUtils.getClassPaths(""), containerMemory, vargs, null);
+            final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(containerMainClass, YarnUtils.getClassPaths(""), mixServMemory, vargs, null);
 
             // Set a yarn-specific java home
             cmdBuilder.setJavaHome(Environment.JAVA_HOME.$$());
