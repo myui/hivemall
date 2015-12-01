@@ -337,7 +337,7 @@ public final class ApplicationMaster {
             logger.info("Got response from RM for container ask, completedCnt="
                     + completedContainers.size());
             for(ContainerStatus containerStatus : completedContainers) {
-                final ContainerId containerId = containerStatus.getContainerId();
+                final String containerId = containerStatus.getContainerId().toString();
 
                 logger.info(appAttemptID + " got container status for " + "containerID:"
                         + containerId + ", state:" + containerStatus.getState() + ", exitStatus:"
@@ -350,7 +350,7 @@ public final class ApplicationMaster {
                 // Ignore containers we know nothing about - probably
                 // from a previous attempt.
                 if(!allocContainers.containsKey(containerId)) {
-                    logger.warn("Ignoring completed status of " + containerId
+                    logger.warn("Ignored completed status of " + containerId
                             + "; unknown container (probably launched by previous attempt)");
                     continue;
                 }
@@ -450,7 +450,7 @@ public final class ApplicationMaster {
         @Override
         public void onContainerStarted(ContainerId containerId, Map<String, ByteBuffer> map) {
             logger.info("Succeeded to start Container " + containerId);
-            final Container container = appMaster.allocContainers.get(containerId);
+            final Container container = appMaster.allocContainers.get(containerId.toString());
             if(container != null) {
                 appMaster.nmClientAsync.getContainerStatusAsync(containerId, container.getNodeId());
                 // Create an invalid entry for the MIX server that is not launched yet and
@@ -462,8 +462,8 @@ public final class ApplicationMaster {
             } else {
                 // Ignore containers we know nothing about - probably
                 // from a previous attempt.
-                logger.info("Ignoring completed status of " + containerId
-                        + "; unknown container (probably launched by previous attempt)");
+                logger.warn("Ignored unknown container (" + containerId + "); "
+                        + "probably launched by previous attempt)");
             }
         }
 
