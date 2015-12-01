@@ -134,9 +134,7 @@ public final class ApplicationMaster {
     private final Set<EventLoopGroup> nettyWorkers = new HashSet<EventLoopGroup>();
 
     // Trackers for container status
-    private final AtomicInteger numAllocatedContainers = new AtomicInteger();
     private final AtomicInteger numRequestedContainers = new AtomicInteger();
-    private final AtomicInteger numCompletedContainers = new AtomicInteger();
     private final AtomicInteger numFailedContainers = new AtomicInteger();
 
     private volatile boolean isTerminated = false;
@@ -361,34 +359,40 @@ public final class ApplicationMaster {
                 allocContainers.remove(containerId);
                 activeMixServers.remove(containerId);
 
-                // Increment counters for completed/failed containers
+                numRequestedContainers.decrementAndGet();
+
+                // Retry if container has some exit conditions
                 int exitStatus = containerStatus.getExitStatus();
-                if(exitStatus != 0) {
-                    if(ContainerExitStatus.ABORTED != exitStatus) {
-                        numCompletedContainers.incrementAndGet();
+                switch (exitStatus) {
+                    case ContainerExitStatus.DISKS_FAILED:
+                    case ContainerExitStatus.PREEMPTED: {
                         numFailedContainers.incrementAndGet();
-                    } else {
-                        numAllocatedContainers.decrementAndGet();
-                        numRequestedContainers.decrementAndGet();
+                        break; // Retry launching
                     }
+                    // Exit ASAP if it has conditions below
+                    case ContainerExitStatus.INVALID:
+                    case ContainerExitStatus.ABORTED:
+                    case 143: // Killed by yarn or clients
+                    default: {
+                        isTerminated = true;
+                    }
+                }
+            }
+
+            // Retry launching containers if not terminated
+            int reAskCount = numContainers - numRequestedContainers.get();
+            if (!isTerminated && reAskCount > 0) {
+                if (retryRequest++ < numRetryForFailedContainers) {
+                    logger.info("Retry " + reAskCount + " requests for failed containers");
+                    for (int i = 0; i < reAskCount; ++i) {
+                        ContainerRequest containerAsk = setupContainerAskForRM();
+                        amRMClientAsync.addContainerRequest(containerAsk);
+                    }
+                    numRequestedContainers.addAndGet(reAskCount);
                 } else {
-                    numCompletedContainers.incrementAndGet();
+                    logger.warn("Allowable #retries exceeded; "
+                            + numRequestedContainers.get() + " MIX servers alive");
                 }
-            }
-
-            // Ask for more containers if any failed
-            int askCount = numContainers - numRequestedContainers.get();
-            if(retryRequest++ < numRetryForFailedContainers && askCount > 0) {
-                logger.info("Retry " + askCount + " requests for failed containers");
-                for(int i = 0; i < askCount; ++i) {
-                    ContainerRequest containerAsk = setupContainerAskForRM();
-                    amRMClientAsync.addContainerRequest(containerAsk);
-                }
-                numRequestedContainers.addAndGet(askCount);
-            }
-
-            if(numCompletedContainers.get() == numContainers) {
-                isTerminated = true;
             }
         }
 
@@ -396,7 +400,6 @@ public final class ApplicationMaster {
         public void onContainersAllocated(List<Container> allocatedContainers) {
             logger.info("Got response from RM for container ask, allocatedCnt="
                     + allocatedContainers.size());
-            numAllocatedContainers.addAndGet(allocatedContainers.size());
             for(Container container : allocatedContainers) {
                 logger.info("Launching a MIX server on a new container: " + "containerId="
                         + container.getId() + ", containerNode=" + container.getNodeId().getHost()
@@ -433,7 +436,6 @@ public final class ApplicationMaster {
         @Override
         public void onError(Throwable throwable) {
             isTerminated = true;
-            amRMClientAsync.stop();
         }
     }
 
@@ -482,7 +484,6 @@ public final class ApplicationMaster {
             logger.error("Failed to start Container " + containerId);
             appMaster.allocContainers.remove(containerId);
             appMaster.activeMixServers.remove(containerId);
-            appMaster.numCompletedContainers.incrementAndGet();
             appMaster.numFailedContainers.incrementAndGet();
         }
 
@@ -500,7 +501,7 @@ public final class ApplicationMaster {
     }
 
     private boolean finish() throws InterruptedException {
-        while(!isTerminated && (numCompletedContainers.get() != numContainers)) {
+        while(!isTerminated) {
             Thread.sleep(60 * 1000L);
         }
 
@@ -516,18 +517,16 @@ public final class ApplicationMaster {
             worker.shutdownGracefully();
         }
 
-        // When the application completes, it should send a finish
-        // application signal to the RM.
+        // When the application has any failure, it logs #failures and
+        // returns false; otherwise, true.
         FinalApplicationStatus appStatus;
         String appMessage = null;
         boolean success = true;
-        if(numFailedContainers.get() == 0 && numCompletedContainers.get() == numContainers) {
+        if(numFailedContainers.get() == 0) {
             appStatus = FinalApplicationStatus.SUCCEEDED;
         } else {
             appStatus = FinalApplicationStatus.FAILED;
-            appMessage = "Diagnostics: " + "total=" + numContainers + ", completed="
-                    + numCompletedContainers.get() + ", allocated=" + numAllocatedContainers.get()
-                    + ", failed=" + numFailedContainers.get();
+            appMessage = "Diagnostics: failed=" + numFailedContainers.get();
             logger.warn(appMessage);
             success = false;
         }
