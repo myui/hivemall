@@ -364,6 +364,10 @@ public final class ApplicationMaster {
                 // Retry if container has some exit conditions
                 int exitStatus = containerStatus.getExitStatus();
                 switch (exitStatus) {
+                    case ContainerExitStatus.SUCCESS: {
+                        isTerminated = true;
+                        break;
+                    }
                     case ContainerExitStatus.DISKS_FAILED:
                     case ContainerExitStatus.PREEMPTED: {
                         numFailedContainers.incrementAndGet();
@@ -372,9 +376,11 @@ public final class ApplicationMaster {
                     // Exit ASAP if it has conditions below
                     case ContainerExitStatus.INVALID:
                     case ContainerExitStatus.ABORTED:
-                    case 143: // Killed by yarn or clients
+                    case 143: // Killed by yarn
                     default: {
+                        numFailedContainers.incrementAndGet();
                         isTerminated = true;
+                        break;
                     }
                 }
             }
