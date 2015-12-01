@@ -403,6 +403,11 @@ public final class ApplicationMaster {
                             + numRequestedContainers.get() + " MIX servers alive");
                 }
             }
+
+            // Finish AM if no request
+            if(numRequestedContainers.get() == 0) {
+                isTerminated = true;
+            }
         }
 
         @Override
