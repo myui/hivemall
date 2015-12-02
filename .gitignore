@@ -2,9 +2,7 @@
 /.fatjar
 /build
 target
-core/target/*
-mixserv/target/*
-nlp/target/*
+logs
 .git
 .settings
 *.swp

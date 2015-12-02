@@ -17,23 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Start a MIX server instance on this machine
-
 if [ "$HIVEMALL_HOME" == "" ]; then
-  echo env HIVEMALL_HOME not defined
-  exit 1
+  if [ -e ../bin/${0##*/} ]; then
+    HIVEMALL_HOME=".."
+  elif [ -e ./bin/${0##*/} ]; then
+    HIVEMALL_HOME="."
+  else
+    echo "env HIVEMALL_HOME not defined"
+    exit 1
+  fi
 fi
 
-# Load a version number from a VERSION file
-VERSION=`cat "$HIVEMALL_HOME/VERSION"`
-JARFILE="$HIVEMALL_HOME/target/hivemall-mixserv-$VERSION-fat.jar"
-
-if [ -f "$JARFILE" ]; then
-  JMXOPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false"
-  VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $VMOPTS"
-  # VMOPTS="-Xmx4g -da -server -XX:+PrintGCDetails -XX:+UseNUMA -XX:+UseParallelGC $JMXOPTS $VMOPTS"
-  java ${VMOPTS} -jar ${JARFILE} $@
-else
-  echo executable jar ${JARFILE} not found
-fi
-
+/bin/sh "$HIVEMALL_HOME/bin/mixserv_daemon.sh" stop
