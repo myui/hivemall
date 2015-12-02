@@ -56,8 +56,8 @@ import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
-public final class MixServerRunner {
-    private static final Log logger = LogFactory.getLog(MixServerRunner.class);
+public final class MixClusterRunner {
+    private static final Log logger = LogFactory.getLog(MixClusterRunner.class);
 
     private final YarnClient yarnClient;
     private final Options opts;
@@ -87,19 +87,19 @@ public final class MixServerRunner {
     public static void main(String[] args) {
         boolean result = false;
         try {
-            MixServerRunner mixServerRunner = new MixServerRunner();
+            MixClusterRunner mixClusterRunner = new MixClusterRunner();
             try {
-                boolean doRun = mixServerRunner.init(args);
+                boolean doRun = mixClusterRunner.init(args);
                 if(!doRun) {
                     logger.error("MixServer failed to start");
                     System.exit(0);
                 }
             } catch (IllegalArgumentException e) {
                 System.err.println(e.getLocalizedMessage());
-                mixServerRunner.printUsage();
+                mixClusterRunner.printUsage();
                 System.exit(-1);
             }
-            result = mixServerRunner.run();
+            result = mixClusterRunner.run();
         } catch (Throwable t) {
             logger.fatal("Error running MixServerRunner", t);
             System.exit(1);
@@ -112,11 +112,11 @@ public final class MixServerRunner {
         System.exit(2);
     }
 
-    public MixServerRunner() throws Exception {
+    public MixClusterRunner() throws Exception {
         this(new YarnConfiguration());
     }
 
-    public MixServerRunner(Configuration conf) {
+    public MixClusterRunner(Configuration conf) {
         this.yarnClient = YarnClient.createYarnClient();
         yarnClient.init(conf);
         this.conf = conf;
@@ -196,7 +196,7 @@ public final class MixServerRunner {
         if(cliParser.hasOption("log_properties")) {
             log4jPropFile = new Path(cliParser.getOptionValue("log_properties"));
             try {
-                Log4jPropertyHelper.updateLog4jConfiguration(MixServerRunner.class, log4jPropFile.toString());
+                Log4jPropertyHelper.updateLog4jConfiguration(MixClusterRunner.class, log4jPropFile.toString());
             } catch (Exception e) {
                 logger.warn("Can not set up custom log4j properties. " + e);
             }
@@ -236,7 +236,7 @@ public final class MixServerRunner {
 
         // Set an application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
-        appContext.setApplicationName(MixServerRunner.class.getName());
+        appContext.setApplicationName(MixClusterRunner.class.getName());
         appId = appContext.getApplicationId();
 
         // Local resources (e.g., jar and local files) for AM
@@ -365,19 +365,19 @@ public final class MixServerRunner {
             // Get application report for the appId we are interested in
             final ApplicationReport report = yarnClient.getApplicationReport(appId);
             final YarnApplicationState state = report.getYarnApplicationState();
-            final FinalApplicationStatus dsStatus = report.getFinalApplicationStatus();
+            final FinalApplicationStatus exitStatus = report.getFinalApplicationStatus();
 
             logger.info("Got application report from ASM for " + "appId:" + appId.getId()
                     + ", clientToAMToken:" + report.getClientToAMToken() + ", appDiagnostics:"
                     + report.getDiagnostics() + ", appMasterHost:" + report.getHost()
                     + ", appQueue:" + report.getQueue() + ", appMasterRpcPort:"
                     + report.getRpcPort() + ", appStartTime:" + report.getStartTime()
-                    + ", yarnAppState:" + state + ", appFinalState:" + dsStatus
+                    + ", yarnAppState:" + state + ", appFinalState:" + exitStatus
                     + ", appTrackingUrl:" + report.getTrackingUrl() + ", appUser:"
                     + report.getUser());
 
             if(YarnApplicationState.FINISHED == state) {
-                if(FinalApplicationStatus.SUCCEEDED == dsStatus) {
+                if(FinalApplicationStatus.SUCCEEDED == exitStatus) {
                     return true;
                 } else {
                     logger.info("MixServer did finished unsuccessfully");

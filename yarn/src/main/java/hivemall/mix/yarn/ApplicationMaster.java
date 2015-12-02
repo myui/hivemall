@@ -233,7 +233,7 @@ public final class ApplicationMaster {
         amRMClientAsync.start();
 
         // AM <--> NM
-        containerListener = new NMCallbackHandler(this);
+        containerListener = createNMCallbackHandler();
         nmClientAsync = new NMClientAsyncImpl(containerListener);
         nmClientAsync.init(conf);
         nmClientAsync.start();
@@ -270,6 +270,11 @@ public final class ApplicationMaster {
             amRMClientAsync.addContainerRequest(containerAsk);
         }
         numRequestedContainers.set(numContainers);
+    }
+
+    // Visible for testing
+    NMCallbackHandler createNMCallbackHandler() {
+        return new NMCallbackHandler(this);
     }
 
     private void startNettyServer(ChannelInitializer<SocketChannel> initializer, int port)

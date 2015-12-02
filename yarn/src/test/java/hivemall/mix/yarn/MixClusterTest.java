@@ -41,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -48,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,99 +60,71 @@ import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.server.MiniYARNCluster;
-import org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
-public class MixServerTest {
+public final class MixClusterTest {
     private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
     private static final String appMasterJar = JarFinder.getJar(ApplicationMaster.class);
     private static final int numNodeManager = 2;
+    private static final int numMixServers = 1;
+
+    // Initialized once
+    private static YarnConfiguration conf;
 
     private MiniYARNCluster yarnCluster;
-    private YarnConfiguration conf;
+    private MixClusterRunner mixClusterRunner;
+    private ExecutorService mixClusterExec;
 
-    @Before
-    public void setup() throws Exception {
-        logger.info("Starting up a YARN cluster");
-
+    @BeforeClass
+    public static void setupOnce() {
         conf = new YarnConfiguration();
         conf.setInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 128);
         conf.set("yarn.log.dir", "target");
-        conf.setBoolean(YarnConfiguration.TIMELINE_SERVICE_ENABLED, true);
-        conf.set(YarnConfiguration.RM_SCHEDULER, CapacityScheduler.class.getName());
-
-        org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler sched = new org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler();
-        System.out.println(sched.toString());
-
-        if(yarnCluster == null) {
-            yarnCluster = new MiniYARNCluster(MixServerTest.class.getSimpleName(), 1, numNodeManager, 1, 1);
-            yarnCluster.init(conf);
-            yarnCluster.start();
-
-            waitForNMsToRegister();
-
-            final URL url = this.getClass().getResource("/yarn-site.xml");
-            Assert.assertNotNull("Could not find 'yarn-site.xml' dummy file in classpath", url);
-
-            Configuration yarnClusterConfig = yarnCluster.getConfig();
-            yarnClusterConfig.set("yarn.application.classpath", new File(url.getPath()).getParent());
-            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            yarnClusterConfig.writeXml(bytesOut);
-            bytesOut.close();
-            OutputStream os = new FileOutputStream(new File(url.getPath()));
-            os.write(bytesOut.toByteArray());
-            os.close();
-        }
     }
 
-    @After
-    public void tearDown() throws IOException {
-        if(yarnCluster != null) {
-            try {
-                yarnCluster.stop();
-            } finally {
-                yarnCluster = null;
-            }
-        }
+    @Before
+    public void setup() throws Exception {
+        assert yarnCluster == null;
+
+        logger.info("Starting up a YARN cluster");
+        this.yarnCluster = new MiniYARNCluster(MixClusterTest.class.getSimpleName(), 1, numNodeManager, 1, 1);
+        yarnCluster.init(conf);
+        yarnCluster.start();
+
+        waitForNMsToRegister();
+
+        final URL url = this.getClass().getResource("/yarn-site.xml");
+        Assert.assertNotNull("Could not find 'yarn-site.xml' dummy file in classpath", url);
+
+        Configuration yarnClusterConfig = yarnCluster.getConfig();
+        yarnClusterConfig.set("yarn.application.classpath", new File(url.getPath()).getParent());
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        yarnClusterConfig.writeXml(bytesOut);
+        bytesOut.close();
+        OutputStream os = new FileOutputStream(new File(url.getPath()));
+        os.write(bytesOut.toByteArray());
+        os.close();
+
+        // For a MIX cluster
+        this.mixClusterExec = Executors.newSingleThreadExecutor();
     }
 
-    private void waitForNMsToRegister() throws Exception {
-        int retry = 0;
-        while(true) {
-            Thread.sleep(1000L);
-            if(yarnCluster.getResourceManager().getRMContext().getRMNodes().size() >= numNodeManager) {
-                break;
-            }
-            if(retry++ > 60) {
-                Assert.fail("Can't launch a yarn cluster");
-            }
-        }
-    }
+    Future<Boolean> startMixCluster(String[] options) throws Exception {
+        assert mixClusterRunner == null;
 
-    @Test
-    public void testSimpleScenario() throws Exception {
-        int numMixServers = 1;
-        String[] args = { "--jar", appMasterJar, "--num_containers",
-                Integer.toString(numMixServers), "--master_memory", "128", "--master_vcores", "1",
-                "--container_memory", "128", "--container_vcores", "1" };
+        this.mixClusterRunner = new MixClusterRunner(new Configuration(yarnCluster.getConfig()));
+        Assert.assertTrue(mixClusterRunner.init(options));
 
-        final MixServerRunner mixClusterRunner = new MixServerRunner(new Configuration(yarnCluster.getConfig()));
-        boolean initSuccess = mixClusterRunner.init(args);
-        Assert.assertTrue(initSuccess);
-
-        final AtomicBoolean result = new AtomicBoolean(false);
-        ExecutorService mixExec = Executors.newSingleThreadExecutor();
-        Future<?> mixCluster = mixExec.submit(new Runnable() {
+        Future<Boolean> mixCluster = mixClusterExec.submit(new Callable<Boolean>() {
             @Override
-            public void run() {
+            public Boolean call() throws Exception {
+                boolean result = false;
                 try {
-                    result.set(mixClusterRunner.run());
+                    result = mixClusterRunner.run();
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
+                return result;
             }
         });
 
@@ -183,6 +157,46 @@ public class MixServerTest {
         // for resource requests is active.
         Thread.sleep(1000L);
 
+        return mixCluster;
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        try {
+            // Shut down a MIX cluster, then a YARN cluster
+            if (mixClusterRunner != null) {
+                mixClusterRunner.forceKillApplication();
+            }
+            mixClusterExec.shutdown();
+            yarnCluster.stop();
+        } finally {
+            yarnCluster = null;
+            mixClusterRunner = null;
+            mixClusterExec = null;
+        }
+    }
+
+    private void waitForNMsToRegister() throws Exception {
+        int retry = 0;
+        while(true) {
+            Thread.sleep(1000L);
+            if(yarnCluster.getResourceManager().getRMContext().getRMNodes().size() >= numNodeManager) {
+                break;
+            }
+            if(retry++ > 60) {
+                Assert.fail("Can't launch a yarn cluster");
+            }
+        }
+    }
+
+    @Test
+    public void testSimpleScenario() throws Exception {
+        final String[] options = { "--jar", appMasterJar, "--num_containers",
+                Integer.toString(numMixServers), "--master_memory", "128", "--master_vcores", "1",
+                "--container_memory", "128", "--container_vcores", "1" };
+
+        Future<Boolean> result = startMixCluster(options);
+
         // Resource allocated from ApplicationMaster
         AtomicReference<String> mixServers = new AtomicReference<String>();
 
@@ -205,14 +219,11 @@ public class MixServerTest {
         // Parse allocated MIX servers
         String[] hosts = mixServers.get().split(Pattern.quote(MixYarnEnv.MIXSERVER_SEPARATOR));
         Assert.assertEquals(hosts.length, 1);
-
-        // TODO: Issue shutdown requests to MIX servers
-        mixClusterRunner.forceKillApplication();
-
-        mixExec.shutdown();
-        mixCluster.get();
-        Assert.assertTrue(result.get());
         workers.shutdownGracefully();
+
+        // Stop the MIX cluster
+        mixClusterRunner.forceKillApplication();
+        Assert.assertTrue(result.get());
     }
 
     private static Channel startNettyClient(MixServerRequestInitializer initializer, int port, EventLoopGroup workers)
