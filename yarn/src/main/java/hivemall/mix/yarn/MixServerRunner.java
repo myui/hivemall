@@ -322,6 +322,19 @@ public final class MixServerRunner {
     }
 
     /**
+     * Get the host name of launched AM
+     * @return return host name if appId assigned
+     */
+    public String getApplicationMasterHost() {
+        assert appId != null;
+        try {
+            return yarnClient.getApplicationReport(appId).getHost();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /**
      * Kill a submitted application by sending a call to the ASM.
      * @throws YarnException
      * @throws IOException

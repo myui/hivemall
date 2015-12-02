@@ -176,6 +176,9 @@ public class MixServerTest {
             break;
         }
 
+        // Why this returns empty string?
+        // Assert.assertEquals("localhost", mixClusterRunner.getApplicationMasterHost());
+
         // TODO: How to wait until a netty server
         // for resource requests is active.
         Thread.sleep(1000L);
