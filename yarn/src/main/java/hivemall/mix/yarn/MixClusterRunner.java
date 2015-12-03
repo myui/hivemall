@@ -57,6 +57,14 @@ import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 
+/**
+ * MixClusterRunner and ApplicationMaster support YARN version 2.4 or more.
+ * An API set that the classes uses is almost the same
+ * with the DistributedShell example in YARN package.
+ * The issue of YARN compatibility can be found in a URL below;
+ *
+ *  - https://issues.apache.org/jira/browse/YARN-2879
+ */
 public final class MixClusterRunner {
     private static final Log logger = LogFactory.getLog(MixClusterRunner.class);
 
