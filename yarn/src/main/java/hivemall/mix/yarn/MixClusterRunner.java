@@ -25,10 +25,7 @@ import hivemall.mix.yarn.utils.YarnUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -191,7 +188,9 @@ public final class MixClusterRunner {
         final String preloadMixServ= System.getenv(MixYarnEnv.MIXSERVER_PRELOAD);
         if(preloadMixServ == null) {
             // Self-contained jar used for mix servers
-            URL jar = this.getClass().getResource("/hivemall-mixserv.jar");
+            final String mixServName = "/hivemall-mixserv-" + getVersion() + "-fat.jar";
+            final URL jar = this.getClass().getResource(mixServName);
+            logger.error("Load a self-contained jar used for mix servers:" + jar.getPath());
             assert jar != null;
             mixServJar = new Path(jar.getPath());
         } else {
@@ -346,6 +345,27 @@ public final class MixClusterRunner {
         fs.mkdirs(dir);
         fs.deleteOnExit(dir);
         return dir;
+    }
+
+    /**
+     * Get the hivemall-yarn version by reading resources/VERSION.
+     * @return the version string
+     */
+    public static String getVersion() {
+        final URL versionFile = MixClusterRunner.class.getResource("/VERSION");
+        String version = "unknown";
+        try {
+            if (versionFile != null) {
+                Properties versionData = new Properties();
+                versionData.load(versionFile.openStream());
+                version = versionData.getProperty("VERSION", version);
+                version = version.trim().replaceAll("[^0-9a-zM\\-\\.]", "");
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return version;
     }
 
     /**
