@@ -25,17 +25,19 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 public final class NettyUtils {
 
-     public static Channel startNettyClient(ChannelInitializer<SocketChannel> initializer, String host, int port, EventLoopGroup workers)
+    public static Channel startNettyClient(ChannelInitializer<SocketChannel> initializer, String host, int port, EventLoopGroup workers)
             throws RuntimeException, InterruptedException {
         Bootstrap b = new Bootstrap();
         b.group(workers);

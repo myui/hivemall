@@ -18,23 +18,6 @@
  */
 package hivemall.mix.yarn;
 
-import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
-import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiverInitializer;
-import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestReceiver;
-import hivemall.mix.yarn.utils.TimestampedValue;
-import hivemall.mix.yarn.utils.YarnUtils;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -46,9 +29,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.annotation.concurrent.ThreadSafe;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -85,7 +76,14 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 
-import static hivemall.mix.yarn.network.NettyUtils.getHostAddress;
+import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
+import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiverInitializer;
+import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
+import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
+import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestReceiver;
+import hivemall.mix.yarn.network.NettyUtils;
+import hivemall.mix.yarn.utils.TimestampedValue;
+import hivemall.mix.yarn.utils.YarnUtils;
 
 public class ApplicationMaster {
     private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
@@ -624,7 +622,7 @@ public class ApplicationMaster {
             vargs.add("--container_id");
             vargs.add(containerId);
             vargs.add("--appmaster_host");
-            vargs.add(getHostAddress());
+            vargs.add(NettyUtils.getHostAddress());
             vargs.add(String.valueOf(containerMemory));
             vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");

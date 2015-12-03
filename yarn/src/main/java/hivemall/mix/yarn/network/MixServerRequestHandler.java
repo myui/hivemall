@@ -36,9 +36,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.hadoop.yarn.api.records.NodeId;
 
-import static hivemall.mix.yarn.network.NettyUtils.readString;
-import static hivemall.mix.yarn.network.NettyUtils.writeString;
-
 public final class MixServerRequestHandler {
 
     public abstract static class AbstractMixServerRequestHandler extends
@@ -108,7 +105,7 @@ public final class MixServerRequestHandler {
         protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out)
                 throws Exception {
             int numRequest = in.readInt();
-            String URIs = readString(in);
+            String URIs = NettyUtils.readString(in);
             out.add(new MixServerRequest(numRequest, URIs));
         }
     }
@@ -123,7 +120,7 @@ public final class MixServerRequestHandler {
         protected void encode(ChannelHandlerContext ctx, MixServerRequest msg, ByteBuf out)
                 throws Exception {
             out.writeInt(msg.getNumRequest());
-            writeString(msg.getAllocatedURIs(), out);
+            NettyUtils.writeString(msg.getAllocatedURIs(), out);
         }
     }
 }

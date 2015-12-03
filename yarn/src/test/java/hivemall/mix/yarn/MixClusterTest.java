@@ -35,6 +35,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import hivemall.mix.yarn.network.NettyUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -55,8 +56,6 @@ import org.junit.*;
 import hivemall.mix.yarn.network.MixServerRequest;
 import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
 import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
-
-import static hivemall.mix.yarn.network.NettyUtils.startNettyClient;
 
 public final class MixClusterTest {
     private static final Log logger = LogFactory.getLog(MixClusterTest.class);
@@ -194,7 +193,7 @@ public final class MixClusterTest {
 
         EventLoopGroup workers = new NioEventLoopGroup();
         MixServerRequester msgHandler = new MixServerRequester(mixServers);
-        Channel ch = startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
+        Channel ch = NettyUtils.startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
         ch.writeAndFlush(new MixServerRequest()).sync();

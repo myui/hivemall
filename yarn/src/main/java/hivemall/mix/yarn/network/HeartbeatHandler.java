@@ -40,9 +40,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import static hivemall.mix.yarn.network.NettyUtils.readString;
-import static hivemall.mix.yarn.network.NettyUtils.writeString;
-
 public final class HeartbeatHandler {
     private static final Log logger = LogFactory.getLog(HeartbeatHandler.class);
 
@@ -147,8 +144,8 @@ public final class HeartbeatHandler {
             if(frame == null) {
                 return null;
             }
-            String containerId = readString(frame);
-            String host = readString(frame);
+            String containerId = NettyUtils.readString(frame);
+            String host = NettyUtils.readString(frame);
             int port = frame.readInt();
             return new Heartbeat(containerId, host, port);
         }
@@ -166,8 +163,8 @@ public final class HeartbeatHandler {
                 throws Exception {
             int startIdx = out.writerIndex();
             out.writeBytes(LENGTH_PLACEHOLDER);
-            writeString(msg.getConainerId(), out);
-            writeString(msg.getHost(), out);
+            NettyUtils.writeString(msg.getConainerId(), out);
+            NettyUtils.writeString(msg.getHost(), out);
             out.writeInt(msg.getPort());
             out.setInt(startIdx, out.writerIndex() - startIdx - 4);
         }
