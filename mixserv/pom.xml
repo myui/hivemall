@@ -160,6 +160,7 @@
 						<configuration>
 							<finalName>${project.artifactId}-${project.version}-fat</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
+							<outputDirectory>${project.parent.basedir}/yarn/src/main/resources</outputDirectory>
 							<minimizeJar>true</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<artifactSet>
