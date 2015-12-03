@@ -130,7 +130,6 @@ public final class MixClusterRunner {
         opts.addOption("jar", true, "Jar file containing AM");
         opts.addOption("master_memory", true, "Amount of memory in MB to be requested to run AM");
         opts.addOption("master_vcores", true, "Amount of virtual cores to be requested to run AM");
-        opts.addOption("container_jar", true, "Jar file containing a MIX server");
         opts.addOption("num_containers", true, "# of containers for MIX servers");
         opts.addOption("container_memory", true, "Amount of memory in MB to be requested to run a MIX server");
         opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a MIX server");
@@ -181,13 +180,14 @@ public final class MixClusterRunner {
                     + "mem=" + amMemory);
         }
 
-        if(cliParser.hasOption("container_jar")) {
-            mixServJar = new Path(cliParser.getOptionValue("container_jar"));
-        } else {
+        final String preloadMixServ= System.getenv(MixYarnEnv.MIXSERVER_PRELOAD);
+        if(preloadMixServ == null) {
             // Self-contained jar used for mix servers
             URL jar = this.getClass().getResource("/hivemall-mixserv.jar");
             assert jar != null;
             mixServJar = new Path(jar.getPath());
+        } else {
+            mixServJar = new Path(preloadMixServ);
         }
 
         containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "512"));

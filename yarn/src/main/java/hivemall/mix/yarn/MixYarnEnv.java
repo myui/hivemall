@@ -26,6 +26,9 @@ public class MixYarnEnv {
     // Default port number for report receivers
     public static final int REPORT_RECEIVER_PORT = 11214;
 
+    // Environment key name for preloading custom jar of MIX server implementation
+    public static final String MIXSERVER_PRELOAD = "MIXSERVER_PRELOAD";
+
     // Environment key name pointing to a cluster-wide directory
     public static final String MIXSERVER_RESOURCE_LOCATION = "MIXSERVER_RESOURCE_LOCATION";
 
@@ -34,8 +37,6 @@ public class MixYarnEnv {
 
     // Interval between each MIX server's heartbeat to an application master
     public static final long MIXSERVER_HEARTBEAT_INTERVAL = 180L;
-
-    public static final int MIXSERV_FAILURE_RETRY_NUM = 30;
 
     // Separator for MIX servers
     public static final String MIXSERVER_SEPARATOR = ",";
