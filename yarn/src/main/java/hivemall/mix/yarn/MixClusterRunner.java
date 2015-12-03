@@ -247,6 +247,8 @@ public final class MixClusterRunner {
         // Set an application name
         ApplicationSubmissionContext appContext = app.getApplicationSubmissionContext();
         appContext.setApplicationName(MixClusterRunner.class.getName());
+        // Keep no container between application attempts
+        appContext.setKeepContainersAcrossApplicationAttempts(false);
         appId = appContext.getApplicationId();
 
         // Local resources (e.g., jar and local files) for AM
