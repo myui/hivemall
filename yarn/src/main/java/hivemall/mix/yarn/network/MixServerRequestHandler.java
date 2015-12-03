@@ -18,8 +18,11 @@
  */
 package hivemall.mix.yarn.network;
 
-import hivemall.mix.yarn.MixYarnEnv;
-import hivemall.mix.yarn.utils.TimestampedValue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,12 +32,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-
 import org.apache.hadoop.yarn.api.records.NodeId;
+
+import hivemall.mix.yarn.MixYarnEnv;
+import hivemall.mix.yarn.utils.TimestampedValue;
 
 public final class MixServerRequestHandler {
 
@@ -54,14 +55,18 @@ public final class MixServerRequestHandler {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, MixServerRequest req)
                 throws Exception {
-            // TODO: Return only # of requested resources
-            int numServers = 0;
-            List<String> urls = new ArrayList<String>();
-            for(TimestampedValue<NodeId> value : activeMixServers.values()) {
-                final NodeId node = value.getValue();
+            final List<String> keys = new ArrayList<String>(activeMixServers.keySet());
+            Collections.shuffle(keys);
+            final List<String> urls = new ArrayList<String>();
+            int num = Math.max(keys.size(), req.getNumRequest());
+            for(int i = 0; i < num; i++) {
+                final TimestampedValue<NodeId> node = activeMixServers.get(keys.get(i));
+                if(node == null) {
+                    continue;
+                }
                 urls.add(node.toString());
             }
-            MixServerRequest msg = new MixServerRequest(numServers, join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
+            MixServerRequest msg = new MixServerRequest(urls.size(), join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
             ctx.writeAndFlush(msg);
         }
 
@@ -107,6 +112,7 @@ public final class MixServerRequestHandler {
             int numRequest = in.readInt();
             String URIs = NettyUtils.readString(in);
             out.add(new MixServerRequest(numRequest, URIs));
+            in.release();
         }
     }
 
@@ -121,6 +127,7 @@ public final class MixServerRequestHandler {
                 throws Exception {
             out.writeInt(msg.getNumRequest());
             NettyUtils.writeString(msg.getAllocatedURIs(), out);
+            out.release();
         }
     }
 }
