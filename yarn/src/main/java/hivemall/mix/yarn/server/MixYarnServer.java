@@ -20,6 +20,7 @@ package hivemall.mix.yarn.server;
 
 import hivemall.mix.server.MixServer;
 import hivemall.mix.yarn.MixYarnEnv;
+import hivemall.mix.yarn.network.NettyUtils;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.cli.CommandLine;
@@ -29,11 +30,10 @@ import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReporter;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReporterInitializer;
 import hivemall.utils.lang.CommandLineUtils;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-import static hivemall.mix.yarn.network.NettyUtils.getHostAddress;
-import static hivemall.mix.yarn.network.NettyUtils.startNettyClient;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public final class MixYarnServer extends MixServer {
 
@@ -48,23 +48,43 @@ public final class MixYarnServer extends MixServer {
         final MixServer mixServ = new MixYarnServer(cl);
         final String containerId = cl.getOptionValue("container_id");
         final String appMasterHost = cl.getOptionValue("appmaster_host");
-        final String host = getHostAddress();
-        final int port = mixServ.getPort();
+
+        // Start MixServer
+        final ExecutorService mixServExec = Executors.newFixedThreadPool(1);
+        Future<?> f = mixServExec.submit(mixServ);
+
+        // Wait until MixServer gets ready
+        while(true) {
+            try {
+                Thread.sleep(500L);
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (mixServ.getState() == ServerState.RUNNING) {
+                break;
+            }
+        }
 
         // Start netty daemon for reporting heartbeats to AM
         EventLoopGroup workers = new NioEventLoopGroup();
+        final String host = NettyUtils.getHostAddress();
+        final int port = mixServ.getBoundPort();
         HeartbeatReporter msgHandler = new HeartbeatReporter(containerId, host, port);
         try {
-            startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
+            NettyUtils.startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        // Start MixServer
-        mixServ.run();
-
-        // Shut down the netty client
-        workers.shutdownGracefully();
+        // Block until this MIX server finished
+        try {
+            f.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            workers.shutdownGracefully();
+            mixServExec.shutdown();
+        }
     }
 
     protected static Options getOptions() {
