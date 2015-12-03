@@ -69,8 +69,9 @@ public final class MixClusterRunner {
     private final Options opts;
     private final Configuration conf;
 
+    private Path appJar;
+
     // For an application master
-    private Path appMasterJar;
     private String appMasterMainClass;
     private String amQueue;
     private int amPriority;
@@ -132,7 +133,7 @@ public final class MixClusterRunner {
         this.opts = new Options();
         opts.addOption("priority", true, "Application Priority [Default: 0]");
         opts.addOption("queue", true, "RM Queue in which this application is to be submitted");
-        opts.addOption("jar", true, "Jar file containing AM");
+        opts.addOption("jar", true, "Jar file containing classes executed in a YARN cluster");
         opts.addOption("master_memory", true, "Amount of memory in MB to be requested to run AM");
         opts.addOption("master_vcores", true, "Amount of virtual cores to be requested to run AM");
         opts.addOption("num_containers", true, "# of containers for MIX servers");
@@ -150,11 +151,10 @@ public final class MixClusterRunner {
 
     @Override
     public String toString() {
-        return "[appMasterJar=" + appMasterJar + ", appMasterJar=" + appMasterJar + ", amQueue="
-                + amQueue + ", amPriority=" + amPriority + ", amVCores=" + amVCores + ", amMemory="
-                + amMemory + ", mixServJar=" + mixServJar + ", numContainers=" + numContainers
-                + ", containerVCores=" + containerVCores + ", containerMemory=" + containerMemory
-                + ", numRetries=" + numRetries + "]";
+        return "[appJar=" + appJar + ", amQueue=" + amQueue + ", amPriority=" + amPriority
+                + ", amVCores=" + amVCores + ", amMemory=" + amMemory
+                + ", numContainers=" + numContainers + ", containerVCores=" + containerVCores
+                + ", containerMemory=" + containerMemory + ", numRetries=" + numRetries + "]";
     }
 
     public boolean init(String[] args) throws ParseException {
@@ -170,12 +170,12 @@ public final class MixClusterRunner {
             return false;
         }
 
-        final String appMasterJarPath = cliParser.getOptionValue("jar");
-        if(appMasterJarPath == null || !isFileExist(appMasterJarPath)) {
+        final String jarPath = cliParser.getOptionValue("jar");
+        if(jarPath == null || !isFileExist(jarPath)) {
             throw new IllegalArgumentException(
                     "Invalid jar not specified for an application master with -jar");
         }
-        appMasterJar = new Path(appMasterJarPath);
+        appJar = new Path(jarPath);
         amQueue = cliParser.getOptionValue("queue", "default");
         amPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
         amVCores = Integer.parseInt(cliParser.getOptionValue("master_vcores", "1"));
@@ -186,14 +186,7 @@ public final class MixClusterRunner {
         }
 
         final String preloadMixServ= System.getenv(MixYarnEnv.MIXSERVER_PRELOAD);
-        if(preloadMixServ == null) {
-            // Self-contained jar used for mix servers
-            final String mixServName = "/hivemall-mixserv-" + getVersion() + "-fat.jar";
-            final URL jar = this.getClass().getResource(mixServName);
-            logger.error("Load a self-contained jar used for mix servers:" + jar.getPath());
-            assert jar != null;
-            mixServJar = new Path(jar.getPath());
-        } else {
+        if(preloadMixServ != null) {
             mixServJar = new Path(preloadMixServ);
         }
 
@@ -265,16 +258,18 @@ public final class MixClusterRunner {
         FileSystem fs = FileSystem.get(conf);
         Path sharedDir = createTempDir(fs, appId);
 
-        YarnUtils.copyFromLocalFile(fs, appMasterJar, new Path(sharedDir, "appmaster.jar"), localResources);
+        YarnUtils.copyFromLocalFile(fs, appJar, new Path(sharedDir, appJar.getName()), localResources);
         YarnUtils.copyFromLocalFile(fs, log4jPropFile, new Path(sharedDir, "log4j.properties"), localResources);
-        YarnUtils.copyFromLocalFile(fs, mixServJar, new Path(sharedDir, mixServJar.getName()), null);
+        if (mixServJar != null) {
+            YarnUtils.copyFromLocalFile(fs, mixServJar, new Path(sharedDir, mixServJar.getName()), null);
+        }
 
         // Set the env variables to be setup in the env
         // where AM will be run.
         Map<String, String> env = new HashMap<String, String>();
 
         env.put(MixYarnEnv.MIXSERVER_RESOURCE_LOCATION, sharedDir.toString());
-        env.put(MixYarnEnv.MIXSERVER_CONTAINER_APP, mixServJar.getName());
+        env.put(MixYarnEnv.MIXSERVER_CONTAINER_APP, (mixServJar == null)? appJar.getName() : mixServJar.getName());
 
         // Set yarn-specific classpaths
         StringBuilder yarnAppClassPaths = new StringBuilder();
@@ -345,27 +340,6 @@ public final class MixClusterRunner {
         fs.mkdirs(dir);
         fs.deleteOnExit(dir);
         return dir;
-    }
-
-    /**
-     * Get the hivemall-yarn version by reading resources/VERSION.
-     * @return the version string
-     */
-    public static String getVersion() {
-        final URL versionFile = MixClusterRunner.class.getResource("/VERSION");
-        String version = "unknown";
-        try {
-            if (versionFile != null) {
-                Properties versionData = new Properties();
-                versionData.load(versionFile.openStream());
-                version = versionData.getProperty("VERSION", version);
-                version = version.trim().replaceAll("[^0-9a-zM\\-\\.]", "");
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return version;
     }
 
     /**

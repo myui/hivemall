@@ -36,7 +36,7 @@ public class MixYarnEnv {
     public static final String MIXSERVER_CONTAINER_APP = "MIXSERVER_CONTAINER_APP";
 
     // Interval between each MIX server's heartbeat to an application master
-    public static final long MIXSERVER_HEARTBEAT_INTERVAL = 180L;
+    public static final int MIXSERVER_HEARTBEAT_INTERVAL = 180;
 
     // Separator for MIX servers
     public static final String MIXSERVER_SEPARATOR = ",";

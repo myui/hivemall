@@ -18,6 +18,7 @@
  */
 package hivemall.mix.yarn.network;
 
+import hivemall.mix.yarn.MixYarnEnv;
 import hivemall.mix.yarn.utils.TimestampedValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -28,10 +29,17 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ConcurrentMap;
 
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.hadoop.yarn.api.records.NodeId;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import static hivemall.mix.yarn.network.NettyUtils.readString;
+import static hivemall.mix.yarn.network.NettyUtils.writeString;
 
 public final class HeartbeatHandler {
 
@@ -61,11 +69,11 @@ public final class HeartbeatHandler {
         }
     }
 
-    public final static class HeartbeatInitializer extends ChannelInitializer<SocketChannel> {
+    public final static class HeartbeatReceiverInitializer extends ChannelInitializer<SocketChannel> {
 
         private final HeartbeatReceiver handler;
 
-        public HeartbeatInitializer(HeartbeatReceiver handler) {
+        public HeartbeatReceiverInitializer(HeartbeatReceiver handler) {
             this.handler = handler;
         }
 
@@ -73,6 +81,53 @@ public final class HeartbeatHandler {
         protected void initChannel(SocketChannel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             pipeline.addLast(new HeartbeatDecoder(), handler);
+        }
+    }
+
+    @ChannelHandler.Sharable
+    public final static class HeartbeatReporter extends SimpleChannelInboundHandler<Heartbeat> {
+        private final String containerId;
+        private final String host;
+        private final int port;
+
+        public HeartbeatReporter(String containerId, String host, int port) {
+            this.containerId = containerId;
+            this.host = host;
+            this.port = port;
+        }
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
+            throw new NotImplementedException();
+        }
+
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof IdleStateEvent) {
+                assert ((IdleStateEvent) evt).state() == IdleState.WRITER_IDLE;
+                ctx.writeAndFlush(new Heartbeat(containerId, host, port));
+            }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            super.exceptionCaught(ctx, cause);
+        }
+    }
+
+    public final static class HeartbeatReporterInitializer extends ChannelInitializer<SocketChannel> {
+
+        private final HeartbeatReporter handler;
+
+        public HeartbeatReporterInitializer(HeartbeatReporter handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            ChannelPipeline pipeline = ch.pipeline();
+            pipeline.addLast(new IdleStateHandler(0, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, 0));
+            pipeline.addLast(new HeartbeatEncoder(), handler);
         }
     }
 
@@ -93,19 +148,20 @@ public final class HeartbeatHandler {
             int port = frame.readInt();
             return new Heartbeat(containerId, host, port);
         }
+    }
 
-        private String readString(final ByteBuf in) {
-            int length = in.readInt();
-            if(length == -1) {
-                return null;
-            }
-            byte[] b = new byte[length];
-            in.readBytes(b, 0, length);
-            try {
-                return new String(b, "utf-8");
-            } catch (UnsupportedEncodingException e) {
-                return null;
-            }
+    public final static class HeartbeatEncoder extends MessageToByteEncoder<Heartbeat> {
+
+        public HeartbeatEncoder() {
+            super(Heartbeat.class, true);
+        }
+
+        @Override
+        protected void encode(ChannelHandlerContext ctx, Heartbeat msg, ByteBuf out)
+                throws Exception {
+            writeString(msg.getConainerId(), out);
+            writeString(msg.getHost(), out);
+            out.writeInt(msg.getPort());
         }
     }
 }

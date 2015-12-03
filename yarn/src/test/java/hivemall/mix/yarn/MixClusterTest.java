@@ -25,8 +25,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -36,14 +35,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,10 +56,12 @@ import hivemall.mix.yarn.network.MixServerRequest;
 import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
 import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
 
+import static hivemall.mix.yarn.network.NettyUtils.startNettyClient;
+
 public final class MixClusterTest {
     private static final Log logger = LogFactory.getLog(MixClusterTest.class);
     private static YarnConfiguration conf = new YarnConfiguration();
-    private static final String appMasterJar = JarFinder.getJar(ApplicationMaster.class);
+    private static final String appJar = JarFinder.getJar(ApplicationMaster.class);
     private static final int numNodeManager = 2;
 
     private MiniYARNCluster yarnCluster;
@@ -185,7 +183,7 @@ public final class MixClusterTest {
 
     @Test
     public void testSimpleScenario() throws Exception {
-        final String[] options = { "--jar", appMasterJar, "--num_containers", "1",
+        final String[] options = { "--jar", appJar, "--num_containers", "1",
                 "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
                 "--container_vcores", "1" };
 
@@ -196,7 +194,7 @@ public final class MixClusterTest {
 
         EventLoopGroup workers = new NioEventLoopGroup();
         MixServerRequester msgHandler = new MixServerRequester(mixServers);
-        Channel ch = startNettyClient(new MixServerRequestInitializer(msgHandler), MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
+        Channel ch = startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
         ch.writeAndFlush(new MixServerRequest()).sync();
@@ -222,7 +220,7 @@ public final class MixClusterTest {
 
     @Test(timeout=360*1000L)
     public void testMixServerLaunchFailure() throws Exception {
-        final String[] options = { "--jar", appMasterJar, "--num_containers", "1",
+        final String[] options = { "--jar", appJar, "--num_containers", "1",
                 "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
                 "--container_vcores", "1", "--num_retries", "4" };
 
@@ -231,35 +229,6 @@ public final class MixClusterTest {
         // Must be finished with failure status
         Assert.assertFalse(result.get());
         Assert.assertEquals("Total failed count for counters:5", mixClusterRunner.getApplicationMasterDiagnostics());
-    }
-
-    private static Channel startNettyClient(MixServerRequestInitializer initializer, int port, EventLoopGroup workers)
-            throws InterruptedException {
-        Bootstrap b = new Bootstrap();
-        b.group(workers);
-        b.channel(NioSocketChannel.class);
-        b.option(ChannelOption.SO_KEEPALIVE, true);
-        b.option(ChannelOption.TCP_NODELAY, true);
-        b.handler(initializer);
-        SocketAddress remoteAddr = new InetSocketAddress("localhost", port);
-        Channel ch = null;
-        int retry = 0;
-        while(true) {
-            try {
-                ch = b.connect(remoteAddr).sync().channel();
-                if(ch.isActive())
-                    break;
-            } catch (Exception e) {
-                // Ignore it
-            }
-            if(++retry > 8) {
-                Assert.fail("Failed to connect to ApplicationMaster");
-                break;
-            }
-            // If inactive, retry it
-            Thread.sleep(500L);
-        }
-        return ch;
     }
 
     @ChannelHandler.Sharable

@@ -19,7 +19,7 @@
 package hivemall.mix.yarn;
 
 import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
-import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatInitializer;
+import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiverInitializer;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
 import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
 import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestReceiver;
@@ -115,9 +115,6 @@ public class ApplicationMaster {
     private final ConcurrentMap<String, Container> allocContainers = new ConcurrentHashMap<String, Container>();
     private final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers = new ConcurrentHashMap<String, TimestampedValue<NodeId>>();
 
-    // Info. to launch containers
-    private ContainerLaunchInfo cmdInfo = new ContainerLaunchInfo();
-
     // Thread pool for container launchers
     private final ExecutorService containerExecutor = Executors.newFixedThreadPool(1);
 
@@ -161,7 +158,7 @@ public class ApplicationMaster {
     }
 
     public ApplicationMaster() {
-        this.containerMainClass = "hivemall.mix.server.MixServer";
+        this.containerMainClass = "hivemall.mix.yarn.server.MixYarnServer";
         this.opts = new Options();
         this.conf = new YarnConfiguration();
         opts.addOption("", true, "# of containers for MIX servers");
@@ -203,9 +200,6 @@ public class ApplicationMaster {
         if(numContainers == 0) {
             throw new IllegalArgumentException("Cannot run distributed shell with no containers");
         }
-
-        // Build an executable command for containers
-        cmdInfo.init();
 
         logger.info("Application master for " + "appId:" + appAttemptID.getApplicationId().getId()
                 + ", clusterTimestamp:" + appAttemptID.getApplicationId().getClusterTimestamp()
@@ -255,13 +249,13 @@ public class ApplicationMaster {
         }
 
         // Accept heartbeats from launched MIX servers
-        startNettyServer(new HeartbeatInitializer(new HeartbeatReceiver(activeMixServers)), MixYarnEnv.REPORT_RECEIVER_PORT);
+        startNettyServer(new HeartbeatReceiverInitializer(new HeartbeatReceiver(activeMixServers)), MixYarnEnv.REPORT_RECEIVER_PORT);
 
         // Accept resource requests from clients
         startNettyServer(new MixServerRequestInitializer(new MixServerRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
-        monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30L, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+        monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
 
         for(int i = 0; i < numContainers; i++) {
             AMRMClient.ContainerRequest containerAsk = setupContainerAskForRM();
@@ -441,7 +435,7 @@ public class ApplicationMaster {
                 // Launch and start the container on a separate thread to keep
                 // the main thread unblocked as all containers
                 // may not be allocated at one go.
-                containerExecutor.submit(new LaunchContainerRunnable(container, cmdInfo));
+                containerExecutor.submit(new LaunchContainerRunnable(container, new ContainerLaunchInfo(container.getId())));
             }
         }
 
@@ -590,18 +584,20 @@ public class ApplicationMaster {
     }
 
     private class ContainerLaunchInfo {
+        private final String containerId;
 
-        private Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
-        private List<String> cmd = null;
-        private boolean isInitialized = false;
+        ContainerLaunchInfo(ContainerId containerId) {
+            this(containerId.toString());
+        }
 
-        public void init() {
-            // If already initialized, return
-            if(isInitialized)
-                return;
+        ContainerLaunchInfo(String containerId) {
+            this.containerId = containerId;
+        }
 
+        public ContainerLaunchContext createContext() {
             // Set local resources (e.g., local files or archives)
             // for the allocated container.
+            final Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
             try {
                 final FileSystem fs = FileSystem.get(conf);
                 final Path mixServJarDst = new Path(sharedDir, mixServJar);
@@ -613,9 +609,8 @@ public class ApplicationMaster {
             // Set arguments
             List<String> vargs = new ArrayList<String>();
 
-            // Workaround: Need to bind a port dynamically in MIX servers
-            vargs.add("--port");
-            vargs.add(Integer.toString(11212 + (int) (Math.random() * 65536)));
+            vargs.add("--container_id");
+            vargs.add(containerId);
             vargs.add(String.valueOf(containerMemory));
             vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
@@ -633,16 +628,12 @@ public class ApplicationMaster {
 
             logger.info("Build an executable command for containers: " + cmdBuilder);
 
+            List<String> cmd = null;
             try {
-                this.cmd = cmdBuilder.buildCommand();
-                isInitialized = true;
+              cmd = cmdBuilder.buildCommand();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        public ContainerLaunchContext createContext() {
-            assert isInitialized;
             return ContainerLaunchContext.newInstance(localResources, null, cmd, null, null, null);
         }
     }

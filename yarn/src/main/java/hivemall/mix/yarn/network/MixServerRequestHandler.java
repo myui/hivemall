@@ -30,12 +30,14 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.hadoop.yarn.api.records.NodeId;
+
+import static hivemall.mix.yarn.network.NettyUtils.readString;
+import static hivemall.mix.yarn.network.NettyUtils.writeString;
 
 public final class MixServerRequestHandler {
 
@@ -109,16 +111,6 @@ public final class MixServerRequestHandler {
             String URIs = readString(in);
             out.add(new MixServerRequest(numRequest, URIs));
         }
-
-        private String readString(final ByteBuf in) throws UnsupportedEncodingException {
-            int length = in.readInt();
-            if(length == -1) {
-                return null;
-            }
-            byte[] b = new byte[length];
-            in.readBytes(b, 0, length);
-            return new String(b, "utf-8");
-        }
     }
 
     public final static class RequestEncoder extends MessageToByteEncoder<MixServerRequest> {
@@ -132,17 +124,6 @@ public final class MixServerRequestHandler {
                 throws Exception {
             out.writeInt(msg.getNumRequest());
             writeString(msg.getAllocatedURIs(), out);
-        }
-
-        private void writeString(final String s, final ByteBuf buf)
-                throws UnsupportedEncodingException {
-            if(s == null) {
-                buf.writeInt(-1);
-                return;
-            }
-            byte[] b = s.getBytes("utf-8");
-            buf.writeInt(b.length);
-            buf.writeBytes(b);
         }
     }
 }

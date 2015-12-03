@@ -26,6 +26,7 @@ import hivemall.mix.store.SessionStore;
 import hivemall.mix.store.SessionStore.IdleSessionSweeper;
 import hivemall.utils.lang.CommandLineUtils;
 import hivemall.utils.lang.Primitives;
+import hivemall.utils.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -51,7 +52,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class MixServer implements Runnable {
+public class MixServer implements Runnable {
     private static final Log logger = LogFactory.getLog(MixServer.class);
 
     private final int port;
@@ -65,7 +66,12 @@ public final class MixServer implements Runnable {
     private volatile ServerState state;
 
     public MixServer(CommandLine cl) {
-        this.port = Primitives.parseInt(cl.getOptionValue("port"), MixEnv.MIXSERV_DEFAULT_PORT);
+        int port = Primitives.parseInt(cl.getOptionValue("port"), MixEnv.MIXSERV_DEFAULT_PORT);
+        // Check if a given port is available
+        if (!NetUtils.isPortAvailable(port)) {
+            port = NetUtils.getAvailablePort();
+        }
+        this.port = port;
         int procs = Runtime.getRuntime().availableProcessors();
         int workers = Math.max(1, (int) Math.round(procs * 1.5f));
         this.numWorkers = Primitives.parseInt(cl.getOptionValue("num_workers"), workers);
@@ -86,7 +92,7 @@ public final class MixServer implements Runnable {
         new MixServer(cl).run();
     }
 
-    static Options getOptions() {
+    protected static Options getOptions() {
         Options opts = new Options();
         opts.addOption("p", "port", true, "port number of the mix server [default: 11212]");
         opts.addOption("workers", "num_workers", true, "The number of MIX workers [default: max(1, round(procs * 1.5))] ");
@@ -105,6 +111,10 @@ public final class MixServer implements Runnable {
                 + ", ssl=" + ssl + ", scale=" + scale + ", syncThreshold=" + syncThreshold
                 + ", sessionTTLinSec=" + sessionTTLinSec + ", sweepIntervalInSec="
                 + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public ServerState getState() {
