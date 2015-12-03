@@ -18,18 +18,6 @@
  */
 package hivemall.mix.yarn;
 
-import hivemall.mix.yarn.network.MixServerRequest;
-import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,11 +33,17 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import org.apache.commons.cli.ParseException;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,14 +56,15 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.*;
 
+import hivemall.mix.yarn.network.MixServerRequest;
+import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
+import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
+
 public final class MixClusterTest {
-    private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
+    private static final Log logger = LogFactory.getLog(MixClusterTest.class);
+    private static YarnConfiguration conf = new YarnConfiguration();
     private static final String appMasterJar = JarFinder.getJar(ApplicationMaster.class);
     private static final int numNodeManager = 2;
-    private static final int numMixServers = 1;
-
-    // Initialized once
-    private static YarnConfiguration conf;
 
     private MiniYARNCluster yarnCluster;
     private MixClusterRunner mixClusterRunner;
@@ -77,7 +72,6 @@ public final class MixClusterTest {
 
     @BeforeClass
     public static void setupOnce() {
-        conf = new YarnConfiguration();
         conf.setInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 128);
         conf.set("yarn.log.dir", "target");
     }
@@ -109,10 +103,10 @@ public final class MixClusterTest {
         this.mixClusterExec = Executors.newSingleThreadExecutor();
     }
 
-    Future<Boolean> startMixCluster(String[] options) throws Exception {
+    Future<Boolean> startMixCluster(Class<?> mainClass, String[] options) throws Exception {
         assert mixClusterRunner == null;
 
-        this.mixClusterRunner = new MixClusterRunner(new Configuration(yarnCluster.getConfig()));
+        this.mixClusterRunner = new MixClusterRunner(mainClass.getName(), new Configuration(yarnCluster.getConfig()));
         Assert.assertTrue(mixClusterRunner.init(options));
 
         Future<Boolean> mixCluster = mixClusterExec.submit(new Callable<Boolean>() {
@@ -191,11 +185,11 @@ public final class MixClusterTest {
 
     @Test
     public void testSimpleScenario() throws Exception {
-        final String[] options = { "--jar", appMasterJar, "--num_containers",
-                Integer.toString(numMixServers), "--master_memory", "128", "--master_vcores", "1",
-                "--container_memory", "128", "--container_vcores", "1" };
+        final String[] options = { "--jar", appMasterJar, "--num_containers", "1",
+                "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
+                "--container_vcores", "1" };
 
-        Future<Boolean> result = startMixCluster(options);
+        Future<Boolean> result = startMixCluster(ApplicationMaster.class, options);
 
         // Resource allocated from ApplicationMaster
         AtomicReference<String> mixServers = new AtomicReference<String>();
@@ -213,8 +207,8 @@ public final class MixClusterTest {
 
         Assert.assertNotNull(mixServers.get());
 
-        verifyContainerErrLog(numMixServers, "REGISTERED");
-        verifyContainerErrLog(numMixServers, "ACTIVE");
+        verifyContainerErrLog(1, "REGISTERED");
+        verifyContainerErrLog(1, "ACTIVE");
 
         // Parse allocated MIX servers
         String[] hosts = mixServers.get().split(Pattern.quote(MixYarnEnv.MIXSERVER_SEPARATOR));
@@ -224,6 +218,19 @@ public final class MixClusterTest {
         // Stop the MIX cluster
         mixClusterRunner.forceKillApplication();
         Assert.assertTrue(result.get());
+    }
+
+    @Test(timeout=360*1000L)
+    public void testMixServerLaunchFailure() throws Exception {
+        final String[] options = { "--jar", appMasterJar, "--num_containers", "1",
+                "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
+                "--container_vcores", "1", "--num_retries", "4" };
+
+        Future<Boolean> result = startMixCluster(RetryDeadMixServerApplicationMaster.class, options);
+
+        // Must be finished with failure status
+        Assert.assertFalse(result.get());
+        Assert.assertEquals("Total failed count for counters:5", mixClusterRunner.getApplicationMasterDiagnostics());
     }
 
     private static Channel startNettyClient(MixServerRequestInitializer initializer, int port, EventLoopGroup workers)

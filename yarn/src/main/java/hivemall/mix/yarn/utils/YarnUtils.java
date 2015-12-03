@@ -34,13 +34,13 @@ import org.apache.hadoop.yarn.util.Records;
 
 public final class YarnUtils {
 
-    public static String getClassPaths(String appClassPath) {
-        // Create application-specific classpaths
+    public static String getSystemClassPath() {
+        // Add system-specific classpaths
         StringBuilder classPaths = new StringBuilder();
         YarnUtils.addClassPath(Environment.CLASSPATH.$$(), classPaths);
         YarnUtils.addClassPath("./*", classPaths);
         YarnUtils.addClassPath("./log4j.properties", classPaths);
-        // YarnUtils.addClassPath(appClassPath, classPaths);
+        YarnUtils.addClassPath(System.getProperty("java.class.path"), classPaths);
         return classPaths.toString();
     }
 

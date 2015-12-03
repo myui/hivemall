@@ -22,6 +22,7 @@ import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
 import hivemall.mix.yarn.utils.Log4jPropertyHelper;
 import hivemall.mix.yarn.utils.YarnUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public final class MixClusterRunner {
 
     // For an application master
     private Path appMasterJar;
+    private String appMasterMainClass;
     private String amQueue;
     private int amPriority;
     private int amVCores;
@@ -75,6 +77,7 @@ public final class MixClusterRunner {
     private int containerMemory;
     private int containerVCores;
     private int numContainers;
+    private int numRetries;
 
     // log4j.properties file used in a yarn cluster
     private Path log4jPropFile;
@@ -113,23 +116,25 @@ public final class MixClusterRunner {
     }
 
     public MixClusterRunner() throws Exception {
-        this(new YarnConfiguration());
+        this(ApplicationMaster.class.getName(), new YarnConfiguration());
     }
 
-    public MixClusterRunner(Configuration conf) {
+    public MixClusterRunner(String appMasterMainClass, Configuration conf) {
+        this.appMasterMainClass = appMasterMainClass;
         this.yarnClient = YarnClient.createYarnClient();
         yarnClient.init(conf);
         this.conf = conf;
         this.opts = new Options();
-        opts.addOption("priority", true, "Application Priority. Default 0");
+        opts.addOption("priority", true, "Application Priority [Default: 0]");
         opts.addOption("queue", true, "RM Queue in which this application is to be submitted");
         opts.addOption("jar", true, "Jar file containing AM");
         opts.addOption("master_memory", true, "Amount of memory in MB to be requested to run AM");
         opts.addOption("master_vcores", true, "Amount of virtual cores to be requested to run AM");
-        opts.addOption("container_jar", true, "Jar file containing a mix server");
-        opts.addOption("num_containers", true, "# of containers for mix servers");
-        opts.addOption("container_memory", true, "Amount of memory in MB to be requested to run a mix server");
-        opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a mix server");
+        opts.addOption("container_jar", true, "Jar file containing a MIX server");
+        opts.addOption("num_containers", true, "# of containers for MIX servers");
+        opts.addOption("container_memory", true, "Amount of memory in MB to be requested to run a MIX server");
+        opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a MIX server");
+        opts.addOption("num_retries", true, "# of retries for failed containers [Default: 32]");
         opts.addOption("log_properties", true, "log4j.properties file");
         opts.addOption("help", false, "Print usage");
     }
@@ -145,7 +150,7 @@ public final class MixClusterRunner {
                 + amQueue + ", amPriority=" + amPriority + ", amVCores=" + amVCores + ", amMemory="
                 + amMemory + ", mixServJar=" + mixServJar + ", numContainers=" + numContainers
                 + ", containerVCores=" + containerVCores + ", containerMemory=" + containerMemory
-                + "]";
+                + ", numRetries=" + numRetries + "]";
     }
 
     public boolean init(String[] args) throws ParseException {
@@ -162,9 +167,9 @@ public final class MixClusterRunner {
         }
 
         final String appMasterJarPath = cliParser.getOptionValue("jar");
-        if (appMasterJarPath == null) {
+        if(appMasterJarPath == null || !isFileExist(appMasterJarPath)) {
             throw new IllegalArgumentException(
-                    "Jar not specified for an application master with -jar");
+                    "Invalid jar not specified for an application master with -jar");
         }
         appMasterJar = new Path(appMasterJarPath);
         amQueue = cliParser.getOptionValue("queue", "default");
@@ -188,7 +193,8 @@ public final class MixClusterRunner {
         containerMemory = Integer.parseInt(cliParser.getOptionValue("container_memory", "512"));
         containerVCores = Integer.parseInt(cliParser.getOptionValue("container_vcores", "1"));
         numContainers = Integer.parseInt(cliParser.getOptionValue("num_containers", "1"));
-        if(containerMemory < 0 || containerVCores < 0 || numContainers < 1) {
+        numRetries = Integer.parseInt(cliParser.getOptionValue("num_retries", "0"));
+        if(containerMemory < 0 || containerVCores < 0 || numContainers < 1 || numRetries < 0) {
             throw new IllegalArgumentException("Invalid resources for containers: " + "num="
                     + numContainers + "cores=" + containerVCores + "mem=" + containerMemory);
         }
@@ -211,6 +217,10 @@ public final class MixClusterRunner {
         logger.info(this);
 
         return true;
+    }
+
+    private boolean isFileExist(String path) {
+        return new File(path).exists();
     }
 
     public boolean run() throws IOException, InterruptedException, YarnException {
@@ -259,7 +269,7 @@ public final class MixClusterRunner {
 
         // Set yarn-specific classpaths
         StringBuilder yarnAppClassPaths = new StringBuilder();
-
+        YarnUtils.addClassPath(YarnUtils.getSystemClassPath(), yarnAppClassPaths);
         String[] yarnClassPath = conf.getStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH, YarnConfiguration.DEFAULT_YARN_CROSS_PLATFORM_APPLICATION_CLASSPATH);
         for(String c : yarnClassPath) {
             YarnUtils.addClassPath(c.trim(), yarnAppClassPaths);
@@ -268,14 +278,21 @@ public final class MixClusterRunner {
         // Set arguments
         List<String> vargs = new ArrayList<String>();
 
-        vargs.add("--container_memory " + String.valueOf(containerMemory));
-        vargs.add("--container_vcores " + String.valueOf(containerVCores));
-        vargs.add("--num_containers " + String.valueOf(numContainers));
+        vargs.add("--container_memory");
+        vargs.add(String.valueOf(containerMemory));
+        vargs.add("--container_vcores");
+        vargs.add(String.valueOf(containerVCores));
+        vargs.add("--num_containers");
+        vargs.add(String.valueOf(numContainers));
+        if (numRetries != 0) {
+            vargs.add("--num_retries");
+            vargs.add(String.valueOf(numRetries));
+        }
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stdout");
         vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stderr");
 
         // Create a command executed in NM
-        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(ApplicationMaster.class, YarnUtils.getClassPaths(yarnAppClassPaths.toString()), amMemory, vargs, null);
+        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(appMasterMainClass, yarnAppClassPaths.toString(), amMemory, vargs, null);
 
         // Set a yarn-specific java home
         cmdBuilder.setJavaHome(Environment.JAVA_HOME.$$());
@@ -329,6 +346,19 @@ public final class MixClusterRunner {
         assert appId != null;
         try {
             return yarnClient.getApplicationReport(appId).getHost();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /**
+     * Get the diagnostic message from AM
+     * @return return host name if appId assigned
+     */
+    public String getApplicationMasterDiagnostics() {
+        assert appId != null;
+        try {
+            return yarnClient.getApplicationReport(appId).getDiagnostics();
         } catch (Exception e) {
             return "";
         }

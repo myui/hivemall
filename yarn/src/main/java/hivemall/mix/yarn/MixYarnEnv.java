@@ -35,6 +35,8 @@ public class MixYarnEnv {
     // Interval between each MIX server's heartbeat to an application master
     public static final long MIXSERVER_HEARTBEAT_INTERVAL = 180L;
 
+    public static final int MIXSERV_FAILURE_RETRY_NUM = 30;
+
     // Separator for MIX servers
     public static final String MIXSERVER_SEPARATOR = ",";
 
