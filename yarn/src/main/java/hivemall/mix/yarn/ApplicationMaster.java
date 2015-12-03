@@ -309,7 +309,7 @@ public class ApplicationMaster {
                 TimestampedValue<NodeId> value = e.getValue();
                 long elapsedTime = System.currentTimeMillis() - value.getTimestamp();
                 // Wait at most two-times intervals for heartbeats
-                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 2) {
+                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 4) {
                     // If expired, restart the MIX server
                     final String containerId = e.getKey();
                     final NodeId node = value.getValue();

@@ -35,6 +35,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -42,6 +44,7 @@ import static hivemall.mix.yarn.network.NettyUtils.readString;
 import static hivemall.mix.yarn.network.NettyUtils.writeString;
 
 public final class HeartbeatHandler {
+    private static final Log logger = LogFactory.getLog(HeartbeatHandler.class);
 
     @ChannelHandler.Sharable
     public final static class HeartbeatReceiver extends SimpleChannelInboundHandler<Heartbeat> {
@@ -54,6 +57,7 @@ public final class HeartbeatHandler {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
+            logger.info(msg);
             final String containerId = msg.getConainerId();
             final NodeId node = NodeId.newInstance(msg.getHost(), msg.getPort());
             if(activeMixServers.replace(containerId, new TimestampedValue<NodeId>(node)) == null) {
@@ -151,6 +155,7 @@ public final class HeartbeatHandler {
     }
 
     public final static class HeartbeatEncoder extends MessageToByteEncoder<Heartbeat> {
+        private static final byte[] LENGTH_PLACEHOLDER = new byte[4];
 
         public HeartbeatEncoder() {
             super(Heartbeat.class, true);
@@ -159,9 +164,12 @@ public final class HeartbeatHandler {
         @Override
         protected void encode(ChannelHandlerContext ctx, Heartbeat msg, ByteBuf out)
                 throws Exception {
+            int startIdx = out.writerIndex();
+            out.writeBytes(LENGTH_PLACEHOLDER);
             writeString(msg.getConainerId(), out);
             writeString(msg.getHost(), out);
             out.writeInt(msg.getPort());
+            out.setInt(startIdx, out.writerIndex() - startIdx - 4);
         }
     }
 }

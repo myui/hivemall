@@ -179,7 +179,7 @@ public final class MixClusterRunner {
         amQueue = cliParser.getOptionValue("queue", "default");
         amPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
         amVCores = Integer.parseInt(cliParser.getOptionValue("master_vcores", "1"));
-        amMemory = Integer.parseInt(cliParser.getOptionValue("master_memory", "128"));
+        amMemory = Integer.parseInt(cliParser.getOptionValue("master_memory", "1024"));
         if(amMemory < 0 || amVCores < 0) {
             throw new IllegalArgumentException("Invalid resources for AM: " + "cores=" + amVCores
                     + "mem=" + amMemory);
@@ -298,7 +298,7 @@ public final class MixClusterRunner {
         // Workaround: Containers killed when the amounts of memory for containers and
         // MIX servers (JVMs) are the same with each other, so MIX servers
         // have smaller memory space than containers.
-        int amShrankMemory = (int) (amMemory * 0.70);
+        int amShrankMemory = (int) (amMemory * 0.40);
 
         // Create a command executed in NM
         WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(appMasterMainClass, yarnAppClassPaths.toString(), amShrankMemory, vargs, null);

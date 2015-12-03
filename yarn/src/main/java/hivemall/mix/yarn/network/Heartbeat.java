@@ -43,4 +43,10 @@ public class Heartbeat {
     public int getPort() {
         return port;
     }
+
+    @Override
+    public String toString() {
+        return "Heartbeat[conainerId=" + conainerId + ", host=" + host + ", port="
+                + Integer.toString(port) + "]";
+    }
 }
