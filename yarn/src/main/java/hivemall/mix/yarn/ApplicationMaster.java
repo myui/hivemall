@@ -222,7 +222,7 @@ public class ApplicationMaster {
 
     protected void run() throws YarnException, IOException, InterruptedException {
         // AM <--> RM
-        amRMClientAsync = AMRMClientAsync.createAMRMClientAsync(1000, new RMCallbackHandler());
+        amRMClientAsync = AMRMClientAsync.createAMRMClientAsync(1000, new RMCallbackHandler(Thread.currentThread()));
         amRMClientAsync.init(conf);
         amRMClientAsync.start();
 
@@ -332,8 +332,18 @@ public class ApplicationMaster {
     }
 
     private class RMCallbackHandler implements AMRMClientAsync.CallbackHandler {
+        private final Thread mainThread;
 
         private int retryRequest = 0;
+
+        RMCallbackHandler(Thread mainThread) {
+            this.mainThread = mainThread;
+        }
+
+        private void nortifyShutdown() {
+            isTerminated = true;
+            mainThread.interrupt();
+        }
 
         @Override
         public void onContainersCompleted(List<ContainerStatus> completedContainers) {
@@ -374,7 +384,7 @@ public class ApplicationMaster {
                         numFailedContainers.incrementAndGet();
                     }
                     case ContainerExitStatus.SUCCESS: {
-                        isTerminated = true;
+                        nortifyShutdown();
                         break;
                     }
                     case ContainerExitStatus.DISKS_FAILED:
@@ -407,7 +417,7 @@ public class ApplicationMaster {
             // Finish AM if no request
             if(numRequestedContainers.get() == 0) {
                 logger.fatal("Allocation request gone for containers");
-                isTerminated = true;
+                nortifyShutdown();
             }
         }
 
@@ -444,7 +454,7 @@ public class ApplicationMaster {
         @Override
         public void onShutdownRequest() {
             logger.warn("Shutdown request received in AM");
-            isTerminated = true;
+            nortifyShutdown();
         }
 
         @Override
@@ -460,7 +470,7 @@ public class ApplicationMaster {
         @Override
         public void onError(Throwable throwable) {
             logger.error("Exception thrown:" + throwable.getMessage());
-            isTerminated = true;
+            nortifyShutdown();
         }
     }
 
