@@ -19,8 +19,10 @@
 package hivemall.mix.yarn.network;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -59,6 +61,15 @@ public final class NettyUtils {
             Thread.sleep(500L);
         }
         return ch;
+    }
+
+    public static String getHostAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     public static void writeString(final String s, final ByteBuf buf)

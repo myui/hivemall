@@ -19,6 +19,7 @@
 package hivemall.mix.yarn.server;
 
 import hivemall.mix.server.MixServer;
+import hivemall.mix.yarn.MixYarnEnv;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.cli.CommandLine;
@@ -31,6 +32,7 @@ import hivemall.utils.lang.CommandLineUtils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static hivemall.mix.yarn.network.NettyUtils.getHostAddress;
 import static hivemall.mix.yarn.network.NettyUtils.startNettyClient;
 
 public final class MixYarnServer extends MixServer {
@@ -41,10 +43,11 @@ public final class MixYarnServer extends MixServer {
 
     public static void main(String[] args) {
         // Parse input arguments
-        final Options opts = getOptions().addOption("container_id", true, "Container id of this MIX server assigned by YARN");
+        final Options opts = getOptions();
         final CommandLine cl = CommandLineUtils.parseOptions(args, opts);
         final MixServer mixServ = new MixYarnServer(cl);
         final String containerId = cl.getOptionValue("container_id");
+        final String appMasterHost = cl.getOptionValue("appmaster_host");
         final String host = getHostAddress();
         final int port = mixServ.getPort();
 
@@ -52,7 +55,7 @@ public final class MixYarnServer extends MixServer {
         EventLoopGroup workers = new NioEventLoopGroup();
         HeartbeatReporter msgHandler = new HeartbeatReporter(containerId, host, port);
         try {
-            startNettyClient(new HeartbeatReporterInitializer(msgHandler), host, port, workers);
+            startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -64,13 +67,10 @@ public final class MixYarnServer extends MixServer {
         workers.shutdownGracefully();
     }
 
-    private static String getHostAddress() {
-        try {
-            return InetAddress.getByName("localhost").getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        return "";
+    protected static Options getOptions() {
+        Options opts = MixServer.getOptions();
+        opts.addOption("container_id", true, "Container id of this MIX server assigned by YARN");
+        opts.addOption("appmaster_host", true, "Hostname of an application master");
+        return opts;
     }
-
 }

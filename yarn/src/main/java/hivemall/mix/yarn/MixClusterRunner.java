@@ -179,7 +179,7 @@ public final class MixClusterRunner {
         amQueue = cliParser.getOptionValue("queue", "default");
         amPriority = Integer.parseInt(cliParser.getOptionValue("priority", "0"));
         amVCores = Integer.parseInt(cliParser.getOptionValue("master_vcores", "1"));
-        amMemory = Integer.parseInt(cliParser.getOptionValue("master_memory", "10"));
+        amMemory = Integer.parseInt(cliParser.getOptionValue("master_memory", "128"));
         if(amMemory < 0 || amVCores < 0) {
             throw new IllegalArgumentException("Invalid resources for AM: " + "cores=" + amVCores
                     + "mem=" + amMemory);
@@ -295,8 +295,13 @@ public final class MixClusterRunner {
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stdout");
         vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stderr");
 
+        // Workaround: Containers killed when the amounts of memory for containers and
+        // MIX servers (JVMs) are the same with each other, so MIX servers
+        // have smaller memory space than containers.
+        int amShrankMemory = (int) (amMemory * 0.70);
+
         // Create a command executed in NM
-        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(appMasterMainClass, yarnAppClassPaths.toString(), amMemory, vargs, null);
+        WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(appMasterMainClass, yarnAppClassPaths.toString(), amShrankMemory, vargs, null);
 
         // Set a yarn-specific java home
         cmdBuilder.setJavaHome(Environment.JAVA_HOME.$$());
@@ -401,7 +406,7 @@ public final class MixClusterRunner {
             final YarnApplicationState state = report.getYarnApplicationState();
             final FinalApplicationStatus exitStatus = report.getFinalApplicationStatus();
 
-            logger.info("Got application report from ASM for " + "appId:" + appId.getId()
+            logger.warn("Got application report from ASM for " + "appId:" + appId.getId()
                     + ", clientToAMToken:" + report.getClientToAMToken() + ", appDiagnostics:"
                     + report.getDiagnostics() + ", appMasterHost:" + report.getHost()
                     + ", appQueue:" + report.getQueue() + ", appMasterRpcPort:"

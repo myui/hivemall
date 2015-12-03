@@ -85,6 +85,8 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 
+import static hivemall.mix.yarn.network.NettyUtils.getHostAddress;
+
 public class ApplicationMaster {
     private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
 
@@ -611,6 +613,8 @@ public class ApplicationMaster {
 
             vargs.add("--container_id");
             vargs.add(containerId);
+            vargs.add("--appmaster_host");
+            vargs.add(getHostAddress());
             vargs.add(String.valueOf(containerMemory));
             vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout");
             vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");

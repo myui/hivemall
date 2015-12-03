@@ -23,7 +23,7 @@ public class MixYarnEnv {
     // Default port number for resource requests
     public static final int RESOURCE_REQUEST_PORT = 11213;
 
-    // Default port number for report receivers
+    // Default port number for heartbeat receivers
     public static final int REPORT_RECEIVER_PORT = 11214;
 
     // Environment key name for preloading custom jar of MIX server implementation
