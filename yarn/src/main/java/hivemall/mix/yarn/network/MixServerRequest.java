@@ -27,10 +27,6 @@ public class MixServerRequest {
         this(-1, null);
     }
 
-    public MixServerRequest(int numRequest) {
-        this(numRequest, null);
-    }
-
     public MixServerRequest(int numRequest, String URIs) {
         this.numRequest = numRequest;
         this.allocatedURIs = URIs;

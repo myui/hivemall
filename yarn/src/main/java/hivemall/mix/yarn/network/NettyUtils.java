@@ -25,13 +25,11 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
@@ -68,7 +66,7 @@ public final class NettyUtils {
     public static String getHostAddress() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
+        } catch(UnknownHostException e) {
             e.printStackTrace();
         }
         return "";
@@ -94,7 +92,7 @@ public final class NettyUtils {
         in.readBytes(b, 0, length);
         try {
             return new String(b, "utf-8");
-        } catch (UnsupportedEncodingException e) {
+        } catch(UnsupportedEncodingException e) {
             return null;
         }
     }

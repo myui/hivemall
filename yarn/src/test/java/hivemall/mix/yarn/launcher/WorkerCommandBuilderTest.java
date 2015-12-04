@@ -39,7 +39,7 @@ public class WorkerCommandBuilderTest {
             InputStream input = process.getInputStream();
             output = IOUtils.toString(input);
             exitCode = process.waitFor();
-        } catch (Exception e) {
+        } catch(Exception e) {
             Assert.fail("Failed to launch a program:" + cmdBuilder);
         }
         Assert.assertEquals("This is a test program! args=[test]", output);

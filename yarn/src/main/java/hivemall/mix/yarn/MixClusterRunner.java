@@ -18,10 +18,6 @@
  */
 package hivemall.mix.yarn;
 
-import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
-import hivemall.mix.yarn.utils.Log4jPropertyHelper;
-import hivemall.mix.yarn.utils.YarnUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -53,6 +49,10 @@ import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
+
+import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
+import hivemall.mix.yarn.utils.Log4jPropertyHelper;
+import hivemall.mix.yarn.utils.YarnUtils;
 
 /**
  * MixClusterRunner and ApplicationMaster support YARN version 2.4 or more.
@@ -109,7 +109,7 @@ public final class MixClusterRunner {
                 System.exit(-1);
             }
             result = mixClusterRunner.run();
-        } catch (Throwable t) {
+        } catch(Throwable t) {
             logger.fatal("Error running MixServerRunner", t);
             System.exit(1);
         }
@@ -260,7 +260,7 @@ public final class MixClusterRunner {
 
         YarnUtils.copyFromLocalFile(fs, appJar, new Path(sharedDir, appJar.getName()), localResources);
         YarnUtils.copyFromLocalFile(fs, log4jPropFile, new Path(sharedDir, "log4j.properties"), localResources);
-        if (mixServJar != null) {
+        if(mixServJar != null) {
             YarnUtils.copyFromLocalFile(fs, mixServJar, new Path(sharedDir, mixServJar.getName()), null);
         }
 
@@ -288,7 +288,7 @@ public final class MixClusterRunner {
         vargs.add(String.valueOf(containerVCores));
         vargs.add("--num_containers");
         vargs.add(String.valueOf(numContainers));
-        if (numRetries != 0) {
+        if(numRetries != 0) {
             vargs.add("--num_retries");
             vargs.add(String.valueOf(numRetries));
         }
@@ -329,7 +329,7 @@ public final class MixClusterRunner {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                if (!isFinished) {
+                if(!isFinished) {
                     forceKillApplication();
                 }
             }

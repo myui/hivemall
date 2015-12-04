@@ -18,21 +18,21 @@
  */
 package hivemall.mix.yarn.server;
 
-import hivemall.mix.server.MixServer;
-import hivemall.mix.yarn.MixYarnEnv;
-import hivemall.mix.yarn.network.NettyUtils;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import hivemall.mix.server.MixServer;
+import hivemall.mix.yarn.MixYarnEnv;
+import hivemall.mix.yarn.network.NettyUtils;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReporter;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReporterInitializer;
 import hivemall.utils.lang.CommandLineUtils;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public final class MixYarnServer extends MixServer {
 
@@ -59,7 +59,7 @@ public final class MixYarnServer extends MixServer {
             } catch(InterruptedException e) {
                 e.printStackTrace();
             }
-            if (mixServ.getState() == ServerState.RUNNING) {
+            if(mixServ.getState() == ServerState.RUNNING) {
                 break;
             }
         }
@@ -71,14 +71,14 @@ public final class MixYarnServer extends MixServer {
         HeartbeatReporter msgHandler = new HeartbeatReporter(containerId, host, port);
         try {
             NettyUtils.startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
-        } catch (InterruptedException e) {
+        } catch(InterruptedException e) {
             e.printStackTrace();
         }
 
         // Block until this MIX server finished
         try {
             f.get();
-        } catch (Exception e) {
+        } catch(Exception e) {
             e.printStackTrace();
         } finally {
             workers.shutdownGracefully();

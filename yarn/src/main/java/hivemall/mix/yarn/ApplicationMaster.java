@@ -612,7 +612,7 @@ public class ApplicationMaster {
                 final FileSystem fs = FileSystem.get(conf);
                 final Path mixServJarDst = new Path(sharedDir, mixServJar);
                 localResources.put(mixServJarDst.getName(), YarnUtils.createLocalResource(fs, mixServJarDst));
-            } catch (IOException e) {
+            } catch(IOException e) {
                 e.printStackTrace();
             }
 

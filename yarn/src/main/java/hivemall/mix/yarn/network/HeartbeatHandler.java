@@ -18,8 +18,8 @@
  */
 package hivemall.mix.yarn.network;
 
-import hivemall.mix.yarn.MixYarnEnv;
-import hivemall.mix.yarn.utils.TimestampedValue;
+import java.util.concurrent.ConcurrentMap;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,9 +28,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-
-import java.util.concurrent.ConcurrentMap;
-
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -39,6 +36,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import hivemall.mix.yarn.MixYarnEnv;
+import hivemall.mix.yarn.utils.TimestampedValue;
 
 public final class HeartbeatHandler {
     private static final Log logger = LogFactory.getLog(HeartbeatHandler.class);
@@ -104,7 +104,7 @@ public final class HeartbeatHandler {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (evt instanceof IdleStateEvent) {
+            if(evt instanceof IdleStateEvent) {
                 assert ((IdleStateEvent) evt).state() == IdleState.WRITER_IDLE;
                 ctx.writeAndFlush(new Heartbeat(containerId, host, port));
             }
