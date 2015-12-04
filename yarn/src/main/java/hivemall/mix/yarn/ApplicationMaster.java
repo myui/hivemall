@@ -100,7 +100,7 @@ public class ApplicationMaster {
     private String mixServJar;
 
     // Handle to communicate with RM/NM
-    private AMRMClientAsync<ContainerRequest> amRMClientAsync;
+    private AMRMClientAsync amRMClientAsync;
     private NMClientAsync nmClientAsync;
     private NMCallbackHandler containerListener;
 
@@ -218,6 +218,40 @@ public class ApplicationMaster {
         return value;
     }
 
+    // Visible for testing
+    protected void setAmRMClient(AMRMClientAsync client) {
+        this.amRMClientAsync = client;
+    }
+
+    // Visible for testing
+    protected RMCallbackHandler getRMCallbackHandler() {
+        return new RMCallbackHandler(Thread.currentThread());
+    }
+
+    // Visible for testing
+    protected void setNumContainers(int numContainers) {
+        this.numContainers = numContainers;
+    }
+
+    // Visible for testing
+    protected void setNumRequestedContainers(int numRequestedContainers) {
+        this.numRequestedContainers.set(numRequestedContainers);
+    }
+
+    // Visible for testing
+    protected int getNumAllocatedContainers() {
+        return this.numAllocatedContainers.get();
+    }
+
+    // Visible for testing
+    protected int getNumFailedContainers() {
+        return this.numFailedContainers.get();
+    }
+
+    protected boolean isTerminated() {
+        return this.isTerminated;
+    }
+
     protected void run() throws YarnException, IOException, InterruptedException {
         // AM <--> RM
         amRMClientAsync = AMRMClientAsync.createAMRMClientAsync(1000, new RMCallbackHandler(Thread.currentThread()));
@@ -329,10 +363,11 @@ public class ApplicationMaster {
         amRMClientAsync.releaseAssignedContainer(id);
     }
 
-    private class RMCallbackHandler implements AMRMClientAsync.CallbackHandler {
+    // Visible for testing
+    public class RMCallbackHandler implements AMRMClientAsync.CallbackHandler {
         private final Thread mainThread;
 
-        private int retryRequest = 0;
+        private int numRetries = 0;
 
         RMCallbackHandler(Thread mainThread) {
             this.mainThread = mainThread;
@@ -341,6 +376,11 @@ public class ApplicationMaster {
         private void nortifyShutdown() {
             isTerminated = true;
             mainThread.interrupt();
+        }
+
+        // Visible for testing
+        protected int getNumRetries() {
+            return numRetries;
         }
 
         @Override
@@ -399,7 +439,7 @@ public class ApplicationMaster {
             // Retry launching containers if not terminated
             int reAskCount = numContainers - numRequestedContainers.get();
             if(!isTerminated && reAskCount > 0) {
-                if(retryRequest++ < numRetryForFailedContainers) {
+                if(numRetries++ < numRetryForFailedContainers) {
                     logger.warn("Retry " + reAskCount + " requests for failed containers");
                     for(int i = 0; i < reAskCount; i++) {
                         ContainerRequest containerAsk = setupContainerAskForRM();
@@ -445,7 +485,8 @@ public class ApplicationMaster {
                 // Launch and start the container on a separate thread to keep
                 // the main thread unblocked as all containers
                 // may not be allocated at one go.
-                containerExecutor.submit(new LaunchContainerRunnable(container, new ContainerLaunchInfo(container.getId())));
+                final Runnable containerTask = createLaunchContainerThread(container, new ContainerLaunchInfo(container.getId()));
+                containerExecutor.submit(containerTask);
             }
         }
 
@@ -593,7 +634,8 @@ public class ApplicationMaster {
         return request;
     }
 
-    private class ContainerLaunchInfo {
+    // Visible for testing
+    protected class ContainerLaunchInfo {
         private final String containerId;
 
         ContainerLaunchInfo(ContainerId containerId) {
@@ -648,6 +690,11 @@ public class ApplicationMaster {
             }
             return ContainerLaunchContext.newInstance(localResources, null, cmd, null, null, null);
         }
+    }
+
+    // Visible for testing
+    protected Runnable createLaunchContainerThread(Container container, ContainerLaunchInfo cmdInfo) {
+        return new LaunchContainerRunnable(container, cmdInfo);
     }
 
     // Thread to launch the container that will execute a MIX server
