@@ -31,7 +31,7 @@ public final class IOUtils {
     private IOUtils() {}
 
     public static void closeQuietly(final Closeable channel) {
-        if(channel != null) {
+        if (channel != null) {
             try {
                 channel.close();
             } catch (IOException e) {
@@ -41,8 +41,8 @@ public final class IOUtils {
     }
 
     public static void closeQuietly(final Closeable... channels) {
-        for(Closeable c : channels) {
-            if(c != null) {
+        for (Closeable c : channels) {
+            if (c != null) {
                 try {
                     c.close();
                 } catch (IOException e) {
@@ -62,6 +62,16 @@ public final class IOUtils {
     }
 
     /**
+     * Serialize given InputStream as String.
+     */
+    public static String toString(@Nonnull final InputStream input, final int bufSize)
+            throws IOException {
+        FastByteArrayOutputStream output = new FastByteArrayOutputStream(bufSize);
+        copy(input, output);
+        return output.toString();
+    }
+
+    /**
      * InputStream -> OutputStream
      */
     public static int copy(@Nonnull final InputStream input, @Nonnull final OutputStream output)
@@ -69,7 +79,7 @@ public final class IOUtils {
         final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         int count = 0;
         int n = 0;
-        while(-1 != (n = input.read(buffer))) {
+        while (-1 != (n = input.read(buffer))) {
             output.write(buffer, 0, n);
             count += n;
         }
