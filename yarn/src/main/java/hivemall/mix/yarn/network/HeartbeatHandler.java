@@ -52,9 +52,8 @@ public final class HeartbeatHandler {
             this.activeMixServers = nodes;
         }
 
-        // Visible for testing
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
             logger.info(msg);
             final String containerId = msg.getConainerId();
             final NodeId node = NodeId.newInstance(msg.getHost(), msg.getPort());

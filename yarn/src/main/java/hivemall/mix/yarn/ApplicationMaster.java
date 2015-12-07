@@ -465,7 +465,7 @@ public class ApplicationMaster {
                     + allocatedContainers.size());
             for(Container container : allocatedContainers) {
                 // TODO: Why this condition below happens?
-                if (isTerminated || numAllocatedContainers.get() >= numContainers) {
+                if(isTerminated || numAllocatedContainers.get() >= numContainers) {
                     logger.warn(container.getId() + " not accepted because of AM state"
                             + " (probably, # of allocated containers exceeded");
                     amRMClientAsync.releaseAssignedContainer(container.getId());
@@ -584,7 +584,7 @@ public class ApplicationMaster {
                     if(sb.length() > 0) {
                         sb.append(",");
                     }
-                    if (node.getValue().getPort() == -1) {
+                    if(node.getValue().getPort() == -1) {
                         sb.append(node.getValue().getHost() + ":UNINITIALIZED");
                     } else {
                         sb.append(node);

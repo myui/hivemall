@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
-
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -35,7 +34,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import hivemall.mix.yarn.network.NettyUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -53,7 +51,8 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.*;
 
-import hivemall.mix.yarn.network.MixServerRequest;
+import hivemall.mix.yarn.network.NettyUtils;
+import hivemall.mix.yarn.network.MixRequest;
 import hivemall.mix.yarn.network.MixRequestServerHandler.AbstractMixRequestHandler;
 import hivemall.mix.yarn.network.MixRequestServerHandler.MixServerRequestInitializer;
 
@@ -155,7 +154,7 @@ public final class MixClusterTest {
     public void tearDown() throws Exception {
         try {
             // Shut down a MIX cluster, then a YARN cluster
-            if (mixClusterRunner != null) {
+            if(mixClusterRunner != null) {
                 mixClusterRunner.forceKillApplication();
             }
             mixClusterExec.shutdown();
@@ -196,7 +195,7 @@ public final class MixClusterTest {
         Channel ch = NettyUtils.startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
-        ch.writeAndFlush(new MixServerRequest()).sync();
+        ch.writeAndFlush(new MixRequest()).sync();
         int retry = 0;
         while(mixServers.get() == null && retry++ < 32) {
             Thread.sleep(500L);
@@ -240,7 +239,7 @@ public final class MixClusterTest {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, MixServerRequest req)
+        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req)
                 throws Exception {
             mixServers.set(req.getAllocatedURIs());
         }

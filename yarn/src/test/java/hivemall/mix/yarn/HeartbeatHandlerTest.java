@@ -18,12 +18,14 @@
  */
 package hivemall.mix.yarn;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import hivemall.mix.yarn.network.HeartbeatHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import org.junit.Assert;
@@ -31,7 +33,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import hivemall.mix.yarn.network.Heartbeat;
-import hivemall.mix.yarn.network.HeartbeatHandler;
+import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
 import hivemall.mix.yarn.utils.TimestampedValue;
 
 public final class HeartbeatHandlerTest {
@@ -42,9 +44,11 @@ public final class HeartbeatHandlerTest {
         aliveMixServers.put("containerId1", createNodeId("localhost", -1)); // -1 means an inactive entry
         aliveMixServers.put("containerId2", createNodeId("localhost", -1));
 
+        HeartbeatReceiver handler = new HeartbeatReceiver(aliveMixServers);
+        Method channelReadMethod = HeartbeatReceiver.class.getDeclaredMethod("channelRead0", ChannelHandlerContext.class, Heartbeat.class);
+        channelReadMethod.setAccessible(true);
         ChannelHandlerContext mockCtx = Mockito.mock(ChannelHandlerContext.class);
-        HeartbeatHandler.HeartbeatReceiver handler = new HeartbeatHandler.HeartbeatReceiver(aliveMixServers);
-        handler.channelRead0(mockCtx, new Heartbeat("containerId1", "localhost", 1));
+        channelReadMethod.invoke(handler, mockCtx, new Heartbeat("containerId1", "localhost", 1));
         Mockito.verify(mockCtx, Mockito.times(0)).writeAndFlush(Mockito.any());
         Assert.assertEquals($s("localhost:1", "localhost:-1"), getMapMixServers(aliveMixServers));
     }

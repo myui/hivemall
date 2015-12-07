@@ -39,7 +39,7 @@ import hivemall.mix.yarn.utils.TimestampedValue;
 public final class MixRequestServerHandler {
 
     public abstract static class AbstractMixRequestHandler extends
-            SimpleChannelInboundHandler<MixServerRequest> {
+            SimpleChannelInboundHandler<MixRequest> {
     }
 
     @ChannelHandler.Sharable
@@ -51,9 +51,8 @@ public final class MixRequestServerHandler {
             this.activeMixServers = nodes;
         }
 
-        // Visible for testing
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, MixServerRequest req)
+        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req)
                 throws Exception {
             assert req.getCount() > 0;
             /**
@@ -65,12 +64,12 @@ public final class MixRequestServerHandler {
             final List<String> urls = new ArrayList<String>();
             for(String key : keys) {
                 final TimestampedValue<NodeId> node = activeMixServers.get(key);
-                if (node == null) {
+                if(node == null) {
                     continue;
                 }
                 urls.add(node.toString());
             }
-            MixServerRequest msg = new MixServerRequest(urls.size(), join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
+            MixRequest msg = new MixRequest(urls.size(), join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
             ctx.writeAndFlush(msg);
         }
 
@@ -115,19 +114,19 @@ public final class MixRequestServerHandler {
                 throws Exception {
             int numRequest = in.readInt();
             String URIs = NettyUtils.readString(in);
-            out.add(new MixServerRequest(numRequest, URIs));
+            out.add(new MixRequest(numRequest, URIs));
             in.release();
         }
     }
 
-    public final static class RequestEncoder extends MessageToByteEncoder<MixServerRequest> {
+    public final static class RequestEncoder extends MessageToByteEncoder<MixRequest> {
 
         public RequestEncoder() {
-            super(MixServerRequest.class, true);
+            super(MixRequest.class, true);
         }
 
         @Override
-        protected void encode(ChannelHandlerContext ctx, MixServerRequest msg, ByteBuf out)
+        protected void encode(ChannelHandlerContext ctx, MixRequest msg, ByteBuf out)
                 throws Exception {
             out.writeInt(msg.getCount());
             NettyUtils.writeString(msg.getAllocatedURIs(), out);

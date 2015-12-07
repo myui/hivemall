@@ -18,7 +18,7 @@
  */
 package hivemall.mix.yarn.network;
 
-public class Heartbeat {
+public final class Heartbeat {
 
     private final String conainerId;
     private final String host;

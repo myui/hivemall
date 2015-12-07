@@ -66,11 +66,13 @@ public final class WorkerCommandBuilder {
         command.add("-cp");
         command.add(join(File.pathSeparator, buildClassPath(extraClassPath)));
         command.addAll(Arrays.asList("-Xms" + memoryMb + "m", "-Xmx" + memoryMb + "m"));
-        if(javaOps != null)
+        if(javaOps != null) {
             command.addAll(javaOps);
+        }
         command.add(mainClass);
-        if(arguments != null)
+        if(arguments != null) {
             command.addAll(arguments);
+        }
         return command;
     }
 

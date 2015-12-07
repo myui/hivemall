@@ -18,21 +18,21 @@
  */
 package hivemall.mix.yarn.network;
 
-public final class MixServerRequest {
+public final class MixRequest {
 
     private final int count;
     private final String allocatedURIs;
 
-    public MixServerRequest() {
+    public MixRequest() {
         this(-1, null);
     }
 
-    public MixServerRequest(int numRequest) {
+    public MixRequest(int numRequest) {
         this.count = numRequest;
         this.allocatedURIs = null;
     }
 
-    public MixServerRequest(int numAssigned, String URIs) {
+    public MixRequest(int numAssigned, String URIs) {
         this.count = numAssigned;
         this.allocatedURIs = URIs;
     }
