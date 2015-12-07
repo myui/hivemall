@@ -568,9 +568,14 @@ public class ApplicationMaster {
         }
     }
 
-    protected boolean finish() throws InterruptedException {
+    protected boolean finish() {
         while(!isTerminated) {
-            Thread.sleep(60 * 1000L);
+            try {
+                Thread.sleep(60 * 1000L);
+            } catch (InterruptedException e) {
+                logger.info("Sleep interrupted for shutting down AM");
+                break;
+            }
 
             // Show registered MIX servers if info-loglevel enabled
             if(logger.isInfoEnabled()) {

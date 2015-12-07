@@ -398,15 +398,15 @@ public final class MixClusterRunner {
         assert appId != null;
 
         while(true) {
-            // Check app status every 1 minute
-            Thread.sleep(60 * 1000L);
+            // Check app status every 20 sec.
+            Thread.sleep(20 * 1000L);
 
             // Get application report for the appId we are interested in
             final ApplicationReport report = yarnClient.getApplicationReport(appId);
             final YarnApplicationState state = report.getYarnApplicationState();
             final FinalApplicationStatus exitStatus = report.getFinalApplicationStatus();
 
-            logger.warn("Got application report from ASM for " + "appId:" + appId.getId()
+            logger.info("Got application report from ASM for " + "appId:" + appId.getId()
                     + ", clientToAMToken:" + report.getClientToAMToken() + ", appDiagnostics:"
                     + report.getDiagnostics() + ", appMasterHost:" + report.getHost()
                     + ", appQueue:" + report.getQueue() + ", appMasterRpcPort:"

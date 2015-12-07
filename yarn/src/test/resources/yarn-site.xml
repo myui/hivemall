@@ -20,5 +20,12 @@
 -->
 
 <configuration>
+
   <!-- Dummy (invalid) config file to be overwriten by TestDistributedShell with MiniCluster configuration. -->
+  <property>
+    <name>yarn.nodemanager.vmem-check-enabled</name>
+    <value>false</value>
+    <description>Whether virtual memory limits will be enforced for containers.</description>
+  </property>
+
 </configuration>

@@ -147,7 +147,7 @@ public final class HeartbeatHandler {
             String containerId = NettyUtils.readString(frame);
             String host = NettyUtils.readString(frame);
             int port = frame.readInt();
-            in.release();
+            // in.release();
             return new Heartbeat(containerId, host, port);
         }
     }

@@ -19,7 +19,6 @@
 package hivemall.mix.yarn.network;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +117,7 @@ public final class MixServerRequestHandler {
             int numRequest = in.readInt();
             String URIs = NettyUtils.readString(in);
             out.add(new MixServerRequest(numRequest, URIs));
-            in.release();
+            // in.release();
         }
     }
 
