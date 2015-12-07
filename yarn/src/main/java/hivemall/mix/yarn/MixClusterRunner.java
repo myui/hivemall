@@ -298,7 +298,7 @@ public final class MixClusterRunner {
         // Workaround: Containers killed when the amounts of memory for containers and
         // MIX servers (JVMs) are the same with each other, so MIX servers
         // have smaller memory space than containers.
-        int amShrankMemory = (int) (amMemory * 0.40);
+        int amShrankMemory = (int) (amMemory * 0.90);
 
         // Create a command executed in NM
         WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(appMasterMainClass, yarnAppClassPaths.toString(), amShrankMemory, vargs, null);

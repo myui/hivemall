@@ -677,7 +677,7 @@ public class ApplicationMaster {
             // Workaround: Containers killed when the amounts of memory for containers and
             // MIX servers (JVMs) are the same with each other, so MIX servers
             // have smaller memory space than containers.
-            int mixServMemory = (int) (containerMemory * 0.70);
+            int mixServMemory = (int) (containerMemory * 0.90);
 
             // Create a command executed in NM
             final WorkerCommandBuilder cmdBuilder = new WorkerCommandBuilder(containerMainClass, YarnUtils.getSystemClassPath(), mixServMemory, vargs, null);
