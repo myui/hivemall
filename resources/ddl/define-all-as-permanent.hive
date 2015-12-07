@@ -430,6 +430,16 @@ CREATE FUNCTION array_sum as 'hivemall.tools.array.ArraySumUDAF' USING JAR '${hi
 DROP FUNCTION IF EXISTS to_string_array;
 CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
 
+---------------------------
+-- compression functions --
+---------------------------
+
+DROP FUNCTION IF EXISTS inflate;
+CREATE FUNCTION inflate as 'hivemall.tools.compress.InflateUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS deflate;
+CREATE FUNCTION deflate as 'hivemall.tools.compress.DeflateUDF' USING JAR '${hivemall_jar}';
+
 ---------------------
 -- map functions --
 ---------------------

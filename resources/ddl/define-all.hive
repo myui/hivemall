@@ -426,6 +426,16 @@ create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
 
+---------------------------
+-- compression functions --
+---------------------------
+
+drop temporary function inflate;
+create temporary function inflate as 'hivemall.tools.compress.InflateUDF';
+
+drop temporary function deflate;
+create temporary function deflate as 'hivemall.tools.compress.DeflateUDF';
+
 ---------------------
 -- map functions --
 ---------------------
