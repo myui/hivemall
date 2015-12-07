@@ -54,8 +54,8 @@ import org.apache.hadoop.yarn.server.MiniYARNCluster;
 import org.junit.*;
 
 import hivemall.mix.yarn.network.MixServerRequest;
-import hivemall.mix.yarn.network.MixServerRequestHandler.AbstractMixServerRequestHandler;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
+import hivemall.mix.yarn.network.MixRequestServerHandler.AbstractMixRequestHandler;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixServerRequestInitializer;
 
 public final class MixClusterTest {
     private static final Log logger = LogFactory.getLog(MixClusterTest.class);
@@ -192,7 +192,7 @@ public final class MixClusterTest {
         AtomicReference<String> mixServers = new AtomicReference<String>();
 
         EventLoopGroup workers = new NioEventLoopGroup();
-        MixServerRequester msgHandler = new MixServerRequester(mixServers);
+        MixRequester msgHandler = new MixRequester(mixServers);
         Channel ch = NettyUtils.startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
@@ -231,11 +231,11 @@ public final class MixClusterTest {
     }
 
     @ChannelHandler.Sharable
-    public final class MixServerRequester extends AbstractMixServerRequestHandler {
+    public final class MixRequester extends AbstractMixRequestHandler {
 
         final AtomicReference<String> mixServers;
 
-        public MixServerRequester(AtomicReference<String> ref) {
+        public MixRequester(AtomicReference<String> ref) {
             this.mixServers = ref;
         }
 

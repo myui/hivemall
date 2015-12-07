@@ -40,4 +40,13 @@ public final class TimestampedValue<T> {
     public String toString() {
         return value.toString();
     }
+
+    @Override
+    public boolean equals(Object others) {
+        if(others == null) {
+            return false;
+        }
+        // Compare value itself
+        return value.equals(others);
+    }
 }

@@ -52,8 +52,9 @@ public final class HeartbeatHandler {
             this.activeMixServers = nodes;
         }
 
+        // Visible for testing
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
+        public void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
             logger.info(msg);
             final String containerId = msg.getConainerId();
             final NodeId node = NodeId.newInstance(msg.getHost(), msg.getPort());
@@ -147,7 +148,7 @@ public final class HeartbeatHandler {
             String containerId = NettyUtils.readString(frame);
             String host = NettyUtils.readString(frame);
             int port = frame.readInt();
-            // in.release();
+            in.release();
             return new Heartbeat(containerId, host, port);
         }
     }

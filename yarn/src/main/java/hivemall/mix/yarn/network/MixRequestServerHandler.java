@@ -36,18 +36,18 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import hivemall.mix.yarn.MixYarnEnv;
 import hivemall.mix.yarn.utils.TimestampedValue;
 
-public final class MixServerRequestHandler {
+public final class MixRequestServerHandler {
 
-    public abstract static class AbstractMixServerRequestHandler extends
+    public abstract static class AbstractMixRequestHandler extends
             SimpleChannelInboundHandler<MixServerRequest> {
     }
 
     @ChannelHandler.Sharable
-    public final static class MixServerRequestReceiver extends AbstractMixServerRequestHandler {
+    public final static class MixRequestReceiver extends AbstractMixRequestHandler {
 
         final Map<String, TimestampedValue<NodeId>> activeMixServers;
 
-        public MixServerRequestReceiver(Map<String, TimestampedValue<NodeId>> nodes) {
+        public MixRequestReceiver(Map<String, TimestampedValue<NodeId>> nodes) {
             this.activeMixServers = nodes;
         }
 
@@ -63,10 +63,9 @@ public final class MixServerRequestHandler {
              */
             final List<String> keys = new ArrayList<String>(activeMixServers.keySet());
             final List<String> urls = new ArrayList<String>();
-            int num = keys.size();
-            for(int i = 0; i < num; i++) {
-                final TimestampedValue<NodeId> node = activeMixServers.get(keys.get(i));
-                if(node == null) {
+            for(String key : keys) {
+                final TimestampedValue<NodeId> node = activeMixServers.get(key);
+                if (node == null) {
                     continue;
                 }
                 urls.add(node.toString());
@@ -96,9 +95,9 @@ public final class MixServerRequestHandler {
 
     public final static class MixServerRequestInitializer extends ChannelInitializer<SocketChannel> {
 
-        private final AbstractMixServerRequestHandler handler;
+        private final AbstractMixRequestHandler handler;
 
-        public MixServerRequestInitializer(AbstractMixServerRequestHandler handler) {
+        public MixServerRequestInitializer(AbstractMixRequestHandler handler) {
             this.handler = handler;
         }
 
@@ -117,7 +116,7 @@ public final class MixServerRequestHandler {
             int numRequest = in.readInt();
             String URIs = NettyUtils.readString(in);
             out.add(new MixServerRequest(numRequest, URIs));
-            // in.release();
+            in.release();
         }
     }
 

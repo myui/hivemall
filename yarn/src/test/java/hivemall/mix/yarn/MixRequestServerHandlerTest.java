@@ -18,10 +18,7 @@
  */
 package hivemall.mix.yarn;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -31,35 +28,30 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestReceiver;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixRequestReceiver;
 import hivemall.mix.yarn.utils.TimestampedValue;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-public final class MixServerRequestHandlerTest {
+public final class MixRequestServerHandlerTest {
 
     @Test
     public void testMixServerRequestReceiver() throws Exception {
         final Map<String, TimestampedValue<NodeId>> aliveMixServers = new ConcurrentHashMap<String, TimestampedValue<NodeId>>();
-        aliveMixServers.put("containerId1", createNodeId("localhost", 0));
-        aliveMixServers.put("containerId2", createNodeId("localhost", 1));
-        aliveMixServers.put("containerId3", createNodeId("localhost", 2));
-        aliveMixServers.put("containerId4", createNodeId("localhost", 3));
+        aliveMixServers.put("containerId1", createNodeId("localhost", 1));
+        aliveMixServers.put("containerId2", createNodeId("localhost", 2));
+        aliveMixServers.put("containerId3", createNodeId("localhost", 3));
 
         ChannelHandlerContext mockCtx = Mockito.mock(ChannelHandlerContext.class);
         ArgumentCaptor<MixServerRequest> arg = ArgumentCaptor.forClass(MixServerRequest.class);
-        MixServerRequestReceiver handler = new MixServerRequestReceiver(aliveMixServers);
+        MixRequestReceiver handler = new MixRequestReceiver(aliveMixServers);
         handler.channelRead0(mockCtx, new MixServerRequest(1));
+        Mockito.verify(mockCtx, Mockito.times(1)).writeAndFlush(Mockito.any());
         Mockito.verify(mockCtx).writeAndFlush(arg.capture());
 
-        Assert.assertEquals(4, arg.getValue().getCount());
+        Assert.assertEquals(3, arg.getValue().getCount());
         final Set<String> setAllocatedURIs = parseAllocatedUris(arg.getValue().getAllocatedURIs());
-        final Set<String> expectedSet = new HashSet<String>();
-        expectedSet.add("localhost:0");
-        expectedSet.add("localhost:1");
-        expectedSet.add("localhost:2");
-        expectedSet.add("localhost:3");
-        Assert.assertEquals(expectedSet, setAllocatedURIs);
+        Assert.assertEquals($s("localhost:1", "localhost:2", "localhost:3"), setAllocatedURIs);
     }
 
     private TimestampedValue<NodeId> createNodeId(String host, int port) {
@@ -69,5 +61,11 @@ public final class MixServerRequestHandlerTest {
     private Set<String> parseAllocatedUris(String uris) {
         final String[] urisStrArray = uris.split(Pattern.quote(MixYarnEnv.MIXSERVER_SEPARATOR));
         return new HashSet<String>(Arrays.asList(urisStrArray));
+    }
+
+    private static <T> Set<T> $s(T... values) {
+        final Set<T> set = new HashSet<T>(values.length);
+        Collections.addAll(set, values);
+        return set;
     }
 }

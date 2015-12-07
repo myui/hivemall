@@ -79,8 +79,8 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiverInitializer;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestInitializer;
-import hivemall.mix.yarn.network.MixServerRequestHandler.MixServerRequestReceiver;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixServerRequestInitializer;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixRequestReceiver;
 import hivemall.mix.yarn.network.NettyUtils;
 import hivemall.mix.yarn.utils.TimestampedValue;
 import hivemall.mix.yarn.utils.YarnUtils;
@@ -286,7 +286,7 @@ public class ApplicationMaster {
         startNettyServer(new HeartbeatReceiverInitializer(new HeartbeatReceiver(activeMixServers)), MixYarnEnv.REPORT_RECEIVER_PORT);
 
         // Accept resource requests from clients
-        startNettyServer(new MixServerRequestInitializer(new MixServerRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
+        startNettyServer(new MixServerRequestInitializer(new MixRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
         monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
