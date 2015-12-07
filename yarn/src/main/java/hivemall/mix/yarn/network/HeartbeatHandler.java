@@ -168,7 +168,6 @@ public final class HeartbeatHandler {
             NettyUtils.writeString(msg.getHost(), out);
             out.writeInt(msg.getPort());
             out.setInt(startIdx, out.writerIndex() - startIdx - 4);
-            out.release();
         }
     }
 }

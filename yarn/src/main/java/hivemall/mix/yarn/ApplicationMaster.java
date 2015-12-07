@@ -249,7 +249,7 @@ public class ApplicationMaster {
     }
 
     protected boolean isTerminated() {
-        return this.isTerminated;
+        return isTerminated;
     }
 
     protected void run() throws YarnException, IOException, InterruptedException {

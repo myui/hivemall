@@ -21,7 +21,7 @@ package hivemall.mix.yarn.network;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -46,19 +46,25 @@ public final class MixServerRequestHandler {
     @ChannelHandler.Sharable
     public final static class MixServerRequestReceiver extends AbstractMixServerRequestHandler {
 
-        final ConcurrentMap<String, TimestampedValue<NodeId>> activeMixServers;
+        final Map<String, TimestampedValue<NodeId>> activeMixServers;
 
-        public MixServerRequestReceiver(ConcurrentMap<String, TimestampedValue<NodeId>> nodes) {
+        public MixServerRequestReceiver(Map<String, TimestampedValue<NodeId>> nodes) {
             this.activeMixServers = nodes;
         }
 
+        // Visible for testing
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, MixServerRequest req)
+        public void channelRead0(ChannelHandlerContext ctx, MixServerRequest req)
                 throws Exception {
+            assert req.getCount() > 0;
+            /**
+             * TODO: In this initial implementation, this function returns all the active MIX
+             * servers. In a future, it could return a subset of the servers
+             * while considering load balancing.
+             */
             final List<String> keys = new ArrayList<String>(activeMixServers.keySet());
-            Collections.shuffle(keys);
             final List<String> urls = new ArrayList<String>();
-            int num = Math.max(keys.size(), req.getNumRequest());
+            int num = keys.size();
             for(int i = 0; i < num; i++) {
                 final TimestampedValue<NodeId> node = activeMixServers.get(keys.get(i));
                 if(node == null) {
@@ -125,9 +131,8 @@ public final class MixServerRequestHandler {
         @Override
         protected void encode(ChannelHandlerContext ctx, MixServerRequest msg, ByteBuf out)
                 throws Exception {
-            out.writeInt(msg.getNumRequest());
+            out.writeInt(msg.getCount());
             NettyUtils.writeString(msg.getAllocatedURIs(), out);
-            out.release();
         }
     }
 }
