@@ -115,7 +115,6 @@ public final class MixRequestServerHandler {
             int numRequest = in.readInt();
             String URIs = NettyUtils.readString(in);
             out.add(new MixRequest(numRequest, URIs));
-            in.release();
         }
     }
 

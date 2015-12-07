@@ -289,7 +289,7 @@ public class ApplicationMaster {
         startNettyServer(new MixServerRequestInitializer(new MixRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
-        monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL + 30, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+        monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
 
         for(int i = 0; i < numContainers; i++) {
             AMRMClient.ContainerRequest containerAsk = setupContainerAskForRM();
@@ -341,13 +341,15 @@ public class ApplicationMaster {
                 TimestampedValue<NodeId> value = e.getValue();
                 long elapsedTime = System.currentTimeMillis() - value.getTimestamp();
                 // Wait at most two-times intervals for heartbeats
-                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 4) {
+                logger.info("Start checking an alive set of MIX servers");
+                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 4000) {
                     // If expired, restart the MIX server
                     final String containerId = e.getKey();
                     final NodeId node = value.getValue();
                     final Container container = allocContainers.get(containerId);
                     if(container != null) {
                         // Released containers exited with ContainerExitStatus.ABORTED
+                        logger.warn("Release " + container.getId() + " because heartbeats not received");
                         releaseAssignedContainer(container.getId());
                         itor.remove();
                     } else {
