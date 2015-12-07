@@ -24,6 +24,7 @@ import hivemall.utils.io.IOUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.zip.Deflater;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -35,21 +36,33 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "deflate",
-        value = "_FUNC_(TEXT data) - Returns compressed string by using Deflater")
+@Description(
+        name = "deflate",
+        value = "_FUNC_(TEXT data [, const int compressionLevel]) - Returns compressed string by using Deflater",
+        extended = "compression level must be in range [-1,9]")
 @UDFType(deterministic = true, stateful = false)
 public final class DeflateUDF extends GenericUDF {
 
     private StringObjectInspector stringOI;
+    private int compressionLevel;
 
     private transient DeflateCodec codec;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if (argOIs.length != 1) {
-            throw new UDFArgumentException("_FUNC_ takes exactly 1 argument");
+        if (argOIs.length != 1 && argOIs.length != 2) {
+            throw new UDFArgumentException("_FUNC_ takes 1 or 2 arguments");
         }
         this.stringOI = HiveUtils.asStringOI(argOIs[0]);
+
+        int level = Deflater.DEFAULT_COMPRESSION;
+        if (argOIs.length == 2) {
+            level = HiveUtils.getConstInt(argOIs[1]);
+            if ((level < 0 || level > 9) && level != Deflater.DEFAULT_COMPRESSION) {
+                throw new UDFArgumentException("Invalid compression level: " + level);
+            }
+        }
+        this.compressionLevel = level;
 
         return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     }
@@ -66,10 +79,10 @@ public final class DeflateUDF extends GenericUDF {
         }
         Text text = stringOI.getPrimitiveWritableObject(arg0);
         byte[] original = text.getBytes();
-        final int len = text.getLength();        
+        final int len = text.getLength();
         final byte[] compressed;
         try {
-            compressed = codec.compress(original, 0, len);
+            compressed = codec.compress(original, 0, len, compressionLevel);
         } catch (IOException e) {
             throw new HiveException("Failed to compress", e);
         }
