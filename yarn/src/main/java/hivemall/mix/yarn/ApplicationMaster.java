@@ -19,7 +19,9 @@
 package hivemall.mix.yarn;
 
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.ByteBuffer;
+import java.security.PrivilegedExceptionAction;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +52,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.ExitUtil;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.ApplicationConstants.Environment;
@@ -67,13 +73,18 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.api.records.Priority;
 import org.apache.hadoop.yarn.api.records.Resource;
+import org.apache.hadoop.yarn.api.records.timeline.TimelineEntity;
+import org.apache.hadoop.yarn.api.records.timeline.TimelineEvent;
+import org.apache.hadoop.yarn.api.records.timeline.TimelinePutResponse;
 import org.apache.hadoop.yarn.client.api.AMRMClient;
 import org.apache.hadoop.yarn.client.api.AMRMClient.ContainerRequest;
+import org.apache.hadoop.yarn.client.api.TimelineClient;
 import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
 import org.apache.hadoop.yarn.client.api.async.NMClientAsync;
 import org.apache.hadoop.yarn.client.api.async.impl.NMClientAsyncImpl;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
+import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 
 import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
@@ -87,6 +98,18 @@ import hivemall.mix.yarn.utils.YarnUtils;
 
 public class ApplicationMaster {
     private static final Log logger = LogFactory.getLog(ApplicationMaster.class);
+
+    private static enum MixServEvent {
+        MIXSERV_APP_ATTEMPT_START,
+        MIXSERV_APP_ATTEMPT_END,
+        MIXSERV_CONTAINER_START,
+        MIXSERV_CONTAINER_END,
+    }
+
+    private static enum MixServEntity {
+        MIXSERV_APP_ATTEMPT,
+        MIXSERV_CONTAINER,
+    }
 
     private String containerMainClass;
     private final Options opts;
@@ -110,6 +133,16 @@ public class ApplicationMaster {
     private int numContainers;
     private int requestPriority;
     private int numRetryForFailedContainers;
+
+    // In both secure and non-secure modes, this points to the job-submitter
+    private UserGroupInformation appSubmitterUgi;
+
+    private ByteBuffer allTokens;
+
+    // Timeline client
+    // TODO: Support domains and ACLs for YARN v2.6 or more
+    private boolean isLogPublished;
+    private TimelineClient timelineClient;
 
     // List of allocated containers and alive MIX servers
     private final ConcurrentMap<String, Container> allocContainers = new ConcurrentHashMap<String, Container>();
@@ -201,6 +234,9 @@ public class ApplicationMaster {
             throw new IllegalArgumentException("Cannot run distributed shell with no containers");
         }
 
+        // Check if AM publishes logs into a timeline server
+        isLogPublished = cliParser.hasOption("publish_logs");
+
         // Check if NMs monitor virtual memory limits
         if(conf.getBoolean(YarnConfiguration.NM_VMEM_CHECK_ENABLED, YarnConfiguration.DEFAULT_NM_VMEM_CHECK_ENABLED)) {
             logger.warn("Recommended: set 'yarn.nodemanager.vmem-check-enabled' at false");
@@ -217,8 +253,8 @@ public class ApplicationMaster {
 
     private String getEnv(String key) {
         final String value = System.getenv(key);
-        if(value.isEmpty()) {
-            throw new IllegalArgumentException(key + "not set in the environment");
+        if(value == null) {
+            return "";
         }
         return value;
     }
@@ -258,6 +294,28 @@ public class ApplicationMaster {
     }
 
     protected void run() throws YarnException, IOException, InterruptedException {
+        // Note: Credentials, Token, UserGroupInformation, DataOutputBuffer class
+        // are marked as LimitedPrivate
+        Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+        DataOutputBuffer dob = new DataOutputBuffer();
+        credentials.writeTokenStorageToStream(dob);
+        // Now remove the AM->RM token so that containers cannot access it
+        Iterator<Token<?>> iter = credentials.getAllTokens().iterator();
+        logger.info("Executing with tokens:");
+        while(iter.hasNext()) {
+            Token<?> token = iter.next();
+            logger.info(token);
+            if (token.getKind().equals(AMRMTokenIdentifier.KIND_NAME)) {
+                iter.remove();
+            }
+        }
+        allTokens = ByteBuffer.wrap(dob.getData(), 0, dob.getLength());
+
+        // Create appSubmitterUgi and add original tokens to it
+        String appSubmitterUserName = System.getenv(ApplicationConstants.Environment.USER.name());
+        appSubmitterUgi = UserGroupInformation.createRemoteUser(appSubmitterUserName);
+        appSubmitterUgi.addCredentials(credentials);
+
         // AM <--> RM
         amRMClientAsync = AMRMClientAsync.createAMRMClientAsync(1000, new RMCallbackHandler(Thread.currentThread()));
         amRMClientAsync.init(conf);
@@ -268,6 +326,14 @@ public class ApplicationMaster {
         nmClientAsync = new NMClientAsyncImpl(containerListener);
         nmClientAsync.init(conf);
         nmClientAsync.start();
+
+        if (isLogPublished) {
+            startTimelineClient(conf);
+            if (timelineClient != null) {
+                publishApplicationAttemptEvent(timelineClient, appAttemptID.toString(),
+                        MixServEvent.MIXSERV_APP_ATTEMPT_START, appSubmitterUgi);
+            }
+        }
 
         // Register self with ResourceManager to start
         // heartbeating to the RM.
@@ -301,6 +367,100 @@ public class ApplicationMaster {
             amRMClientAsync.addContainerRequest(containerAsk);
         }
         numRequestedContainers.set(numContainers);
+    }
+
+    private void startTimelineClient(final Configuration conf)
+            throws YarnException, IOException, InterruptedException {
+        try {
+            appSubmitterUgi.doAs(new PrivilegedExceptionAction<Void>() {
+                @Override
+                public Void run() throws Exception {
+                    if (conf.getBoolean(YarnConfiguration.TIMELINE_SERVICE_ENABLED,
+                            YarnConfiguration.DEFAULT_TIMELINE_SERVICE_ENABLED)) {
+                        // Create the Timeline Client
+                        timelineClient = TimelineClient.createTimelineClient();
+                        timelineClient.init(conf);
+                        timelineClient.start();
+                    } else {
+                        timelineClient = null;
+                        logger.warn("Timeline service is not enabled");
+                    }
+                    return null;
+                }
+            });
+        } catch (UndeclaredThrowableException e) {
+            throw new YarnException(e.getCause());
+        }
+    }
+
+    private static void publishApplicationAttemptEvent(
+            final TimelineClient timelineClient, String appAttemptId, MixServEvent appEvent,
+            UserGroupInformation ugi) {
+        logger.info("Try to publish an event: appAttemptId=" + appAttemptId + ", appEvent=" + appEvent);
+        final TimelineEntity entity = new TimelineEntity();
+        entity.setEntityId(appAttemptId);
+        entity.setEntityType(MixServEntity.MIXSERV_APP_ATTEMPT.toString());
+        entity.addPrimaryFilter("user", ugi.getShortUserName());
+        TimelineEvent event = new TimelineEvent();
+        event.setEventType(appEvent.toString());
+        event.setTimestamp(System.currentTimeMillis());
+        entity.addEvent(event);
+        try {
+            timelineClient.putEntities(entity);
+        } catch (Exception e) {
+            logger.error("App Attempt "
+                    + (appEvent.equals(MixServEvent.MIXSERV_APP_ATTEMPT_START) ? "start" : "end")
+                    + " event could not be published for " + appAttemptId.toString(), e);
+        }
+    }
+
+    private static void publishContainerStartEvent(
+          final TimelineClient timelineClient, Container container, UserGroupInformation ugi) {
+        logger.info("Try to publish an event: containerId="
+                + container.getId() + ", appEvent=" + MixServEvent.MIXSERV_CONTAINER_START);
+        final TimelineEntity entity = new TimelineEntity();
+        entity.setEntityId(container.getId().toString());
+        entity.setEntityType(MixServEntity.MIXSERV_CONTAINER.toString());
+        entity.addPrimaryFilter("user", ugi.getShortUserName());
+        TimelineEvent event = new TimelineEvent();
+        event.setTimestamp(System.currentTimeMillis());
+        event.setEventType(MixServEvent.MIXSERV_CONTAINER_START.toString());
+        event.addEventInfo("Node", container.getNodeId().toString());
+        event.addEventInfo("Resources", container.getResource().toString());
+        entity.addEvent(event);
+        try {
+            ugi.doAs(new PrivilegedExceptionAction<TimelinePutResponse>() {
+                @Override
+                public TimelinePutResponse run() throws Exception {
+                    return timelineClient.putEntities(entity);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Container start event could not be published for " + container.getId().toString(),
+                    (e instanceof UndeclaredThrowableException)? e.getCause() : e);
+        }
+      }
+
+    private static void publishContainerEndEvent(
+            final TimelineClient timelineClient, ContainerStatus container, UserGroupInformation ugi) {
+        logger.info("Try to publish an event: containerId="
+                + container.getContainerId() + ", appEvent=" + MixServEvent.MIXSERV_CONTAINER_END);
+        final TimelineEntity entity = new TimelineEntity();
+        entity.setEntityId(container.getContainerId().toString());
+        entity.setEntityType(MixServEntity.MIXSERV_CONTAINER.toString());
+        entity.addPrimaryFilter("user", ugi.getShortUserName());
+        TimelineEvent event = new TimelineEvent();
+        event.setTimestamp(System.currentTimeMillis());
+        event.setEventType(MixServEvent.MIXSERV_CONTAINER_END.toString());
+        event.addEventInfo("State", container.getState().name());
+        event.addEventInfo("Exit Status", container.getExitStatus());
+        entity.addEvent(event);
+        try {
+            timelineClient.putEntities(entity);
+        } catch (Exception e) {
+            logger.error("Container end event could not be published for "
+                    + container.getContainerId().toString(), e);
+        }
     }
 
     // Visible for testing
@@ -441,6 +601,10 @@ public class ApplicationMaster {
                         break;
                     }
                 }
+
+                if(isLogPublished) {
+                    publishContainerEndEvent(timelineClient, containerStatus, appSubmitterUgi);
+                }
             }
 
             // Retry launching containers if not terminated
@@ -547,6 +711,11 @@ public class ApplicationMaster {
                 logger.warn("Ignored unknown container (" + containerId + "); "
                         + "probably launched by previous attempt)");
             }
+
+            if(appMaster.timelineClient != null) {
+                ApplicationMaster.publishContainerStartEvent(
+                        appMaster.timelineClient, container, appMaster.appSubmitterUgi);
+            }
         }
 
         @Override
@@ -582,6 +751,11 @@ public class ApplicationMaster {
             } catch (InterruptedException e) {
                 logger.info("Sleep interrupted for shutting down AM");
                 break;
+            }
+
+            if(isLogPublished) {
+                publishApplicationAttemptEvent(timelineClient, appAttemptID.toString(),
+                        MixServEvent.MIXSERV_APP_ATTEMPT_END, appSubmitterUgi);
             }
 
             // Show registered MIX servers if info-loglevel enabled
@@ -700,7 +874,7 @@ public class ApplicationMaster {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return ContainerLaunchContext.newInstance(localResources, null, cmd, null, null, null);
+            return ContainerLaunchContext.newInstance(localResources, null, cmd, null, allTokens, null);
         }
     }
 
