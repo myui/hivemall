@@ -201,6 +201,11 @@ public class ApplicationMaster {
             throw new IllegalArgumentException("Cannot run distributed shell with no containers");
         }
 
+        // Check if NMs monitor virtual memory limits
+        if(conf.getBoolean(YarnConfiguration.NM_VMEM_CHECK_ENABLED, YarnConfiguration.DEFAULT_NM_VMEM_CHECK_ENABLED)) {
+            logger.warn("Recommended: set 'yarn.nodemanager.vmem-check-enabled' at false");
+        }
+
         logger.info("Application master for " + "appId:" + appAttemptID.getApplicationId().getId()
                 + ", clusterTimestamp:" + appAttemptID.getApplicationId().getClusterTimestamp()
                 + ", attemptId:" + appAttemptID.getAttemptId() + ", containerVCores:"

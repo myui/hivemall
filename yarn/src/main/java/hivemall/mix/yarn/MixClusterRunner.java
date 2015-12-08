@@ -213,11 +213,6 @@ public final class MixClusterRunner {
             log4jPropFile = new Path(log4j.getPath());
         }
 
-        // Check if NMs monitor virtual memory limits
-        if(conf.getBoolean(YarnConfiguration.NM_VMEM_CHECK_ENABLED, YarnConfiguration.DEFAULT_NM_VMEM_CHECK_ENABLED)) {
-            logger.warn("Recommended: set 'yarn.nodemanager.vmem-check-enabled' at false");
-        }
-
         // Print the configurations that this yarn client works with
         logger.info(this);
 
