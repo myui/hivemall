@@ -85,6 +85,9 @@ public final class MixClusterRunner {
     private int numContainers;
     private int numRetries;
 
+    // Flag to enable a timeline client
+    private boolean isLogPublished;
+
     // log4j.properties file used in a yarn cluster
     private Path log4jPropFile;
 
@@ -140,6 +143,7 @@ public final class MixClusterRunner {
         opts.addOption("container_memory", true, "Amount of memory in MB to be requested to run a MIX server");
         opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a MIX server");
         opts.addOption("num_retries", true, "# of retries for failed containers [Default: 32]");
+        opts.addOption("publish_logs", true, "Flag to publish logs into a YARN timeline server [Default: false]");
         opts.addOption("log_properties", true, "log4j.properties file");
         opts.addOption("help", false, "Print usage");
     }
@@ -198,6 +202,9 @@ public final class MixClusterRunner {
             throw new IllegalArgumentException("Invalid resources for containers: " + "num="
                     + numContainers + "cores=" + containerVCores + "mem=" + containerMemory);
         }
+
+        // Check if a timeline client enabled
+        isLogPublished = cliParser.hasOption("publish_logs");
 
         if(cliParser.hasOption("log_properties")) {
             log4jPropFile = new Path(cliParser.getOptionValue("log_properties"));
@@ -291,6 +298,9 @@ public final class MixClusterRunner {
         if(numRetries != 0) {
             vargs.add("--num_retries");
             vargs.add(String.valueOf(numRetries));
+        }
+        if (isLogPublished) {
+            vargs.add("--publish_logs");
         }
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stdout");
         vargs.add("2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stderr");
