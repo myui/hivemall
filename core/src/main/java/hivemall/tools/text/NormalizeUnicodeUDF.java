@@ -26,8 +26,10 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 
-@Description(name = "normalize_unicode", value = "_FUNC_(String str [, String form]) - Transforms `str` with the specified normalization form. "
-        + "The `form` takes one of NFC (default), NFD, NFKC, or NFKD")
+@Description(
+        name = "normalize_unicode",
+        value = "_FUNC_(String str [, String form]) - Transforms `str` with the specified normalization form. "
+                + "The `form` takes one of NFC (default), NFD, NFKC, or NFKD")
 @UDFType(deterministic = true, stateful = false)
 public final class NormalizeUnicodeUDF extends UDF {
 
@@ -38,16 +40,18 @@ public final class NormalizeUnicodeUDF extends UDF {
 
     @Nullable
     public String evaluate(@Nullable String str, @Nullable String form) {
-        if(str == null) {
+        if (str == null) {
             return null;
         }
-        if("NFC".equals(form)) {
+        if (form == null) {
             return Normalizer.normalize(str, Normalizer.Form.NFC);
-        } else if("NFD".equals(form)) {
+        } else if ("NFC".equals(form)) { 
+            return Normalizer.normalize(str, Normalizer.Form.NFC);
+        } else if ("NFD".equals(form)) {
             return Normalizer.normalize(str, Normalizer.Form.NFD);
-        } else if("NFKC".equals(form)) {
+        } else if ("NFKC".equals(form)) {
             return Normalizer.normalize(str, Normalizer.Form.NFKC);
-        } else if("NFKD".equals(form)) {
+        } else if ("NFKD".equals(form)) {
             return Normalizer.normalize(str, Normalizer.Form.NFKD);
         } else {
             return Normalizer.normalize(str, Normalizer.Form.NFC);
