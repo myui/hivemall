@@ -76,11 +76,14 @@ public class NioSegment implements Segments {
 
     @Override
     public final void close(boolean deleteFile) throws IOException {
-        channel.close();
-        raf.close();
-        if(deleteFile) {
-            if(file.exists()) {
-                file.delete();
+        try {
+            channel.close();
+            raf.close();
+        } finally {
+            if (deleteFile) {
+                if (file.exists()) {
+                    file.delete();
+                }
             }
         }
     }
