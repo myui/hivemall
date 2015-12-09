@@ -299,7 +299,7 @@ public final class MixClusterRunner {
             vargs.add("--num_retries");
             vargs.add(String.valueOf(numRetries));
         }
-        if (isLogPublished) {
+        if(isLogPublished) {
             vargs.add("--publish_logs");
         }
         vargs.add("1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/AppMaster.stdout");

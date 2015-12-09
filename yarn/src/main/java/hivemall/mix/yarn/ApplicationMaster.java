@@ -306,7 +306,7 @@ public class ApplicationMaster {
         while(iter.hasNext()) {
             Token<?> token = iter.next();
             logger.info(token);
-            if (token.getKind().equals(AMRMTokenIdentifier.KIND_NAME)) {
+            if(token.getKind().equals(AMRMTokenIdentifier.KIND_NAME)) {
                 iter.remove();
             }
         }
@@ -328,9 +328,9 @@ public class ApplicationMaster {
         nmClientAsync.init(conf);
         nmClientAsync.start();
 
-        if (isLogPublished) {
+        if(isLogPublished) {
             startTimelineClient(conf);
-            if (timelineClient != null) {
+            if(timelineClient != null) {
                 publishApplicationAttemptEvent(timelineClient, appAttemptID.toString(),
                         MixServEvent.MIXSERV_APP_ATTEMPT_START, appSubmitterUgi);
             }
@@ -375,7 +375,7 @@ public class ApplicationMaster {
             appSubmitterUgi.doAs(new PrivilegedExceptionAction<Void>() {
                 @Override
                 public Void run() throws Exception {
-                    if (conf.getBoolean(YarnConfiguration.TIMELINE_SERVICE_ENABLED,
+                    if(conf.getBoolean(YarnConfiguration.TIMELINE_SERVICE_ENABLED,
                             YarnConfiguration.DEFAULT_TIMELINE_SERVICE_ENABLED)) {
                         // Create the Timeline Client
                         timelineClient = TimelineClient.createTimelineClient();

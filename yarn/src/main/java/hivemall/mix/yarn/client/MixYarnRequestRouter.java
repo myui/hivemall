@@ -72,7 +72,7 @@ public final class MixYarnRequestRouter {
         }
 
         this.nodes = parseConnectInfo(allocatedConnectInfo.get());
-        if (nodes == null) {
+        if(nodes == null) {
             throw new RuntimeException("Can't allocate MIX servers from AM");
         }
     }

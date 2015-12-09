@@ -92,7 +92,7 @@ public final class MixYarnServer extends MixServer {
             // Break if AM channel disconnected
             while(true) {
                 final long elapsed = System.currentTimeMillis() - lastAmHeartbeatReceived.get();
-                if (!ch.isActive() || elapsed > MixYarnEnv.MIXSERVER_HEARTBEAT_TIMEOUT * 1000) {
+                if(!ch.isActive() || elapsed > MixYarnEnv.MIXSERVER_HEARTBEAT_TIMEOUT * 1000) {
                     logger.warn("Channel to AM (host=" + appMasterHost
                             + ", port=" + MixYarnEnv.REPORT_RECEIVER_PORT + ") disconnected");
                     break;

@@ -46,7 +46,7 @@ public final class Heartbeat {
 
     @Override
     public boolean equals(Object other) {
-        if (other != null && other instanceof Heartbeat) {
+        if(other != null && other instanceof Heartbeat) {
             final Heartbeat otherHeartbeat = (Heartbeat) other;
             return otherHeartbeat.conainerId.equals(conainerId) && otherHeartbeat.host.equals(host)
                     && otherHeartbeat.port == port;
