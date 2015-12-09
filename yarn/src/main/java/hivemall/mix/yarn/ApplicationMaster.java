@@ -200,7 +200,7 @@ public class ApplicationMaster {
         opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a MIX server");
         opts.addOption("priority", true, "Application Priority [Default: 0]");
         opts.addOption("num_retries", true, "# of retries for failed containers [Default: 32]");
-        opts.addOption("publish_logs", true, "Flag to publish logs into a YARN timeline server [Default: false]");
+        opts.addOption("publish_logs", false, "Flag to publish logs into a YARN timeline server [Default: false]");
         opts.addOption("help", false, "Print usage");
     }
 
@@ -370,8 +370,7 @@ public class ApplicationMaster {
         numRequestedContainers.set(numContainers);
     }
 
-    private void startTimelineClient(final Configuration conf)
-            throws YarnException, IOException, InterruptedException {
+    private void startTimelineClient(final Configuration conf) throws YarnException {
         try {
             appSubmitterUgi.doAs(new PrivilegedExceptionAction<Void>() {
                 @Override
@@ -389,7 +388,7 @@ public class ApplicationMaster {
                     return null;
                 }
             });
-        } catch (UndeclaredThrowableException e) {
+        } catch (Exception e) {
             throw new YarnException(e.getCause());
         }
     }

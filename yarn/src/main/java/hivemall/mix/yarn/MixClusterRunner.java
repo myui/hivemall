@@ -143,7 +143,7 @@ public final class MixClusterRunner {
         opts.addOption("container_memory", true, "Amount of memory in MB to be requested to run a MIX server");
         opts.addOption("container_vcores", true, "Amount of virtual cores to be requested to run a MIX server");
         opts.addOption("num_retries", true, "# of retries for failed containers [Default: 32]");
-        opts.addOption("publish_logs", true, "Flag to publish logs into a YARN timeline server [Default: false]");
+        opts.addOption("publish_logs", false, "Flag to publish logs into a YARN timeline server [Default: false]");
         opts.addOption("log_properties", true, "log4j.properties file");
         opts.addOption("help", false, "Print usage");
     }
