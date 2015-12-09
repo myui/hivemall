@@ -90,7 +90,7 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import hivemall.mix.yarn.launcher.WorkerCommandBuilder;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiverInitializer;
 import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReceiver;
-import hivemall.mix.yarn.network.MixRequestServerHandler.MixServerRequestInitializer;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixRequestInitializer;
 import hivemall.mix.yarn.network.MixRequestServerHandler.MixRequestReceiver;
 import hivemall.mix.yarn.network.NettyUtils;
 import hivemall.mix.yarn.utils.TimestampedValue;
@@ -358,7 +358,7 @@ public class ApplicationMaster {
         startNettyServer(new HeartbeatReceiverInitializer(new HeartbeatReceiver(activeMixServers)), MixYarnEnv.REPORT_RECEIVER_PORT);
 
         // Accept resource requests from clients
-        startNettyServer(new MixServerRequestInitializer(new MixRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
+        startNettyServer(new MixRequestInitializer(new MixRequestReceiver(activeMixServers)), MixYarnEnv.RESOURCE_REQUEST_PORT);
 
         // Start scheduled threads to check if MIX servers keep alive
         monitorContainerExecutor.scheduleAtFixedRate(new MonitorContainerRunnable(amRMClientAsync, activeMixServers, allocContainers), MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
@@ -507,7 +507,7 @@ public class ApplicationMaster {
                 long elapsedTime = System.currentTimeMillis() - value.getTimestamp();
                 // Wait at most two-times intervals for heartbeats
                 logger.info("Start checking an alive set of MIX servers");
-                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_INTERVAL * 4000) {
+                if(elapsedTime > MixYarnEnv.MIXSERVER_HEARTBEAT_TIMEOUT * 1000) {
                     // If expired, restart the MIX server
                     final String containerId = e.getKey();
                     final NodeId node = value.getValue();

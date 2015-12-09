@@ -41,6 +41,9 @@ public class MixYarnEnv {
     // Interval between each MIX server's heartbeat to an application master
     public static final int MIXSERVER_HEARTBEAT_INTERVAL = 180;
 
+    // Maximum time to wait for heartbeats
+    public static final int MIXSERVER_HEARTBEAT_TIMEOUT = MIXSERVER_HEARTBEAT_INTERVAL * 2;
+
     // Separator for MIX servers
     public static final String MIXSERVER_SEPARATOR = ",";
 

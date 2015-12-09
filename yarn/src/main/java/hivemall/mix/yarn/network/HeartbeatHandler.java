@@ -19,6 +19,7 @@
 package hivemall.mix.yarn.network;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -35,7 +36,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.yarn.api.records.NodeId;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import hivemall.mix.yarn.MixYarnEnv;
 import hivemall.mix.yarn.utils.TimestampedValue;
@@ -61,12 +61,10 @@ public final class HeartbeatHandler {
                 // If the value does not exist, the MIX server
                 // already has gone.
                 activeMixServers.remove(containerId);
+            } else {
+                // Just echo to let MIX servers know AM alive
+                ctx.writeAndFlush(msg);
             }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            super.exceptionCaught(ctx, cause);
         }
     }
 
@@ -87,32 +85,32 @@ public final class HeartbeatHandler {
 
     @ChannelHandler.Sharable
     public final static class HeartbeatReporter extends SimpleChannelInboundHandler<Heartbeat> {
-        private final String containerId;
-        private final String host;
-        private final int port;
+        private final Heartbeat heartbeatMsg;
 
-        public HeartbeatReporter(String containerId, String host, int port) {
-            this.containerId = containerId;
-            this.host = host;
-            this.port = port;
+        // Record time to receive heartbeats from AM
+        private final AtomicLong lastReceived;
+
+        public HeartbeatReporter(String containerId, String host, int port, AtomicLong lastReceived) {
+            this.heartbeatMsg = new Heartbeat(containerId, host ,port);
+            this.lastReceived = lastReceived;
         }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Heartbeat msg) throws Exception {
-            throw new NotImplementedException();
+            assert msg == heartbeatMsg;
+            lastReceived.set(System.currentTimeMillis());
         }
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             if(evt instanceof IdleStateEvent) {
-                assert ((IdleStateEvent) evt).state() == IdleState.WRITER_IDLE;
-                ctx.writeAndFlush(new Heartbeat(containerId, host, port));
+                try {
+                    assert ((IdleStateEvent) evt).state() == IdleState.WRITER_IDLE;
+                    ctx.writeAndFlush(heartbeatMsg).sync();
+                } catch(Exception e) {
+                    ctx.close();
+                }
             }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            super.exceptionCaught(ctx, cause);
         }
     }
 

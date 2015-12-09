@@ -34,6 +34,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import hivemall.mix.NodeInfo;
+import hivemall.mix.yarn.client.MixYarnRequestRouter;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -53,8 +55,8 @@ import org.junit.*;
 
 import hivemall.mix.yarn.network.NettyUtils;
 import hivemall.mix.yarn.network.MixRequest;
-import hivemall.mix.yarn.network.MixRequestServerHandler.AbstractMixRequestHandler;
-import hivemall.mix.yarn.network.MixRequestServerHandler.MixServerRequestInitializer;
+import hivemall.mix.yarn.network.MixRequestServerHandler.AbstractMixRequestServerHandler;
+import hivemall.mix.yarn.network.MixRequestServerHandler.MixRequestInitializer;
 
 public final class MixClusterTest {
     private static final Log logger = LogFactory.getLog(MixClusterTest.class);
@@ -145,7 +147,7 @@ public final class MixClusterTest {
 
         // TODO: How to wait until a netty server
         // for resource requests is active.
-        Thread.sleep(1000L);
+        Thread.sleep(10 * 1000L);
 
         return mixCluster;
     }
@@ -179,23 +181,26 @@ public final class MixClusterTest {
         }
     }
 
-    @Test
+    @Test(timeout=360*1000L)
     public void testSimpleScenario() throws Exception {
-        final String[] options = { "--jar", appJar, "--num_containers", "1",
+        int numMixServers = 1;
+        final String[] options = { "--jar", appJar, "--num_containers", Integer.toString(numMixServers),
                 "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
                 "--container_vcores", "1" };
 
         Future<Boolean> result = startMixCluster(ApplicationMaster.class, options);
+        Assert.assertEquals(2, verifyContainerLog("REGISTERED"));
+        Assert.assertEquals(2, verifyContainerLog("ACTIVE"));
 
-        // Resource allocated from ApplicationMaster
+        // Resources allocated from ApplicationMaster
         AtomicReference<String> mixServers = new AtomicReference<String>();
 
         EventLoopGroup workers = new NioEventLoopGroup();
         MixRequester msgHandler = new MixRequester(mixServers);
-        Channel ch = NettyUtils.startNettyClient(new MixServerRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
+        Channel ch = NettyUtils.startNettyClient(new MixRequestInitializer(msgHandler), "localhost", MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
 
         // Request all the MIX servers
-        ch.writeAndFlush(new MixRequest()).sync();
+        ch.writeAndFlush(new MixRequest());
         int retry = 0;
         while(mixServers.get() == null && retry++ < 32) {
             Thread.sleep(500L);
@@ -203,13 +208,38 @@ public final class MixClusterTest {
 
         Assert.assertNotNull(mixServers.get());
 
-        verifyContainerErrLog(1, "REGISTERED");
-        verifyContainerErrLog(1, "ACTIVE");
-
         // Parse allocated MIX servers
         String[] hosts = mixServers.get().split(Pattern.quote(MixYarnEnv.MIXSERVER_SEPARATOR));
-        Assert.assertEquals(hosts.length, 1);
+        Assert.assertEquals(numMixServers, hosts.length);
+        for(String host : hosts) {
+            Assert.assertTrue(host.contains(NettyUtils.getHostAddress()));
+        }
+
         workers.shutdownGracefully();
+
+        // Stop the MIX cluster
+        mixClusterRunner.forceKillApplication();
+        Assert.assertTrue(result.get());
+    }
+
+    @Test(timeout=360*1000L)
+    public void testMixYarnRequestRouter() throws Exception {
+        int numMixServers = 1;
+        final String[] options = { "--jar", appJar, "--num_containers", Integer.toString(numMixServers),
+                "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
+                "--container_vcores", "1" };
+
+        Future<Boolean> result = startMixCluster(ApplicationMaster.class, options);
+        Assert.assertEquals(2, verifyContainerLog("REGISTERED"));
+        Assert.assertEquals(2, verifyContainerLog("ACTIVE"));
+
+        // Resources allocated from ApplicationMaster
+        MixYarnRequestRouter router = new MixYarnRequestRouter("localhost");
+        final NodeInfo[] nodes = router.getAllNodes();
+        Assert.assertEquals(numMixServers, nodes.length);
+        for(NodeInfo node : nodes) {
+            Assert.assertEquals(NettyUtils.getHostAddress(), node.getAddress().getHostName());
+        }
 
         // Stop the MIX cluster
         mixClusterRunner.forceKillApplication();
@@ -230,7 +260,7 @@ public final class MixClusterTest {
     }
 
     @ChannelHandler.Sharable
-    public final class MixRequester extends AbstractMixRequestHandler {
+    public final class MixRequester extends AbstractMixRequestServerHandler {
 
         final AtomicReference<String> mixServers;
 
@@ -239,52 +269,37 @@ public final class MixClusterTest {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req)
-                throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req) throws Exception {
             mixServers.set(req.getAllocatedURIs());
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            super.exceptionCaught(ctx, cause);
         }
     }
 
-    private int verifyContainerErrLog(int numContainer, String expectedWord) {
+    private int verifyContainerLog(String expectedWord) {
         int numOfWords = 0;
         for(int i = 0; i < numNodeManager; i++) {
             Configuration config = yarnCluster.getNodeManager(i).getConfig();
             String logDirs = config.get(YarnConfiguration.NM_LOG_DIRS, YarnConfiguration.DEFAULT_NM_LOG_DIRS);
             File logDir = new File(logDirs);
             File[] logFiles = logDir.listFiles();
-            logger.info("NodeManager LogDir:" + logDirs + " (#files:" + logFiles.length + ")");
-            int logFileIndex = -1;
-            for(int j = logFiles.length - 1; j >= 0; j--) {
-                if(logFiles[j].listFiles().length == numContainer + 1) {
-                    logFileIndex = j;
-                    break;
-                }
-            }
-            if(logFileIndex == -1)
-                continue;
-
-            File[] containerDirs = logFiles[logFileIndex].listFiles();
-            for(File dir : containerDirs) {
-                for(File output : dir.listFiles()) {
-                    if(output.getName().trim().contains("stderr")) {
-                        BufferedReader br = null;
-                        try {
-                            String sCurrentLine;
-                            br = new BufferedReader(new FileReader(output));
-                            while((sCurrentLine = br.readLine()) != null) {
-                                if(sCurrentLine.contains(expectedWord)) {
-                                    numOfWords++;
+            logger.info("NodeManager LogDir:" + logDirs);
+            for(File logs : logFiles) {
+                for(File dir : logs.listFiles()) {
+                    for(File output : dir.listFiles()) {
+                        if(output.getName().trim().contains("stderr")) {
+                            BufferedReader br = null;
+                            try {
+                                String sCurrentLine;
+                                br = new BufferedReader(new FileReader(output));
+                                while((sCurrentLine = br.readLine()) != null) {
+                                    if(sCurrentLine.contains(expectedWord)) {
+                                        numOfWords++;
+                                    }
                                 }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } finally {
+                                IOUtils.closeQuietly(br);
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } finally {
-                            IOUtils.closeQuietly(br);
                         }
                     }
                 }

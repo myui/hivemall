@@ -18,9 +18,8 @@
  */
 package hivemall.mix.yarn.network;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -31,66 +30,34 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import org.apache.hadoop.yarn.api.records.NodeId;
 
-import hivemall.mix.yarn.MixYarnEnv;
-import hivemall.mix.yarn.utils.TimestampedValue;
+public final class MixRequestClientHandler {
 
-public final class MixRequestServerHandler {
-
-    public abstract static class AbstractMixRequestServerHandler extends
+    public abstract static class AbstractMixRequestClientHandler extends
             SimpleChannelInboundHandler<MixRequest> {
     }
 
     @ChannelHandler.Sharable
-    public final static class MixRequestReceiver extends AbstractMixRequestServerHandler {
+    public final static class MixRequester extends AbstractMixRequestClientHandler {
 
-        final Map<String, TimestampedValue<NodeId>> activeMixServers;
+        final AtomicReference<String> mixServers;
 
-        public MixRequestReceiver(Map<String, TimestampedValue<NodeId>> nodes) {
-            this.activeMixServers = nodes;
+        public MixRequester(AtomicReference<String> ref) {
+            this.mixServers = ref;
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req)
-                throws Exception {
-            /**
-             * TODO: In this initial implementation, this function returns all the active MIX
-             * servers. In a future, it could return a subset of the servers
-             * while considering load balancing.
-             */
-            final List<String> keys = new ArrayList<String>(activeMixServers.keySet());
-            final List<String> urls = new ArrayList<String>();
-            for(String key : keys) {
-                final TimestampedValue<NodeId> node = activeMixServers.get(key);
-                if(node == null || node.getValue().getPort() == -1) {
-                    continue;
-                }
-                urls.add(node.toString());
-            }
-            MixRequest msg = new MixRequest(urls.size(), join(MixYarnEnv.MIXSERVER_SEPARATOR, urls));
-            ctx.writeAndFlush(msg);
-        }
-
-        private static String join(String sep, Iterable<String> elements) {
-            StringBuilder sb = new StringBuilder();
-            for(String e : elements) {
-                if(e != null) {
-                    if(sb.length() > 0) {
-                        sb.append(sep);
-                    }
-                    sb.append(e);
-                }
-            }
-            return sb.toString();
+        protected void channelRead0(ChannelHandlerContext ctx, MixRequest req) throws Exception {
+            mixServers.set(req.getAllocatedURIs());
         }
     }
 
+    // TODO: Three classes below are duplicated in MixRequestServerHandler
     public final static class MixRequestInitializer extends ChannelInitializer<SocketChannel> {
 
-        private final AbstractMixRequestServerHandler handler;
+        private final AbstractMixRequestClientHandler handler;
 
-        public MixRequestInitializer(AbstractMixRequestServerHandler handler) {
+        public MixRequestInitializer(AbstractMixRequestClientHandler handler) {
             this.handler = handler;
         }
 

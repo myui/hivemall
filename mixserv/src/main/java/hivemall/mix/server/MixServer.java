@@ -210,13 +210,12 @@ public class MixServer implements Runnable {
                     this.state = ServerState.RUNNING;
                     break;
                 }
-            } catch(Exception e) {
-                // Ignore it
-            }
-            logger.warn("Can't bind a port:" + boundPort);
+            } catch(Exception e) {}
+
             if(++retry > 8) {
                 throw new RuntimeException("Can't bind a port for a MIX server");
             }
+
             // Try to bind another port
             boundPort = NetUtils.getAvailablePort();
         }

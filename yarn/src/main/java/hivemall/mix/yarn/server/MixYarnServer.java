@@ -21,11 +21,16 @@ package hivemall.mix.yarn.server;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
+import hivemall.mix.yarn.network.Heartbeat;
+import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import hivemall.mix.server.MixServer;
 import hivemall.mix.yarn.MixYarnEnv;
@@ -35,6 +40,7 @@ import hivemall.mix.yarn.network.HeartbeatHandler.HeartbeatReporterInitializer;
 import hivemall.utils.lang.CommandLineUtils;
 
 public final class MixYarnServer extends MixServer {
+    private static final Log logger = LogFactory.getLog(MixYarnServer.class);
 
     public MixYarnServer(CommandLine cl) {
         super(cl);
@@ -65,25 +71,43 @@ public final class MixYarnServer extends MixServer {
         }
 
         // Start netty daemon for reporting heartbeats to AM
-        EventLoopGroup workers = new NioEventLoopGroup();
+        final AtomicLong lastAmHeartbeatReceived = new AtomicLong(System.currentTimeMillis());
         final String host = NettyUtils.getHostAddress();
         final int port = mixServ.getBoundPort();
-        HeartbeatReporter msgHandler = new HeartbeatReporter(containerId, host, port);
+        final HeartbeatReporter msgHandler = new HeartbeatReporter(containerId, host, port, lastAmHeartbeatReceived);
+        final EventLoopGroup workers = new NioEventLoopGroup();
+        Channel ch = null;
         try {
-            NettyUtils.startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
+            ch = NettyUtils.startNettyClient(new HeartbeatReporterInitializer(msgHandler), appMasterHost, MixYarnEnv.REPORT_RECEIVER_PORT, workers);
         } catch(InterruptedException e) {
             e.printStackTrace();
         }
 
-        // Block until this MIX server finished
+        assert ch != null;
+
+        // Send a first heartbeat to AM
+        ch.writeAndFlush(new Heartbeat(containerId, host, port));
+
         try {
-            f.get();
+            // Break if AM channel disconnected
+            while(true) {
+                final long elapsed = System.currentTimeMillis() - lastAmHeartbeatReceived.get();
+                if (!ch.isActive() || elapsed > MixYarnEnv.MIXSERVER_HEARTBEAT_TIMEOUT * 1000) {
+                    logger.warn("Channel to AM (host=" + appMasterHost
+                            + ", port=" + MixYarnEnv.REPORT_RECEIVER_PORT + ") disconnected");
+                    break;
+                }
+                Thread.sleep(30 * 1000L);
+            }
         } catch(Exception e) {
             e.printStackTrace();
         } finally {
             workers.shutdownGracefully();
             mixServExec.shutdown();
         }
+
+        // TODO: Why the JVM does not exist when MixYarnServer#main() finished?
+        System.exit(0);
     }
 
     protected static Options getOptions() {

@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import hivemall.mix.yarn.network.HeartbeatHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import org.junit.Assert;
@@ -49,7 +48,7 @@ public final class HeartbeatHandlerTest {
         channelReadMethod.setAccessible(true);
         ChannelHandlerContext mockCtx = Mockito.mock(ChannelHandlerContext.class);
         channelReadMethod.invoke(handler, mockCtx, new Heartbeat("containerId1", "localhost", 1));
-        Mockito.verify(mockCtx, Mockito.times(0)).writeAndFlush(Mockito.any());
+        Mockito.verify(mockCtx, Mockito.times(1)).writeAndFlush(Mockito.any());
         Assert.assertEquals($s("localhost:1", "localhost:-1"), getMapMixServers(aliveMixServers));
     }
 
