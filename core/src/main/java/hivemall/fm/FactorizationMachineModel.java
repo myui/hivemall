@@ -48,7 +48,9 @@ public abstract class FactorizationMachineModel {
     protected float _lambdaW;
     protected final float[] _lambdaV;
 
-    public FactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+    public FactorizationMachineModel(boolean classification, int factor, float lambda0,
+            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
+            @Nonnull VInitScheme vInit) {
         this._classification = classification;
         this._factor = factor;
         this._sigma = sigma;
@@ -107,21 +109,21 @@ public abstract class FactorizationMachineModel {
 
     protected abstract void setV(@Nonnull Feature x, int f, float nextVif);
 
-    /**    
+    /**
      * @param f index value >= 0
      */
     float getLambdaV(int f) {
         return _lambdaV[f];
     }
 
-    final double dloss(@Nonnull final Feature[] x, final double y) {
+    final double dloss(@Nonnull final Feature[] x, final double y) throws HiveException {
         double p = predict(x);
         return dloss(p, y);
     }
 
     final double dloss(double p, final double y) {
         final double ret;
-        if(_classification) {
+        if (_classification) {
             ret = (MathUtils.sigmoid(p * y) - 1.d) * y;
         } else { // regression            
             p = Math.min(p, _max_target);
@@ -132,22 +134,22 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    final double predict(@Nonnull final Feature[] x) {
+    final double predict(@Nonnull final Feature[] x) throws HiveException {
         // w0
         double ret = getW0();
 
         // W
-        for(Feature e : x) {
+        for (Feature e : x) {
             double xj = e.getValue();
             ret += getW(e) * xj;
         }
 
         // V
-        for(int f = 0, k = _factor; f < k; f++) {
+        for (int f = 0, k = _factor; f < k; f++) {
             double sumVjfXj = 0.d;
             double sumV2X2 = 0.d;
 
-            for(Feature e : x) {
+            for (Feature e : x) {
                 double xj = e.getValue();
                 float vjf = getV(e, f);
                 double vx = vjf * xj;
@@ -157,7 +159,10 @@ public abstract class FactorizationMachineModel {
             ret += 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
             assert (!Double.isNaN(ret));
         }
-        assert (!Double.isNaN(ret));
+        if (Double.isNaN(ret)) {
+            throw new HiveException(
+                "Detected NaN in predict. We recommend to normalize training examples");
+        }
         return ret;
     }
 
@@ -176,7 +181,8 @@ public abstract class FactorizationMachineModel {
         setW(x, nextWi);
     }
 
-    final void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX, final float eta) {
+    final void updateV(final double dloss, @Nonnull final Feature x, final int f,
+            final double sumViX, final float eta) {
         final double Xi = x.getValue();
         float Vif = getV(x, f);
         double h = gradV(Xi, Vif, sumViX);
@@ -194,7 +200,7 @@ public abstract class FactorizationMachineModel {
 
     final void updateLambdaW(@Nonnull Feature[] x, double dloss, float eta) {
         double sumWX = 0.d;
-        for(Feature e : x) {
+        for (Feature e : x) {
             assert (e != null) : Arrays.toString(x);
             double xi = e.getValue();
             sumWX += getW(e) * xi;
@@ -216,12 +222,12 @@ public abstract class FactorizationMachineModel {
      * </pre>
      */
     final void updateLambdaV(@Nonnull final Feature[] x, final double dloss, final float eta) {
-        for(int f = 0, k = _factor; f < k; f++) {
+        for (int f = 0, k = _factor; f < k; f++) {
             double sum_f_dash = 0.d, sum_f = 0.d, sum_f_dash_f = 0.d;
             float lambdaVf = getLambdaV(f);
 
             final double sumVfX = sumVfX(x, f);
-            for(Feature e : x) {
+            for (Feature e : x) {
                 assert (e != null) : Arrays.toString(x);
                 double x_j = e.getValue();
 
@@ -243,7 +249,7 @@ public abstract class FactorizationMachineModel {
     double[] sumVfX(@Nonnull final Feature[] x) {
         final int k = _factor;
         final double[] ret = new double[k];
-        for(int f = 0; f < k; f++) {
+        for (int f = 0; f < k; f++) {
             ret[f] = sumVfX(x, f);
         }
         return ret;
@@ -251,7 +257,7 @@ public abstract class FactorizationMachineModel {
 
     private double sumVfX(@Nonnull final Feature[] x, final int f) {
         double ret = 0.d;
-        for(Feature e : x) {
+        for (Feature e : x) {
             double xj = e.getValue();
             float Vjf = getV(e, f);
             ret += Vjf * xj;
@@ -282,11 +288,11 @@ public abstract class FactorizationMachineModel {
 
         @Nonnull
         public static VInitScheme resolve(@Nullable String opt) {
-            if(opt == null) {
+            if (opt == null) {
                 return random;
-            } else if("gaussian".equalsIgnoreCase(opt)) {
+            } else if ("gaussian".equalsIgnoreCase(opt)) {
                 return gaussian;
-            } else if("random".equalsIgnoreCase(opt)) {
+            } else if ("random".equalsIgnoreCase(opt)) {
                 return random;
             }
             return random;
@@ -303,7 +309,7 @@ public abstract class FactorizationMachineModel {
         public void initRandom(int factor, long seed) {
             int size = (this == random) ? 1 : factor;
             this.rand = new Random[size];
-            for(int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
                 rand[i] = new Random(seed + i);
             }
         }
@@ -326,15 +332,17 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    protected static final void uniformFill(final float[] a, final Random rand, final float maxInitValue) {
-        for(int i = 0, len = a.length; i < len; i++) {
+    protected static final void uniformFill(final float[] a, final Random rand,
+            final float maxInitValue) {
+        for (int i = 0, len = a.length; i < len; i++) {
             float v = rand.nextFloat() * maxInitValue / len;
             a[i] = v;
         }
     }
 
-    protected static final void gaussianFill(final float[] a, final Random[] rand, final double stddev) {
-        for(int i = 0, len = a.length; i < len; i++) {
+    protected static final void gaussianFill(final float[] a, final Random[] rand,
+            final double stddev) {
+        for (int i = 0, len = a.length; i < len; i++) {
             float v = (float) MathUtils.gaussian(0.d, stddev, rand[i]);
             a[i] = v;
         }
