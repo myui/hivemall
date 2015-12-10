@@ -35,9 +35,6 @@ public class MixYarnEnv {
     // Environment key name denoting a jar name for containers
     public static final String MIXSERVER_CONTAINER_APP = "MIXSERVER_CONTAINER_APP";
 
-    // Environment key name for a timeline domain
-    public static final String MIXSERVER_TIMELINEDOMAIN = "MIXSERVER_TIMELINEDOMAIN";
-
     // Interval between each MIX server's heartbeat to an application master
     public static final int MIXSERVER_HEARTBEAT_INTERVAL = 180;
 

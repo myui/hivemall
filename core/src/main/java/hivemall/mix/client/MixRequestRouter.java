@@ -25,13 +25,22 @@ import hivemall.utils.net.NetUtils;
 
 import java.net.InetSocketAddress;
 
-public final class MixRequestRouter {
+public class MixRequestRouter {
+    private final String connectInfo;
 
-    private final int numNodes;
-    private final NodeInfo[] nodes;
+    // Filled from 'connectInfo' in initialize()
+    private NodeInfo[] nodes;
 
     public MixRequestRouter(String connectInfo) {
-        if(connectInfo == null) {
+        this.connectInfo = connectInfo;
+    }
+
+    public void initialize() throws Exception {
+        this.nodes = parseMixServerList(toMixServerList(connectInfo));
+    }
+
+    private static NodeInfo[] parseMixServerList(String connectInfo) {
+         if(connectInfo == null) {
             throw new IllegalArgumentException();
         }
         String[] endpoints = connectInfo.split("\\s*,\\s*");
@@ -39,13 +48,16 @@ public final class MixRequestRouter {
         if(numEndpoints < 1) {
             throw new IllegalArgumentException("Invalid connectInfo: " + connectInfo);
         }
-        this.numNodes = numEndpoints;
         NodeInfo[] nodes = new NodeInfo[numEndpoints];
         for(int i = 0; i < numEndpoints; i++) {
             InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
             nodes[i] = new NodeInfo(addr);
         }
-        this.nodes = nodes;
+        return nodes;
+    }
+
+    protected String toMixServerList(String connectInfo) {
+        return connectInfo;
     }
 
     public NodeInfo[] getAllNodes() {
@@ -56,7 +68,7 @@ public final class MixRequestRouter {
         assert (msg != null);
         Object feature = msg.getFeature();
         int hashcode = feature.hashCode();
-        int index = (hashcode & Integer.MAX_VALUE) % numNodes;
+        int index = (hashcode & Integer.MAX_VALUE) % nodes.length;
         return nodes[index];
     }
 

@@ -20,5 +20,10 @@ package hivemall.mix;
 
 public final class MixEnv {
 
+    // Default port number for MixServer
     public final static int MIXSERV_DEFAULT_PORT = 11212;
+
+    // Default port number for resource requests in YARN AM
+    public static final int YARN_RESOURCE_REQUEST_PORT = 11213;
+
 }

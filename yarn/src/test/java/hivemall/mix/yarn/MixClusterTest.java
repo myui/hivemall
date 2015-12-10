@@ -34,8 +34,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import hivemall.mix.NodeInfo;
-import hivemall.mix.yarn.client.MixYarnRequestRouter;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -216,30 +214,6 @@ public final class MixClusterTest {
         }
 
         workers.shutdownGracefully();
-
-        // Stop the MIX cluster
-        mixClusterRunner.forceKillApplication();
-        Assert.assertTrue(result.get());
-    }
-
-    @Test(timeout=360*1000L)
-    public void testMixYarnRequestRouter() throws Exception {
-        int numMixServers = 1;
-        final String[] options = { "--jar", appJar, "--num_containers", Integer.toString(numMixServers),
-                "--master_memory", "128", "--master_vcores", "1", "--container_memory", "128",
-                "--container_vcores", "1" };
-
-        Future<Boolean> result = startMixCluster(ApplicationMaster.class, options);
-        Assert.assertEquals(2, verifyContainerLog("REGISTERED"));
-        Assert.assertEquals(2, verifyContainerLog("ACTIVE"));
-
-        // Resources allocated from ApplicationMaster
-        MixYarnRequestRouter router = new MixYarnRequestRouter("localhost");
-        final NodeInfo[] nodes = router.getAllNodes();
-        Assert.assertEquals(numMixServers, nodes.length);
-        for(NodeInfo node : nodes) {
-            Assert.assertEquals(NettyUtils.getHostAddress(), node.getAddress().getHostName());
-        }
 
         // Stop the MIX cluster
         mixClusterRunner.forceKillApplication();

@@ -28,30 +28,27 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
+import hivemall.mix.client.MixRequestRouter;
 import hivemall.mix.MixEnv;
-import hivemall.mix.MixMessage;
-import hivemall.mix.NodeInfo;
-import hivemall.mix.yarn.MixYarnEnv;
 import hivemall.mix.yarn.network.MixRequest;
 import hivemall.mix.yarn.network.MixRequestClientHandler.MixRequester;
 import hivemall.mix.yarn.network.MixRequestClientHandler.MixRequestInitializer;
-import hivemall.mix.yarn.network.NettyUtils;
-import hivemall.utils.net.NetUtils;
 
-public final class MixYarnRequestRouter {
+public final class MixYarnRequestRouter extends MixRequestRouter {
 
-    private final NodeInfo[] nodes;
+    public MixYarnRequestRouter(String connectInfo) {
+        super(connectInfo);
+    }
 
-    // Resource allocated from ApplicationMaster
-    private AtomicReference<String> allocatedConnectInfo = new AtomicReference<String>();
-
-    public MixYarnRequestRouter(String amHostAdddr) {
+    @Override
+    protected String toMixServerList(String connectInfo) {
         // Send a request to AM for allocating MIX servers
+        AtomicReference<String> allocatedConnectInfo = new AtomicReference<String>();
         EventLoopGroup workers = new NioEventLoopGroup();
         MixRequester msgHandler = new MixRequester(allocatedConnectInfo);
         Channel ch = null;
         try {
-            ch = NettyUtils.startNettyClient(new MixRequestInitializer(msgHandler), amHostAdddr, MixYarnEnv.RESOURCE_REQUEST_PORT, workers);
+            ch = startNettyClient(new MixRequestInitializer(msgHandler), connectInfo, MixEnv.YARN_RESOURCE_REQUEST_PORT, workers);
         } catch(InterruptedException e) {
             e.printStackTrace();
         }
@@ -71,10 +68,7 @@ public final class MixYarnRequestRouter {
             workers.shutdownGracefully();
         }
 
-        this.nodes = parseConnectInfo(allocatedConnectInfo.get());
-        if(nodes == null) {
-            throw new RuntimeException("Can't allocate MIX servers from AM");
-        }
+        return allocatedConnectInfo.get();
     }
 
     private static Channel startNettyClient(ChannelInitializer<SocketChannel> initializer, String host, int port, EventLoopGroup workers)
@@ -103,35 +97,6 @@ public final class MixYarnRequestRouter {
             Thread.sleep(500L);
         }
         return ch;
-    }
-
-    protected static NodeInfo[] parseConnectInfo(String connectInfo) {
-         if(connectInfo == null) {
-            throw new IllegalArgumentException();
-        }
-        String[] endpoints = connectInfo.split("\\s*,\\s*");
-        final int numEndpoints = endpoints.length;
-        if(numEndpoints < 1) {
-            throw new IllegalArgumentException("Invalid connectInfo: " + connectInfo);
-        }
-        NodeInfo[] nodes = new NodeInfo[numEndpoints];
-        for(int i = 0; i < numEndpoints; i++) {
-            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
-            nodes[i] = new NodeInfo(addr);
-        }
-        return nodes;
-    }
-
-    public NodeInfo[] getAllNodes() {
-        return nodes;
-    }
-
-    public NodeInfo selectNode(MixMessage msg) {
-        assert (msg != null);
-        Object feature = msg.getFeature();
-        int hashcode = feature.hashCode();
-        int index = (hashcode & Integer.MAX_VALUE) % nodes.length;
-        return nodes[index];
     }
 
 }

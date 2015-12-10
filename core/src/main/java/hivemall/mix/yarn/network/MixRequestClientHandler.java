@@ -18,6 +18,7 @@
  */
 package hivemall.mix.yarn.network;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -74,7 +75,7 @@ public final class MixRequestClientHandler {
         protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out)
                 throws Exception {
             int numRequest = in.readInt();
-            String URIs = NettyUtils.readString(in);
+            String URIs = readString(in);
             out.add(new MixRequest(numRequest, URIs));
         }
     }
@@ -89,7 +90,32 @@ public final class MixRequestClientHandler {
         protected void encode(ChannelHandlerContext ctx, MixRequest msg, ByteBuf out)
                 throws Exception {
             out.writeInt(msg.getCount());
-            NettyUtils.writeString(msg.getAllocatedURIs(), out);
+            writeString(msg.getAllocatedURIs(), out);
+        }
+    }
+
+    public static void writeString(final String s, final ByteBuf buf)
+            throws UnsupportedEncodingException {
+        if(s == null) {
+            buf.writeInt(-1);
+            return;
+        }
+        byte[] b = s.getBytes("utf-8");
+        buf.writeInt(b.length);
+        buf.writeBytes(b);
+    }
+
+    public static String readString(final ByteBuf in) {
+        int length = in.readInt();
+        if(length == -1) {
+            return null;
+        }
+        byte[] b = new byte[length];
+        in.readBytes(b, 0, length);
+        try {
+            return new String(b, "utf-8");
+        } catch(UnsupportedEncodingException e) {
+            return null;
         }
     }
 }
