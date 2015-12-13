@@ -61,7 +61,9 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "train_fm", value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
+@Description(
+        name = "train_fm",
+        value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
 public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
@@ -125,7 +127,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("p", "size_x", true, "The size of x");
         opts.addOption("f", "factor", true, "The number of the latent variables [default: 10]");
         opts.addOption("sigma", true, "The standard deviation for initializing V [default: 0.1]");
-        opts.addOption("lambda", "lambda0", true, "The initial lambda value for regularization [default: 0.01]");
+        opts.addOption("lambda", "lambda0", true,
+            "The initial lambda value for regularization [default: 0.01]");
         // regression
         opts.addOption("min", "min_target", true, "The minimum value of target variable");
         opts.addOption("max", "max_target", true, "The maximum value of target variable");
@@ -133,20 +136,33 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("eta", true, "The initial learning rate");
         opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
         opts.addOption("t", "total_steps", true, "The total number of training examples");
-        opts.addOption("power_t", true, "The exponent for inverse scaling learning rate [default 0.1]");
+        opts.addOption("power_t", true,
+            "The exponent for inverse scaling learning rate [default 0.1]");
         // conversion check
-        opts.addOption("disable_cv", "disable_cvtest", false, "Whether to disable convergence check [default: OFF]");
-        opts.addOption("cv_rate", "convergence_rate", true, "Threshold to determine convergence [default: 0.005]");
+        opts.addOption("disable_cv", "disable_cvtest", false,
+            "Whether to disable convergence check [default: OFF]");
+        opts.addOption("cv_rate", "convergence_rate", true,
+            "Threshold to determine convergence [default: 0.005]");
         // adaptive regularization
-        opts.addOption("adareg", "adaptive_regularizaion", false, "Whether to enable adaptive regularization [default: OFF]");
-        opts.addOption("va_ratio", "validation_ratio", true, "Ratio of training data used for validation [default: 0.05f]");
-        opts.addOption("va_threshold", "validation_threshold", true, "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
+        opts.addOption("adareg", "adaptive_regularizaion", false,
+            "Whether to enable adaptive regularization [default: OFF]");
+        opts.addOption("va_ratio", "validation_ratio", true,
+            "Ratio of training data used for validation [default: 0.05f]");
+        opts.addOption(
+            "va_threshold",
+            "validation_threshold",
+            true,
+            "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
         // initialization of V
-        opts.addOption("init_v", true, "Initialization strategy of matrix V [random, gaussian] (default: random)");
-        opts.addOption("maxval", "max_init_value", true, "The maximum initial value in the matrix V [default: 1.0]");
-        opts.addOption("min_init_stddev", true, "The minimum standard deviation of initial matrix V [default: 0.1]");
+        opts.addOption("init_v", true,
+            "Initialization strategy of matrix V [random, gaussian] (default: random)");
+        opts.addOption("maxval", "max_init_value", true,
+            "The maximum initial value in the matrix V [default: 1.0]");
+        opts.addOption("min_init_stddev", true,
+            "The minimum standard deviation of initial matrix V [default: 0.1]");
         // feature representation
-        opts.addOption("int_feature", "feature_as_integer", false, "Parse a feature as integer [default: OFF, ON if -p option is specified]");
+        opts.addOption("int_feature", "feature_as_integer", false,
+            "Parse a feature as integer [default: OFF, ON if -p option is specified]");
         return opts;
     }
 
@@ -171,7 +187,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         boolean parseFeatureAsInt = false;
 
         CommandLine cl = null;
-        if(argOIs.length >= 3) {
+        if (argOIs.length >= 3) {
             String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
             classication = cl.hasOption("classification");
@@ -186,12 +202,14 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             adaptiveReglarization = cl.hasOption("adaptive_regularizaion");
-            validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"), validationRatio);
-            validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"), validationThreshold);
+            validationRatio = Primitives.parseFloat(cl.getOptionValue("validation_ratio"),
+                validationRatio);
+            validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"),
+                validationThreshold);
             vInitOpt = cl.getOptionValue("init_v");
             maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
             initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
-            if(p == -1) {
+            if (p == -1) {
                 parseFeatureAsInt = cl.hasOption("feature_as_integer");
             } else {
                 parseFeatureAsInt = true;
@@ -207,11 +225,11 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         this._sigma = sigma;
         this._min_target = min_target;
         this._max_target = max_target;
-        if(adaptiveReglarization) {
+        if (adaptiveReglarization) {
             this._va_rand = new Random(seed + 31L);
         }
         this._validationRatio = validationRatio;
-        if(_validationRatio < 0.f || _validationRatio >= 1.f) {
+        if (_validationRatio < 0.f || _validationRatio >= 1.f) {
             throw new UDFArgumentException("validation_ratio should be in range [0, 1): "
                     + _validationRatio);
         }
@@ -236,13 +254,14 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2 && argOIs.length != 3) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 or 3 arguments: array<string> x, double y [, CONSTANT STRING options]: "
-                    + Arrays.toString(argOIs));
+        if (argOIs.length != 2 && argOIs.length != 3) {
+            throw new UDFArgumentException(
+                getClass().getSimpleName()
+                        + " takes 2 or 3 arguments: array<string> x, double y [, CONSTANT STRING options]: "
+                        + Arrays.toString(argOIs));
         }
         this._xOI = HiveUtils.asListOI(argOIs[0]);
-        if(!HiveUtils.isStringOI(_xOI.getListElementObjectInspector())) {
+        if (!HiveUtils.isStringOI(_xOI.getListElementObjectInspector())) {
             throw new UDFArgumentException("Unexpected Object inspector for array<string>: "
                     + argOIs[0]);
         }
@@ -250,21 +269,24 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
         processOptions(argOIs);
 
-        if(_parseFeatureAsInt) {
-            if(_p == -1) {
-                this._model = new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit);
+        if (_parseFeatureAsInt) {
+            if (_p == -1) {
+                this._model = new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma,
+                    _seed, _min_target, _max_target, _etaEstimator, _vInit);
             } else {
-                this._model = new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p, _seed, _min_target, _max_target, _etaEstimator, _vInit);
+                this._model = new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p,
+                    _seed, _min_target, _max_target, _etaEstimator, _vInit);
             }
         } else {
-            this._model = new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit);
+            this._model = new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma,
+                _seed, _min_target, _max_target, _etaEstimator, _vInit);
         }
         this._t = 0L;
 
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
         fieldNames.add("feature");
-        if(_parseFeatureAsInt) {
+        if (_parseFeatureAsInt) {
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         } else {
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
@@ -280,13 +302,13 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     @Override
     public void process(Object[] args) throws HiveException {
         Feature[] x = Feature.parseFeatures(args[0], _xOI, _probes, _parseFeatureAsInt);
-        if(x == null) {
+        if (x == null) {
             return;
         }
         this._probes = x;
 
         double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
-        if(_classification) {
+        if (_classification) {
             y = (y > 0.d) ? 1.d : -1.d;
         }
 
@@ -297,18 +319,18 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     }
 
     protected void recordTrain(@Nonnull final Feature[] x, final double y) throws HiveException {
-        if(_iterations <= 1) {
+        if (_iterations <= 1) {
             return;
         }
 
         ByteBuffer inputBuf = _inputBuf;
         NioStatefullSegment dst = _fileIO;
-        if(inputBuf == null) {
+        if (inputBuf == null) {
             final File file;
             try {
                 file = File.createTempFile("hivemall_fm", ".sgmt");
                 file.deleteOnExit();
-                if(!file.canWrite()) {
+                if (!file.canWrite()) {
                     throw new UDFArgumentException("Cannot write a temporary file: "
                             + file.getAbsolutePath());
                 }
@@ -327,13 +349,13 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         int recordBytes = (Integer.SIZE + Double.SIZE) / 8 + xBytes;
         int requiredBytes = (Integer.SIZE / 8) + recordBytes;
         int remain = inputBuf.remaining();
-        if(remain < requiredBytes) {
+        if (remain < requiredBytes) {
             writeBuffer(inputBuf, dst);
         }
 
         inputBuf.putInt(recordBytes);
         inputBuf.putInt(x.length);
-        for(Feature f : x) {
+        for (Feature f : x) {
             f.writeTo(inputBuf);
         }
         inputBuf.putDouble(y);
@@ -350,21 +372,25 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         srcBuf.clear();
     }
 
-    public void train(@Nonnull final Feature[] x, final double y, final boolean adaptiveRegularization)
-            throws HiveException {
+    public void train(@Nonnull final Feature[] x, final double y,
+            final boolean adaptiveRegularization) throws HiveException {
         // check
         _model.check(x);
 
-        if(adaptiveRegularization) {
-            assert (_va_rand != null);
-            final float rnd = _va_rand.nextFloat();
-            if(rnd < _validationRatio) {
-                trainLambda(x, y); // adaptive regularization
+        try {
+            if (adaptiveRegularization) {
+                assert (_va_rand != null);
+                final float rnd = _va_rand.nextFloat();
+                if (rnd < _validationRatio) {
+                    trainLambda(x, y); // adaptive regularization
+                } else {
+                    trainTheta(x, y);
+                }
             } else {
                 trainTheta(x, y);
             }
-        } else {
-            trainTheta(x, y);
+        } catch (Exception ex) {
+            throw new HiveException("Exception caused in the " + _t + "-th call of train()", ex);
         }
     }
 
@@ -383,10 +409,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         _model.updateW0(lossGrad, eta);
 
         final double[] sumVfx = _model.sumVfX(x);
-        for(Feature e : x) {
+        for (Feature e : x) {
             // wi update
             _model.updateWi(lossGrad, e, eta);
-            for(int f = 0, k = _factor; f < k; f++) {
+            for (int f = 0, k = _factor; f < k; f++) {
                 // Vif update
                 //_model.updateV(x, lossGrad, i, f, eta);
                 _model.updateV(lossGrad, e, f, sumVfx[f], eta);
@@ -396,6 +422,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     /**
      * Update regularization parameters `lambda` as follows:
+     * 
      * <pre>
      *      grad_lambdaw0 = (grad l(p,y)) * (-2 * alpha * w_0)
      *      grad_lambdawg = (grad l(p,y)) * (-2 * alpha * (\sum_{l \in group(g)} x_l * w_l))
@@ -414,21 +441,21 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        if(_t == 0) {
+        if (_t == 0) {
             this._model = null;
             return;
         }
-        if(_iterations > 1) {
+        if (_iterations > 1) {
             runTrainingIteration(_iterations);
         }
 
         final int P = _model.getSize();
-        if(P <= 0) {
+        if (P <= 0) {
             logger.warn("Model size P was less than zero: " + P);
             return;
         }
 
-        if(_parseFeatureAsInt) {
+        if (_parseFeatureAsInt) {
             forwardAsIntFeature();
         } else {
             forwardAsStringFeature();
@@ -453,9 +480,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         // Wi, Vif (i starts from 1..P)
         forwardObjs[2] = Arrays.asList(f_Vi);
 
-        for(int i = _model.getMinIndex(), maxIdx = _model.getMaxIndex(); i <= maxIdx; i++) {
+        for (int i = _model.getMinIndex(), maxIdx = _model.getMaxIndex(); i <= maxIdx; i++) {
             final float[] vi = _model.getV(i);
-            if(vi == null) {
+            if (vi == null) {
                 continue;
             }
             f_idx.set(i);
@@ -463,7 +490,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             final float w = _model.getW(i);
             f_Wi.set(w);
             // set Vif
-            for(int f = 0; f < _factor; f++) {
+            for (int f = 0; f < _factor; f++) {
                 float v = vi[f];
                 f_Vi[f].set(v);
             }
@@ -492,7 +519,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         forwardObjs[2] = Arrays.asList(f_Vi);
 
         final IMapIterator<String, Entry> itor = model.entries();
-        while(itor.next() != -1) {
+        while (itor.next() != -1) {
             String i = itor.getKey();
             assert (i != null);
             // set i
@@ -502,7 +529,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             f_Wi.set(entry.W);
             // set Vif
             final float[] Vi = entry.Vf;
-            for(int f = 0; f < _factor; f++) {
+            for (int f = 0; f < _factor; f++) {
                 float v = Vi[f];
                 f_Vi[f].set(v);
             }
@@ -519,20 +546,20 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         final boolean adaregr = _va_rand != null;
 
         try {
-            if(fileIO.getPosition() == 0L) {// run iterations w/o temporary file
-                if(inputBuf.position() == 0) {
+            if (fileIO.getPosition() == 0L) {// run iterations w/o temporary file
+                if (inputBuf.position() == 0) {
                     return; // no training example
                 }
                 inputBuf.flip();
 
                 int i = 1;
-                for(; i < iterations; i++) {
-                    while(inputBuf.remaining() > 0) {
+                for (; i < iterations; i++) {
+                    while (inputBuf.remaining() > 0) {
                         int bytes = inputBuf.getInt();
                         assert (bytes > 0) : bytes;
                         int xLength = inputBuf.getInt();
                         final Feature[] x = new Feature[xLength];
-                        for(int j = 0; j < xLength; j++) {
+                        for (int j = 0; j < xLength; j++) {
                             x[j] = Feature.createInstance(inputBuf, _parseFeatureAsInt);
                         }
                         double y = inputBuf.getDouble();
@@ -540,7 +567,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         ++_t;
                         train(x, y, adaregr);
                     }
-                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                    if (_cvState.isConverged(i + 1, numTrainingExamples)) {
                         i++;
                         break;
                     }
@@ -553,7 +580,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             } else {// read training examples in the temporary file and invoke train for each example
 
                 // write training examples in buffer to a temporary file
-                if(inputBuf.remaining() > 0) {
+                if (inputBuf.remaining() > 0) {
                     writeBuffer(inputBuf, fileIO);
                 }
                 try {
@@ -562,7 +589,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                if(logger.isInfoEnabled()) {
+                if (logger.isInfoEnabled()) {
                     File tmpFile = fileIO.getFile();
                     logger.info("Wrote " + numTrainingExamples
                             + " records to a temporary file for iterative training: "
@@ -572,10 +599,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
                 // run iterations
                 int i = 1;
-                for(; i < iterations; i++) {
+                for (; i < iterations; i++) {
                     inputBuf.clear();
                     fileIO.resetPosition();
-                    while(true) {
+                    while (true) {
                         // TODO prefetch
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;
@@ -585,7 +612,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                             throw new HiveException("Failed to read a file: "
                                     + fileIO.getFile().getAbsolutePath(), e);
                         }
-                        if(bytesRead == 0) { // reached file EOF
+                        if (bytesRead == 0) { // reached file EOF
                             break;
                         }
                         assert (bytesRead > 0) : bytesRead;
@@ -593,21 +620,21 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         // reads training examples from a buffer
                         inputBuf.flip();
                         int remain = inputBuf.remaining();
-                        if(remain < INT_BYTES) {
+                        if (remain < INT_BYTES) {
                             throw new HiveException("Illegal file format was detected");
                         }
-                        while(remain >= INT_BYTES) {
+                        while (remain >= INT_BYTES) {
                             int pos = inputBuf.position();
                             int recordBytes = inputBuf.getInt();
                             remain -= INT_BYTES;
-                            if(remain < recordBytes) {
+                            if (remain < recordBytes) {
                                 inputBuf.position(pos);
                                 break;
                             }
 
                             final int xLength = inputBuf.getInt();
                             final Feature[] x = new Feature[xLength];
-                            for(int j = 0; j < xLength; j++) {
+                            for (int j = 0; j < xLength; j++) {
                                 x[j] = Feature.createInstance(inputBuf, _parseFeatureAsInt);
                             }
                             double y = inputBuf.getDouble();
@@ -620,7 +647,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                         }
                         inputBuf.compact();
                     }
-                    if(_cvState.isConverged(i + 1, numTrainingExamples)) {
+                    if (_cvState.isConverged(i + 1, numTrainingExamples)) {
                         i++;
                         break;
                     }

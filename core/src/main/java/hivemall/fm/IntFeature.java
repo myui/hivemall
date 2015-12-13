@@ -36,6 +36,11 @@ public final class IntFeature extends Feature {
     }
 
     @Override
+    public String getFeature() {
+        return Integer.toString(index);
+    }
+
+    @Override
     public int getIndex() {
         return index;
     }

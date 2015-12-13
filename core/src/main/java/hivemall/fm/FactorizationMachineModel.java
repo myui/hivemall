@@ -19,6 +19,7 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
@@ -116,7 +117,7 @@ public abstract class FactorizationMachineModel {
         return _lambdaV[f];
     }
 
-    final double dloss(@Nonnull final Feature[] x, final double y) throws HiveException {
+    final double dloss(@Nonnull final Feature[] x, final double y) {
         double p = predict(x);
         return dloss(p, y);
     }
@@ -134,14 +135,16 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    final double predict(@Nonnull final Feature[] x) throws HiveException {
+    final double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW0();
 
         // W
         for (Feature e : x) {
             double xj = e.getValue();
-            ret += getW(e) * xj;
+            float w = getW(e);
+            double wx = w * xj;
+            ret += wx;
         }
 
         // V
@@ -159,17 +162,60 @@ public abstract class FactorizationMachineModel {
             ret += 0.5d * (sumVjfXj * sumVjfXj - sumV2X2);
             assert (!Double.isNaN(ret));
         }
-        if (Double.isNaN(ret)) {
-            throw new HiveException(
-                "Detected NaN in predict. We recommend to normalize training examples");
+        if (!NumberUtils.isFinite(ret)) {
+            throw new IllegalStateException("Detected " + ret
+                    + " in predict. We recommend to normalize training examples.\n"
+                    + "Dumping variables ...\n" + varDump(x));
         }
         return ret;
+    }
+
+    private String varDump(@Nonnull final Feature[] x) {
+        final StringBuilder buf = new StringBuilder(1024);
+        for (int i = 0; i < x.length; i++) {
+            Feature e = x[i];
+            String j = e.getFeature();
+            double xj = e.getValue();
+            if (i != 0) {
+                buf.append(", ");
+            }
+            buf.append("x[").append(j).append("] => ").append(xj);
+        }
+        buf.append("\n\n");
+        buf.append("W0 => ").append(getW0()).append('\n');
+        for (int i = 0; i < x.length; i++) {
+            Feature e = x[i];
+            String j = e.getFeature();
+            float wi = getW(e);
+            if (i != 0) {
+                buf.append(", ");
+            }
+            buf.append("W[").append(j).append("] => ").append(wi);
+        }
+        buf.append("\n\n");
+        for (int f = 0, k = _factor; f < k; f++) {
+            for (int i = 0; i < x.length; i++) {
+                Feature e = x[i];
+                String j = e.getFeature();
+                float vjf = getV(e, f);
+                if (i != 0) {
+                    buf.append(", ");
+                }
+                buf.append('V').append(f).append('[').append(j).append("] => ").append(vjf);
+            }
+            buf.append('\n');
+        }
+        return buf.toString();
     }
 
     final void updateW0(final double dloss, final float eta) {
         float gradW0 = (float) dloss;
         float prevW0 = getW0();
         float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
+        if (!NumberUtils.isFinite(nextW0)) {
+            throw new IllegalStateException("Got " + nextW0 + " for next W0\n" + "gradW0=" + gradW0
+                    + ", prevW0=" + prevW0 + ", dloss=" + dloss);
+        }
         setW0(nextW0);
     }
 
@@ -178,6 +224,10 @@ public abstract class FactorizationMachineModel {
         float gradWi = (float) (dloss * Xi);
         float wi = getW(x);
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
+        if (!NumberUtils.isFinite(nextWi)) {
+            throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
+                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss);
+        }
         setW(x, nextWi);
     }
 
@@ -189,6 +239,12 @@ public abstract class FactorizationMachineModel {
         float gradV = (float) (dloss * h);
         float LambdaVf = getLambdaV(f);
         float nextVif = Vif - eta * (gradV + 2.f * LambdaVf * Vif);
+        if (!NumberUtils.isFinite(nextVif)) {
+            throw new IllegalStateException("Got " + nextVif + " for next V" + f + '['
+                    + x.getFeature() + "]\n" + "Xi=" + Xi + ", Vif=" + Vif + ", h=" + h
+                    + ", gradV=" + gradV + ", lambdaVf=" + LambdaVf + ", dloss=" + dloss
+                    + ", sumViX=" + sumViX);
+        }
         setV(x, f, nextVif);
     }
 
@@ -261,6 +317,10 @@ public abstract class FactorizationMachineModel {
             double xj = e.getValue();
             float Vjf = getV(e, f);
             ret += Vjf * xj;
+        }
+        if (!NumberUtils.isFinite(ret)) {
+            throw new IllegalStateException("Got " + ret + " for sumV[ " + f + "]X.\n" + "x = "
+                    + Arrays.toString(x));
         }
         return ret;
     }
@@ -335,7 +395,7 @@ public abstract class FactorizationMachineModel {
     protected static final void uniformFill(final float[] a, final Random rand,
             final float maxInitValue) {
         for (int i = 0, len = a.length; i < len; i++) {
-            float v = rand.nextFloat() * maxInitValue / len;
+            float v = rand.nextFloat() * (maxInitValue / len);
             a[i] = v;
         }
     }
