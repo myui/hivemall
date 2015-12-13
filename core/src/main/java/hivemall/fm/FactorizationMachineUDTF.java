@@ -341,7 +341,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                 throw new UDFArgumentException(e);
             }
 
-            this._inputBuf = inputBuf = ByteBuffer.allocateDirect(131072); // 128 KiB
+            this._inputBuf = inputBuf = ByteBuffer.allocateDirect(1024 * 1024); // 1 MiB
             this._fileIO = dst = new NioStatefullSegment(file, false);
         }
 
