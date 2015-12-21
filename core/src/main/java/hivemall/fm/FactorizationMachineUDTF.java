@@ -148,11 +148,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
             "Whether to enable adaptive regularization [default: OFF]");
         opts.addOption("va_ratio", "validation_ratio", true,
             "Ratio of training data used for validation [default: 0.05f]");
-        opts.addOption(
-            "va_threshold",
-            "validation_threshold",
-            true,
-            "Threshold to start validation. At least N training examples are used before validation [default: 1000]");
+        opts.addOption("va_threshold", "validation_threshold", true,
+            "Threshold to start validation. "
+                    + "At least N training examples are used before validation [default: 1000]");
         // initialization of V
         opts.addOption("init_v", true,
             "Initialization strategy of matrix V [random, gaussian] (default: random)");
