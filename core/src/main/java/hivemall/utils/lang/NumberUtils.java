@@ -27,10 +27,10 @@ public final class NumberUtils {
     public static int parseInt(String s) {
         int endIndex = s.length() - 1;
         char last = s.charAt(endIndex);
-        if(Character.isLetter(last)) {
+        if (Character.isLetter(last)) {
             String numstr = s.substring(0, endIndex);
             int i = Integer.parseInt(numstr);
-            switch(last) {
+            switch (last) {
                 case 'k':
                 case 'K':
                     i *= 1000;
@@ -53,7 +53,7 @@ public final class NumberUtils {
     }
 
     public static int parseInt(String s, int defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return parseInt(s);
@@ -65,18 +65,18 @@ public final class NumberUtils {
     }
 
     public static String prettySize(long size) {
-        if(size < 0) {
+        if (size < 0) {
             return "N/A";
         } else {
-            if(size < 1024) {
+            if (size < 1024) {
                 return size + " bytes";
             } else {
                 float kb = size / 1024f;
-                if(kb < 1024f) {
+                if (kb < 1024f) {
                     return String.format("%.1f KiB", kb);
                 } else {
                     float mb = kb / 1024f;
-                    if(mb < 1024f) {
+                    if (mb < 1024f) {
                         return String.format("%.1f MiB", mb);
                     } else {
                         float gb = mb / 1024f;
@@ -85,6 +85,14 @@ public final class NumberUtils {
                 }
             }
         }
+    }
+
+    public static boolean isFinite(final double v) {
+        return (v > Double.NEGATIVE_INFINITY) & (v < Double.POSITIVE_INFINITY);
+    }
+
+    public static boolean isFinite(final float v) {
+        return (v > Float.NEGATIVE_INFINITY) & (v < Float.POSITIVE_INFINITY);
     }
 
 }
