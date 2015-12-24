@@ -114,8 +114,12 @@ public final class DeflateCodec extends CompressionCodec {
 
     @Override
     public void close() throws IOException {
-        compressor.end();
-        decompressor.end();
+        if (compressor != null) {
+            compressor.end();
+        }
+        if (decompressor != null) {
+            decompressor.end();
+        }
     }
 
 }
