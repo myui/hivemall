@@ -32,19 +32,34 @@
  */
 package hivemall.smile.regression;
 
+import hivemall.smile.data.Attribute;
+import hivemall.smile.data.Attribute.AttributeType;
 import hivemall.smile.utils.SmileExtUtils;
+import hivemall.utils.io.FastByteArrayInputStream;
+import hivemall.utils.io.FastMultiByteArrayOutputStream;
+import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.StringUtils;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import smile.data.Attribute;
-import smile.data.NominalAttribute;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+
 import smile.math.Math;
 import smile.math.Random;
 import smile.regression.GradientTreeBoost;
@@ -52,50 +67,43 @@ import smile.regression.RandomForest;
 import smile.regression.Regression;
 
 /**
- * Decision tree for regression. A decision tree can be learned by splitting the
- * training set into subsets based on an attribute value test. This process is
- * repeated on each derived subset in a recursive manner called recursive
- * partitioning.
+ * Decision tree for regression. A decision tree can be learned by splitting the training set into
+ * subsets based on an attribute value test. This process is repeated on each derived subset in a
+ * recursive manner called recursive partitioning.
  * <p>
- * Classification and Regression Tree techniques have a number of advantages
- * over many of those alternative techniques.
+ * Classification and Regression Tree techniques have a number of advantages over many of those
+ * alternative techniques.
  * <dl>
  * <dt>Simple to understand and interpret.</dt>
- * <dd>In most cases, the interpretation of results summarized in a tree is very
- * simple. This simplicity is useful not only for purposes of rapid
- * classification of new observations, but can also often yield a much simpler
- * "model" for explaining why observations are classified or predicted in a
- * particular manner.</dd>
+ * <dd>In most cases, the interpretation of results summarized in a tree is very simple. This
+ * simplicity is useful not only for purposes of rapid classification of new observations, but can
+ * also often yield a much simpler "model" for explaining why observations are classified or
+ * predicted in a particular manner.</dd>
  * <dt>Able to handle both numerical and categorical data.</dt>
- * <dd>Other techniques are usually specialized in analyzing datasets that have
- * only one type of variable.</dd>
+ * <dd>Other techniques are usually specialized in analyzing datasets that have only one type of
+ * variable.</dd>
  * <dt>Tree methods are nonparametric and nonlinear.</dt>
- * <dd>The final results of using tree methods for classification or regression
- * can be summarized in a series of (usually few) logical if-then conditions
- * (tree nodes). Therefore, there is no implicit assumption that the underlying
- * relationships between the predictor variables and the dependent variable are
- * linear, follow some specific non-linear link function, or that they are even
- * monotonic in nature. Thus, tree methods are particularly well suited for data
- * mining tasks, where there is often little a priori knowledge nor any coherent
- * set of theories or predictions regarding which variables are related and how.
- * In those types of data analytics, tree methods can often reveal simple
- * relationships between just a few variables that could have easily gone
+ * <dd>The final results of using tree methods for classification or regression can be summarized in
+ * a series of (usually few) logical if-then conditions (tree nodes). Therefore, there is no
+ * implicit assumption that the underlying relationships between the predictor variables and the
+ * dependent variable are linear, follow some specific non-linear link function, or that they are
+ * even monotonic in nature. Thus, tree methods are particularly well suited for data mining tasks,
+ * where there is often little a priori knowledge nor any coherent set of theories or predictions
+ * regarding which variables are related and how. In those types of data analytics, tree methods can
+ * often reveal simple relationships between just a few variables that could have easily gone
  * unnoticed using other analytic techniques.</dd>
  * </dl>
- * One major problem with classification and regression trees is their high
- * variance. Often a small change in the data can result in a very different
- * series of splits, making interpretation somewhat precarious. Besides,
- * decision-tree learners can create over-complex trees that cause over-fitting.
- * Mechanisms such as pruning are necessary to avoid this problem. Another
- * limitation of trees is the lack of smoothness of the prediction surface.
+ * One major problem with classification and regression trees is their high variance. Often a small
+ * change in the data can result in a very different series of splits, making interpretation
+ * somewhat precarious. Besides, decision-tree learners can create over-complex trees that cause
+ * over-fitting. Mechanisms such as pruning are necessary to avoid this problem. Another limitation
+ * of trees is the lack of smoothness of the prediction surface.
  * <p>
- * Some techniques such as bagging, boosting, and random forest use more than
- * one decision tree for their analysis.
+ * Some techniques such as bagging, boosting, and random forest use more than one decision tree for
+ * their analysis.
  * 
  * @see GradientTreeBoost
  * @see RandomForest
- * 
- * @author Haifeng LI
  */
 public class RegressionTree implements Regression<double[]> {
     /**
@@ -103,10 +111,9 @@ public class RegressionTree implements Regression<double[]> {
      */
     private final Attribute[] _attributes;
     /**
-     * Variable importance. Every time a split of a node is made on variable the
-     * impurity criterion for the two descendent nodes is less than the parent
-     * node. Adding up the decreases for each individual variable over the tree
-     * gives a simple measure of variable importance.
+     * Variable importance. Every time a split of a node is made on variable the impurity criterion
+     * for the two descendant nodes is less than the parent node. Adding up the decreases for each
+     * individual variable over the tree gives a simple measure of variable importance.
      */
     private final double[] _importance;
     /**
@@ -118,35 +125,32 @@ public class RegressionTree implements Regression<double[]> {
      */
     private final int _maxDepth;
     /**
-     * The number of instances in a node below which the tree will not split,
-     * setting S = 5 generally gives good results.
+     * The number of instances in a node below which the tree will not split, setting S = 5
+     * generally gives good results.
      */
     private final int _minSplit;
     /**
-     * The number of input variables to be used to determine the decision at a
-     * node of the tree.
+     * The number of input variables to be used to determine the decision at a node of the tree.
      */
     private final int _numVars;
     /**
-     * The index of training values in ascending order. Note that only numeric
-     * attributes will be sorted.
+     * The index of training values in ascending order. Note that only numeric attributes will be
+     * sorted.
      */
     private final int[][] _order;
 
     private final Random _rnd;
 
     /**
-     * An interface to calculate node output. Note that samples[i] is the number
-     * of sampling of dataset[i]. 0 means that the datum is not included and
-     * values of greater than 1 are possible because of sampling with
-     * replacement.
+     * An interface to calculate node output. Note that samples[i] is the number of sampling of
+     * dataset[i]. 0 means that the datum is not included and values of greater than 1 are possible
+     * because of sampling with replacement.
      */
     public static interface NodeOutput {
         /**
          * Calculate the node output.
          * 
-         * @param samples
-         *            the samples in the node.
+         * @param samples the samples in the node.
          * @return the node output
          */
         public double calculate(int[] samples);
@@ -155,7 +159,7 @@ public class RegressionTree implements Regression<double[]> {
     /**
      * Regression tree node.
      */
-    class Node {
+    static class Node implements Externalizable {
 
         /**
          * Predicted real value for this node.
@@ -190,36 +194,43 @@ public class RegressionTree implements Regression<double[]> {
          */
         double falseChildOutput = 0.0;
 
-        /**
-         * Constructor.
-         */
-        public Node(double output) {
+        // shared across Nodes
+        transient Attribute[] attributes;
+
+        public Node() {}//for Externalizable
+
+        public Node(@Nonnull Attribute[] attributes) {
+            this.attributes = attributes;
+        }
+
+        public Node(@Nonnull Attribute[] attributes, double output) {
+            this.attributes = attributes;
             this.output = output;
         }
 
         /**
          * Evaluate the regression tree over an instance.
          */
-        public double predict(double[] x) {
-            if(trueChild == null && falseChild == null) {
+        public double predict(final double[] x) {
+            if (trueChild == null && falseChild == null) {
                 return output;
             } else {
-                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
                     // REVIEWME if(Math.equals(x[splitFeature], splitValue)) {
-                    if(x[splitFeature] == splitValue) {
+                    if (x[splitFeature] == splitValue) {
                         return trueChild.predict(x);
                     } else {
                         return falseChild.predict(x);
                     }
-                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
-                    if(x[splitFeature] <= splitValue) {
+                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
+                    if (x[splitFeature] <= splitValue) {
                         return trueChild.predict(x);
                     } else {
                         return falseChild.predict(x);
                     }
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + _attributes[splitFeature].type);
+                            + attributes[splitFeature].type);
                 }
             }
         }
@@ -227,50 +238,58 @@ public class RegressionTree implements Regression<double[]> {
         /**
          * Evaluate the regression tree over an instance.
          */
-        public double predict(int[] x) {
-            if(trueChild == null && falseChild == null) {
+        public double predict(final int[] x) {
+            if (trueChild == null && falseChild == null) {
                 return output;
-            } else if(x[splitFeature] == (int) splitValue) {
+            } else if (x[splitFeature] == (int) splitValue) {
                 return trueChild.predict(x);
             } else {
                 return falseChild.predict(x);
             }
         }
 
-        public void codegen(@Nonnull final StringBuilder builder, final int depth) {
-            if(trueChild == null && falseChild == null) {
+        public void jsCodegen(@Nonnull final StringBuilder builder, final int depth) {
+            if (trueChild == null && falseChild == null) {
                 indent(builder, depth);
                 builder.append("").append(output).append(";\n");
             } else {
-                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
                     indent(builder, depth);
-                    builder.append("if(x[").append(splitFeature).append("] == ").append(splitValue).append(") {\n");
-                    trueChild.codegen(builder, depth + 1);
+                    builder.append("if(x[")
+                           .append(splitFeature)
+                           .append("] == ")
+                           .append(splitValue)
+                           .append(") {\n");
+                    trueChild.jsCodegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("} else {\n");
-                    falseChild.codegen(builder, depth + 1);
+                    falseChild.jsCodegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("}\n");
-                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
                     indent(builder, depth);
-                    builder.append("if(x[").append(splitFeature).append("] <= ").append(splitValue).append(") {\n");
-                    trueChild.codegen(builder, depth + 1);
+                    builder.append("if(x[")
+                           .append(splitFeature)
+                           .append("] <= ")
+                           .append(splitValue)
+                           .append(") {\n");
+                    trueChild.jsCodegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("} else  {\n");
-                    falseChild.codegen(builder, depth + 1);
+                    falseChild.jsCodegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("}\n");
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + _attributes[splitFeature].type);
+                            + attributes[splitFeature].type);
                 }
             }
         }
 
-        public int opcodegen(final List<String> scripts, int depth) {
+        public int opCodegen(final List<String> scripts, int depth) {
             int selfDepth = 0;
             final StringBuilder buf = new StringBuilder();
-            if(trueChild == null && falseChild == null) {
+            if (trueChild == null && falseChild == null) {
                 buf.append("push ").append(output);
                 scripts.add(buf.toString());
                 buf.setLength(0);
@@ -278,7 +297,7 @@ public class RegressionTree implements Regression<double[]> {
                 scripts.add(buf.toString());
                 selfDepth += 2;
             } else {
-                if(_attributes[splitFeature].type == Attribute.Type.NOMINAL) {
+                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -289,12 +308,12 @@ public class RegressionTree implements Regression<double[]> {
                     scripts.add(buf.toString());
                     depth += 3;
                     selfDepth += 3;
-                    int trueDepth = trueChild.opcodegen(scripts, depth);
+                    int trueDepth = trueChild.opCodegen(scripts, depth);
                     selfDepth += trueDepth;
                     scripts.set(depth - 1, "ifeq " + String.valueOf(depth + trueDepth));
-                    int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
+                    int falseDepth = falseChild.opCodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
-                } else if(_attributes[splitFeature].type == Attribute.Type.NUMERIC) {
+                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -305,22 +324,60 @@ public class RegressionTree implements Regression<double[]> {
                     scripts.add(buf.toString());
                     depth += 3;
                     selfDepth += 3;
-                    int trueDepth = trueChild.opcodegen(scripts, depth);
+                    int trueDepth = trueChild.opCodegen(scripts, depth);
                     selfDepth += trueDepth;
                     scripts.set(depth - 1, "ifle " + String.valueOf(depth + trueDepth));
-                    int falseDepth = falseChild.opcodegen(scripts, depth + trueDepth);
+                    int falseDepth = falseChild.opCodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + _attributes[splitFeature].type);
+                            + attributes[splitFeature].type);
                 }
             }
             return selfDepth;
         }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeDouble(output);
+            out.writeInt(splitFeature);
+            out.writeDouble(splitValue);
+            if (trueChild == null) {
+                out.writeBoolean(false);
+            } else {
+                out.writeBoolean(true);
+                trueChild.writeExternal(out);
+            }
+            if (falseChild == null) {
+                out.writeBoolean(false);
+            } else {
+                out.writeBoolean(true);
+                falseChild.writeExternal(out);
+            }
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            if (attributes == null) {
+                throw new IOException("attributes is not set");
+            }
+
+            this.output = in.readDouble();
+            this.splitFeature = in.readInt();
+            this.splitValue = in.readDouble();
+            if (in.readBoolean()) {
+                this.trueChild = new Node(attributes);
+                trueChild.readExternal(in);
+            }
+            if (in.readBoolean()) {
+                this.falseChild = new Node(attributes);
+                falseChild.readExternal(in);
+            }
+        }
     }
 
     private static void indent(final StringBuilder builder, final int depth) {
-        for(int i = 0; i < depth; i++) {
+        for (int i = 0; i < depth; i++) {
             builder.append("  ");
         }
     }
@@ -351,10 +408,9 @@ public class RegressionTree implements Regression<double[]> {
          */
         final double[] y;
         /**
-         * The samples for training this node. Note that samples[i] is the
-         * number of sampling of dataset[i]. 0 means that the datum is not
-         * included and values of greater than 1 are possible because of
-         * sampling with replacement.
+         * The samples for training this node. Note that samples[i] is the number of sampling of
+         * dataset[i]. 0 means that the datum is not included and values of greater than 1 are
+         * possible because of sampling with replacement.
          */
         final int[] samples;
 
@@ -372,64 +428,63 @@ public class RegressionTree implements Regression<double[]> {
         }
 
         @Override
-        public int compareTo(TrainNode a) {
+        public int compareTo(final TrainNode a) {
             return (int) Math.signum(a.node.splitScore - node.splitScore);
         }
 
         /**
          * Calculate the node output for leaves.
          * 
-         * @param output
-         *            the output calculate functor.
+         * @param output the output calculate functor.
          */
-        public void calculateOutput(NodeOutput output) {
-            if(node.trueChild == null && node.falseChild == null) {
+        public void calculateOutput(final NodeOutput output) {
+            if (node.trueChild == null && node.falseChild == null) {
                 node.output = output.calculate(samples);
             } else {
-                if(trueChild != null) {
+                if (trueChild != null) {
                     trueChild.calculateOutput(output);
                 }
-                if(falseChild != null) {
+                if (falseChild != null) {
                     falseChild.calculateOutput(output);
                 }
             }
         }
 
         /**
-         * Finds the best attribute to split on at the current node. Returns
-         * true if a split exists to reduce squared error, false otherwise.
+         * Finds the best attribute to split on at the current node. Returns true if a split exists
+         * to reduce squared error, false otherwise.
          */
         public boolean findBestSplit() {
-            if(depth >= _maxDepth) {
+            if (depth >= _maxDepth) {
                 return false;
             }
 
             int n = 0;
-            for(int s : samples) {
+            for (int s : samples) {
                 n += s;
             }
 
-            if(n <= _minSplit) {
+            if (n <= _minSplit) {
                 return false;
             }
 
-            double sum = node.output * n;
-            int p = _attributes.length;
-            int[] variables = new int[p];
-            for(int i = 0; i < p; i++) {
+            final double sum = node.output * n;
+            final int p = _attributes.length;
+            final int[] variables = new int[p];
+            for (int i = 0; i < p; i++) {
                 variables[i] = i;
             }
 
             // Loop through features and compute the reduction of squared error,
             // which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2                    
-            if(_numVars < p) {
+            if (_numVars < p) {
                 // Training of Random Forest will get into this race condition.
                 // smile.math.Math uses a static object of random number generator.
                 SmileExtUtils.shuffle(variables, _rnd);
             }
-            for(int j = 0; j < _numVars; j++) {
+            for (int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(n, sum, variables[j]);
-                if(split.splitScore > node.splitScore) {
+                if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
                     node.splitValue = split.splitValue;
                     node.splitScore = split.splitScore;
@@ -444,25 +499,21 @@ public class RegressionTree implements Regression<double[]> {
         /**
          * Finds the best split cutoff for attribute j at the current node.
          * 
-         * @param n
-         *            the number instances in this node.
-         * @param count
-         *            the sample count in each class.
-         * @param impurity
-         *            the impurity of this node.
-         * @param j
-         *            the attribute to split on.
+         * @param n the number instances in this node.
+         * @param count the sample count in each class.
+         * @param impurity the impurity of this node.
+         * @param j the attribute to split on.
          */
-        public Node findBestSplit(int n, double sum, int j) {
-            int N = x.length;
-            Node split = new Node(0.0);
-            if(_attributes[j].type == Attribute.Type.NOMINAL) {
-                int m = ((NominalAttribute) _attributes[j]).size();
-                double[] trueSum = new double[m];
-                int[] trueCount = new int[m];
+        public Node findBestSplit(final int n, final double sum, final int j) {
+            final int N = x.length;
+            final Node split = new Node(_attributes, 0.0);
+            if (_attributes[j].type == AttributeType.NOMINAL) {
+                final int m = _attributes[j].getSize();
+                final double[] trueSum = new double[m];
+                final int[] trueCount = new int[m];
 
-                for(int i = 0; i < N; i++) {
-                    if(samples[i] > 0) {
+                for (int i = 0; i < N; i++) {
+                    if (samples[i] > 0) {
                         double target = samples[i] * y[i];
 
                         // For each true feature of this datum increment the
@@ -474,22 +525,22 @@ public class RegressionTree implements Regression<double[]> {
                     }
                 }
 
-                for(int k = 0; k < m; k++) {
-                    double tc = (double) trueCount[k];
-                    double fc = n - tc;
+                for (int k = 0; k < m; k++) {
+                    final double tc = (double) trueCount[k];
+                    final double fc = n - tc;
 
                     // If either side is empty, skip this feature.
-                    if(tc == 0 || fc == 0) {
+                    if (tc == 0 || fc == 0) {
                         continue;
                     }
 
                     // compute penalized means
-                    double trueMean = trueSum[k] / tc;
-                    double falseMean = (sum - trueSum[k]) / fc;
+                    final double trueMean = trueSum[k] / tc;
+                    final double falseMean = (sum - trueSum[k]) / fc;
 
-                    double gain = (tc * trueMean * trueMean + fc * falseMean * falseMean) - n
+                    final double gain = (tc * trueMean * trueMean + fc * falseMean * falseMean) - n
                             * split.output * split.output;
-                    if(gain > split.splitScore) {
+                    if (gain > split.splitScore) {
                         // new best split
                         split.splitFeature = j;
                         split.splitValue = k;
@@ -498,24 +549,24 @@ public class RegressionTree implements Regression<double[]> {
                         split.falseChildOutput = falseMean;
                     }
                 }
-            } else if(_attributes[j].type == Attribute.Type.NUMERIC) {
+            } else if (_attributes[j].type == AttributeType.NUMERIC) {
                 double trueSum = 0.0;
                 int trueCount = 0;
                 double prevx = Double.NaN;
 
-                for(int i : _order[j]) {
-                    if(samples[i] > 0) {
-                        if(Double.isNaN(prevx) || x[i][j] == prevx) {
+                for (int i : _order[j]) {
+                    if (samples[i] > 0) {
+                        if (Double.isNaN(prevx) || x[i][j] == prevx) {
                             prevx = x[i][j];
                             trueSum += samples[i] * y[i];
                             trueCount += samples[i];
                             continue;
                         }
 
-                        double falseCount = n - trueCount;
+                        final double falseCount = n - trueCount;
 
                         // If either side is empty, skip this feature.
-                        if(trueCount == 0 || falseCount == 0) {
+                        if (trueCount == 0 || falseCount == 0) {
                             prevx = x[i][j];
                             trueSum += samples[i] * y[i];
                             trueCount += samples[i];
@@ -523,16 +574,16 @@ public class RegressionTree implements Regression<double[]> {
                         }
 
                         // compute penalized means
-                        double trueMean = trueSum / trueCount;
-                        double falseMean = (sum - trueSum) / falseCount;
+                        final double trueMean = trueSum / trueCount;
+                        final double falseMean = (sum - trueSum) / falseCount;
 
                         // The gain is actually -(reduction in squared error) for
                         // sorting in priority queue, which treats smaller number with
                         // higher priority.
-                        double gain = (trueCount * trueMean * trueMean + falseCount * falseMean
-                                * falseMean)
+                        final double gain = (trueCount * trueMean * trueMean + falseCount
+                                * falseMean * falseMean)
                                 - n * split.output * split.output;
-                        if(gain > split.splitScore) {
+                        if (gain > split.splitScore) {
                             // new best split
                             split.splitFeature = j;
                             split.splitValue = (x[i][j] + prevx) / 2;
@@ -555,24 +606,23 @@ public class RegressionTree implements Regression<double[]> {
         }
 
         /**
-         * Split the node into two children nodes. Returns true if split
-         * success.
+         * Split the node into two children nodes. Returns true if split success.
          */
-        public boolean split(PriorityQueue<TrainNode> nextSplits) {
-            if(node.splitFeature < 0) {
+        public boolean split(final PriorityQueue<TrainNode> nextSplits) {
+            if (node.splitFeature < 0) {
                 throw new IllegalStateException("Split a node with invalid feature.");
             }
 
-            int n = x.length;
+            final int n = x.length;
             int tc = 0;
             int fc = 0;
-            int[] trueSamples = new int[n];
-            int[] falseSamples = new int[n];
+            final int[] trueSamples = new int[n];
+            final int[] falseSamples = new int[n];
 
-            if(_attributes[node.splitFeature].type == Attribute.Type.NOMINAL) {
-                for(int i = 0; i < n; i++) {
-                    if(samples[i] > 0) {
-                        if(x[i][node.splitFeature] == node.splitValue) {
+            if (_attributes[node.splitFeature].type == AttributeType.NOMINAL) {
+                for (int i = 0; i < n; i++) {
+                    if (samples[i] > 0) {
+                        if (x[i][node.splitFeature] == node.splitValue) {
                             trueSamples[i] = samples[i];
                             tc += samples[i];
                         } else {
@@ -581,10 +631,10 @@ public class RegressionTree implements Regression<double[]> {
                         }
                     }
                 }
-            } else if(_attributes[node.splitFeature].type == Attribute.Type.NUMERIC) {
-                for(int i = 0; i < n; i++) {
-                    if(samples[i] > 0) {
-                        if(x[i][node.splitFeature] <= node.splitValue) {
+            } else if (_attributes[node.splitFeature].type == AttributeType.NUMERIC) {
+                for (int i = 0; i < n; i++) {
+                    if (samples[i] > 0) {
+                        if (x[i][node.splitFeature] <= node.splitValue) {
                             trueSamples[i] = samples[i];
                             tc += samples[i];
                         } else {
@@ -598,28 +648,28 @@ public class RegressionTree implements Regression<double[]> {
                         + _attributes[node.splitFeature].type);
             }
 
-            if(tc == 0 || fc == 0) {
+            if (tc == 0 || fc == 0) {
                 node.splitFeature = -1;
                 node.splitValue = Double.NaN;
                 node.splitScore = 0.0;
                 return false;
             }
 
-            node.trueChild = new Node(node.trueChildOutput);
-            node.falseChild = new Node(node.falseChildOutput);
+            node.trueChild = new Node(_attributes, node.trueChildOutput);
+            node.falseChild = new Node(_attributes, node.falseChildOutput);
 
-            trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
-            if(tc >= _minSplit && trueChild.findBestSplit()) {
-                if(nextSplits != null) {
+            this.trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
+            if (tc >= _minSplit && trueChild.findBestSplit()) {
+                if (nextSplits != null) {
                     nextSplits.add(trueChild);
                 } else {
                     trueChild.split(null);
                 }
             }
 
-            falseChild = new TrainNode(node.falseChild, x, y, falseSamples, depth + 1);
-            if(fc >= _minSplit && falseChild.findBestSplit()) {
-                if(nextSplits != null) {
+            this.falseChild = new TrainNode(node.falseChild, x, y, falseSamples, depth + 1);
+            if (fc >= _minSplit && falseChild.findBestSplit()) {
+                if (nextSplits != null) {
                     nextSplits.add(falseChild);
                 } else {
                     falseChild.split(null);
@@ -632,60 +682,56 @@ public class RegressionTree implements Regression<double[]> {
         }
     }
 
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int maxLeafs) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
+            @Nonnull double[] y, int maxLeafs) {
         this(attributes, x, y, x[0].length, Integer.MAX_VALUE, maxLeafs, 5, null, null, null);
     }
 
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
+            @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits,
+            @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
         this(attributes, x, y, numVars, maxDepth, maxLeafs, minSplits, order, samples, null, rand);
     }
 
     /**
      * Constructor. Learns a regression tree for gradient tree boosting.
      * 
-     * @param attributes
-     *            the attribute properties.
-     * @param x
-     *            the training instances.
-     * @param y
-     *            the response variable.
-     * @param numVars
-     *            the number of input variables to pick to split on at each
-     *            node. It seems that dim/3 give generally good performance,
-     *            where dim is the number of variables.
-     * @param maxLeafs
-     *            the maximum number of leaf nodes in the tree.
-     * @param minSplits
-     *            number of instances in a node below which the tree will not
-     *            split, setting S = 5 generally gives good results.
-     * @param order
-     *            the index of training values in ascending order. Note that
-     *            only numeric attributes need be sorted.
-     * @param samples
-     *            the sample set of instances for stochastic learning.
-     *            samples[i] should be 0 or 1 to indicate if the instance is
-     *            used for training.
-     * @param output
-     *            An interface to calculate node output.
+     * @param attributes the attribute properties.
+     * @param x the training instances.
+     * @param y the response variable.
+     * @param numVars the number of input variables to pick to split on at each node. It seems that
+     *        dim/3 give generally good performance, where dim is the number of variables.
+     * @param maxLeafs the maximum number of leaf nodes in the tree.
+     * @param minSplits number of instances in a node below which the tree will not split, setting S
+     *        = 5 generally gives good results.
+     * @param order the index of training values in ascending order. Note that only numeric
+     *        attributes need be sorted.
+     * @param samples the sample set of instances for stochastic learning. samples[i] should be 0 or
+     *        1 to indicate if the instance is used for training.
+     * @param output An interface to calculate node output.
      */
-    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits, @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
-        if(x.length != y.length) {
-            throw new IllegalArgumentException(String.format("The sizes of X and Y don't match: %d != %d", x.length, y.length));
+    public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
+            @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits,
+            @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output,
+            @Nullable smile.math.Random rand) {
+        if (x.length != y.length) {
+            throw new IllegalArgumentException(String.format(
+                "The sizes of X and Y don't match: %d != %d", x.length, y.length));
         }
-        if(numVars <= 0 || numVars > x[0].length) {
-            throw new IllegalArgumentException("Invalid number of variables to split on at a node of the tree: "
-                    + numVars);
+        if (numVars <= 0 || numVars > x[0].length) {
+            throw new IllegalArgumentException(
+                "Invalid number of variables to split on at a node of the tree: " + numVars);
         }
-        if(minSplits <= 0) {
+        if (minSplits <= 0) {
             throw new IllegalArgumentException("Invalid mimum number of instances in leaf nodes: "
                     + minSplits);
         }
-        if(maxLeafs < 2) {
+        if (maxLeafs < 2) {
             throw new IllegalArgumentException("Invalid maximum leaves: " + maxLeafs);
         }
 
         this._attributes = SmileExtUtils.attributeTypes(attributes, x);
-        if(attributes.length != x[0].length) {
+        if (attributes.length != x[0].length) {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
@@ -699,56 +745,56 @@ public class RegressionTree implements Regression<double[]> {
 
         int n = 0;
         double sum = 0.0;
-        if(samples == null) {
+        if (samples == null) {
             n = y.length;
             samples = new int[n];
-            for(int i = 0; i < n; i++) {
+            for (int i = 0; i < n; i++) {
                 samples[i] = 1;
                 sum += y[i];
             }
         } else {
-            for(int i = 0; i < y.length; i++) {
+            for (int i = 0; i < y.length; i++) {
                 n += samples[i];
                 sum += samples[i] * y[i];
             }
         }
 
-        this._root = new Node(sum / n);
+        this._root = new Node(_attributes, sum / n);
 
         TrainNode trainRoot = new TrainNode(_root, x, y, samples, 1);
-        if(maxLeafs == Integer.MAX_VALUE) {
-            if(trainRoot.findBestSplit()) {
+        if (maxLeafs == Integer.MAX_VALUE) {
+            if (trainRoot.findBestSplit()) {
                 trainRoot.split(null);
             }
         } else {
             // Priority queue for best-first tree growing.
             PriorityQueue<TrainNode> nextSplits = new PriorityQueue<TrainNode>();
             // Now add splits to the tree until max tree size is reached
-            if(trainRoot.findBestSplit()) {
+            if (trainRoot.findBestSplit()) {
                 nextSplits.add(trainRoot);
             }
             // Pop best leaf from priority queue, split it, and push
             // children nodes into the queue if possible.
-            for(int leaves = 1; leaves < maxLeafs; leaves++) {
+            for (int leaves = 1; leaves < maxLeafs; leaves++) {
                 // parent is the leaf to split
                 TrainNode node = nextSplits.poll();
-                if(node == null) {
+                if (node == null) {
                     break;
                 }
                 node.split(nextSplits); // Split the parent node into two children nodes
             }
         }
 
-        if(output != null) {
+        if (output != null) {
             trainRoot.calculateOutput(output);
         }
     }
 
     /**
-     * Returns the variable importance. Every time a split of a node is made on
-     * variable the impurity criterion for the two descendent nodes is less than
-     * the parent node. Adding up the decreases for each individual variable
-     * over the tree gives a simple measure of variable importance.
+     * Returns the variable importance. Every time a split of a node is made on variable the
+     * impurity criterion for the two descendent nodes is less than the parent node. Adding up the
+     * decreases for each individual variable over the tree gives a simple measure of variable
+     * importance.
      *
      * @return the variable importance
      */
@@ -761,18 +807,71 @@ public class RegressionTree implements Regression<double[]> {
         return _root.predict(x);
     }
 
-    public String predictCodegen() {
+    public String predictJsCodegen() {
         StringBuilder buf = new StringBuilder(1024);
-        _root.codegen(buf, 0);
+        _root.jsCodegen(buf, 0);
         return buf.toString();
     }
 
     public String predictOpCodegen(@Nonnull String sep) {
         List<String> opslist = new ArrayList<String>();
-        _root.opcodegen(opslist, 0);
+        _root.opCodegen(opslist, 0);
         opslist.add("call end");
         String scripts = StringUtils.concat(opslist, sep);
         return scripts;
+    }
+
+    @Nonnull
+    public byte[] predictSerCodegen(boolean compress) throws HiveException {
+        final Attribute[] attrs = _attributes;
+        assert (attrs != null);
+
+        FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
+        OutputStream wrapped = compress ? new DeflaterOutputStream(bos) : bos;
+        ObjectOutputStream oos = null;
+        try {
+            oos = new ObjectOutputStream(wrapped);
+            oos.writeInt(attrs.length);
+            for (int i = 0; i < attrs.length; i++) {
+                attrs[i].writeTo(oos);
+            }
+            _root.writeExternal(oos);
+            oos.flush();
+        } catch (IOException ioe) {
+            throw new HiveException("IOException cause while serializing DecisionTree object", ioe);
+        } catch (Exception e) {
+            throw new HiveException("Exception cause while serializing DecisionTree object", e);
+        } finally {
+            IOUtils.closeQuietly(oos);
+        }
+        return bos.toByteArray_clear();
+    }
+
+    public static Node deserializeNode(final byte[] serializedObj, final boolean compressed)
+            throws HiveException {
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj);
+        InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
+
+        final Node root;
+        ObjectInputStream ois = null;
+        try {
+            ois = new ObjectInputStream(wrapped);
+            final int numAttrs = ois.readInt();
+            final Attribute[] attrs = new Attribute[numAttrs];
+            for (int i = 0; i < numAttrs; i++) {
+                attrs[i] = Attribute.readFrom(ois);
+            }
+            root = new Node(attrs);
+            root.readExternal(ois);
+        } catch (IOException ioe) {
+            throw new HiveException("IOException cause while deserializing DecisionTree object",
+                ioe);
+        } catch (Exception e) {
+            throw new HiveException("Exception cause while deserializing DecisionTree object", e);
+        } finally {
+            IOUtils.closeQuietly(ois);
+        }
+        return root;
     }
 
 }
