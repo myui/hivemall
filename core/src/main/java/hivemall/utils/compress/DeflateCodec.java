@@ -33,9 +33,13 @@ public final class DeflateCodec extends CompressionCodec {
     private final Inflater decompressor;
 
     public DeflateCodec() {
+        this(true, true);
+    }
+
+    public DeflateCodec(boolean compress, boolean decompress) {
         super();
-        this.compressor = new Deflater(DEFAULT_COMPRESSION, true);
-        this.decompressor = new Inflater(true);
+        this.compressor = compress ? new Deflater(DEFAULT_COMPRESSION, true) : null;
+        this.decompressor = decompress ? new Inflater(true) : null;
     }
 
     @Override
