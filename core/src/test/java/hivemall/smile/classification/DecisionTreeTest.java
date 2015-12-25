@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
+import org.junit.Assert;
 import org.junit.Test;
 
 import smile.data.AttributeDataset;
@@ -157,7 +158,7 @@ public class DecisionTreeTest {
             DecisionTree tree = new DecisionTree(attrs, trainx, trainy, 4);
 
             byte[] b = tree.predictSerCodegen(false);
-            Node node = DecisionTree.deserializeNode(b, false);
+            Node node = DecisionTree.deserializeNode(b, b.length, false);
             assertEquals(tree.predict(x[loocv.test[i]]), node.predict(x[loocv.test[i]]));
         }
     }
@@ -183,8 +184,11 @@ public class DecisionTreeTest {
             Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
             DecisionTree tree = new DecisionTree(attrs, trainx, trainy, 4);
 
-            byte[] b = tree.predictSerCodegen(true);
-            Node node = DecisionTree.deserializeNode(b, true);
+            byte[] b1 = tree.predictSerCodegen(true);
+            byte[] b2 = tree.predictSerCodegen(false);
+            Assert.assertTrue("b1.length = " + b1.length + ", b2.length = " + b2.length,
+                b1.length < b2.length);
+            Node node = DecisionTree.deserializeNode(b1, b1.length, true);
             assertEquals(tree.predict(x[loocv.test[i]]), node.predict(x[loocv.test[i]]));
         }
     }
