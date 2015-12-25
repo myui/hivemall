@@ -70,7 +70,7 @@ public final class DeflateUDF extends GenericUDF {
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
         if (codec == null) {
-            this.codec = new DeflateCodec();
+            this.codec = new DeflateCodec(true, false);
         }
 
         Object arg0 = arguments[0].get();
