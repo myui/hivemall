@@ -183,10 +183,12 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this.featuresList = new ArrayList<double[]>(1024);
         this.labels = new IntArrayList(1024);
 
-        ArrayList<String> fieldNames = new ArrayList<String>(5);
-        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(5);
+        ArrayList<String> fieldNames = new ArrayList<String>(6);
+        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(6);
 
         fieldNames.add("model_id");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldNames.add("model_type");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("pred_model");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
@@ -310,12 +312,13 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 }
             }
         }
-        Object[] forwardObjs = new Object[5];
+        Object[] forwardObjs = new Object[6];
         forwardObjs[0] = new IntWritable(modelId);
-        forwardObjs[1] = model;
-        forwardObjs[2] = WritableUtils.toWritableList(importance);
-        forwardObjs[3] = new IntWritable(oobErrors);
-        forwardObjs[4] = new IntWritable(oobTests);
+        forwardObjs[1] = new IntWritable(_outputType.getId());
+        forwardObjs[2] = model;
+        forwardObjs[3] = WritableUtils.toWritableList(importance);
+        forwardObjs[4] = new IntWritable(oobErrors);
+        forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
     }
 

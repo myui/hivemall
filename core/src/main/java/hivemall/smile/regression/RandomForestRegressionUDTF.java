@@ -184,6 +184,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
         fieldNames.add("model_id");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldNames.add("model_type");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("pred_model");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
         fieldNames.add("var_importance");
@@ -307,12 +309,13 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 }
             }
         }
-        Object[] forwardObjs = new Object[5];
+        Object[] forwardObjs = new Object[6];
         forwardObjs[0] = new IntWritable(modelId);
-        forwardObjs[1] = model;
-        forwardObjs[2] = WritableUtils.toWritableList(importance);
-        forwardObjs[3] = new DoubleWritable(oobErrors);
-        forwardObjs[4] = new IntWritable(oobTests);
+        forwardObjs[1] = new IntWritable(_outputType.getId());
+        forwardObjs[2] = model;
+        forwardObjs[3] = WritableUtils.toWritableList(importance);
+        forwardObjs[4] = new DoubleWritable(oobErrors);
+        forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
     }
 

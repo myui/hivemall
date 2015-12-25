@@ -199,6 +199,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
         fieldNames.add("iteration");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldNames.add("model_type");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("prediction_models");
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableStringObjectInspector));
         fieldNames.add("intercept");
@@ -499,13 +501,14 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             }
         }
 
-        Object[] forwardObjs = new Object[6];
+        Object[] forwardObjs = new Object[7];
         forwardObjs[0] = new IntWritable(m);
-        forwardObjs[1] = models;
-        forwardObjs[2] = new DoubleWritable(intercept);
-        forwardObjs[3] = new DoubleWritable(shrinkage);
-        forwardObjs[4] = WritableUtils.toWritableList(importance);
-        forwardObjs[5] = new FloatWritable(oobErrorRate);
+        forwardObjs[1] = new IntWritable(_outputType.getId());
+        forwardObjs[2] = models;
+        forwardObjs[3] = new DoubleWritable(intercept);
+        forwardObjs[4] = new DoubleWritable(shrinkage);
+        forwardObjs[5] = WritableUtils.toWritableList(importance);
+        forwardObjs[6] = new FloatWritable(oobErrorRate);
 
         forward(forwardObjs);
     }
