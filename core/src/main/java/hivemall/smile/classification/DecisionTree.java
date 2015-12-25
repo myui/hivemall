@@ -183,7 +183,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * Classification tree node.
      */
-    static class Node implements Externalizable {
+    public static class Node implements Externalizable {
 
         /**
          * Predicted class label for this node.
@@ -193,6 +193,10 @@ public class DecisionTree implements Classifier<double[]> {
          * The split feature for this node.
          */
         int splitFeature = -1;
+        /**
+         * The type of split feature
+         */
+        AttributeType splitFeatureType = null;
         /**
          * The split value.
          */
@@ -218,21 +222,12 @@ public class DecisionTree implements Classifier<double[]> {
          */
         int falseChildOutput = -1;
 
-        // shared cross Nodes
-        @Nullable
-        transient Attribute[] attributes;
-
         public Node() {}// for Externalizable
-
-        public Node(@Nonnull Attribute[] attributes) {
-            this.attributes = attributes;
-        }
 
         /**
          * Constructor.
          */
-        public Node(@Nonnull Attribute[] attributes, int output) {
-            this.attributes = attributes;
+        public Node(int output) {
             this.output = output;
         }
 
@@ -243,13 +238,13 @@ public class DecisionTree implements Classifier<double[]> {
             if (trueChild == null && falseChild == null) {
                 return output;
             } else {
-                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
+                if (splitFeatureType == AttributeType.NOMINAL) {
                     if (x[splitFeature] == splitValue) {
                         return trueChild.predict(x);
                     } else {
                         return falseChild.predict(x);
                     }
-                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
+                } else if (splitFeatureType == AttributeType.NUMERIC) {
                     if (x[splitFeature] <= splitValue) {
                         return trueChild.predict(x);
                     } else {
@@ -257,33 +252,7 @@ public class DecisionTree implements Classifier<double[]> {
                     }
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
-                }
-            }
-        }
-
-        /**
-         * Evaluate the regression tree over an instance.
-         */
-        public int predict(final double[] x, final Attribute[] attributes) {
-            if (trueChild == null && falseChild == null) {
-                return output;
-            } else {
-                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
-                    if (x[splitFeature] == splitValue) {
-                        return trueChild.predict(x);
-                    } else {
-                        return falseChild.predict(x);
-                    }
-                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
-                    if (x[splitFeature] <= splitValue) {
-                        return trueChild.predict(x);
-                    } else {
-                        return falseChild.predict(x);
-                    }
-                } else {
-                    throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + splitFeatureType);
                 }
             }
         }
@@ -293,7 +262,7 @@ public class DecisionTree implements Classifier<double[]> {
                 indent(builder, depth);
                 builder.append("").append(output).append(";\n");
             } else {
-                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
+                if (splitFeatureType == AttributeType.NOMINAL) {
                     indent(builder, depth);
                     builder.append("if(x[")
                            .append(splitFeature)
@@ -306,7 +275,7 @@ public class DecisionTree implements Classifier<double[]> {
                     falseChild.jsCodegen(builder, depth + 1);
                     indent(builder, depth);
                     builder.append("}\n");
-                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
+                } else if (splitFeatureType == AttributeType.NUMERIC) {
                     indent(builder, depth);
                     builder.append("if(x[")
                            .append(splitFeature)
@@ -321,7 +290,7 @@ public class DecisionTree implements Classifier<double[]> {
                     builder.append("}\n");
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + splitFeatureType);
                 }
             }
         }
@@ -337,7 +306,7 @@ public class DecisionTree implements Classifier<double[]> {
                 scripts.add(buf.toString());
                 selfDepth += 2;
             } else {
-                if (attributes[splitFeature].type == AttributeType.NOMINAL) {
+                if (splitFeatureType == AttributeType.NOMINAL) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -353,7 +322,7 @@ public class DecisionTree implements Classifier<double[]> {
                     scripts.set(depth - 1, "ifeq " + String.valueOf(depth + trueDepth));
                     int falseDepth = falseChild.opCodegen(scripts, depth + trueDepth);
                     selfDepth += falseDepth;
-                } else if (attributes[splitFeature].type == AttributeType.NUMERIC) {
+                } else if (splitFeatureType == AttributeType.NUMERIC) {
                     buf.append("push ").append("x[").append(splitFeature).append("]");
                     scripts.add(buf.toString());
                     buf.setLength(0);
@@ -371,7 +340,7 @@ public class DecisionTree implements Classifier<double[]> {
                     selfDepth += falseDepth;
                 } else {
                     throw new IllegalStateException("Unsupported attribute type: "
-                            + attributes[splitFeature].type);
+                            + splitFeatureType);
                 }
             }
             return selfDepth;
@@ -381,6 +350,11 @@ public class DecisionTree implements Classifier<double[]> {
         public void writeExternal(ObjectOutput out) throws IOException {
             out.writeInt(output);
             out.writeInt(splitFeature);
+            if (splitFeatureType == null) {
+                out.writeInt(-1);
+            } else {
+                out.writeInt(splitFeatureType.getTypeId());
+            }
             out.writeDouble(splitValue);
             if (trueChild == null) {
                 out.writeBoolean(false);
@@ -398,19 +372,21 @@ public class DecisionTree implements Classifier<double[]> {
 
         @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            if(attributes == null) {
-                throw new IOException("attributes is not set");
-            }
-            
             this.output = in.readInt();
             this.splitFeature = in.readInt();
+            int typeId = in.readInt();
+            if (typeId == -1) {
+                this.splitFeatureType = null;
+            } else {
+                this.splitFeatureType = AttributeType.resolve(typeId);
+            }
             this.splitValue = in.readDouble();
             if (in.readBoolean()) {
-                this.trueChild = new Node(attributes);
+                this.trueChild = new Node();
                 trueChild.readExternal(in);
             }
             if (in.readBoolean()) {
-                this.falseChild = new Node(attributes);
+                this.falseChild = new Node();
                 falseChild.readExternal(in);
             }
         }
@@ -519,6 +495,7 @@ public class DecisionTree implements Classifier<double[]> {
                 Node split = findBestSplit(n, count, falseCount, impurity, variableIndex[j]);
                 if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
+                    node.splitFeatureType = split.splitFeatureType;
                     node.splitValue = split.splitValue;
                     node.splitScore = split.splitScore;
                     node.trueChildOutput = split.trueChildOutput;
@@ -539,9 +516,9 @@ public class DecisionTree implements Classifier<double[]> {
          * @param j the attribute index to split on.
          */
         public Node findBestSplit(final int n, final int[] count, final int[] falseCount,
-                                  final double impurity, final int j) {
+                final double impurity, final int j) {
             final int N = x.length;
-            final Node splitNode = new Node(_attributes);
+            final Node splitNode = new Node();
 
             if (_attributes[j].type == AttributeType.NOMINAL) {
                 final int m = _attributes[j].getSize();
@@ -576,6 +553,7 @@ public class DecisionTree implements Classifier<double[]> {
                         int falseLabel = Math.whichMax(falseCount);
                         // new best split
                         splitNode.splitFeature = j;
+                        splitNode.splitFeatureType = AttributeType.NOMINAL;
                         splitNode.splitValue = l;
                         splitNode.splitScore = gain;
                         splitNode.trueChildOutput = trueLabel;
@@ -591,7 +569,7 @@ public class DecisionTree implements Classifier<double[]> {
                     if (samples[i] > 0) {
                         final double x_ij = x[i][j];
                         final int y_i = y[i];
-                        
+
                         if (Double.isNaN(prevx) || x_ij == prevx || y_i == prevy) {
                             prevx = x_ij;
                             prevy = y_i;
@@ -623,6 +601,7 @@ public class DecisionTree implements Classifier<double[]> {
                             int falseLabel = Math.whichMax(falseCount);
                             // new best split
                             splitNode.splitFeature = j;
+                            splitNode.splitFeatureType = AttributeType.NUMERIC;
                             splitNode.splitValue = (x_ij + prevx) / 2.d;
                             splitNode.splitScore = gain;
                             splitNode.trueChildOutput = trueLabel;
@@ -656,7 +635,7 @@ public class DecisionTree implements Classifier<double[]> {
             final int[] trueSamples = new int[n];
             final int[] falseSamples = new int[n];
 
-            if (_attributes[node.splitFeature].type == AttributeType.NOMINAL) {
+            if (node.splitFeatureType == AttributeType.NOMINAL) {
                 for (int i = 0; i < n; i++) {
                     if (samples[i] > 0) {
                         if (x[i][node.splitFeature] == node.splitValue) {
@@ -668,7 +647,7 @@ public class DecisionTree implements Classifier<double[]> {
                         }
                     }
                 }
-            } else if (_attributes[node.splitFeature].type == AttributeType.NUMERIC) {
+            } else if (node.splitFeatureType == AttributeType.NUMERIC) {
                 for (int i = 0; i < n; i++) {
                     if (samples[i] > 0) {
                         if (x[i][node.splitFeature] <= node.splitValue) {
@@ -682,18 +661,19 @@ public class DecisionTree implements Classifier<double[]> {
                 }
             } else {
                 throw new IllegalStateException("Unsupported attribute type: "
-                        + _attributes[node.splitFeature].type);
+                        + node.splitFeatureType);
             }
 
             if (tc == 0 || fc == 0) {
                 node.splitFeature = -1;
+                node.splitFeatureType = null;
                 node.splitValue = Double.NaN;
                 node.splitScore = 0.0;
                 return false;
             }
 
-            node.trueChild = new Node(_attributes, node.trueChildOutput);
-            node.falseChild = new Node(_attributes, node.falseChildOutput);
+            node.trueChild = new Node(node.trueChildOutput);
+            node.falseChild = new Node(node.falseChildOutput);
 
             final TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
             if (tc >= _minSplit && trueChild.findBestSplit()) {
@@ -729,7 +709,7 @@ public class DecisionTree implements Classifier<double[]> {
      * @return the impurity of a node
      */
     private static double impurity(@Nonnull final int[] count, final int n,
-                                   @Nonnull final SplitRule rule) {
+            @Nonnull final SplitRule rule) {
         double impurity = 0.0;
 
         switch (rule) {
@@ -757,10 +737,6 @@ public class DecisionTree implements Classifier<double[]> {
         return impurity;
     }
 
-    /**
-     * @see DecisionTree#DecisionTree(Attribute[], double[][], int[], int, int, int, int[], int[][],
-     *      SplitRule, Random)
-     */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y,
             int J) {
         this(attributes, x, y, x[0].length, Integer.MAX_VALUE, J, 2, null, null, SplitRule.GINI, null);
@@ -830,7 +806,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
         }
 
-        this._root = new Node(_attributes, Math.whichMax(count));
+        this._root = new Node(Math.whichMax(count));
 
         final TrainNode trainRoot = new TrainNode(_root, x, y, samples, 1);
         if (numLeafs == Integer.MAX_VALUE) {
@@ -899,18 +875,11 @@ public class DecisionTree implements Classifier<double[]> {
 
     @Nonnull
     public byte[] predictSerCodegen(boolean compress) throws HiveException {
-        final Attribute[] attrs = _attributes;
-        assert (attrs != null);
-
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
         OutputStream wrapped = compress ? new DeflaterOutputStream(bos) : bos;
         ObjectOutputStream oos = null;
         try {
             oos = new ObjectOutputStream(wrapped);
-            oos.writeInt(attrs.length);
-            for (int i = 0; i < attrs.length; i++) {
-                attrs[i].writeTo(oos);
-            }
             _root.writeExternal(oos);
             oos.flush();
         } catch (IOException ioe) {
@@ -923,7 +892,7 @@ public class DecisionTree implements Classifier<double[]> {
         return bos.toByteArray_clear();
     }
 
-    public static Node deserializeNode(final byte[] serializedObj, final boolean compressed)
+    public static Node deserializeNode(final byte[] serializedObj, final int length, final boolean compressed)
             throws HiveException {
         FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj);
         InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
@@ -932,12 +901,7 @@ public class DecisionTree implements Classifier<double[]> {
         ObjectInputStream ois = null;
         try {
             ois = new ObjectInputStream(wrapped);
-            final int numAttrs = ois.readInt();
-            final Attribute[] attrs = new Attribute[numAttrs];
-            for (int i = 0; i < numAttrs; i++) {
-                attrs[i] = Attribute.readFrom(ois);
-            }
-            root = new Node(attrs);
+            root = new Node();
             root.readExternal(ois);
         } catch (IOException ioe) {
             throw new HiveException("IOException cause while deserializing DecisionTree object",
