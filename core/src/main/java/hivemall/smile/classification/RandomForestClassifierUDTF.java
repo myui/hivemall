@@ -154,6 +154,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
         this._numTrees = trees;
         this._numVars = numVars;
+        this._maxDepth = maxDepth;
         this._maxLeafNodes = numLeafs;
         this._minSamplesSplit = minSplits;
         this._seed = seed;
@@ -240,6 +241,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if (_minSamplesSplit <= 0) {
             throw new HiveException("Invalid minSamplesSplit: " + _minSamplesSplit);
         }
+        if (_maxDepth < 1) {
+            throw new HiveException("Invalid maxDepth: " + _maxDepth);
+        }
     }
 
     /**
@@ -265,9 +269,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         int numInputVars = SmileExtUtils.computeNumInputVars(_numVars, x);
 
         if (logger.isInfoEnabled()) {
-            logger.info("numTrees: " + _numTrees + ", numVars: " + numInputVars
-                    + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: " + _maxLeafNodes
-                    + ", splitRule: " + _splitRule + ", seed: " + _seed);
+            logger.info("numTrees: " + _numTrees + ", numVars: " + numInputVars + ", maxDepth: "
+                    + _maxDepth + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: "
+                    + _maxLeafNodes + ", splitRule: " + _splitRule + ", seed: " + _seed);
         }
 
         final int numExamples = x.length;
