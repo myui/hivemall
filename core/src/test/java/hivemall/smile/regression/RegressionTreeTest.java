@@ -110,7 +110,7 @@ public class RegressionTreeTest {
             RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs);
 
             byte[] b = tree.predictSerCodegen(true);
-            RegressionTree.Node node = RegressionTree.deserializeNode(b, true);
+            RegressionTree.Node node = RegressionTree.deserializeNode(b, b.length, true);
 
             double expected = tree.predict(longley[loocv.test[i]]);
             double actual = node.predict(longley[loocv.test[i]]);
