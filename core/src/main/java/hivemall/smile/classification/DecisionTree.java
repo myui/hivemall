@@ -892,8 +892,8 @@ public class DecisionTree implements Classifier<double[]> {
         return bos.toByteArray_clear();
     }
 
-    public static Node deserializeNode(final byte[] serializedObj, final int length, final boolean compressed)
-            throws HiveException {
+    public static Node deserializeNode(final byte[] serializedObj, final int length,
+            final boolean compressed) throws HiveException {
         FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj);
         InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
 
@@ -912,6 +912,11 @@ public class DecisionTree implements Classifier<double[]> {
             IOUtils.closeQuietly(ois);
         }
         return root;
+    }
+
+    @Override
+    public String toString() {
+        return _root == null ? "" : predictJsCodegen();
     }
 
 }
