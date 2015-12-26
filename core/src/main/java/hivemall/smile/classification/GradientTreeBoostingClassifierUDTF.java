@@ -300,9 +300,9 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         final int numVars = SmileExtUtils.computeNumInputVars(_numVars, x);
         if (logger.isInfoEnabled()) {
             logger.info("k: " + 2 + ", numTrees: " + _numTrees + ", shirinkage: " + _eta
-                    + ", subsample: " + _subsample + ", numVars: " + numVars
-                    + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: " + _maxLeafNodes
-                    + ", seed: " + _seed);
+                    + ", subsample: " + _subsample + ", numVars: " + numVars + ", maxDepth: "
+                    + _maxDepth + ", minSamplesSplit: " + _minSamplesSplit + ", maxLeafs: "
+                    + _maxLeafNodes + ", seed: " + _seed);
         }
 
         final int n = x.length;
