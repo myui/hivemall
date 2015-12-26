@@ -894,7 +894,7 @@ public class DecisionTree implements Classifier<double[]> {
 
     public static Node deserializeNode(final byte[] serializedObj, final int length,
             final boolean compressed) throws HiveException {
-        FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj);
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj, length);
         InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
 
         final Node root;
