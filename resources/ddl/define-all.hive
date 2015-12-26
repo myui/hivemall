@@ -579,7 +579,7 @@ drop temporary function train_rf_regr;
 create temporary function train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
 
 drop temporary function tree_predict;
-create temporary function tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+create temporary function tree_predict as 'hivemall.smile.tools.TreePredictUDF';
 
 -- alias
 drop temporary function vm_tree_predict;

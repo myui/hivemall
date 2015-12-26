@@ -583,7 +583,7 @@ DROP FUNCTION IF EXISTS train_rf_regr;
 CREATE FUNCTION train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS tree_predict;
-CREATE FUNCTION tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION tree_predict as 'hivemall.smile.tools.TreePredictUDF' USING JAR '${hivemall_jar}';
 
 -- alias
 DROP FUNCTION IF EXISTS vm_tree_predict;
