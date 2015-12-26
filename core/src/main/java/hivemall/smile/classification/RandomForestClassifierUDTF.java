@@ -125,7 +125,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         float numVars = -1.f;
         Attribute[] attrs = null;
         long seed = -1L;
-        String output = "opscode";
+        String output = "serialization";
         SplitRule splitRule = SplitRule.GINI;
         boolean compress = true;
 

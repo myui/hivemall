@@ -123,7 +123,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         float numVars = -1.f;
         Attribute[] attrs = null;
         long seed = -1L;
-        String output = "opscode";
+        String output = "serialization";
         boolean compress = true;
 
         CommandLine cl = null;

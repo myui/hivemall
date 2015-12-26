@@ -134,7 +134,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         double eta = 0.05d, subsample = 0.7d;
         Attribute[] attrs = null;
         long seed = -1L;
-        String output = "opscode";
+        String output = "serialization";
         boolean compress = true;
 
         CommandLine cl = null;
