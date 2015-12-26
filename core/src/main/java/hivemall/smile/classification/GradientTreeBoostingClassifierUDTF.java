@@ -57,10 +57,11 @@ import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(
-        name = "train_gradient_tree_boosting_classifier",
+@Description(name = "train_gradient_tree_boosting_classifier",
         value = "_FUNC_(double[] features, int label [, string options]) - "
-                + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
+                + "Returns a relation consists of "
+                + "<int iteration, int model_type, array<string> pred_models, double intercept, "
+                + "double shrinkage, array<double> var_importance, float oob_error_rate>")
 public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(GradientTreeBoostingClassifierUDTF.class);
 
@@ -201,7 +202,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("model_type");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
-        fieldNames.add("prediction_models");
+        fieldNames.add("pred_models");
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableStringObjectInspector));
         fieldNames.add("intercept");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);

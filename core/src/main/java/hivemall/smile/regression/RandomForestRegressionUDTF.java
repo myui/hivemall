@@ -62,7 +62,8 @@ import org.apache.hadoop.io.Text;
 @Description(
         name = "train_randomforest_regression",
         value = "_FUNC_(double[] features, double target [, string options]) - "
-                + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
+                + "Returns a relation consists of "
+                + "<int model_id, int model_type, string pred_model, array<double> var_importance, int oob_errors, int oob_tests>")
 public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(RandomForestRegressionUDTF.class);
 

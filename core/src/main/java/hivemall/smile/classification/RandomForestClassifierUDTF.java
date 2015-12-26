@@ -62,7 +62,8 @@ import org.apache.hadoop.io.Text;
 @Description(
         name = "train_randomforest_classifier",
         value = "_FUNC_(double[] features, int label [, string options]) - "
-                + "Returns a relation consists of <string pred_model, double[] var_importance, int oob_errors, int oob_tests>")
+                + "Returns a relation consists of "
+                + "<int model_id, int model_type, string pred_model, array<double> var_importance, int oob_errors, int oob_tests>")
 public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(RandomForestClassifierUDTF.class);
 
@@ -295,9 +296,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
      * Synchronized because {@link #forward(Object)} should be called from a single thread.
      */
     synchronized void forward(final int modelId, @Nonnull final Text model,
-                              @Nonnull final double[] importance, final int[] y,
-                              final int[][] prediction, final boolean lastTask)
-            throws HiveException {
+            @Nonnull final double[] importance, final int[] y, final int[][] prediction,
+            final boolean lastTask) throws HiveException {
         int oobErrors = 0;
         int oobTests = 0;
         if (lastTask) {
@@ -429,7 +429,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         }
 
         private static Text getModel(@Nonnull final DecisionTree tree,
-                                     @Nonnull final ModelType outputType) throws HiveException {
+                @Nonnull final ModelType outputType) throws HiveException {
             final Text model;
             switch (outputType) {
                 case serialization:
