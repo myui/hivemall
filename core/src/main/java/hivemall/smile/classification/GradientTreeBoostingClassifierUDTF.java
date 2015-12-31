@@ -25,6 +25,7 @@ import hivemall.smile.regression.RegressionTree;
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.smile.vm.StackMachine;
 import hivemall.utils.collections.IntArrayList;
+import hivemall.utils.compress.Base91;
 import hivemall.utils.compress.DeflateCodec;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
@@ -122,7 +123,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true,
-            "The output type (opscode/vm or javascript/js) [default: opscode]");
+            "The output type (serialization/ser or opscode/vm or javascript/js) [default: serialization]");
         opts.addOption("disable_compression", false,
             "Whether to disable compression of the output script [default: false]");
         return opts;
@@ -523,6 +524,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             case serialization_compressed: {
                 for (int i = 0; i < m; i++) {
                     byte[] b = trees[i].predictSerCodegen(outputType.isCompressed());
+                    b = Base91.encode(b);
                     models[i] = new Text(b);
                 }
                 break;
@@ -541,6 +543,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                         } finally {
                             IOUtils.closeQuietly(codec);
                         }
+                        b = Base91.encode(b);
                         models[i] = new Text(b);
                     } else {
                         models[i] = new Text(s);
@@ -562,6 +565,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                         } finally {
                             IOUtils.closeQuietly(codec);
                         }
+                        b = Base91.encode(b);
                         models[i] = new Text(b);
                     } else {
                         models[i] = new Text(s);

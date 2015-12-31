@@ -22,6 +22,7 @@ import hivemall.smile.classification.DecisionTree;
 import hivemall.smile.regression.RegressionTree;
 import hivemall.smile.vm.StackMachine;
 import hivemall.smile.vm.VMRuntimeException;
+import hivemall.utils.compress.Base91;
 import hivemall.utils.compress.DeflateCodec;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.IOUtils;
@@ -203,7 +204,8 @@ public final class TreePredictUDF extends GenericUDF {
                 this.prevModelId = modelId;
                 int length = script.getLength();
                 byte[] b = script.getBytes();
-                this.cNode = DecisionTree.deserializeNode(b, length, compressed);
+                b = Base91.decode(b, 0, length);
+                this.cNode = DecisionTree.deserializeNode(b, b.length, compressed);
             }
             assert (cNode != null);
             int result = cNode.predict(features);
@@ -216,7 +218,8 @@ public final class TreePredictUDF extends GenericUDF {
                 this.prevModelId = modelId;
                 int length = script.getLength();
                 byte[] b = script.getBytes();
-                this.rNode = RegressionTree.deserializeNode(b, length, compressed);
+                b = Base91.decode(b, 0, length);
+                this.rNode = RegressionTree.deserializeNode(b, b.length, compressed);
             }
             assert (rNode != null);
             double result = rNode.predict(features);
@@ -246,8 +249,9 @@ public final class TreePredictUDF extends GenericUDF {
                 }
                 byte[] b = script.getBytes();
                 int len = script.getLength();
+                b = Base91.decode(b, 0, len);
                 try {
-                    b = codec.decompress(b, 0, len);
+                    b = codec.decompress(b);
                 } catch (IOException e) {
                     throw new HiveException("decompression failed", e);
                 }
@@ -328,8 +332,9 @@ public final class TreePredictUDF extends GenericUDF {
                 }
                 byte[] b = script.getBytes();
                 int len = script.getLength();
+                b = Base91.decode(b, 0, len);
                 try {
-                    b = codec.decompress(b, 0, len);
+                    b = codec.decompress(b);
                 } catch (IOException e) {
                     throw new HiveException("decompression failed", e);
                 }

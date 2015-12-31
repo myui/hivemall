@@ -25,6 +25,7 @@ import hivemall.smile.utils.SmileExtUtils;
 import hivemall.smile.utils.SmileTaskExecutor;
 import hivemall.smile.vm.StackMachine;
 import hivemall.utils.collections.DoubleArrayList;
+import hivemall.utils.compress.Base91;
 import hivemall.utils.compress.DeflateCodec;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
@@ -112,7 +113,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
         opts.addOption("output", "output_type", true,
-            "The output type (opscode/vm or javascript/js) [default: opscode]");
+            "The output type (serialization/ser or opscode/vm or javascript/js) [default: serialization]");
         opts.addOption("disable_compression", false,
             "Whether to disable compression of the output script [default: false]");
         return opts;
@@ -434,6 +435,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 case serialization:
                 case serialization_compressed: {
                     byte[] b = tree.predictSerCodegen(outputType.isCompressed());
+                    b = Base91.encode(b);
                     model = new Text(b);
                     break;
                 }
@@ -450,6 +452,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                         } finally {
                             IOUtils.closeQuietly(codec);
                         }
+                        b = Base91.encode(b);
                         model = new Text(b);
                     } else {
                         model = new Text(s);
@@ -469,6 +472,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                         } finally {
                             IOUtils.closeQuietly(codec);
                         }
+                        b = Base91.encode(b);
                         model = new Text(b);
                     } else {
                         model = new Text(s);

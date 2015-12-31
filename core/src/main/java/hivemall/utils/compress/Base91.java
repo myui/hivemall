@@ -58,8 +58,8 @@ import javax.annotation.Nonnull;
  * BASE91 is an advanced method for encoding binary data as ASCII, i.e., UTF-8 1 byte, characters.
  * 
  * It uses ACSII printable characters expect Backslash (0x5C), Single Quote (0x27), and Double Quote
- * (0x22) while the original version of basE91 use Double Quote (0x22) instead of Dash (0x2D) 
- * for the encoded string.
+ * (0x22) while the original version of basE91 use Double Quote (0x22) instead of Dash (0x2D) for
+ * the encoded string.
  */
 public final class Base91 {
 
@@ -87,10 +87,15 @@ public final class Base91 {
 
     @Nonnull
     public static byte[] encode(@Nonnull final byte[] input) {
-        int estimatedSize = (int) Math.ceil(input.length * WORST_ENCODING_RATIO);
+        return encode(input, 0, input.length);
+    }
+
+    @Nonnull
+    public static byte[] encode(@Nonnull final byte[] input, final int offset, final int len) {
+        int estimatedSize = (int) Math.ceil(len * WORST_ENCODING_RATIO);
         final FastByteArrayOutputStream output = new FastByteArrayOutputStream(estimatedSize);
         try {
-            encode(input, 0, input.length, output);
+            encode(input, offset, len, output);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to convert BINARY to BASE91 string", e);
         }
@@ -133,10 +138,15 @@ public final class Base91 {
 
     @Nonnull
     public static byte[] decode(@Nonnull final byte[] input) {
-        int expectedSize = Math.round(input.length / BEST_ENCODING_RATIO);
+        return decode(input, 0, input.length);
+    }
+
+    @Nonnull
+    public static byte[] decode(@Nonnull final byte[] input, final int offset, final int len) {
+        int expectedSize = Math.round(len / BEST_ENCODING_RATIO);
         final FastByteArrayOutputStream output = new FastByteArrayOutputStream(expectedSize);
         try {
-            decode(input, 0, input.length, output);
+            decode(input, offset, len, output);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to decode BASE91 binary", e);
         }
