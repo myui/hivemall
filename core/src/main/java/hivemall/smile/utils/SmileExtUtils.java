@@ -165,7 +165,7 @@ public final class SmileExtUtils {
         final int numInputVars;
         if (numVars <= 0.f) {
             int dims = x[0].length;
-            numInputVars = (int) Math.round(Math.max(Math.sqrt(dims), dims / 3.0d));
+            numInputVars = (int) Math.ceil(Math.sqrt(dims));
         } else if (numVars > 0.f && numVars <= 1.f) {
             numInputVars = (int) (numVars * x[0].length);
         } else {

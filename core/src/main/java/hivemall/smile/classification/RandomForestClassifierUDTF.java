@@ -102,7 +102,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         opts.addOption("trees", "num_trees", true,
             "The number of trees for each task [default: 50]");
         opts.addOption("vars", "num_variables", true,
-            "The number of random selected features [default: round(max(sqrt(x[0].length),x[0].length/3.0))]."
+            "The number of random selected features [default: ceil(sqrt(x[0].length))]."
                     + " int(num_variables * x[0].length) is considered if num_variable is (0,1]");
         opts.addOption("depth", "max_depth", true,
             "The maximum number of the tree depth [default: Integer.MAX_VALUE]");
