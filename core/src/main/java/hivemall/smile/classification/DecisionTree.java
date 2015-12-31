@@ -473,9 +473,10 @@ public class DecisionTree implements Classifier<double[]> {
             int n = 0;
             final int[] count = new int[_k];
             for (int i = 0; i < N; i++) {
-                if (samples[i] > 0) {
-                    n += samples[i];
-                    count[y[i]] += samples[i];
+                final int sample = samples[i];
+                if (sample > 0) {
+                    n += sample;
+                    count[y[i]] += sample;
                 }
             }
 
@@ -565,15 +566,16 @@ public class DecisionTree implements Classifier<double[]> {
                 double prevx = Double.NaN;
                 int prevy = -1;
 
-                for (int i : _order[j]) {
-                    if (samples[i] > 0) {
+                for (final int i : _order[j]) {
+                    final int sample = samples[i];
+                    if (sample > 0) {
                         final double x_ij = x[i][j];
                         final int y_i = y[i];
 
                         if (Double.isNaN(prevx) || x_ij == prevx || y_i == prevy) {
                             prevx = x_ij;
                             prevy = y_i;
-                            trueCount[y_i] += samples[i];
+                            trueCount[y_i] += sample;
                             continue;
                         }
 
@@ -584,7 +586,7 @@ public class DecisionTree implements Classifier<double[]> {
                         if (tc == 0 || fc == 0) {
                             prevx = x_ij;
                             prevy = y_i;
-                            trueCount[y_i] += samples[i];
+                            trueCount[y_i] += sample;
                             continue;
                         }
 
@@ -610,7 +612,7 @@ public class DecisionTree implements Classifier<double[]> {
 
                         prevx = x_ij;
                         prevy = y_i;
-                        trueCount[y_i] += samples[i];
+                        trueCount[y_i] += sample;
                     }
                 }
             } else {
@@ -637,25 +639,27 @@ public class DecisionTree implements Classifier<double[]> {
 
             if (node.splitFeatureType == AttributeType.NOMINAL) {
                 for (int i = 0; i < n; i++) {
-                    if (samples[i] > 0) {
+                    final int sample = samples[i];
+                    if (sample > 0) {
                         if (x[i][node.splitFeature] == node.splitValue) {
-                            trueSamples[i] = samples[i];
+                            trueSamples[i] = sample;
                             tc += samples[i];
                         } else {
-                            falseSamples[i] = samples[i];
-                            fc += samples[i];
+                            falseSamples[i] = sample;
+                            fc += sample;
                         }
                     }
                 }
             } else if (node.splitFeatureType == AttributeType.NUMERIC) {
                 for (int i = 0; i < n; i++) {
-                    if (samples[i] > 0) {
+                    final int sample = samples[i];
+                    if (sample > 0) {
                         if (x[i][node.splitFeature] <= node.splitValue) {
-                            trueSamples[i] = samples[i];
-                            tc += samples[i];
+                            trueSamples[i] = sample;
+                            tc += sample;
                         } else {
-                            falseSamples[i] = samples[i];
-                            fc += samples[i];
+                            falseSamples[i] = sample;
+                            fc += sample;
                         }
                     }
                 }

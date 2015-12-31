@@ -308,7 +308,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         if (lastTask) {
             // out-of-bag error estimate
             for (int i = 0; i < y.length; i++) {
-                int pred = smile.math.Math.whichMax(prediction[i]);
+                final int pred = smile.math.Math.whichMax(prediction[i]);
                 if (prediction[i][pred] > 0) {
                     oobTests++;
                     if (pred != y[i]) {
