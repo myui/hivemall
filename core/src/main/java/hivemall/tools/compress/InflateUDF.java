@@ -61,7 +61,7 @@ public final class InflateUDF extends GenericUDF {
     }
 
     @Override
-    public Object evaluate(DeferredObject[] arguments) throws HiveException {
+    public Text evaluate(DeferredObject[] arguments) throws HiveException {
         if (codec == null) {
             this.codec = new DeflateCodec(false, true);
         }
