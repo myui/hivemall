@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -34,19 +36,22 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(
-        name = "deflate",
-        value = "_FUNC_(TEXT data [, const int compressionLevel]) - Returns compressed string by using Deflater",
-        extended = "compression level must be in range [-1,9]")
+@Description(name = "deflate", value = "_FUNC_(TEXT data [, const int compressionLevel]) - "
+        + "Returns a compressed BINARY obeject by using Deflater.",
+        extended = "The compression level must be in range [-1,9]")
 @UDFType(deterministic = true, stateful = false)
 public final class DeflateUDF extends GenericUDF {
 
     private StringObjectInspector stringOI;
     private int compressionLevel;
 
+    @Nullable
     private transient DeflateCodec codec;
+    @Nullable
+    private transient BytesWritable result;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -64,7 +69,7 @@ public final class DeflateUDF extends GenericUDF {
         }
         this.compressionLevel = level;
 
-        return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+        return PrimitiveObjectInspectorFactory.writableBinaryObjectInspector;
     }
 
     @Override
@@ -87,14 +92,19 @@ public final class DeflateUDF extends GenericUDF {
             throw new HiveException("Failed to compress", e);
         }
         original = null;
-        Text ret = new Text(compressed);
-        return ret;
+        if (result == null) {
+            this.result = new BytesWritable(compressed);
+        } else {
+            result.set(compressed, 0, compressed.length);
+        }
+        return result;
     }
 
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(codec);
         this.codec = null;
+        this.result = null;
     }
 
     @Override

@@ -19,6 +19,7 @@
 package hivemall.utils.hadoop;
 
 import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
+import static hivemall.HivemallConstants.BINARY_TYPE_NAME;
 import static hivemall.HivemallConstants.BOOLEAN_TYPE_NAME;
 import static hivemall.HivemallConstants.DOUBLE_TYPE_NAME;
 import static hivemall.HivemallConstants.FLOAT_TYPE_NAME;
@@ -53,6 +54,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
@@ -403,6 +405,14 @@ public final class HiveUtils {
         return (StringObjectInspector) argOI;
     }
 
+    public static BinaryObjectInspector asBinaryOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!BINARY_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be Binary: " + argOI.getTypeName());
+        }
+        return (BinaryObjectInspector) argOI;
+    }
+
     public static BooleanObjectInspector asBooleanOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentException {
         if (!BOOLEAN_TYPE_NAME.equals(argOI.getTypeName())) {
@@ -444,9 +454,8 @@ public final class HiveUtils {
         return oi;
     }
 
-    public static PrimitiveObjectInspector
-            asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
-                    throws UDFArgumentTypeException {
+    public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
         if (argOI.getCategory() != Category.PRIMITIVE) {
             throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
                     + argOI.getTypeName() + " is passed.");

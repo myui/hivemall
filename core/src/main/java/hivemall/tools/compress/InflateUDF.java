@@ -25,31 +25,37 @@ import hivemall.utils.io.IOUtils;
 import java.io.IOException;
 import java.util.Arrays;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 
 @Description(name = "inflate",
-        value = "_FUNC_(TEXT compressedData) - Returns decompressed string by using Inflater")
+        value = "_FUNC_(BINARY compressedData) - Returns a decompressed STRING by using Inflater")
 @UDFType(deterministic = true, stateful = false)
 public final class InflateUDF extends GenericUDF {
 
-    private StringObjectInspector stringOI;
+    private BinaryObjectInspector binaryOI;
 
+    @Nonnull
     private transient DeflateCodec codec;
+    @Nonnull
+    private transient Text result;
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length != 1) {
             throw new UDFArgumentException("_FUNC_ takes exactly 1 argument");
         }
-        this.stringOI = HiveUtils.asStringOI(argOIs[0]);
+        this.binaryOI = HiveUtils.asBinaryOI(argOIs[0]);
 
         return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     }
@@ -64,9 +70,9 @@ public final class InflateUDF extends GenericUDF {
         if (arg0 == null) {
             return null;
         }
-        Text text = stringOI.getPrimitiveWritableObject(arg0);
-        byte[] compressed = text.getBytes();
-        final int len = text.getLength();
+        BytesWritable b = binaryOI.getPrimitiveWritableObject(arg0);
+        byte[] compressed = b.getBytes();
+        final int len = b.getLength();
         final byte[] decompressed;
         try {
             decompressed = codec.decompress(compressed, 0, len);
@@ -74,14 +80,19 @@ public final class InflateUDF extends GenericUDF {
             throw new HiveException("Failed to decompressed. Compressed data format is illegal.", e);
         }
         compressed = null;
-        Text ret = new Text(decompressed);
-        return ret;
+        if (result == null) {
+            result = new Text(decompressed);
+        } else {
+            result.set(decompressed, 0, decompressed.length);
+        }
+        return result;
     }
 
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(codec);
         this.codec = null;
+        this.result = null;
     }
 
     @Override
