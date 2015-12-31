@@ -511,6 +511,12 @@ create temporary function split_words as 'hivemall.tools.text.SplitWordsUDF';
 drop temporary function normalize_unicode;
 create temporary function normalize_unicode as 'hivemall.tools.text.NormalizeUnicodeUDF';
 
+drop temporary function base91;
+create temporary function base91 as 'hivemall.tools.text.Base91UDF';
+
+drop temporary function unbase91;
+create temporary function unbase91 as 'hivemall.tools.text.Unbase91UDF';
+
 ---------------------------------
 -- Dataset generator functions --
 ---------------------------------

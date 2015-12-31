@@ -515,6 +515,12 @@ CREATE FUNCTION split_words as 'hivemall.tools.text.SplitWordsUDF' USING JAR '${
 DROP FUNCTION IF EXISTS normalize_unicode;
 CREATE FUNCTION normalize_unicode as 'hivemall.tools.text.NormalizeUnicodeUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS base91;
+CREATE FUNCTION base91 as 'hivemall.tools.text.Base91UDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS unbase91;
+CREATE FUNCTION unbase91 as 'hivemall.tools.text.Unbase91UDF' USING JAR '${hivemall_jar}';
+
 ---------------------------------
 -- Dataset generator functions --
 ---------------------------------

@@ -25,13 +25,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import javax.annotation.CheckForNull;
+
 /**
  * Unsynchronized version of {@link ByteArrayOutputStream}.
  */
 public final class FastByteArrayOutputStream extends OutputStream {
     private static final int DEFAULT_BLOCK_SIZE = 8192;
 
-    private byte buf[];
+    private byte[] buf;
     private int count;
 
     public FastByteArrayOutputStream() {
@@ -43,6 +45,15 @@ public final class FastByteArrayOutputStream extends OutputStream {
             throw new IllegalArgumentException("Negative initial size: " + size);
         }
         this.buf = new byte[size];
+        this.count = 0;
+    }
+
+    public FastByteArrayOutputStream(@CheckForNull byte[] buf) {
+        if (buf == null) {
+            throw new IllegalArgumentException("buf should not be NULL");
+        }
+        this.buf = buf;
+        this.count = 0;
     }
 
     public byte[] getInternalArray() {
