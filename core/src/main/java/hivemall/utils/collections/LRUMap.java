@@ -16,25 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.smile.data;
+package hivemall.utils.collections;
 
-import smile.data.NominalAttribute;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-public final class NominalAttribute2 extends NominalAttribute {
+public class LRUMap<K, V> extends LinkedHashMap<K, V> {
+    private static final long serialVersionUID = -7708264099645977733L;
 
-    private int size;
+    private final int cacheSize;
 
-    public NominalAttribute2(String name) {
-        super(name);
+    public LRUMap(int cacheSize) {
+        this(cacheSize, 0.75f, cacheSize);
     }
 
-    public void setSize(int size) {
-        this.size = size;
+    public LRUMap(int capacity, float loadFactor, int cacheSize) {
+        super(capacity, loadFactor, true);
+        this.cacheSize = cacheSize;
     }
 
-    @Override
-    public int size() {
-        return size;
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > cacheSize;
     }
-
 }

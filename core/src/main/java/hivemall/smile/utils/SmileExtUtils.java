@@ -18,7 +18,10 @@
 package hivemall.smile.utils;
 
 import hivemall.smile.classification.DecisionTree.SplitRule;
-import hivemall.smile.data.NominalAttribute2;
+import hivemall.smile.data.Attribute;
+import hivemall.smile.data.Attribute.AttributeType;
+import hivemall.smile.data.Attribute.NominalAttribute;
+import hivemall.smile.data.Attribute.NumericAttribute;
 
 import java.util.Arrays;
 
@@ -28,40 +31,30 @@ import javax.annotation.Nullable;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
-import smile.data.Attribute;
-import smile.data.DateAttribute;
-import smile.data.NominalAttribute;
-import smile.data.NumericAttribute;
-import smile.data.StringAttribute;
-import smile.math.Math;
+import smile.sort.QuickSort;
 
-public final class SmileExtUtils extends smile.util.SmileUtils {
+public final class SmileExtUtils {
 
     private SmileExtUtils() {}
 
     /**
-     * Q for {@link NumericAttribute}, C for {@link NominalAttribute}, S for
-     * {@link StringAttribute}, and D for {@link DateAttribute}.
+     * Q for {@link NumericAttribute}, C for {@link NominalAttribute}.
      */
     @Nullable
     public static Attribute[] resolveAttributes(@Nullable final String opt)
             throws UDFArgumentException {
-        if(opt == null) {
+        if (opt == null) {
             return null;
         }
         final String[] opts = opt.split(",");
         final int size = opts.length;
         final Attribute[] attr = new Attribute[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             final String type = opts[i];
-            if("Q".equals(type)) {
-                attr[i] = new NumericAttribute("V" + (i + 1));
-            } else if("C".equals(type)) {
-                attr[i] = new NominalAttribute2("V" + (i + 1));
-            } else if("S".equals(type)) {
-                attr[i] = new StringAttribute("V" + (i + 1));
-            } else if("D".equals(type)) {
-                attr[i] = new DateAttribute("V" + (i + 1));
+            if ("Q".equals(type)) {
+                attr[i] = new NumericAttribute(i);
+            } else if ("C".equals(type)) {
+                attr[i] = new NominalAttribute(i);
             } else {
                 throw new UDFArgumentException("Unexpected type: " + type);
             }
@@ -70,18 +63,86 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
     }
 
     @Nonnull
+    public static Attribute[] attributeTypes(@Nullable Attribute[] attributes,
+            @Nonnull final double[][] x) {
+        if (attributes == null) {
+            int p = x[0].length;
+            attributes = new Attribute[p];
+            for (int i = 0; i < p; i++) {
+                attributes[i] = new NumericAttribute(i);
+            }
+        } else {
+            int size = attributes.length;
+            for (int j = 0; j < size; j++) {
+                Attribute attr = attributes[j];
+                if (attr.type == AttributeType.NOMINAL) {
+                    int max_x = 0;
+                    for (int i = 0; i < x.length; i++) {
+                        int x_ij = (int) x[i][j];
+                        if (x_ij > max_x) {
+                            max_x = x_ij;
+                        }
+                    }
+                    attr.setSize(max_x + 1);
+                }
+            }
+        }
+        return attributes;
+    }
+
+    @Nonnull
+    public static Attribute[] convertAttributeTypes(@Nonnull final smile.data.Attribute[] original) {
+        final int size = original.length;
+        final Attribute[] dst = new Attribute[size];
+        for (int i = 0; i < size; i++) {
+            smile.data.Attribute o = original[i];
+            switch (o.type) {
+                case NOMINAL:
+                    dst[i] = new NominalAttribute(i);
+                    break;
+                case NUMERIC:
+                    dst[i] = new NumericAttribute(i);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported type: " + o.type);
+            }
+        }
+        return dst;
+    }
+
+    @Nonnull
+    public static int[][] sort(@Nonnull final Attribute[] attributes, @Nonnull final double[][] x) {
+        final int n = x.length;
+        final int p = x[0].length;
+
+        final double[] a = new double[n];
+        final int[][] index = new int[p][];
+
+        for (int j = 0; j < p; j++) {
+            if (attributes[j].type == AttributeType.NUMERIC) {
+                for (int i = 0; i < n; i++) {
+                    a[i] = x[i][j];
+                }
+                index[j] = QuickSort.sort(a);
+            }
+        }
+
+        return index;
+    }
+
+    @Nonnull
     public static int[] classLables(@Nonnull final int[] y) throws HiveException {
-        final int[] labels = Math.unique(y);
+        final int[] labels = smile.math.Math.unique(y);
         Arrays.sort(labels);
 
-        if(labels.length < 2) {
+        if (labels.length < 2) {
             throw new HiveException("Only one class.");
         }
-        for(int i = 0; i < labels.length; i++) {
-            if(labels[i] < 0) {
+        for (int i = 0; i < labels.length; i++) {
+            if (labels[i] < 0) {
                 throw new HiveException("Negative class label: " + labels[i]);
             }
-            if(i > 0 && labels[i] - labels[i - 1] > 1) {
+            if (i > 0 && labels[i] - labels[i - 1] > 1) {
                 throw new HiveException("Missing class: " + labels[i] + 1);
             }
         }
@@ -90,37 +151,10 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
     }
 
     @Nonnull
-    public static Attribute[] attributeTypes(@Nullable Attribute[] attributes, @Nonnull final double[][] x) {
-        if(attributes == null) {
-            int p = x[0].length;
-            attributes = new Attribute[p];
-            for(int i = 0; i < p; i++) {
-                attributes[i] = new NumericAttribute("V" + (i + 1));
-            }
-        } else {
-            int size = attributes.length;
-            for(int j = 0; j < size; j++) {
-                Attribute attr = attributes[j];
-                if(attr instanceof NominalAttribute2) {
-                    int max_x = 0;
-                    for(int i = 0; i < x.length; i++) {
-                        int x_ij = (int) x[i][j];
-                        if(x_ij > max_x) {
-                            max_x = x_ij;
-                        }
-                    }
-                    ((NominalAttribute2) attr).setSize(max_x + 1);
-                }
-            }
-        }
-        return attributes;
-    }
-
-    @Nonnull
     public static SplitRule resolveSplitRule(@Nullable String ruleName) {
-        if("gini".equalsIgnoreCase(ruleName)) {
+        if ("gini".equalsIgnoreCase(ruleName)) {
             return SplitRule.GINI;
-        } else if("entropy".equalsIgnoreCase(ruleName)) {
+        } else if ("entropy".equalsIgnoreCase(ruleName)) {
             return SplitRule.ENTROPY;
         } else {
             return SplitRule.GINI;
@@ -129,10 +163,10 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
 
     public static int computeNumInputVars(final float numVars, final double[][] x) {
         final int numInputVars;
-        if(numVars <= 0.f) {
+        if (numVars <= 0.f) {
             int dims = x[0].length;
-            numInputVars = (int) Math.round(Math.max(Math.sqrt(dims), dims / 3.0d));
-        } else if(numVars > 0.f && numVars <= 1.f) {
+            numInputVars = (int) Math.ceil(Math.sqrt(dims));
+        } else if (numVars > 0.f && numVars <= 1.f) {
             numInputVars = (int) (numVars * x[0].length);
         } else {
             numInputVars = (int) numVars;
@@ -145,48 +179,66 @@ public final class SmileExtUtils extends smile.util.SmileUtils {
     }
 
     public static void shuffle(@Nonnull final int[] x, @Nonnull final smile.math.Random rnd) {
-        for(int i = x.length; i > 1; i--) {
+        for (int i = x.length; i > 1; i--) {
             int j = rnd.nextInt(i);
-            Math.swap(x, i - 1, j);
+            swap(x, i - 1, j);
         }
     }
 
     public static void shuffle(@Nonnull final double[][] x, final int[] y, @Nonnull long seed) {
-        if(x.length != y.length) {
+        if (x.length != y.length) {
             throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
                     + y.length + ')');
         }
-        if(seed == -1L) {
+        if (seed == -1L) {
             seed = generateSeed();
         }
         final smile.math.Random rnd = new smile.math.Random(seed);
-        for(int i = x.length; i > 1; i--) {
+        for (int i = x.length; i > 1; i--) {
             int j = rnd.nextInt(i);
             swap(x, i - 1, j);
-            Math.swap(y, i - 1, j);
+            swap(y, i - 1, j);
         }
     }
 
     public static void shuffle(@Nonnull final double[][] x, final double[] y, @Nonnull long seed) {
-        if(x.length != y.length) {
+        if (x.length != y.length) {
             throw new IllegalArgumentException("x.length (" + x.length + ") != y.length ("
                     + y.length + ')');
         }
-        if(seed == -1L) {
+        if (seed == -1L) {
             seed = generateSeed();
         }
         final smile.math.Random rnd = new smile.math.Random(seed);
-        for(int i = x.length; i > 1; i--) {
+        for (int i = x.length; i > 1; i--) {
             int j = rnd.nextInt(i);
             swap(x, i - 1, j);
-            Math.swap(y, i - 1, j);
+            swap(y, i - 1, j);
         }
     }
 
     /**
      * Swap two elements of an array.
      */
-    public static void swap(final double[][] x, final int i, final int j) {
+    private static void swap(final int[] x, final int i, final int j) {
+        int s = x[i];
+        x[i] = x[j];
+        x[j] = s;
+    }
+
+    /**
+     * Swap two elements of an array.
+     */
+    private static void swap(final double[] x, final int i, final int j) {
+        double s = x[i];
+        x[i] = x[j];
+        x[j] = s;
+    }
+
+    /**
+     * Swap two elements of an array.
+     */
+    private static void swap(final double[][] x, final int i, final int j) {
         double[] s = x[i];
         x[i] = x[j];
         x[j] = s;

@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.tools.compress;
+package hivemall.tools.text;
 
-import hivemall.utils.compress.DeflateCodec;
+import hivemall.utils.compress.Base91;
 import hivemall.utils.hadoop.HiveUtils;
-import hivemall.utils.io.IOUtils;
+import hivemall.utils.io.FastByteArrayOutputStream;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -38,15 +37,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "inflate",
-        value = "_FUNC_(BINARY compressedData) - Returns a decompressed STRING by using Inflater")
+@Description(name = "base91",
+        value = "_FUNC_(bin) - Convert the argument from binary to a BASE91 string")
 @UDFType(deterministic = true, stateful = false)
-public final class InflateUDF extends GenericUDF {
+public final class Base91UDF extends GenericUDF {
 
     private BinaryObjectInspector binaryOI;
 
     @Nonnull
-    private transient DeflateCodec codec;
+    private transient FastByteArrayOutputStream outputBuf;
     @Nonnull
     private transient Text result;
 
@@ -62,42 +61,46 @@ public final class InflateUDF extends GenericUDF {
 
     @Override
     public Text evaluate(DeferredObject[] arguments) throws HiveException {
-        if (codec == null) {
-            this.codec = new DeflateCodec(false, true);
+        if (outputBuf == null) {
+            this.outputBuf = new FastByteArrayOutputStream(4096);
+        } else {
+            outputBuf.reset();
         }
 
         Object arg0 = arguments[0].get();
         if (arg0 == null) {
             return null;
         }
-        BytesWritable b = binaryOI.getPrimitiveWritableObject(arg0);
-        byte[] compressed = b.getBytes();
-        final int len = b.getLength();
-        final byte[] decompressed;
+
+        BytesWritable input = binaryOI.getPrimitiveWritableObject(arg0);
+        final byte[] inputBytes = input.getBytes();
+        final int len = input.getLength();
         try {
-            decompressed = codec.decompress(compressed, 0, len);
+            Base91.encode(inputBytes, 0, len, outputBuf);
         } catch (IOException e) {
-            throw new HiveException("Failed to decompressed. Compressed data format is illegal.", e);
+            throw new HiveException(e);
         }
-        compressed = null;
+
         if (result == null) {
-            result = new Text(decompressed);
+            byte[] outputBytes = outputBuf.toByteArray();
+            this.result = new Text(outputBytes);
         } else {
-            result.set(decompressed, 0, decompressed.length);
+            byte[] outputBytes = outputBuf.getInternalArray();
+            int outputSize = outputBuf.size();
+            result.set(outputBytes, 0, outputSize);
         }
         return result;
     }
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(codec);
-        this.codec = null;
+        this.outputBuf = null;
         this.result = null;
     }
 
     @Override
     public String getDisplayString(String[] children) {
-        return "inflate(" + Arrays.toString(children) + ")";
+        return "base91(" + Arrays.toString(children) + ')';
     }
 
 }
