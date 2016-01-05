@@ -22,7 +22,9 @@ import static org.junit.Assert.assertEquals;
 import hivemall.smile.classification.DecisionTree.Node;
 import hivemall.smile.data.Attribute;
 import hivemall.smile.tools.TreePredictByJavascriptUDF;
+import hivemall.smile.tools.TreePredictByStackMachineUDF;
 import hivemall.smile.utils.SmileExtUtils;
+import hivemall.smile.vm.StackMachine;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -113,7 +115,7 @@ public class DecisionTreeTest {
     }
 
     @Test
-    public void testIris2() throws IOException, ParseException, HiveException {
+    public void testIrisStackmachine() throws IOException, ParseException, HiveException {
         URL url = new URL(
             "https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
         InputStream is = new BufferedInputStream(url.openStream());
@@ -132,7 +134,33 @@ public class DecisionTreeTest {
 
             Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
             DecisionTree tree = new DecisionTree(attrs, trainx, trainy, 4);
-            assertEquals(tree.predict(x[loocv.test[i]]), evalPredict(tree, x[loocv.test[i]]));
+            assertEquals(tree.predict(x[loocv.test[i]]),
+                predictByStackMachine(tree, x[loocv.test[i]]));
+        }
+    }
+
+    @Test
+    public void testIrisJavascript() throws IOException, ParseException, HiveException {
+        URL url = new URL(
+            "https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
+        InputStream is = new BufferedInputStream(url.openStream());
+
+        ArffParser arffParser = new ArffParser();
+        arffParser.setResponseIndex(4);
+        AttributeDataset iris = arffParser.parse(is);
+        double[][] x = iris.toArray(new double[iris.size()][]);
+        int[] y = iris.toArray(new int[iris.size()]);
+
+        int n = x.length;
+        LOOCV loocv = new LOOCV(n);
+        for (int i = 0; i < n; i++) {
+            double[][] trainx = Math.slice(x, loocv.train[i]);
+            int[] trainy = Math.slice(y, loocv.train[i]);
+
+            Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
+            DecisionTree tree = new DecisionTree(attrs, trainx, trainy, 4);
+            assertEquals(tree.predict(x[loocv.test[i]]),
+                predictByJavascript(tree, x[loocv.test[i]]));
         }
     }
 
@@ -193,7 +221,22 @@ public class DecisionTreeTest {
         }
     }
 
-    private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
+    private static int predictByStackMachine(DecisionTree tree, double[] x) throws HiveException,
+            IOException {
+        String script = tree.predictOpCodegen(StackMachine.SEP);
+        debugPrint(script);
+        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
+        udf.initialize(new ObjectInspector[] {
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)});
+        IntWritable result = (IntWritable) udf.evaluate(script, x, true);
+        result = (IntWritable) udf.evaluate(script, x, true);
+        udf.close();
+        return result.get();
+    }
+
+    private static int predictByJavascript(DecisionTree tree, double[] x) throws HiveException,
+            IOException {
         String script = tree.predictJsCodegen();
         debugPrint(script);
         TreePredictByJavascriptUDF udf = new TreePredictByJavascriptUDF();
