@@ -21,13 +21,15 @@ package hivemall.regression;
 import hivemall.common.EtaEstimator;
 import hivemall.common.LossFunctions;
 
+import hivemall.io.IWeightValue;
+import hivemall.io.WeightValue;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-public final class LogressUDTF extends OnlineRegressionUDTF {
+public final class LogressUDTF extends RegressionBaseUDTF {
 
     private EtaEstimator etaEstimator;
 
@@ -70,6 +72,15 @@ public final class LogressUDTF extends OnlineRegressionUDTF {
         float eta = etaEstimator.eta(count);
         float gradient = LossFunctions.logisticLoss(target, predicted);
         return eta * gradient;
+    }
+
+    @Override
+    protected IWeightValue getNewWeight(IWeightValue old_w, float delta) {
+        float oldWeight = 0.f;
+        if (old_w != null) {
+            oldWeight = old_w.get();
+        }
+        return new WeightValue(oldWeight + (delta / sampled));
     }
 
 }

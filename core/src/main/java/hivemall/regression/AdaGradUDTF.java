@@ -36,7 +36,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 /**
  * ADAGRAD algorithm with element-wise adaptive learning rates. 
  */
-public final class AdaGradUDTF extends OnlineRegressionUDTF {
+public final class AdaGradUDTF extends RegressionBaseUDTF {
 
     private float eta;
     private float eps;
@@ -88,11 +88,11 @@ public final class AdaGradUDTF extends OnlineRegressionUDTF {
     @Override
     protected void update(@Nonnull final FeatureValue[] features, float target, float predicted) {
         float gradient = LossFunctions.logisticLoss(target, predicted);
-        update(features, gradient);
+        onlineUpdate(features, gradient);
     }
 
     @Override
-    protected void update(@Nonnull final FeatureValue[] features, float gradient) {
+    protected void onlineUpdate(@Nonnull final FeatureValue[] features, float gradient) {
         final float g_g = gradient * (gradient / scaling);
 
         for(FeatureValue f : features) {// w[i] += y * x[i]
