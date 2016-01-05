@@ -48,7 +48,6 @@ import org.apache.hadoop.io.Writable;
 
 @Description(name = "js_tree_predict", value = "_FUNC_(string script, array<double> features [, const boolean classification]) - Returns a prediction result of a random forest")
 @UDFType(deterministic = true, stateful = false)
-@Deprecated
 public final class TreePredictByJavascriptUDF extends GenericUDF {
 
     private boolean classification;
