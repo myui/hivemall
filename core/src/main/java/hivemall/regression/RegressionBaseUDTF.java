@@ -137,7 +137,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
             return;
         }
         if (accDelta == null) {
-            accDelta = new FeatureValue[featureVector.length];
+            this.accDelta = new FeatureValue[featureVector.length];
         }
         float target = PrimitiveObjectInspectorUtils.getFloat(args[1], targetOI);
         checkTargetValue(target);
@@ -243,10 +243,10 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, float target, float predicted) {
-        float d = computeUpdate(target, predicted);
+    protected void update(@Nonnull final FeatureValue[] features, final float target, final float predicted) {
+        final float d = computeUpdate(target, predicted);
 
-        if (this.is_mini_batch) {
+        if (is_mini_batch) {
             batchUpdate(features, d);
         } else {
             onlineUpdate(features, d);
@@ -260,10 +260,9 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     protected IWeightValue getNewWeight(IWeightValue old_w, float delta) {
         throw new IllegalStateException();
     }
+
     /**
-     * Accumulates the delta calculated from each samples
-     * @param features
-     * @param coeff
+     * Accumulates the delta calculated from each samples.
      */
     protected void accumulateDelta(@Nonnull final FeatureValue[] features, float coeff) {
         for (int i = 0; i < features.length; i++) {
@@ -283,11 +282,9 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     /**
      * Calculate the update value for batch training.
-     * @param features
-     * @param coeff
      */
     protected void batchUpdate(@Nonnull final FeatureValue[] features, float coeff) {
-        if (rnd.nextFloat() <= this.mini_batch_ratio) {
+        if (rnd.nextFloat() <= mini_batch_ratio) {
             assert features.length == accDelta.length;
             accumulateDelta(features, coeff);
             sampled += 1;
@@ -296,8 +293,6 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     /**
      * Calculate the update value for online training.
-     * @param features
-     * @param coeff
      */
     protected void onlineUpdate(@Nonnull final FeatureValue[] features, float coeff) {
         for(FeatureValue f : features) {// w[i] += y * x[i]
@@ -319,7 +314,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         if(model != null) {
             // Update model with accumulated delta. This is done
             // at the end of iteration only in case of batch training.
-            if (this.is_mini_batch) {
+            if (is_mini_batch) {
                 for (int i = 0; i < accDelta.length; i++) {
                     final Object x = accDelta[i].getFeature();
                     final float delta = accDelta[i].getValue();
