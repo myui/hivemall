@@ -19,13 +19,13 @@
 package hivemall.smile.classification;
 
 import hivemall.utils.lang.mutable.MutableInt;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -63,9 +63,13 @@ public class RandomForestClassifierUDTFTest {
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
                 PrimitiveObjectInspectorFactory.javaIntObjectInspector, param});
 
+        final List<Double> xi = new ArrayList<Double>(x[0].length);
         for (int i = 0; i < size; i++) {
-            List<Double> xi = new DoubleArrayList(x[i]);
+            for (int j = 0; j < x[i].length; j++) {
+                xi.add(j, x[i][j]);
+            }
             udtf.process(new Object[] {xi, y[i]});
+            xi.clear();
         }
 
         final MutableInt count = new MutableInt(0);
