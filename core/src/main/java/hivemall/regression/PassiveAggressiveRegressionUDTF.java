@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
+public class PassiveAggressiveRegressionUDTF extends RegressionBaseUDTF {
 
     /** Aggressiveness parameter */
     protected float c;
@@ -102,7 +102,7 @@ public class PassiveAggressiveRegressionUDTF extends OnlineRegressionUDTF {
             float eta = eta(loss, margin); // min(C, loss / |x|^2)
             float coeff = sign * eta;
             if(!Float.isInfinite(coeff)) {
-                update(features, coeff);
+                onlineUpdate(features, coeff);
             }
         }
     }

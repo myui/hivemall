@@ -44,6 +44,10 @@ public final class FeatureValue {
         return value;
     }
 
+    public void setValue(float value) {
+        this.value = value;
+    }
+
     @Nullable
     public static FeatureValue parse(final Object o) throws IllegalArgumentException {
         if(o == null) {

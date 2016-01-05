@@ -64,6 +64,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected String preloadedModelFile;
     protected boolean dense_model;
     protected int model_dims;
+    protected boolean is_mini_batch;
+    protected float mini_batch_ratio;
     protected boolean disable_halffloat;
     protected String mixConnectInfo;
     protected String mixSessionName;
@@ -85,6 +87,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
         opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
+        opts.addOption("mini_batch", false, "Use mini batch algorithm or not");
+        opts.addOption("mini_batch_ratio", true, "The mini batch sampling ratio against all dataset");
         opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
         opts.addOption("mix_session", "mix_session_name", true, "Mix session name [default: ${mapred.job.id}]");
@@ -101,6 +105,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         String modelfile = null;
         boolean denseModel = false;
         int modelDims = -1;
+        boolean isMinibatch = false;
+        float miniBatchRatio = 1.f;
         boolean disableHalfFloat = false;
         String mixConnectInfo = null;
         String mixSessionName = null;
@@ -119,6 +125,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             if(denseModel) {
                 modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 16777216);
             }
+            isMinibatch = cl.hasOption("mini_batch");
+            if (isMinibatch) {
+                miniBatchRatio = Primitives.parseFloat(cl.getOptionValue("mini_batch_ratio"), 1.f);
+            }
 
             disableHalfFloat = cl.hasOption("disable_halffloat");
 
@@ -136,6 +146,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
+        this.is_mini_batch = isMinibatch;
+        this.mini_batch_ratio = miniBatchRatio;
         this.disable_halffloat = disableHalfFloat;
         this.mixConnectInfo = mixConnectInfo;
         this.mixSessionName = mixSessionName;
