@@ -270,7 +270,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             if(f == null) {
                 continue;
             }
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
             squared_norm += (v * v);
         }
         return squared_norm;
@@ -283,7 +283,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
@@ -299,7 +299,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             if(f == null) {
                 continue;
             }
-            float v = f.getValue();
+            float v = f.getValueAsFloat();
             variance += v * v;
         }
         return variance;
@@ -314,7 +314,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
@@ -354,7 +354,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_trueclass_w = model2add.getWeight(k);
             float add_w = old_trueclass_w + (coeff * v);

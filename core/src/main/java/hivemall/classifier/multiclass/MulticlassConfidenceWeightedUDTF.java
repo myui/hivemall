@@ -150,7 +150,7 @@ public class MulticlassConfidenceWeightedUDTF extends MulticlassOnlineClassifier
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             IWeightValue old_correctclass_w = model2add.get(k);
             IWeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, phi, true);

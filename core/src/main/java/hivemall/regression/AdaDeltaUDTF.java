@@ -100,7 +100,7 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
                 continue;
             }
             Object x = f.getFeature();
-            float xi = f.getValue();
+            float xi = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(x);
             IWeightValue new_w = getNewWeight(old_w, xi, gradient, g_g);

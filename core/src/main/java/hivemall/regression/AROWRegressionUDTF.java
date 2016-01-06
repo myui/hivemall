@@ -108,7 +108,7 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
                 continue;
             }
             Object k = f.getFeature();
-            float v = f.getValue();
+            float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             IWeightValue new_w = getNewWeight(old_w, v, coeff, beta);

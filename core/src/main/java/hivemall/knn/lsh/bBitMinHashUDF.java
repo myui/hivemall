@@ -114,7 +114,7 @@ public final class bBitMinHashUDF extends UDF {
                 assert (f != null);
                 String fs = f.toString();
                 int hashIndex = Math.abs(MurmurHash3.murmurhash3_x86_32(fs, seeds[i]));
-                float w = fv.getValue();
+                float w = fv.getValueAsFloat();
                 float hashValue = calcWeightedHashValue(hashIndex, w);
                 if(hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;

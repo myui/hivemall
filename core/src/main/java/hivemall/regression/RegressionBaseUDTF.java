@@ -187,7 +187,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
@@ -208,7 +208,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
@@ -229,7 +229,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
@@ -270,12 +270,12 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object x = features[i].getFeature();
-            final float xi = features[i].getValue();
+            final float xi = features[i].getValueAsFloat();
             float delta = xi * coeff;
             if (accDelta[i] == null) {
                 accDelta[i] = new FeatureValue(x, delta);
             } else {
-                accDelta[i].setValue(accDelta[i].getValue() + delta);
+                accDelta[i].setValue(accDelta[i].getValueAsFloat() + delta);
             }
         }
     }
@@ -300,7 +300,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object x = f.getFeature();
-            final float xi = f.getValue();
+            final float xi = f.getValueAsFloat();
 
             float old_w = model.getWeight(x);
             float new_w = old_w + (coeff * xi);
@@ -317,7 +317,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
             if (is_mini_batch) {
                 for (int i = 0; i < accDelta.length; i++) {
                     final Object x = accDelta[i].getFeature();
-                    final float delta = accDelta[i].getValue();
+                    final float delta = accDelta[i].getValueAsFloat();
                     IWeightValue old_w = model.get(x);
                     IWeightValue new_w = getNewWeight(old_w, delta);
                     model.set(x, new_w);

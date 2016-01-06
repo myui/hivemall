@@ -26,11 +26,16 @@ import org.apache.hadoop.io.Text;
 public final class FeatureValue {
 
     private/* final */Object feature;
-    private/* final */float value;
+    private/* final */double value;
 
     public FeatureValue() {}// used for Probe
 
     public FeatureValue(Object f, float v) {
+        this.feature = f;
+        this.value = v;
+    }
+
+    public FeatureValue(Object f, double v) {
         this.feature = f;
         this.value = v;
     }
@@ -40,17 +45,25 @@ public final class FeatureValue {
         return (T) feature;
     }
 
-    public float getValue() {
+    public double getValue() {
         return value;
+    }
+
+    public float getValueAsFloat() {
+        return (float) value;
     }
 
     public void setValue(float value) {
         this.value = value;
     }
 
+    public void setValue(double value) {
+        this.value = value;
+    }
+
     @Nullable
     public static FeatureValue parse(final Object o) throws IllegalArgumentException {
-        if(o == null) {
+        if (o == null) {
             return null;
         }
         String s = o.toString();
@@ -61,20 +74,20 @@ public final class FeatureValue {
     public static FeatureValue parse(@Nonnull final String s) throws IllegalArgumentException {
         assert (s != null);
         final int pos = s.indexOf(':');
-        if(pos == 0) {
+        if (pos == 0) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
 
         final Text feature;
-        final float weight;
-        if(pos > 0) {
+        final double weight;
+        if (pos > 0) {
             String s1 = s.substring(0, pos);
             String s2 = s.substring(pos + 1);
             feature = new Text(s1);
-            weight = Float.parseFloat(s2);
+            weight = Double.parseDouble(s2);
         } else {
             feature = new Text(s);
-            weight = 1.f;
+            weight = 1.d;
         }
         return new FeatureValue(feature, weight);
     }
@@ -90,19 +103,19 @@ public final class FeatureValue {
             throws IllegalArgumentException {
         assert (s != null);
         final int pos = s.indexOf(':');
-        if(pos == 0) {
+        if (pos == 0) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
 
         final String feature;
-        final float weight;
-        if(pos > 0) {
+        final double weight;
+        if (pos > 0) {
             feature = s.substring(0, pos);
             String s2 = s.substring(pos + 1);
-            weight = Float.parseFloat(s2);
+            weight = Double.parseDouble(s2);
         } else {
             feature = s;
-            weight = 1.f;
+            weight = 1.d;
         }
         return new FeatureValue(feature, weight);
     }
@@ -114,22 +127,22 @@ public final class FeatureValue {
         parseFeatureAsString(s, probe);
     }
 
-    public static void parseFeatureAsString(@Nonnull final String s, @Nonnull final FeatureValue probe)
-            throws IllegalArgumentException {
+    public static void parseFeatureAsString(@Nonnull final String s,
+            @Nonnull final FeatureValue probe) throws IllegalArgumentException {
         assert (s != null);
         assert (probe != null);
 
         final int pos = s.indexOf(':');
-        if(pos == 0) {
+        if (pos == 0) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
-        if(pos > 0) {
+        if (pos > 0) {
             probe.feature = s.substring(0, pos);
             String s2 = s.substring(pos + 1);
-            probe.value = Float.parseFloat(s2);
+            probe.value = Double.parseDouble(s2);
         } else {
             probe.feature = s;
-            probe.value = 1.f;
+            probe.value = 1.d;
         }
     }
 

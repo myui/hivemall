@@ -237,7 +237,7 @@ public abstract class SoftConfideceWeightedUDTF extends BinaryOnlineClassifierUD
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             IWeightValue new_w = getNewWeight(old_w, v, y, alpha, beta);

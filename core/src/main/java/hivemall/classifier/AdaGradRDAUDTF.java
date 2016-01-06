@@ -93,7 +93,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
                 continue;
             }
             Object x = f.getFeature();
-            float xi = f.getValue();
+            float xi = f.getValueAsFloat();
 
             updateWeight(x, xi, y, t);
         }
