@@ -30,10 +30,12 @@ import hivemall.io.WeightValue;
 import hivemall.io.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.FloatAccumulator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,8 +56,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 
 /**
- * The base class for regression algorithms. RegressionBaseUDTF provides
- * general implementation for online training and batch training.
+ * The base class for regression algorithms. RegressionBaseUDTF provides general implementation for
+ * online training and batch training.
  */
 public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     private static final Log logger = LogFactory.getLog(RegressionBaseUDTF.class);
@@ -67,17 +69,17 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     protected PredictionModel model;
     protected int count;
+
     // The accumulated delta of each weight values.
-    protected FeatureValue[] accDelta;
-    // The number of samples which picked up through mini batch training.
+    protected transient Map<Object, FloatAccumulator> accumulated;
     protected int sampled;
-    protected Random rnd;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length < 2) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
+        if (argOIs.length < 2) {
+            throw new UDFArgumentException(
+                getClass().getSimpleName()
+                        + " takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
         this.featureInputOI = processFeaturesOI(argOIs[0]);
         this.targetOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
@@ -87,13 +89,11 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
                 : featureInputOI;
         this.model = createModel();
-        if(preloadedModelFile != null) {
+        if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
 
         this.count = 0;
-        this.accDelta = null;
-        this.rnd = new Random(42);
         this.sampled = 0;
         return getReturnOI(featureOutputOI);
     }
@@ -103,10 +103,10 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+        if (!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
                 && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
-            throw new UDFArgumentTypeException(0, "1st argument must be List of key type [Int|BitInt|Text]: "
-                    + keyTypeName);
+            throw new UDFArgumentTypeException(0,
+                "1st argument must be List of key type [Int|BitInt|Text]: " + keyTypeName);
         }
         this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
@@ -121,7 +121,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(useCovariance()) {
+        if (useCovariance()) {
             fieldNames.add("covar");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
@@ -131,13 +131,14 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     @Override
     public void process(Object[] args) throws HiveException {
+        if (is_mini_batch && accumulated == null) {
+            this.accumulated = new HashMap<Object, FloatAccumulator>(1024);
+        }
+
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         FeatureValue[] featureVector = parseFeatures(features);
-        if(featureVector == null) {
+        if (featureVector == null) {
             return;
-        }
-        if (accDelta == null) {
-            this.accDelta = new FeatureValue[featureVector.length];
         }
         float target = PrimitiveObjectInspectorUtils.getFloat(args[1], targetOI);
         checkTargetValue(target);
@@ -150,19 +151,19 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     @Nullable
     protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
         final int size = features.size();
-        if(size == 0) {
+        if (size == 0) {
             return null;
         }
 
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final FeatureValue[] featureVector = new FeatureValue[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Object f = features.get(i);
-            if(f == null) {
+            if (f == null) {
                 continue;
             }
             final FeatureValue fv;
-            if(parseFeature) {
+            if (parseFeature) {
                 fv = FeatureValue.parse(f);
             } else {
                 Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
@@ -182,19 +183,18 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     protected float predict(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
-            if(old_w != 0f) {
+            if (old_w != 0f) {
                 score += (old_w * v);
             }
         }
-
         return score;
     }
 
@@ -203,15 +203,15 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         float score = 0.f;
         float squared_norm = 0.f;
 
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
-            if(old_w != 0f) {
+            if (old_w != 0f) {
                 score += (old_w * v);
             }
             squared_norm += (v * v);
@@ -224,16 +224,16 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         float score = 0.f;
         float variance = 0.f;
 
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
-            if(old_w == null) {
-                variance += (1.f * v * v);
+            if (old_w == null) {
+                variance += (v * v);
             } else {
                 score += (old_w.get() * v);
                 variance += (old_w.getCovariance() * v * v);
@@ -243,13 +243,17 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, final float target, final float predicted) {
-        final float d = computeUpdate(target, predicted);
+    protected void update(@Nonnull final FeatureValue[] features, final float target,
+            final float predicted) {
+        final float grad = computeUpdate(target, predicted);
 
         if (is_mini_batch) {
-            batchUpdate(features, d);
+            accumulateUpdate(features, grad);
+            if (sampled >= mini_batch_size) {
+                batchUpdate();
+            }
         } else {
-            onlineUpdate(features, d);
+            onlineUpdate(features, grad);
         }
     }
 
@@ -261,10 +265,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         throw new IllegalStateException();
     }
 
-    /**
-     * Accumulates the delta calculated from each samples.
-     */
-    protected void accumulateDelta(@Nonnull final FeatureValue[] features, float coeff) {
+    protected final void accumulateUpdate(@Nonnull final FeatureValue[] features, final float coeff) {
         for (int i = 0; i < features.length; i++) {
             if (features[i] == null) {
                 continue;
@@ -272,31 +273,43 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
             final Object x = features[i].getFeature();
             final float xi = features[i].getValueAsFloat();
             float delta = xi * coeff;
-            if (accDelta[i] == null) {
-                accDelta[i] = new FeatureValue(x, delta);
+
+            FloatAccumulator acc = accumulated.get(x);
+            if (acc == null) {
+                acc = new FloatAccumulator(delta);
+                accumulated.put(x, acc);
             } else {
-                accDelta[i].setValue(accDelta[i].getValueAsFloat() + delta);
+                acc.add(delta);
             }
         }
+        sampled++;
     }
 
-    /**
-     * Calculate the update value for batch training.
-     */
-    protected void batchUpdate(@Nonnull final FeatureValue[] features, float coeff) {
-        if (rnd.nextFloat() <= mini_batch_ratio) {
-            assert features.length == accDelta.length;
-            accumulateDelta(features, coeff);
-            sampled += 1;
+    protected final void batchUpdate() {
+        if (accumulated.isEmpty()) {
+            this.sampled = 0;
+            return;
         }
+
+        for (Map.Entry<Object, FloatAccumulator> e : accumulated.entrySet()) {
+            Object x = e.getKey();
+            FloatAccumulator v = e.getValue();
+            float delta = v.get();
+
+            float old_w = model.getWeight(x);
+            float new_w = old_w + delta;
+            model.set(x, new WeightValue(new_w));
+        }
+        accumulated.clear();
+        this.sampled = 0;
     }
 
     /**
      * Calculate the update value for online training.
      */
     protected void onlineUpdate(@Nonnull final FeatureValue[] features, float coeff) {
-        for(FeatureValue f : features) {// w[i] += y * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[i] += y * x[i]
+            if (f == null) {
                 continue;
             }
             final Object x = f.getFeature();
@@ -311,28 +324,21 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     @Override
     public final void close() throws HiveException {
         super.close();
-        if(model != null) {
-            // Update model with accumulated delta. This is done
-            // at the end of iteration only in case of batch training.
-            if (is_mini_batch) {
-                for (int i = 0; i < accDelta.length; i++) {
-                    final Object x = accDelta[i].getFeature();
-                    final float delta = accDelta[i].getValueAsFloat();
-                    IWeightValue old_w = model.get(x);
-                    IWeightValue new_w = getNewWeight(old_w, delta);
-                    model.set(x, new_w);
-                }
+        if (model != null) {
+            if (accumulated != null) { // Update model with accumulated delta
+                batchUpdate();
+                this.accumulated = null;
             }
             int numForwarded = 0;
-            if(useCovariance()) {
+            if (useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[3];
                 final FloatWritable fv = new FloatWritable();
                 final FloatWritable cov = new FloatWritable();
                 final IMapIterator<Object, IWeightValue> itor = model.entries();
-                while(itor.next() != -1) {
+                while (itor.next() != -1) {
                     itor.getValue(probe);
-                    if(!probe.isTouched()) {
+                    if (!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();
@@ -349,9 +355,9 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
                 final Object[] forwardMapObj = new Object[2];
                 final FloatWritable fv = new FloatWritable();
                 final IMapIterator<Object, IWeightValue> itor = model.entries();
-                while(itor.next() != -1) {
+                while (itor.next() != -1) {
                     itor.getValue(probe);
-                    if(!probe.isTouched()) {
+                    if (!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();

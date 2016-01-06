@@ -64,9 +64,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected String preloadedModelFile;
     protected boolean dense_model;
     protected int model_dims;
-    protected boolean is_mini_batch;
-    protected float mini_batch_ratio;
     protected boolean disable_halffloat;
+    protected boolean is_mini_batch;
+    protected int mini_batch_size;
     protected String mixConnectInfo;
     protected String mixSessionName;
     protected int mixThreshold;
@@ -86,13 +86,17 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
-        opts.addOption("dims", "feature_dimensions", true, "The dimension of model [default: 16777216 (2^24)]");
-        opts.addOption("mini_batch", false, "Use mini batch algorithm or not");
-        opts.addOption("mini_batch_ratio", true, "The mini batch sampling ratio against all dataset");
-        opts.addOption("disable_halffloat", false, "Toggle this option to disable the use of SpaceEfficientDenseModel");
+        opts.addOption("dims", "feature_dimensions", true,
+            "The dimension of model [default: 16777216 (2^24)]");
+        opts.addOption("disable_halffloat", false,
+            "Toggle this option to disable the use of SpaceEfficientDenseModel");
+        opts.addOption("mini_batch", "mini_batch_size", true,
+            "Mini batch size [default: 1]. Expecting ");
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
-        opts.addOption("mix_session", "mix_session_name", true, "Mix session name [default: ${mapred.job.id}]");
-        opts.addOption("mix_threshold", true, "Threshold to mix local updates in range (0,127] [default: 3]");
+        opts.addOption("mix_session", "mix_session_name", true,
+            "Mix session name [default: ${mapred.job.id}]");
+        opts.addOption("mix_threshold", true,
+            "Threshold to mix local updates in range (0,127] [default: 3]");
         opts.addOption("mix_cancel", "enable_mix_canceling", false, "Enable mix cancel requests");
         opts.addOption("ssl", false, "Use SSL for the communication with mix servers");
         return opts;
@@ -105,9 +109,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         String modelfile = null;
         boolean denseModel = false;
         int modelDims = -1;
-        boolean isMinibatch = false;
-        float miniBatchRatio = 1.f;
         boolean disableHalfFloat = false;
+        int miniBatchSize = 1;
         String mixConnectInfo = null;
         String mixSessionName = null;
         int mixThreshold = -1;
@@ -115,27 +118,28 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         boolean ssl = false;
 
         CommandLine cl = null;
-        if(argOIs.length >= 3) {
+        if (argOIs.length >= 3) {
             String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
 
             modelfile = cl.getOptionValue("loadmodel");
 
             denseModel = cl.hasOption("dense");
-            if(denseModel) {
+            if (denseModel) {
                 modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 16777216);
             }
-            isMinibatch = cl.hasOption("mini_batch");
-            if (isMinibatch) {
-                miniBatchRatio = Primitives.parseFloat(cl.getOptionValue("mini_batch_ratio"), 1.f);
-            }
-
             disableHalfFloat = cl.hasOption("disable_halffloat");
+
+            miniBatchSize = Primitives.parseInt(cl.getOptionValue("mini_batch_size"), miniBatchSize);
+            if (miniBatchSize <= 0) {
+                throw new UDFArgumentException("mini_batch_size must be greater than 0: "
+                        + miniBatchSize);
+            }
 
             mixConnectInfo = cl.getOptionValue("mix");
             mixSessionName = cl.getOptionValue("mix_session");
             mixThreshold = Primitives.parseInt(cl.getOptionValue("mix_threshold"), 3);
-            if(mixThreshold > Byte.MAX_VALUE) {
+            if (mixThreshold > Byte.MAX_VALUE) {
                 throw new UDFArgumentException("mix_threshold must be in range (0,127]: "
                         + mixThreshold);
             }
@@ -146,9 +150,9 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
         this.model_dims = modelDims;
-        this.is_mini_batch = isMinibatch;
-        this.mini_batch_ratio = miniBatchRatio;
         this.disable_halffloat = disableHalfFloat;
+        this.is_mini_batch = miniBatchSize > 1;
+        this.mini_batch_size = miniBatchSize;
         this.mixConnectInfo = mixConnectInfo;
         this.mixSessionName = mixSessionName;
         this.mixThreshold = mixThreshold;
@@ -164,8 +168,8 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected PredictionModel createModel(String label) {
         PredictionModel model;
         final boolean useCovar = useCovariance();
-        if(dense_model) {
-            if(disable_halffloat == false && model_dims > 16777216) {
+        if (dense_model) {
+            if (disable_halffloat == false && model_dims > 16777216) {
                 logger.info("Build a space efficient dense model with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
                 model = new SpaceEfficientDenseModel(model_dims, useCovar);
@@ -180,7 +184,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                     + " initial dimensions");
             model = new SparseModel(initModelSize, useCovar);
         }
-        if(mixConnectInfo != null) {
+        if (mixConnectInfo != null) {
             model.configureClock();
             model = new SynchronizedModelWrapper(model);
             MixClient client = configureMixClient(mixConnectInfo, label, model);
@@ -195,7 +199,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         assert (connectURIs != null);
         assert (model != null);
         String jobId = (mixSessionName == null) ? MixClient.DUMMY_JOB_ID : mixSessionName;
-        if(label != null) {
+        if (label != null) {
             jobId = jobId + '-' + label;
         }
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
@@ -208,35 +212,39 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return 16384;
     }
 
-    protected void loadPredictionModel(PredictionModel model, String filename, PrimitiveObjectInspector keyOI) {
+    protected void loadPredictionModel(PredictionModel model, String filename,
+            PrimitiveObjectInspector keyOI) {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
-            if(useCovariance()) {
-                lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector, writableFloatObjectInspector);
+            if (useCovariance()) {
+                lines = loadPredictionModel(model, new File(filename), keyOI,
+                    writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                lines = loadPredictionModel(model, new File(filename), keyOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(model, new File(filename), keyOI,
+                    writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
-        if(model.size() > 0) {
+        if (model.size() > 0) {
             logger.info("Loaded " + model.size() + " features from distributed cache '" + filename
                     + "' (" + lines + " lines) in " + elapsed);
         }
     }
 
-    private static long loadPredictionModel(PredictionModel model, File file, PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
+    private static long loadPredictionModel(PredictionModel model, File file,
+            PrimitiveObjectInspector keyOI, WritableFloatObjectInspector valueOI)
             throws IOException, SerDeException {
         long count = 0L;
-        if(!file.exists()) {
+        if (!file.exists()) {
             return count;
         }
-        if(!file.getName().endsWith(".crc")) {
-            if(file.isDirectory()) {
-                for(File f : file.listFiles()) {
+        if (!file.getName().endsWith(".crc")) {
+            if (file.isDirectory()) {
+                for (File f : file.listFiles()) {
                     count += loadPredictionModel(model, f, keyOI, valueOI);
                 }
             } else {
@@ -251,14 +259,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 try {
                     reader = HadoopUtils.getBufferedReader(file);
                     String line;
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
                         Object f0 = fields.get(0);
                         Object f1 = fields.get(1);
-                        if(f0 == null || f1 == null) {
+                        if (f0 == null || f1 == null) {
                             continue; // avoid the case that key or value is null
                         }
                         Object k = keyRefOI.getPrimitiveWritableObject(keyRefOI.copyObject(f0));
@@ -273,15 +281,16 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return count;
     }
 
-    private static long loadPredictionModel(PredictionModel model, File file, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
-            throws IOException, SerDeException {
+    private static long loadPredictionModel(PredictionModel model, File file,
+            PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI,
+            WritableFloatObjectInspector covarOI) throws IOException, SerDeException {
         long count = 0L;
-        if(!file.exists()) {
+        if (!file.exists()) {
             return count;
         }
-        if(!file.getName().endsWith(".crc")) {
-            if(file.isDirectory()) {
-                for(File f : file.listFiles()) {
+        if (!file.getName().endsWith(".crc")) {
+            if (file.isDirectory()) {
+                for (File f : file.listFiles()) {
                     count += loadPredictionModel(model, f, featureOI, weightOI, covarOI);
                 }
             } else {
@@ -298,7 +307,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 try {
                     reader = HadoopUtils.getBufferedReader(file);
                     String line;
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
@@ -306,7 +315,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                         Object f0 = fields.get(0);
                         Object f1 = fields.get(1);
                         Object f2 = fields.get(2);
-                        if(f0 == null || f1 == null) {
+                        if (f0 == null || f1 == null) {
                             continue; // avoid unexpected case
                         }
                         Object k = c1oi.getPrimitiveWritableObject(c1oi.copyObject(f0));
@@ -325,7 +334,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        if(mixClient != null) {
+        if (mixClient != null) {
             IOUtils.closeQuietly(mixClient);
             this.mixClient = null;
         }
