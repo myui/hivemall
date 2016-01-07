@@ -91,7 +91,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         opts.addOption("disable_halffloat", false,
             "Toggle this option to disable the use of SpaceEfficientDenseModel");
         opts.addOption("mini_batch", "mini_batch_size", true,
-            "Mini batch size [default: 1]. Expecting ");
+            "Mini batch size [default: 1]. Expecting in range [1,100] or so.");
         opts.addOption("mix", "mix_servers", true, "Comma separated list of MIX servers");
         opts.addOption("mix_session", "mix_session_name", true,
             "Mix session name [default: ${mapred.job.id}]");
