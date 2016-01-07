@@ -33,7 +33,7 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-public class AROWRegressionUDTF extends OnlineRegressionUDTF {
+public class AROWRegressionUDTF extends RegressionBaseUDTF {
 
     /** Regularization parameter r */
     protected float r;
@@ -108,7 +108,7 @@ public class AROWRegressionUDTF extends OnlineRegressionUDTF {
                 continue;
             }
             Object k = f.getFeature();
-            float v = f.getValue();
+            float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             IWeightValue new_w = getNewWeight(old_w, v, coeff, beta);

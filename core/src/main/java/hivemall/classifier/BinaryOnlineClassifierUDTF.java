@@ -186,7 +186,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             Object k = f.getFeature();
             float old_w = model.getWeight(k);
             if(old_w != 0.f) {
-                float v = f.getValue();
+                float v = f.getValueAsFloat();
                 score += (old_w * v);
             }
         }
@@ -203,7 +203,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
             if(old_w != 0f) {
@@ -225,7 +225,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
             if(old_w == null) {
@@ -249,7 +249,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                 continue;
             }
             final Object k = f.getFeature();
-            final float v = f.getValue();
+            final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
             float new_w = old_w + (coeff * v);

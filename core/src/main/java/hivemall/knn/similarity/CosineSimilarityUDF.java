@@ -71,7 +71,7 @@ public final class CosineSimilarityUDF extends GenericUDF {
         double score1 = 0.d;
         for(String ft : ftvec1) {
             FeatureValue.parseFeatureAsString(ft, probe);
-            float v = probe.getValue();
+            float v = probe.getValueAsFloat();
             score1 += (v * v);
             String f = probe.getFeature();
             map1.put(f, v);
@@ -82,7 +82,7 @@ public final class CosineSimilarityUDF extends GenericUDF {
         double score2 = 0.d;
         for(String ft : ftvec2) {
             FeatureValue.parseFeatureAsString(ft, probe);
-            float v2 = probe.getValue();
+            float v2 = probe.getValueAsFloat();
             score2 += (v2 * v2);
             String f2 = probe.getFeature();
             Float v1 = map1.get(f2);

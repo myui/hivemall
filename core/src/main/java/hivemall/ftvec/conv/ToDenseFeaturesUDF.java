@@ -60,7 +60,7 @@ public final class ToDenseFeaturesUDF extends UDF {
             if(i > dimensions) {
                 throw new HiveException("IndexOutOfBounds: " + i);
             }
-            float v = probe.getValue();
+            float v = probe.getValueAsFloat();
             fv[i] = new Float(v);
         }
         return Arrays.asList(fv);

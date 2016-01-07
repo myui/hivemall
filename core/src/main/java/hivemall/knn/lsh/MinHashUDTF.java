@@ -142,7 +142,7 @@ public final class MinHashUDTF extends UDTFWithOptions {
             for(FeatureValue fv : features) {
                 Object f = fv.getFeature();
                 int hashIndex = Math.abs(hashFuncs[i].hash(f));
-                float w = fv.getValue();
+                float w = fv.getValueAsFloat();
                 float hashValue = calcWeightedHashValue(hashIndex, w);
                 if(hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;

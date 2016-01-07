@@ -31,13 +31,13 @@ public class FeatureValueTest {
         FeatureValue fv = FeatureValue.parse(expectedFeature);
         assertNotNull(fv);
         assertEquals(expectedFeature, fv.getFeature().toString());
-        assertEquals(1.f, fv.getValue(), 0.f);
+        assertEquals(1.f, fv.getValueAsFloat(), 0.f);
 
         expectedFeature = "891572";
         fv = FeatureValue.parse(expectedFeature);
         assertNotNull(fv);
         assertEquals(expectedFeature, fv.getFeature().toString());
-        assertEquals(1.f, fv.getValue(), 0.f);
+        assertEquals(1.f, fv.getValueAsFloat(), 0.f);
     }
 
     @Test
@@ -46,7 +46,7 @@ public class FeatureValueTest {
         FeatureValue fv = FeatureValue.parse(expectedFeature);
         assertNotNull(fv);
         assertEquals("ad_url", fv.getFeature().toString());
-        assertEquals(0.5f, fv.getValue(), 0.f);
+        assertEquals(0.5f, fv.getValueAsFloat(), 0.f);
     }
 
     @Test(expected = IllegalArgumentException.class)

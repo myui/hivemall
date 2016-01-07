@@ -70,7 +70,7 @@ public final class EuclidDistanceUDF extends GenericUDF {
                 continue;
             }
             FeatureValue.parseFeatureAsString(ft, probe);
-            float v1 = probe.getValue();
+            float v1 = probe.getValueAsFloat();
             String f1 = probe.getFeature();
             map.put(f1, v1);
         }
@@ -81,7 +81,7 @@ public final class EuclidDistanceUDF extends GenericUDF {
             }
             FeatureValue.parseFeatureAsString(ft, probe);
             String f2 = probe.getFeature();
-            float v2f = probe.getValue();
+            float v2f = probe.getValueAsFloat();
             Float v1 = map.remove(f2);
             if(v1 == null) {
                 d += (v2f * v2f);

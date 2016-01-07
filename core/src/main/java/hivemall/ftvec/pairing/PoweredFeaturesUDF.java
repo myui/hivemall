@@ -62,7 +62,7 @@ public final class PoweredFeaturesUDF extends UDF {
             dstVec.add(t); // x^1
 
             FeatureValue.parseFeatureAsString(t, probe);
-            final float v = probe.getValue();
+            final float v = probe.getValueAsFloat();
             if(truncate && (v == 0.f || v == 1.f)) {
                 continue;
             }

@@ -73,7 +73,7 @@ public final class PolynomialFeaturesUDF extends UDF {
             dstVec.add(t); // x^1
 
             FeatureValue fv = srcVec.get(i);
-            float v = fv.getValue();
+            float v = fv.getValueAsFloat();
             if(truncate == false || (v != 0.f && v != 1.f)) {
                 String f = fv.getFeature();
                 addPolynomialFeature(f, v, 2, degree, srcVec, i, dstVec, interactionOnly, truncate);
@@ -94,7 +94,7 @@ public final class PolynomialFeaturesUDF extends UDF {
             }
 
             FeatureValue ftvec = srcVec.get(i);
-            float v = ftvec.getValue();
+            float v = ftvec.getValueAsFloat();
             if(truncate && (v == 0.f || v == 1.f)) {
                 continue;
             }
