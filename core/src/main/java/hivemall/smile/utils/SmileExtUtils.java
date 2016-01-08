@@ -156,6 +156,8 @@ public final class SmileExtUtils {
             return SplitRule.GINI;
         } else if ("entropy".equalsIgnoreCase(ruleName)) {
             return SplitRule.ENTROPY;
+        } else if ("classification_error".equalsIgnoreCase(ruleName)) {
+            return SplitRule.CLASSIFICATION_ERROR;
         } else {
             return SplitRule.GINI;
         }

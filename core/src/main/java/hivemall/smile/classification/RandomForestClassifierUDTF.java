@@ -91,6 +91,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
      */
     private int _maxLeafNodes;
     private int _minSamplesSplit;
+    private int _minSamplesLeaf;
     private long _seed;
     private Attribute[] _attributes;
     private ModelType _outputType;
@@ -110,6 +111,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("splits", "min_split", true,
             "A node that has greater than or equals to `min_split` examples will split [default: 2]");
+        opts.addOption("min_samples_leaf", true,
+            "The minimum number of samples in a leaf node [default: 1]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
@@ -123,7 +126,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        int trees = 50, maxDepth = Integer.MAX_VALUE, numLeafs = Integer.MAX_VALUE, minSplits = 2;
+        int trees = 50, maxDepth = Integer.MAX_VALUE;
+        int numLeafs = Integer.MAX_VALUE, minSplits = 2, minSamplesLeaf = 1;
         float numVars = -1.f;
         Attribute[] attrs = null;
         long seed = -1L;
@@ -144,6 +148,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
             maxDepth = Primitives.parseInt(cl.getOptionValue("max_depth"), maxDepth);
             numLeafs = Primitives.parseInt(cl.getOptionValue("max_leaf_nodes"), numLeafs);
             minSplits = Primitives.parseInt(cl.getOptionValue("min_split"), minSplits);
+            minSamplesLeaf = Primitives.parseInt(cl.getOptionValue("min_samples_leaf"),
+                minSamplesLeaf);
             seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
             attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
             output = cl.getOptionValue("output", output);
@@ -158,6 +164,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         this._maxDepth = maxDepth;
         this._maxLeafNodes = numLeafs;
         this._minSamplesSplit = minSplits;
+        this._minSamplesLeaf = minSamplesLeaf;
         this._seed = seed;
         this._attributes = attrs;
         this._outputType = ModelType.resolve(output, compress);
@@ -282,8 +289,8 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         List<TrainingTask> tasks = new ArrayList<TrainingTask>();
         for (int i = 0; i < _numTrees; i++) {
             long s = (_seed == -1L) ? -1L : _seed + i;
-            tasks.add(new TrainingTask(this, i, attributes, x, y, numInputVars, _maxDepth,
-                _maxLeafNodes, _minSamplesSplit, order, prediction, _splitRule, s, remainingTasks));
+            tasks.add(new TrainingTask(this, i, attributes, x, y, numInputVars, order, prediction,
+                s, remainingTasks));
         }
 
         MapredContext mapredContext = MapredContextAccessor.get();
@@ -349,25 +356,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
          */
         private final int[][] _order;
         /**
-         * Split rule of DecisionTrere.
-         */
-        private final SplitRule _splitRule;
-        /**
          * The number of variables to pick up in each node.
          */
         private final int _numVars;
-        /**
-         * The maximum number of the tree depth
-         */
-        private final int _maxDepth;
-        /**
-         * The maximum number of leaf nodes in the tree.
-         */
-        private final int _maxLeafs;
-        /**
-         * The number of instances in a node below which the tree will not split.
-         */
-        private final int _minSamplesSplit;
         /**
          * The out-of-bag predictions.
          */
@@ -379,20 +370,15 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         private final AtomicInteger _remainingTasks;
 
         TrainingTask(RandomForestClassifierUDTF udtf, int taskId, Attribute[] attributes,
-                double[][] x, int[] y, int numVars, int maxDepth, int maxLeafs,
-                int minSamplesSplit, int[][] order, int[][] prediction, SplitRule splitRule,
-                long seed, AtomicInteger remainingTasks) {
+                double[][] x, int[] y, int numVars, int[][] order, int[][] prediction, long seed,
+                AtomicInteger remainingTasks) {
             this._udtf = udtf;
             this._taskId = taskId;
             this._attributes = attributes;
             this._x = x;
             this._y = y;
             this._order = order;
-            this._splitRule = splitRule;
             this._numVars = numVars;
-            this._maxDepth = maxDepth;
-            this._maxLeafs = maxLeafs;
-            this._minSamplesSplit = minSamplesSplit;
             this._prediction = prediction;
             this._seed = seed;
             this._remainingTasks = remainingTasks;
@@ -411,8 +397,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 samples[rnd1.nextInt(n)]++;
             }
 
-            DecisionTree tree = new DecisionTree(_attributes, _x, _y, _numVars, _maxDepth,
-                _maxLeafs, _minSamplesSplit, samples, _order, _splitRule, rnd2);
+            DecisionTree tree = new DecisionTree(_attributes, _x, _y, _numVars, _udtf._maxDepth,
+                _udtf._maxLeafNodes, _udtf._minSamplesSplit, _udtf._minSamplesLeaf, samples,
+                _order, _udtf._splitRule, rnd2);
 
             // out-of-bag prediction
             for (int i = 0; i < n; i++) {

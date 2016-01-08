@@ -154,6 +154,10 @@ public class DecisionTree implements Classifier<double[]> {
      */
     private final int _minSplit;
     /**
+     * The minimum number of samples in a leaf node
+     */
+    private final int _minLeafSize;
+    /**
      * The index of training values in ascending order. Note that only numeric attributes will be
      * sorted.
      */
@@ -177,7 +181,11 @@ public class DecisionTree implements Classifier<double[]> {
         /**
          * Used by the ID3, C4.5 and C5.0 tree generation algorithms.
          */
-        ENTROPY
+        ENTROPY,
+        /**
+         * Classification error.
+         */
+        CLASSIFICATION_ERROR
     }
 
     /**
@@ -480,6 +488,11 @@ public class DecisionTree implements Classifier<double[]> {
                 }
             }
 
+            // avoid split if the number of samples is less than threshold
+            if (n <= _minSplit) {
+                return false;
+            }
+
             final double impurity = impurity(count, n, _rule);
 
             final int p = _attributes.length;
@@ -516,7 +529,7 @@ public class DecisionTree implements Classifier<double[]> {
          * @param impurity the impurity of this node.
          * @param j the attribute index to split on.
          */
-        public Node findBestSplit(final int n, final int[] count, final int[] falseCount,
+        private Node findBestSplit(final int n, final int[] count, final int[] falseCount,
                 final double impurity, final int j) {
             final int N = x.length;
             final Node splitNode = new Node();
@@ -536,8 +549,8 @@ public class DecisionTree implements Classifier<double[]> {
                     final int tc = Math.sum(trueCount[l]);
                     final int fc = n - tc;
 
-                    // If either side is empty, skip this feature.
-                    if (tc == 0 || fc == 0) {
+                    // skip splitting this feature.
+                    if (tc < _minSplit || fc < _minSplit) {
                         continue;
                     }
 
@@ -550,15 +563,13 @@ public class DecisionTree implements Classifier<double[]> {
                             * impurity(falseCount, fc, _rule);
 
                     if (gain > splitNode.splitScore) {
-                        int trueLabel = Math.whichMax(trueCount[l]);
-                        int falseLabel = Math.whichMax(falseCount);
                         // new best split
                         splitNode.splitFeature = j;
                         splitNode.splitFeatureType = AttributeType.NOMINAL;
                         splitNode.splitValue = l;
                         splitNode.splitScore = gain;
-                        splitNode.trueChildOutput = trueLabel;
-                        splitNode.falseChildOutput = falseLabel;
+                        splitNode.trueChildOutput = Math.whichMax(trueCount[l]);
+                        splitNode.falseChildOutput = Math.whichMax(falseCount);
                     }
                 }
             } else if (_attributes[j].type == AttributeType.NUMERIC) {
@@ -582,8 +593,8 @@ public class DecisionTree implements Classifier<double[]> {
                         final int tc = Math.sum(trueCount);
                         final int fc = n - tc;
 
-                        // If either side is empty, continue.
-                        if (tc == 0 || fc == 0) {
+                        // skip splitting this feature.
+                        if (tc < _minSplit || fc < _minSplit) {
                             prevx = x_ij;
                             prevy = y_i;
                             trueCount[y_i] += sample;
@@ -599,15 +610,13 @@ public class DecisionTree implements Classifier<double[]> {
                                 * impurity(falseCount, fc, _rule);
 
                         if (gain > splitNode.splitScore) {
-                            int trueLabel = Math.whichMax(trueCount);
-                            int falseLabel = Math.whichMax(falseCount);
                             // new best split
                             splitNode.splitFeature = j;
                             splitNode.splitFeatureType = AttributeType.NUMERIC;
                             splitNode.splitValue = (x_ij + prevx) / 2.d;
                             splitNode.splitScore = gain;
-                            splitNode.trueChildOutput = trueLabel;
-                            splitNode.falseChildOutput = falseLabel;
+                            splitNode.trueChildOutput = Math.whichMax(trueCount);
+                            splitNode.falseChildOutput = Math.whichMax(falseCount);
                         }
 
                         prevx = x_ij;
@@ -668,7 +677,8 @@ public class DecisionTree implements Classifier<double[]> {
                         + node.splitFeatureType);
             }
 
-            if (tc == 0 || fc == 0) {
+            if (tc < _minLeafSize || fc < _minLeafSize) {
+                // set the node as leaf                
                 node.splitFeature = -1;
                 node.splitFeatureType = null;
                 node.splitValue = Double.NaN;
@@ -736,14 +746,24 @@ public class DecisionTree implements Classifier<double[]> {
                 }
                 break;
             }
+            case CLASSIFICATION_ERROR: {
+                impurity = 0.d;
+                for (int i = 0; i < count.length; i++) {
+                    if (count[i] > 0) {
+                        impurity = Math.max(impurity, count[i] / (double) n);
+                    }
+                }
+                impurity = Math.abs(1.d - impurity);
+                break;
+            }
         }
 
         return impurity;
     }
 
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y,
-            int J) {
-        this(attributes, x, y, x[0].length, Integer.MAX_VALUE, J, 2, null, null, SplitRule.GINI, null);
+            int numLeafs) {
+        this(attributes, x, y, x[0].length, Integer.MAX_VALUE, numLeafs, 2, 1, null, null, SplitRule.GINI, null);
     }
 
     /**
@@ -754,8 +774,9 @@ public class DecisionTree implements Classifier<double[]> {
      * @param y the response variable.
      * @param numVars the number of input variables to pick to split on at each node. It seems that
      *        dim/3 give generally good performance, where dim is the number of variables.
-     * @param numLeafs the maximum number of leaf nodes in the tree.
+     * @param maxLeafs the maximum number of leaf nodes in the tree.
      * @param minSplits the number of minimum elements in a node to split
+     * @param minLeafSize the minimum size of leaf nodes.
      * @param order the index of training values in ascending order. Note that only numeric
      *        attributes need be sorted.
      * @param samples the sample set of instances for stochastic learning. samples[i] is the number
@@ -764,19 +785,10 @@ public class DecisionTree implements Classifier<double[]> {
      * @param seed
      */
     public DecisionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x, @Nonnull int[] y,
-            int numVars, int maxDepth, int numLeafs, int minSplits, @Nullable int[] samples,
-            @Nullable int[][] order, @Nonnull SplitRule rule, @Nullable smile.math.Random rand) {
-        if (x.length != y.length) {
-            throw new IllegalArgumentException(String.format(
-                "The sizes of X and Y don't match: %d != %d", x.length, y.length));
-        }
-        if (numVars <= 0 || numVars > x[0].length) {
-            throw new IllegalArgumentException(
-                "Invalid number of variables to split on at a node of the tree: " + numVars);
-        }
-        if (numLeafs < 2) {
-            throw new IllegalArgumentException("Invalid maximum leaves: " + numLeafs);
-        }
+            int numVars, int maxDepth, int maxLeafs, int minSplits, int minLeafSize,
+            @Nullable int[] samples, @Nullable int[][] order, @Nonnull SplitRule rule,
+            @Nullable smile.math.Random rand) {
+        checkArgument(x, y, numVars, maxDepth, maxLeafs, minSplits, minLeafSize);
 
         this._k = Math.max(y) + 1;
         if (_k < 2) {
@@ -788,9 +800,11 @@ public class DecisionTree implements Classifier<double[]> {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
+
         this._numVars = numVars;
         this._maxDepth = maxDepth;
         this._minSplit = minSplits;
+        this._minLeafSize = minLeafSize;
         this._rule = rule;
         this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this._importance = new double[attributes.length];
@@ -813,7 +827,7 @@ public class DecisionTree implements Classifier<double[]> {
         this._root = new Node(Math.whichMax(count));
 
         final TrainNode trainRoot = new TrainNode(_root, x, y, samples, 1);
-        if (numLeafs == Integer.MAX_VALUE) {
+        if (maxLeafs == Integer.MAX_VALUE) {
             if (trainRoot.findBestSplit()) {
                 trainRoot.split(null);
             }
@@ -826,7 +840,7 @@ public class DecisionTree implements Classifier<double[]> {
             }
             // Pop best leaf from priority queue, split it, and push
             // children nodes into the queue if possible.
-            for (int leaves = 1; leaves < numLeafs; leaves++) {
+            for (int leaves = 1; leaves < maxLeafs; leaves++) {
                 // parent is the leaf to split
                 TrainNode node = nextSplits.poll();
                 if (node == null) {
@@ -834,6 +848,32 @@ public class DecisionTree implements Classifier<double[]> {
                 }
                 node.split(nextSplits); // Split the parent node into two children nodes
             }
+        }
+    }
+
+    private static void checkArgument(@Nonnull double[][] x, @Nonnull int[] y, int numVars,
+            int maxDepth, int maxLeafs, int minSplits, int minLeafSize) {
+        if (x.length != y.length) {
+            throw new IllegalArgumentException(String.format(
+                "The sizes of X and Y don't match: %d != %d", x.length, y.length));
+        }
+        if (numVars <= 0 || numVars > x[0].length) {
+            throw new IllegalArgumentException(
+                "Invalid number of variables to split on at a node of the tree: " + numVars);
+        }
+        if (maxDepth < 2) {
+            throw new IllegalArgumentException("maxDepth should be greater than 1: " + maxDepth);
+        }
+        if (maxLeafs < 2) {
+            throw new IllegalArgumentException("Invalid maximum leaves: " + maxLeafs);
+        }
+        if (minSplits < 2) {
+            throw new IllegalArgumentException(
+                "Invalid minimum number of samples required to split an internal node: "
+                        + minSplits);
+        }
+        if (minLeafSize < 1) {
+            throw new IllegalArgumentException("Invalid minimum size of leaf nodes: " + minLeafSize);
         }
     }
 
