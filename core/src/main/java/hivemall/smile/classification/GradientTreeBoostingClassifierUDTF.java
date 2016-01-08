@@ -97,6 +97,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
      */
     private int _maxLeafNodes;
     private int _minSamplesSplit;
+    private int _minSamplesLeaf;
     private long _seed;
     private Attribute[] _attributes;
     private ModelType _outputType;
@@ -119,6 +120,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("splits", "min_split", true,
             "A node that has greater than or equals to `min_split` examples will split [default: 5]");
+        opts.addOption("min_samples_leaf", true,
+            "The minimum number of samples in a leaf node [default: 1]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
@@ -131,7 +134,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        int trees = 500, maxDepth = 8, maxLeafs = Integer.MAX_VALUE, minSplit = 5;
+        int trees = 500, maxDepth = 8;
+        int maxLeafs = Integer.MAX_VALUE, minSplit = 5, minSamplesLeaf = 1;
         float numVars = -1.f;
         double eta = 0.05d, subsample = 0.7d;
         Attribute[] attrs = null;
@@ -154,6 +158,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             maxDepth = Primitives.parseInt(cl.getOptionValue("max_depth"), maxDepth);
             maxLeafs = Primitives.parseInt(cl.getOptionValue("max_leaf_nodes"), maxLeafs);
             minSplit = Primitives.parseInt(cl.getOptionValue("min_split"), minSplit);
+            minSamplesLeaf = Primitives.parseInt(cl.getOptionValue("min_samples_leaf"),
+                minSamplesLeaf);
             seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
             attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
             output = cl.getOptionValue("output", output);
@@ -169,6 +175,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         this._maxDepth = maxDepth;
         this._maxLeafNodes = maxLeafs;
         this._minSamplesSplit = minSplit;
+        this._minSamplesLeaf = minSamplesLeaf;
         this._seed = seed;
         this._attributes = attrs;
         this._outputType = ModelType.resolve(output, compress);
@@ -345,7 +352,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             }
 
             RegressionTree tree = new RegressionTree(_attributes, x, response, numVars, _maxDepth,
-                _maxLeafNodes, _minSamplesSplit, order, samples, output, rnd2);
+                _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, samples, output, rnd2);
 
             for (int i = 0; i < n; i++) {
                 h[i] += _eta * tree.predict(x[i]);
@@ -455,7 +462,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                 }
 
                 RegressionTree tree = new RegressionTree(_attributes, x, response[j], numVars,
-                    _maxDepth, _maxLeafNodes, _minSamplesSplit, order, samples, output[j], rnd2);
+                    _maxDepth, _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, samples,
+                    output[j], rnd2);
                 trees[j] = tree;
 
                 for (int i = 0; i < n; i++) {

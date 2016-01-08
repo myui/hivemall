@@ -91,6 +91,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
      */
     private int _maxLeafNodes;
     private int _minSamplesSplit;
+    private int _minSamplesLeaf;
     private long _seed;
     private Attribute[] _attributes;
     private ModelType _outputType;
@@ -109,6 +110,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             "The maximum number of leaf nodes [default: Integer.MAX_VALUE]");
         opts.addOption("split", "min_split", true,
             "A node that has greater than or equals to `min_split` examples will split [default: 5]");
+        opts.addOption("min_samples_leaf", true,
+            "The minimum number of samples in a leaf node [default: 1]");
         opts.addOption("seed", true, "seed value in long [default: -1 (random)]");
         opts.addOption("attrs", "attribute_types", true, "Comma separated attribute types "
                 + "(Q for quantitative variable and C for categorical variable. e.g., [Q,C,Q,C])");
@@ -121,7 +124,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        int trees = 50, maxDepth = Integer.MAX_VALUE, maxLeafs = Integer.MAX_VALUE, minSplit = 5;
+        int trees = 50, maxDepth = Integer.MAX_VALUE;
+        int maxLeafs = Integer.MAX_VALUE, minSplit = 5, minSamplesLeaf = 1;
         float numVars = -1.f;
         Attribute[] attrs = null;
         long seed = -1L;
@@ -141,6 +145,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
             maxDepth = Primitives.parseInt(cl.getOptionValue("max_depth"), maxDepth);
             maxLeafs = Primitives.parseInt(cl.getOptionValue("max_leaf_nodes"), maxLeafs);
             minSplit = Primitives.parseInt(cl.getOptionValue("min_split"), minSplit);
+            minSamplesLeaf = Primitives.parseInt(cl.getOptionValue("min_samples_leaf"),
+                minSamplesLeaf);
             seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
             attrs = SmileExtUtils.resolveAttributes(cl.getOptionValue("attribute_types"));
             output = cl.getOptionValue("output", output);
@@ -154,6 +160,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         this._maxDepth = maxDepth;
         this._maxLeafNodes = maxLeafs;
         this._minSamplesSplit = minSplit;
+        this._minSamplesLeaf = minSamplesLeaf;
         this._seed = seed;
         this._attributes = attrs;
         this._outputType = ModelType.resolve(output, compress);
@@ -247,8 +254,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
      * @param y label
      * @param attrs attribute types
      * @param numTrees The number of trees
-     * @param numVars The number of variables to pick up in each node.
-     * @param seed The seed number for Random Forest
+     * @param _numVars The number of variables to pick up in each node.
+     * @param _seed The seed number for Random Forest
      */
     private void train(@Nonnull final double[][] x, @Nonnull final double[] y) throws HiveException {
         if (x.length != y.length) {
@@ -278,8 +285,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         List<TrainingTask> tasks = new ArrayList<TrainingTask>();
         for (int i = 0; i < _numTrees; i++) {
             long s = (_seed == -1L) ? -1L : _seed + i;
-            tasks.add(new TrainingTask(this, i, attributes, x, y, numInputVars, _maxDepth,
-                _maxLeafNodes, _minSamplesSplit, order, prediction, oob, s, remainingTasks));
+            tasks.add(new TrainingTask(this, i, attributes, x, y, numInputVars, order, prediction,
+                oob, s, remainingTasks));
         }
 
         MapredContext mapredContext = MapredContextAccessor.get();
@@ -328,102 +335,87 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         /**
          * Attribute properties.
          */
-        private final Attribute[] attributes;
+        private final Attribute[] _attributes;
         /**
          * Training instances.
          */
-        private final double[][] x;
+        private final double[][] _x;
         /**
          * Training sample labels.
          */
-        private final double[] y;
+        private final double[] _y;
         /**
          * The index of training values in ascending order. Note that only numeric attributes will
          * be sorted.
          */
-        private final int[][] order;
+        private final int[][] _order;
         /**
          * The number of variables to pick up in each node.
          */
-        private final int numVars;
-        /**
-         * The maximum number of the tree depth
-         */
-        private final int maxDepth;
-        /**
-         * The maximum number of leaf nodes in the tree.
-         */
-        private final int maxLeafs;
-        /**
-         * The number of instances in a node below which the tree will not split
-         */
-        private final int minSamplesSplit;
+        private final int _numVars;
         /**
          * The out-of-bag predictions.
          */
-        private final double[] prediction;
+        private final double[] _prediction;
         /**
          * Out-of-bag sample
          */
-        private final int[] oob;
+        private final int[] _oob;
 
-        private final RandomForestRegressionUDTF udtf;
+        private final RandomForestRegressionUDTF _udtf;
         private final int _taskId;
-        private final long seed;
-        private final AtomicInteger remainingTasks;
+        private final long _seed;
+        private final AtomicInteger _remainingTasks;
 
         TrainingTask(RandomForestRegressionUDTF udtf, int taskId, Attribute[] attributes,
-                double[][] x, double[] y, int numVars, int maxDepth, int maxLeafs,
-                int minSamplesSplit, int[][] order, double[] prediction, int[] oob, long seed,
-                AtomicInteger remainingTasks) {
-            this.udtf = udtf;
+                double[][] x, double[] y, int numVars, int[][] order, double[] prediction,
+                int[] oob, long seed, AtomicInteger remainingTasks) {
+            this._udtf = udtf;
             this._taskId = taskId;
-            this.attributes = attributes;
-            this.x = x;
-            this.y = y;
-            this.order = order;
-            this.numVars = numVars;
-            this.maxDepth = maxDepth;
-            this.maxLeafs = maxLeafs;
-            this.minSamplesSplit = minSamplesSplit;
-            this.prediction = prediction;
-            this.oob = oob;
-            this.seed = seed;
-            this.remainingTasks = remainingTasks;
+            this._attributes = attributes;
+            this._x = x;
+            this._y = y;
+            this._order = order;
+            this._numVars = numVars;
+            this._prediction = prediction;
+            this._oob = oob;
+            this._seed = seed;
+            this._remainingTasks = remainingTasks;
         }
 
         @Override
         public Integer call() throws HiveException {
-            long s = (this.seed == -1L) ? SmileExtUtils.generateSeed()
-                    : new smile.math.Random(seed).nextLong();
+            long s = (this._seed == -1L) ? SmileExtUtils.generateSeed() : new smile.math.Random(
+                _seed).nextLong();
             final smile.math.Random rnd1 = new smile.math.Random(s);
             final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
-            final int n = x.length;
+            final int n = _x.length;
             // Training samples draw with replacement.
             int[] samples = new int[n];
             for (int i = 0; i < n; i++) {
                 samples[rnd1.nextInt(n)]++;
             }
 
-            RegressionTree tree = new RegressionTree(attributes, x, y, numVars, maxDepth, maxLeafs,
-                minSamplesSplit, order, samples, rnd2);
+            RegressionTree tree = new RegressionTree(_attributes, _x, _y, _numVars,
+                _udtf._maxDepth, _udtf._maxLeafNodes, _udtf._minSamplesSplit,
+                _udtf._minSamplesLeaf, _order, samples, rnd2);
 
             // out-of-bag prediction
             for (int i = 0; i < n; i++) {
                 if (samples[i] == 0) {
-                    double pred = tree.predict(x[i]);
-                    synchronized (x[i]) {
-                        prediction[i] += pred;
-                        oob[i]++;
+                    double pred = tree.predict(_x[i]);
+                    synchronized (_x[i]) {
+                        _prediction[i] += pred;
+                        _oob[i]++;
                     }
                 }
             }
 
-            Text model = getModel(tree, udtf._outputType);
+            Text model = getModel(tree, _udtf._outputType);
             double[] importance = tree.importance();
-            int remain = remainingTasks.decrementAndGet();
+            int remain = _remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
-            udtf.forward(_taskId + 1, model, importance, y, prediction, oob, lastTask);
+            _udtf.forward(_taskId + 1, model, importance, _y, _prediction, _oob, lastTask);
 
             return Integer.valueOf(remain);
         }

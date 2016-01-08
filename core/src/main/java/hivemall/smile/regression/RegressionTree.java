@@ -130,6 +130,10 @@ public class RegressionTree implements Regression<double[]> {
      */
     private final int _minSplit;
     /**
+     * The minimum number of samples in a leaf node
+     */
+    private final int _minLeafSize;
+    /**
      * The number of input variables to be used to determine the decision at a node of the tree.
      */
     private final int _numVars;
@@ -508,7 +512,7 @@ public class RegressionTree implements Regression<double[]> {
          * @param impurity the impurity of this node.
          * @param j the attribute to split on.
          */
-        public Node findBestSplit(final int n, final double sum, final int j) {
+        private Node findBestSplit(final int n, final double sum, final int j) {
             final int N = x.length;
             final Node split = new Node(0.d);
             if (_attributes[j].type == AttributeType.NOMINAL) {
@@ -533,8 +537,8 @@ public class RegressionTree implements Regression<double[]> {
                     final double tc = (double) trueCount[k];
                     final double fc = n - tc;
 
-                    // If either side is empty, skip this feature.
-                    if (tc == 0 || fc == 0) {
+                    // skip splitting
+                    if (tc < _minSplit || fc < _minSplit) {
                         continue;
                     }
 
@@ -571,7 +575,7 @@ public class RegressionTree implements Regression<double[]> {
                         final double falseCount = n - trueCount;
 
                         // If either side is empty, skip this feature.
-                        if (trueCount == 0 || falseCount == 0) {
+                        if (trueCount < _minSplit || falseCount < _minSplit) {
                             prevx = x[i][j];
                             trueSum += samples[i] * y[i];
                             trueCount += samples[i];
@@ -654,7 +658,8 @@ public class RegressionTree implements Regression<double[]> {
                         + node.splitFeatureType);
             }
 
-            if (tc == 0 || fc == 0) {
+            if (tc < _minLeafSize || fc < _minLeafSize) {
+                // set as a leaf node
                 node.splitFeature = -1;
                 node.splitFeatureType = null;
                 node.splitValue = Double.NaN;
@@ -691,13 +696,14 @@ public class RegressionTree implements Regression<double[]> {
 
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
             @Nonnull double[] y, int maxLeafs) {
-        this(attributes, x, y, x[0].length, Integer.MAX_VALUE, maxLeafs, 5, null, null, null);
+        this(attributes, x, y, x[0].length, Integer.MAX_VALUE, maxLeafs, 5, 1, null, null, null);
     }
 
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
             @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits,
-            @Nullable int[][] order, @Nullable int[] samples, @Nullable smile.math.Random rand) {
-        this(attributes, x, y, numVars, maxDepth, maxLeafs, minSplits, order, samples, null, rand);
+            int minLeafSize, @Nullable int[][] order, @Nullable int[] samples,
+            @Nullable smile.math.Random rand) {
+        this(attributes, x, y, numVars, maxDepth, maxLeafs, minSplits, minLeafSize, order, samples, null, rand);
     }
 
     /**
@@ -719,23 +725,9 @@ public class RegressionTree implements Regression<double[]> {
      */
     public RegressionTree(@Nullable Attribute[] attributes, @Nonnull double[][] x,
             @Nonnull double[] y, int numVars, int maxDepth, int maxLeafs, int minSplits,
-            @Nullable int[][] order, @Nullable int[] samples, @Nullable NodeOutput output,
-            @Nullable smile.math.Random rand) {
-        if (x.length != y.length) {
-            throw new IllegalArgumentException(String.format(
-                "The sizes of X and Y don't match: %d != %d", x.length, y.length));
-        }
-        if (numVars <= 0 || numVars > x[0].length) {
-            throw new IllegalArgumentException(
-                "Invalid number of variables to split on at a node of the tree: " + numVars);
-        }
-        if (minSplits <= 0) {
-            throw new IllegalArgumentException("Invalid mimum number of instances in leaf nodes: "
-                    + minSplits);
-        }
-        if (maxLeafs < 2) {
-            throw new IllegalArgumentException("Invalid maximum leaves: " + maxLeafs);
-        }
+            int minLeafSize, @Nullable int[][] order, @Nullable int[] samples,
+            @Nullable NodeOutput output, @Nullable smile.math.Random rand) {
+        checkArgument(x, y, numVars, maxDepth, maxLeafs, minSplits, minLeafSize);
 
         this._attributes = SmileExtUtils.attributeTypes(attributes, x);
         if (attributes.length != x[0].length) {
@@ -746,6 +738,7 @@ public class RegressionTree implements Regression<double[]> {
         this._numVars = numVars;
         this._maxDepth = maxDepth;
         this._minSplit = minSplits;
+        this._minLeafSize = minLeafSize;
         this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
         this._importance = new double[attributes.length];
         this._rnd = (rand == null) ? new smile.math.Random() : rand;
@@ -794,6 +787,32 @@ public class RegressionTree implements Regression<double[]> {
 
         if (output != null) {
             trainRoot.calculateOutput(output);
+        }
+    }
+
+    private static void checkArgument(@Nonnull double[][] x, @Nonnull double[] y, int numVars,
+            int maxDepth, int maxLeafs, int minSplits, int minLeafSize) {
+        if (x.length != y.length) {
+            throw new IllegalArgumentException(String.format(
+                "The sizes of X and Y don't match: %d != %d", x.length, y.length));
+        }
+        if (numVars <= 0 || numVars > x[0].length) {
+            throw new IllegalArgumentException(
+                "Invalid number of variables to split on at a node of the tree: " + numVars);
+        }
+        if (maxDepth < 2) {
+            throw new IllegalArgumentException("maxDepth should be greater than 1: " + maxDepth);
+        }
+        if (maxLeafs < 2) {
+            throw new IllegalArgumentException("Invalid maximum leaves: " + maxLeafs);
+        }
+        if (minSplits < 2) {
+            throw new IllegalArgumentException(
+                "Invalid minimum number of samples required to split an internal node: "
+                        + minSplits);
+        }
+        if (minLeafSize < 1) {
+            throw new IllegalArgumentException("Invalid minimum size of leaf nodes: " + minLeafSize);
         }
     }
 
@@ -850,8 +869,8 @@ public class RegressionTree implements Regression<double[]> {
         return bos.toByteArray_clear();
     }
 
-    public static Node deserializeNode(final byte[] serializedObj, final int length, final boolean compressed)
-            throws HiveException {
+    public static Node deserializeNode(final byte[] serializedObj, final int length,
+            final boolean compressed) throws HiveException {
         FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj, length);
         InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
 
