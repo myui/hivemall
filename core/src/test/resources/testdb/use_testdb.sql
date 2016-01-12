@@ -1,0 +1,1 @@
+USE ${hiveconf:hivemall.schema};
