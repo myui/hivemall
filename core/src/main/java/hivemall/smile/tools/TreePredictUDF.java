@@ -41,6 +41,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
@@ -55,6 +56,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspe
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapred.JobConf;
 
 @Description(
         name = "tree_predict",
@@ -72,6 +74,20 @@ public final class TreePredictUDF extends GenericUDF {
 
     @Nullable
     private transient Evaluator evaluator;
+    private boolean support_javascript_eval = true;
+
+    @Override
+    public void configure(MapredContext context) {
+        super.configure(context);
+
+        if (context != null) {
+            JobConf conf = context.getJobConf();
+            String tdJarVersion = conf.get("td.jar.version");
+            if (tdJarVersion != null) {
+                this.support_javascript_eval = false;
+            }
+        }
+    }
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -122,7 +138,7 @@ public final class TreePredictUDF extends GenericUDF {
         double[] features = HiveUtils.asDoubleArray(arg3, featureListOI, featureElemOI);
 
         if (evaluator == null) {
-            this.evaluator = getEvaluator(modelType);
+            this.evaluator = getEvaluator(modelType, support_javascript_eval);
         }
 
         Writable result = evaluator.evaluate(modelId, modelType.isCompressed(), script, features,
@@ -131,7 +147,8 @@ public final class TreePredictUDF extends GenericUDF {
     }
 
     @Nonnull
-    private static Evaluator getEvaluator(@Nonnull ModelType type) throws UDFArgumentException {
+    private static Evaluator getEvaluator(@Nonnull ModelType type, boolean supportJavascriptEval)
+            throws UDFArgumentException {
         final Evaluator evaluator;
         switch (type) {
             case serialization:
@@ -146,6 +163,10 @@ public final class TreePredictUDF extends GenericUDF {
             }
             case javascript:
             case javascript_compressed: {
+                if (!supportJavascriptEval) {
+                    throw new UDFArgumentException(
+                        "Javascript evaluation is not allowed in Treasure Data env");
+                }
                 evaluator = new JavascriptEvaluator();
                 break;
             }
