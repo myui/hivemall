@@ -41,19 +41,24 @@ case $cmd in
     ;;
 esac
 
-MIXSERV_HOSTS="$HIVEMALL_HOME/conf/MIXSERV_LIST"
-MIXSERV_SSH_OPTS="-o StrictHostKeyChecking=no"
-
-# Load host entries from the servers file
-if [ -f "$MIXSERV_HOSTS" ]; then
-  HOSTLIST=`cat $MIXSERV_HOSTS`
+# Check if YARN or not
+if [ "$MIXSERV_YARN_ENABLED" == "1" ]; then
+  /bin/sh "$HIVEMALL_HOME/bin/mixserv_daemon.sh" $cmd
 else
-  HOSTLIST=localhost
+  MIXSERV_HOSTS="$HIVEMALL_HOME/conf/MIXSERV_LIST"
+  MIXSERV_SSH_OPTS="-o StrictHostKeyChecking=no"
+
+  # Load host entries from the servers file
+  if [ -f "$MIXSERV_HOSTS" ]; then
+    HOSTLIST=`cat $MIXSERV_HOSTS`
+  else
+    HOSTLIST=localhost
+  fi
+
+  for slave in `echo "$HOSTLIST" | sed  "s/#.*$//;/^$/d"`; do
+    ssh $MIXSERV_SSH_OPTS "$slave" "$HIVEMALL_HOME/bin/mixserv_daemon.sh" $cmd 2>&1 | sed "s/^/$slave: /" &
+  done
+
+  wait
 fi
-
-for slave in `echo "$HOSTLIST" | sed  "s/#.*$//;/^$/d"`; do
-  ssh $MIXSERV_SSH_OPTS "$slave" "$HIVEMALL_HOME/bin/mixserv_daemon.sh" $cmd 2>&1 | sed "s/^/$slave: /" &
-done
-
-wait
 

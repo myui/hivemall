@@ -195,16 +195,16 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         return model;
     }
 
-    protected MixClient configureMixClient(String connectURIs, String label, PredictionModel model) {
-        assert (connectURIs != null);
+    protected MixClient configureMixClient(String connectInfo, String label, PredictionModel model) {
+        assert (connectInfo != null);
         assert (model != null);
         String jobId = (mixSessionName == null) ? MixClient.DUMMY_JOB_ID : mixSessionName;
         if (label != null) {
             jobId = jobId + '-' + label;
         }
         MixEventName event = useCovariance() ? MixEventName.argminKLD : MixEventName.average;
-        MixClient client = new MixClient(event, jobId, connectURIs, ssl, mixThreshold, model);
-        logger.info("Successfully configured mix client: " + connectURIs);
+        MixClient client = new MixClient(event, jobId, connectInfo, ssl, mixThreshold, model);
+        logger.info("Successfully configured mix client: " + connectInfo);
         return client;
     }
 

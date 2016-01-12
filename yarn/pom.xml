@@ -5,77 +5,38 @@
 	<parent>
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
-		<version>0.4.1-alpha.3</version>
+		<version>0.4.1-alpha.2</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>hivemall-mixserv</artifactId>
-	<name>Hivemall Mix Server</name>
+	<artifactId>hivemall-yarn</artifactId>
+	<name>Hivemall Mix Server on Yarn</name>
 	<packaging>jar</packaging>
 
 	<dependencies>
-		<!-- provided scope -->
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-common</artifactId>
-			<version>2.4.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-mapreduce-client-core</artifactId>
-			<version>2.4.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-exec</artifactId>
-			<version>0.11.0</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>jetty</artifactId>
-					<groupId>org.mortbay.jetty</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId>javax.jdo</groupId>
-					<artifactId>jdo2-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>asm-parent</groupId>
-					<artifactId>asm-parent</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>asm</groupId>
-					<artifactId>asm</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>javax.jdo</groupId>
-			<artifactId>jdo2-api</artifactId>
-			<version>2.3-eb</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>11.0.2</version>
-			<scope>provided</scope>
-		</dependency>
-
 		<!-- compile scope -->
 		<dependency>
 			<groupId>io.github.myui</groupId>
-			<artifactId>hivemall-core</artifactId>
+			<artifactId>hivemall-mixserv</artifactId>
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<!-- optionally provided for RUNTIME retention -->
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>jsr305</artifactId>
-			<version>1.3.9</version>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-yarn-client</artifactId>
+			<version>2.4.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>2.4.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>4.0.23.Final</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -96,13 +57,6 @@
 			<version>1.2.17</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
-			<groupId>io.netty</groupId>
-			<!-- required for mixing -->
-			<artifactId>netty-all</artifactId>
-			<version>4.0.23.Final</version>
-			<scope>compile</scope>
-		</dependency>
 
 		<!-- test scope -->
 		<dependency>
@@ -115,6 +69,20 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
 			<version>1.10.19</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-yarn-server-tests</artifactId>
+			<type>test-jar</type>
+			<version>2.4.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<type>test-jar</type>
+			<version>2.4.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -145,7 +113,7 @@
 					</headerDefinitions>
 				</configuration>
 			</plugin>
-			<!-- hivemall-mixserv-xx-fat.jar including all dependencies -->
+			<!-- hivemall-yarn-xx-fat.jar including all dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -162,17 +130,8 @@
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>true</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<artifactSet>
-								<includes>
-									<include>io.github.myui:hivemall-core</include>
-									<include>commons-cli:commons-cli</include>
-									<include>commons-logging:commons-logging</include>
-									<include>log4j:log4j</include>
-									<include>io.netty:netty-all</include>
-								</includes>
-							</artifactSet>
-							<!-- maven-shade-plugin cannot handle the dependency of log4j because 
-								commons-logging invokes log4j through Java reflection. 'filers' clauses avoid 
+							<!-- maven-shade-plugin cannot handle the dependency of log4j because
+								commons-logging invokes log4j through Java reflection. 'filers' clauses avoid
 								this issue as described in the URL below http://stackoverflow.com/questions/8817257/minimize-an-uber-jar-correctly-using-shade-plugin -->
 							<filters>
 								<filter>
@@ -188,17 +147,6 @@
 									</includes>
 								</filter>
 							</filters>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>hivemall.mix.server.MixServer</Main-Class>
-										<Implementation-Title>${project.name}</Implementation-Title>
-										<Implementation-Version>${project.version}</Implementation-Version>
-										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
-									</manifestEntries>
-								</transformer>
-							</transformers>
 						</configuration>
 					</execution>
 				</executions>

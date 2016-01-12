@@ -16,21 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.client;
+package hivemall.mix.yarn.network;
 
-import hivemall.mix.NodeInfo;
+public final class MixRequest {
 
-import org.junit.Test;
-import org.junit.Assert;
+    private final int count;
+    private final String allocatedURIs;
 
-public class MixRequestRouterTest {
-
-    @Test
-    public void test() throws Exception {
-        MixRequestRouter router = new MixRequestRouter("dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
-        router.initialize();
-        NodeInfo[] nodes = router.getAllNodes();
-        Assert.assertEquals(3, nodes.length);
+    public MixRequest() {
+        this(-1, null);
     }
 
+    public MixRequest(int numRequest) {
+        this.count = numRequest;
+        this.allocatedURIs = null;
+    }
+
+    public MixRequest(int numAssigned, String URIs) {
+        this.count = numAssigned;
+        this.allocatedURIs = URIs;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public String getAllocatedURIs() {
+        return allocatedURIs;
+    }
+
+    @Override
+    public String toString() {
+        return "MixServerRequest[count=" + count + ", allocatedURIs=" + allocatedURIs + "]";
+    }
 }

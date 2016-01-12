@@ -24,6 +24,7 @@ import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.MixedModel;
 import hivemall.mix.MixedWeight;
 import hivemall.mix.NodeInfo;
+import hivemall.mix.yarn.client.MixYarnRequestRouter;
 import hivemall.utils.hadoop.HadoopUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -59,7 +60,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     private boolean initialized = false;
     private EventLoopGroup workers;
 
-    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectURIs, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
+    public MixClient(@Nonnull MixEventName event, @CheckForNull String groupID, @Nonnull String connectInfo, boolean ssl, int mixThreshold, @Nonnull MixedModel model) {
         if(groupID == null) {
             throw new IllegalArgumentException("groupID is null");
         }
@@ -68,7 +69,12 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
         }
         this.event = event;
         this.groupID = groupID;
-        this.router = new MixRequestRouter(connectURIs);
+        if (connectInfo.matches("yarn://[0-9a-zA-Z.]*")) {
+            // Enable a YARN mode
+            this.router = new MixYarnRequestRouter(connectInfo.replace("yarn://", ""));
+        } else {
+            this.router = new MixRequestRouter(connectInfo);
+        }
         this.ssl = ssl;
         this.mixThreshold = mixThreshold;
         this.msgHandler = new MixClientHandler(model);
@@ -76,6 +82,7 @@ public final class MixClient implements ModelUpdateHandler, Closeable {
     }
 
     private void initialize() throws Exception {
+        this.router.initialize();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         NodeInfo[] serverNodes = router.getAllNodes();
         for(NodeInfo node : serverNodes) {

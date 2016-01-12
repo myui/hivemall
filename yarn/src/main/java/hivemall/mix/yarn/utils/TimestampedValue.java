@@ -16,21 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mix.client;
+package hivemall.mix.yarn.utils;
 
-import hivemall.mix.NodeInfo;
+public final class TimestampedValue<T> {
 
-import org.junit.Test;
-import org.junit.Assert;
+    private final T value;
+    private long timestamp;
 
-public class MixRequestRouterTest {
-
-    @Test
-    public void test() throws Exception {
-        MixRequestRouter router = new MixRequestRouter("dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
-        router.initialize();
-        NodeInfo[] nodes = router.getAllNodes();
-        Assert.assertEquals(3, nodes.length);
+    public TimestampedValue(T value) {
+        this.value = value;
+        this.timestamp = System.currentTimeMillis();
     }
 
+    public T getValue() {
+        return value;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
+
+    @Override
+    public boolean equals(Object others) {
+        if(others == null) {
+            return false;
+        }
+        // Compare value itself
+        return value.equals(others);
+    }
 }
