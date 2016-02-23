@@ -419,7 +419,7 @@ public class RegressionTree implements Regression<double[]> {
          * dataset[i]. 0 means that the datum is not included and values of greater than 1 are
          * possible because of sampling with replacement.
          */
-        final int[] samples;
+        int[] samples;
 
         final int depth;
 
@@ -626,8 +626,8 @@ public class RegressionTree implements Regression<double[]> {
             final int n = x.length;
             int tc = 0;
             int fc = 0;
-            final int[] trueSamples = new int[n];
-            final int[] falseSamples = new int[n];
+            int[] trueSamples = new int[n];
+            int[] falseSamples = new int[n];
 
             if (node.splitFeatureType == AttributeType.NOMINAL) {
                 for (int i = 0; i < n; i++) {
@@ -657,6 +657,7 @@ public class RegressionTree implements Regression<double[]> {
                 throw new IllegalStateException("Unsupported attribute type: "
                         + node.splitFeatureType);
             }
+            this.samples = null; // help GC for recursive call
 
             if (tc < _minLeafSize || fc < _minLeafSize) {
                 // set as a leaf node
@@ -671,6 +672,7 @@ public class RegressionTree implements Regression<double[]> {
             node.falseChild = new Node(node.falseChildOutput);
 
             this.trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
+            trueSamples = null; // help GC for recursive call
             if (tc >= _minSplit && trueChild.findBestSplit()) {
                 if (nextSplits != null) {
                     nextSplits.add(trueChild);
@@ -680,6 +682,7 @@ public class RegressionTree implements Regression<double[]> {
             }
 
             this.falseChild = new TrainNode(node.falseChild, x, y, falseSamples, depth + 1);
+            falseSamples = null; // help GC for recursive call
             if (fc >= _minSplit && falseChild.findBestSplit()) {
                 if (nextSplits != null) {
                     nextSplits.add(falseChild);
