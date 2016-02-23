@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
-		<version>0.4.1-alpha.3</version>
+		<version>0.4.1-alpha.4</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
