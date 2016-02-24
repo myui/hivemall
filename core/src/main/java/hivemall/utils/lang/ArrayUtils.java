@@ -207,4 +207,12 @@ public final class ArrayUtils {
         return copy;
     }
 
+    public static void copy(final int[] src, final int[] dest) {
+        if (src.length != dest.length) {
+            throw new IllegalArgumentException("src.legnth '" + src.length + "' != dest.length '"
+                    + dest.length + "'");
+        }
+        System.arraycopy(src, 0, dest, 0, src.length);
+    }
+
 }

@@ -38,6 +38,7 @@ import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.io.FastByteArrayInputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
 import hivemall.utils.io.IOUtils;
+import hivemall.utils.lang.ArrayUtils;
 import hivemall.utils.lang.StringUtils;
 
 import java.io.Externalizable;
@@ -423,24 +424,33 @@ public class DecisionTree implements Classifier<double[]> {
          * class labels.
          */
         final int[] y;
+
+        final int depth;
+
         /**
          * The samples for training this node. Note that samples[i] is the number of sampling of
          * dataset[i]. 0 means that the datum is not included and values of greater than 1 are
          * possible because of sampling with replacement.
          */
-        int[] samples;
-
-        final int depth;
+        @Nullable
+        int[] fixedSamples;
 
         /**
-         * Constructor.
+         * Constructor for a non-leaf node.
          */
-        public TrainNode(Node node, double[][] x, int[] y, int[] samples, int depth) {
+        public TrainNode(Node node, double[][] x, int[] y, int depth) {
+            this(node, x, y, depth, null);
+        }
+        
+        /**
+         * Constructor for a leaf node.
+         */
+        public TrainNode(Node node, double[][] x, int[] y, int depth, @Nonnull int[] samples) {
             this.node = node;
             this.x = x;
             this.y = y;
-            this.samples = samples;
             this.depth = depth;
+            this.fixedSamples = samples;
         }
 
         @Override
@@ -453,7 +463,7 @@ public class DecisionTree implements Classifier<double[]> {
          * 
          * @return true if a split exists to reduce squared error, false otherwise.
          */
-        public boolean findBestSplit() {
+        public boolean findBestSplit(final int[] samples) {
             if (depth >= _maxDepth) {
                 return false;
             }
@@ -506,7 +516,8 @@ public class DecisionTree implements Classifier<double[]> {
 
             final int[] falseCount = new int[_k];
             for (int j = 0; j < _numVars; j++) {
-                Node split = findBestSplit(n, count, falseCount, impurity, variableIndex[j]);
+                Node split = findBestSplit(n, samples, count, falseCount, impurity,
+                    variableIndex[j]);
                 if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
                     node.splitFeatureType = split.splitFeatureType;
@@ -524,13 +535,14 @@ public class DecisionTree implements Classifier<double[]> {
          * Finds the best split cutoff for attribute j at the current node.
          * 
          * @param n the number instances in this node.
+         * @param samples the number of samples for each data[i]
          * @param count the sample count in each class.
          * @param falseCount an array to store sample count in each class for false child node.
          * @param impurity the impurity of this node.
          * @param j the attribute index to split on.
          */
-        private Node findBestSplit(final int n, final int[] count, final int[] falseCount,
-                final double impurity, final int j) {
+        private Node findBestSplit(final int n, final int[] samples, final int[] count,
+                final int[] falseCount, final double impurity, final int j) {
             final int N = x.length;
             final Node splitNode = new Node();
 
@@ -635,7 +647,8 @@ public class DecisionTree implements Classifier<double[]> {
         /**
          * Split the node into two children nodes. Returns true if split success.
          */
-        public boolean split(@Nullable final PriorityQueue<TrainNode> nextSplits) {
+        public boolean split(@Nullable final PriorityQueue<TrainNode> nextSplits,
+                final int[] samples, final int[] trueSamples, final int[] falseSamples) {
             if (node.splitFeature < 0) {
                 throw new IllegalStateException("Split a node with invalid feature.");
             }
@@ -643,8 +656,6 @@ public class DecisionTree implements Classifier<double[]> {
             final int n = x.length;
             int tc = 0;
             int fc = 0;
-            int[] trueSamples = new int[n];
-            int[] falseSamples = new int[n];
 
             if (node.splitFeatureType == AttributeType.NOMINAL) {
                 for (int i = 0; i < n; i++) {
@@ -652,11 +663,16 @@ public class DecisionTree implements Classifier<double[]> {
                     if (sample > 0) {
                         if (x[i][node.splitFeature] == node.splitValue) {
                             trueSamples[i] = sample;
+                            falseSamples[i] = 0;
                             tc += samples[i];
                         } else {
+                            trueSamples[i] = 0;
                             falseSamples[i] = sample;
                             fc += sample;
                         }
+                    } else {
+                        trueSamples[i] = 0;
+                        falseSamples[i] = 0;
                     }
                 }
             } else if (node.splitFeatureType == AttributeType.NUMERIC) {
@@ -665,18 +681,22 @@ public class DecisionTree implements Classifier<double[]> {
                     if (sample > 0) {
                         if (x[i][node.splitFeature] <= node.splitValue) {
                             trueSamples[i] = sample;
+                            falseSamples[i] = 0;
                             tc += sample;
                         } else {
+                            trueSamples[i] = 0;
                             falseSamples[i] = sample;
                             fc += sample;
                         }
+                    } else {
+                        trueSamples[i] = 0;
+                        falseSamples[i] = 0;
                     }
                 }
             } else {
                 throw new IllegalStateException("Unsupported attribute type: "
                         + node.splitFeatureType);
             }
-            this.samples = null; // help GC for recursive call
 
             if (tc < _minLeafSize || fc < _minLeafSize) {
                 // set the node as leaf                
@@ -690,24 +710,25 @@ public class DecisionTree implements Classifier<double[]> {
             node.trueChild = new Node(node.trueChildOutput);
             node.falseChild = new Node(node.falseChildOutput);
 
-            final TrainNode trueChild = new TrainNode(node.trueChild, x, y, trueSamples, depth + 1);
-            trueSamples = null; // help GC for recursive call
-            if (tc >= _minSplit && trueChild.findBestSplit()) {
+            TrainNode trueChild = new TrainNode(node.trueChild, x, y, depth + 1);
+            if (tc >= _minSplit && trueChild.findBestSplit(trueSamples)) {
                 if (nextSplits != null) {
+                    trueChild.fixedSamples = Arrays.copyOf(trueSamples, trueSamples.length);
                     nextSplits.add(trueChild);
                 } else {
-                    trueChild.split(null);
+                    ArrayUtils.copy(trueSamples, samples);
+                    trueChild.split(null, samples, trueSamples, falseSamples);
                 }
             }
 
-            final TrainNode falseChild = new TrainNode(node.falseChild, x, y, falseSamples,
-                depth + 1);
-            falseSamples = null; // help GC for recursive call
-            if (fc >= _minSplit && falseChild.findBestSplit()) {
+            TrainNode falseChild = new TrainNode(node.falseChild, x, y, depth + 1);
+            if (fc >= _minSplit && falseChild.findBestSplit(falseSamples)) {
                 if (nextSplits != null) {
+                    falseChild.fixedSamples = Arrays.copyOf(falseSamples, falseSamples.length);
                     nextSplits.add(falseChild);
                 } else {
-                    falseChild.split(null);
+                    ArrayUtils.copy(falseSamples, samples);
+                    falseChild.split(null, samples, trueSamples, falseSamples);
                 }
             }
 
@@ -828,17 +849,19 @@ public class DecisionTree implements Classifier<double[]> {
         }
 
         this._root = new Node(Math.whichMax(count));
+        int[] trueSamples = new int[n];
+        int[] falseSamples = new int[n];
 
-        final TrainNode trainRoot = new TrainNode(_root, x, y, samples, 1);
+        final TrainNode trainRoot = new TrainNode(_root, x, y, 1, samples);
         if (maxLeafs == Integer.MAX_VALUE) {
-            if (trainRoot.findBestSplit()) {
-                trainRoot.split(null);
+            if (trainRoot.findBestSplit(samples)) {
+                trainRoot.split(null, samples, trueSamples, falseSamples);
             }
         } else {
             // Priority queue for best-first tree growing.
             final PriorityQueue<TrainNode> nextSplits = new PriorityQueue<TrainNode>();
             // Now add splits to the tree until max tree size is reached
-            if (trainRoot.findBestSplit()) {
+            if (trainRoot.findBestSplit(samples)) {
                 nextSplits.add(trainRoot);
             }
             // Pop best leaf from priority queue, split it, and push
@@ -849,7 +872,12 @@ public class DecisionTree implements Classifier<double[]> {
                 if (node == null) {
                     break;
                 }
-                node.split(nextSplits); // Split the parent node into two children nodes
+                if (node.fixedSamples == null) {
+                    throw new IllegalStateException("node.fixedSamples is not set");
+                }
+                // Split the parent node into two children nodes
+                node.split(nextSplits, node.fixedSamples, trueSamples, falseSamples);
+                node.fixedSamples = null;
             }
         }
     }
