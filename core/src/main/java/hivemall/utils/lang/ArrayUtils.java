@@ -207,12 +207,42 @@ public final class ArrayUtils {
         return copy;
     }
 
+    public static int[] copyOf(final int[] src) {
+        int len = src.length;
+        int[] dest = new int[len];
+        System.arraycopy(src, 0, dest, 0, len);
+        return dest;
+    }
+
     public static void copy(final int[] src, final int[] dest) {
         if (src.length != dest.length) {
             throw new IllegalArgumentException("src.legnth '" + src.length + "' != dest.length '"
                     + dest.length + "'");
         }
         System.arraycopy(src, 0, dest, 0, src.length);
+    }
+
+    public static int[] append(int[] array, int currentSize, int element) {
+        if (currentSize + 1 > array.length) {
+            int[] newArray = new int[currentSize * 2];
+            System.arraycopy(array, 0, newArray, 0, currentSize);
+            array = newArray;
+        }
+        array[currentSize] = element;
+        return array;
+    }
+
+    public static int[] insert(int[] array, int currentSize, int index, int element) {
+        if (currentSize + 1 <= array.length) {
+            System.arraycopy(array, index, array, index + 1, currentSize - index);
+            array[index] = element;
+            return array;
+        }
+        int[] newArray = new int[currentSize * 2];
+        System.arraycopy(array, 0, newArray, 0, index);
+        newArray[index] = element;
+        System.arraycopy(array, index, newArray, index + 1, array.length - index);
+        return newArray;
     }
 
 }
