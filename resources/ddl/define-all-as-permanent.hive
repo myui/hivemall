@@ -574,19 +574,11 @@ CREATE FUNCTION train_fm as 'hivemall.fm.FactorizationMachineUDTF' USING JAR '${
 DROP FUNCTION IF EXISTS train_randomforest_classifier;
 CREATE FUNCTION train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
 
--- alias
-DROP FUNCTION IF EXISTS train_rf_classifier;
-CREATE FUNCTION train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
-
--- alias
-DROP FUNCTION IF EXISTS train_randomforest;
-CREATE FUNCTION train_randomforest as 'hivemall.smile.classification.RandomForestClassifierUDTF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS train_randomforest_regressor;
+CREATE FUNCTION train_randomforest_regressor as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_randomforest_regr;
 CREATE FUNCTION train_randomforest_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS train_rf_regr;
-CREATE FUNCTION train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS tree_predict;
 CREATE FUNCTION tree_predict as 'hivemall.smile.tools.TreePredictUDF' USING JAR '${hivemall_jar}';

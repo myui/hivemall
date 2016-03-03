@@ -570,19 +570,12 @@ create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
 drop temporary function train_randomforest_classifier;
 create temporary function train_randomforest_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
 
--- alias
-drop temporary function train_rf_classifier;
-create temporary function train_rf_classifier as 'hivemall.smile.classification.RandomForestClassifierUDTF';
+drop temporary function train_randomforest_regressor;
+create temporary function train_randomforest_regressor as 'hivemall.smile.regression.RandomForestRegressionUDTF';
 
 -- alias
-drop temporary function train_randomforest;
-create temporary function train_randomforest as 'hivemall.smile.classification.RandomForestClassifierUDTF';
-
 drop temporary function train_randomforest_regr;
 create temporary function train_randomforest_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
-
-drop temporary function train_rf_regr;
-create temporary function train_rf_regr as 'hivemall.smile.regression.RandomForestRegressionUDTF';
 
 drop temporary function tree_predict;
 create temporary function tree_predict as 'hivemall.smile.tools.TreePredictUDF';
