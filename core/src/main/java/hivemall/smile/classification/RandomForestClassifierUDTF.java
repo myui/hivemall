@@ -334,7 +334,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
 
-        logger.info("Forworded " + modelId + "-th DecisionTree out of " + _numTrees);
+        logger.info("Forwarded " + modelId + "-th DecisionTree out of " + _numTrees);
     }
 
     /**

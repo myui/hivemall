@@ -528,7 +528,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
         forward(forwardObjs);
 
-        logger.info("Forworded the output of " + m + "-th Boosting iteration out of " + _numTrees);
+        logger.info("Forwarded the output of " + m + "-th Boosting iteration out of " + _numTrees);
     }
 
     private static Text[] getModel(@Nonnull final RegressionTree[] trees,

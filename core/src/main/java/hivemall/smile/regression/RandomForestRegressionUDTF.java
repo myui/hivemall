@@ -328,7 +328,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
 
-        logger.info("Forworded " + modelId + "-th RegressionTree out of " + _numTrees);
+        logger.info("Forwarded " + modelId + "-th RegressionTree out of " + _numTrees);
     }
 
     /**
