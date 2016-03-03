@@ -35,6 +35,7 @@ import hivemall.utils.lang.Primitives;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -313,25 +314,26 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                     + _maxLeafNodes + ", seed: " + _seed);
         }
 
-        final int n = x.length;
-        final int N = (int) Math.round(n * _subsample);
+        final int numInstances = x.length;
+        final int numSamples = (int) Math.round(numInstances * _subsample);
 
-        final double[] h = new double[n]; // current F(x_i)
-        final double[] response = new double[n]; // response variable for regression tree.
+        final double[] h = new double[numInstances]; // current F(x_i)
+        final double[] response = new double[numInstances]; // response variable for regression tree.
 
         final double mu = smile.math.Math.mean(y);
         final double intercept = 0.5d * Math.log((1.d + mu) / (1.d - mu));
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < numInstances; i++) {
             h[i] = intercept;
         }
 
         final int[][] order = SmileExtUtils.sort(_attributes, x);
         final RegressionTree.NodeOutput output = new L2NodeOutput(response);
 
-        final int[] samples = new int[n];
-        final int[] perm = new int[n];
-        for (int i = 0; i < n; i++) {
+        final BitSet sampled = new BitSet(numInstances);
+        final int[] bag = new int[numSamples];
+        final int[] perm = new int[numSamples];
+        for (int i = 0; i < numSamples; i++) {
             perm[i] = i;
         }
 
@@ -341,32 +343,31 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
 
         for (int m = 0; m < _numTrees; m++) {
-            Arrays.fill(samples, 0);
             SmileExtUtils.shuffle(perm, rnd1);
-            for (int i = 0; i < N; i++) {
-                samples[perm[i]] = 1;
+            for (int i = 0; i < numSamples; i++) {
+                int index = perm[i];
+                bag[i] = index;
+                sampled.set(index);
             }
 
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < numInstances; i++) {
                 response[i] = 2.0d * y[i] / (1.d + Math.exp(2.d * y[i] * h[i]));
             }
 
             RegressionTree tree = new RegressionTree(_attributes, x, response, numVars, _maxDepth,
-                _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, samples, output, rnd2);
+                _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, bag, output, rnd2);
 
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < numInstances; i++) {
                 h[i] += _eta * tree.predict(x[i]);
             }
 
             // out-of-bag error estimate
             int oobTests = 0, oobErrors = 0;
-            for (int i = 0; i < n; i++) {
-                if (samples[i] == 0) {
-                    oobTests++;
-                    final int pred = (h[i] > 0.d) ? 1 : 0;
-                    if (pred != y[i]) {
-                        oobErrors++;
-                    }
+            for (int i = sampled.nextClearBit(0); i < numInstances; i = sampled.nextClearBit(i + 1)) {
+                oobTests++;
+                final int pred = (h[i] > 0.d) ? 1 : 0;
+                if (pred != y[i]) {
+                    oobErrors++;
                 }
             }
             float oobErrorRate = 0.f;
@@ -375,6 +376,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             }
 
             forward(m + 1, intercept, _eta, oobErrorRate, tree);
+            sampled.clear();
         }
     }
 
@@ -390,12 +392,12 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                     + ", maxLeafs: " + _maxLeafNodes + ", seed: " + _seed);
         }
 
-        final int n = x.length;
-        final int N = (int) Math.round(n * _subsample);
+        final int numInstances = x.length;
+        final int numSamples = (int) Math.round(numInstances * _subsample);
 
-        final double[][] h = new double[k][n]; // boost tree output.
-        final double[][] p = new double[k][n]; // posteriori probabilities.
-        final double[][] response = new double[k][n]; // pseudo response.
+        final double[][] h = new double[k][numInstances]; // boost tree output.
+        final double[][] p = new double[k][numInstances]; // posteriori probabilities.
+        final double[][] response = new double[k][numInstances]; // pseudo response.
 
         final int[][] order = SmileExtUtils.sort(_attributes, x);
         final RegressionTree.NodeOutput[] output = new LKNodeOutput[k];
@@ -403,9 +405,10 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             output[i] = new LKNodeOutput(response[i], k);
         }
 
-        final int[] perm = new int[n];
-        final int[] samples = new int[n];
-        for (int i = 0; i < n; i++) {
+        final BitSet sampled = new BitSet(numInstances);
+        final int[] bag = new int[numSamples];
+        final int[] perm = new int[numSamples];
+        for (int i = 0; i < numSamples; i++) {
             perm[i] = i;
         }
 
@@ -415,10 +418,10 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
 
         // out-of-bag prediction
-        final int[] prediction = new int[n];
+        final int[] prediction = new int[numInstances];
 
         for (int m = 0; m < _numTrees; m++) {
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < numInstances; i++) {
                 double max = Double.NEGATIVE_INFINITY;
                 for (int j = 0; j < k; j++) {
                     final double h_ji = h[j][i];
@@ -441,12 +444,14 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
             Arrays.fill(prediction, -1);
             double max_h = Double.NEGATIVE_INFINITY;
+            int oobTests = 0, oobErrors = 0;
+
             for (int j = 0; j < k; j++) {
                 final double[] response_j = response[j];
                 final double[] p_j = p[j];
                 final double[] h_j = h[j];
 
-                for (int i = 0; i < n; i++) {
+                for (int i = 0; i < numInstances; i++) {
                     if (y[i] == j) {
                         response_j[i] = 1.0d;
                     } else {
@@ -455,18 +460,19 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                     response_j[i] -= p_j[i];
                 }
 
-                Arrays.fill(samples, 0);
                 SmileExtUtils.shuffle(perm, rnd1);
-                for (int i = 0; i < N; i++) {
-                    samples[perm[i]] = 1;
+                for (int i = 0; i < numSamples; i++) {
+                    int index = perm[i];
+                    bag[i] = index;
+                    sampled.set(i);
                 }
 
                 RegressionTree tree = new RegressionTree(_attributes, x, response[j], numVars,
-                    _maxDepth, _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, samples,
+                    _maxDepth, _maxLeafNodes, _minSamplesSplit, _minSamplesLeaf, order, bag,
                     output[j], rnd2);
                 trees[j] = tree;
 
-                for (int i = 0; i < n; i++) {
+                for (int i = 0; i < numInstances; i++) {
                     double h_ji = h_j[i] + _eta * tree.predict(x[i]);
                     h_j[i] += h_ji;
                     if (h_ji > max_h) {
@@ -474,18 +480,17 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
                         prediction[i] = j;
                     }
                 }
-            }
+
+            }// for each k
 
             // out-of-bag error estimate
-            int oobTests = 0, oobErrors = 0;
-            for (int i = 0; i < n; i++) {
-                if (samples[i] == 0) {
-                    oobTests++;
-                    if (prediction[i] != y[i]) {
-                        oobErrors++;
-                    }
+            for (int i = sampled.nextClearBit(0); i < numInstances; i = sampled.nextClearBit(i + 1)) {
+                oobTests++;
+                if (prediction[i] != y[i]) {
+                    oobErrors++;
                 }
             }
+            sampled.clear();
             float oobErrorRate = 0.f;
             if (oobTests > 0) {
                 oobErrorRate = ((float) oobErrors) / oobTests;
@@ -493,7 +498,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
             // forward a row
             forward(m + 1, 0.d, _eta, oobErrorRate, trees);
-        }
+
+        }// for each m
     }
 
     /**
@@ -521,6 +527,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         forwardObjs[6] = new FloatWritable(oobErrorRate);
 
         forward(forwardObjs);
+
+        logger.info("Forwarded the output of " + m + "-th Boosting iteration out of " + _numTrees);
     }
 
     private static Text[] getModel(@Nonnull final RegressionTree[] trees,
@@ -613,8 +621,9 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             double de = 0.0d;
             for (int i = 0; i < samples.length; i++) {
                 if (samples[i] > 0) {
-                    double abs = Math.abs(y[i]);
-                    nu += y[i];
+                    double y_i = y[i];
+                    double abs = Math.abs(y_i);
+                    nu += y_i;
                     de += abs * (2.0d - abs);
                 }
             }
@@ -656,8 +665,9 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             for (int i = 0; i < samples.length; i++) {
                 if (samples[i] > 0) {
                     n++;
-                    double abs = Math.abs(y[i]);
-                    nu += y[i];
+                    double y_i = y[i];
+                    double abs = Math.abs(y_i);
+                    nu += y_i;
                     de += abs * (1.0d - abs);
                 }
             }
@@ -665,7 +675,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             if (de < 1E-10d) {
                 return nu / n;
             }
-            return ((k - 1.0) / k) * (nu / de);
+            return ((k - 1.0d) / k) * (nu / de);
         }
     }
 

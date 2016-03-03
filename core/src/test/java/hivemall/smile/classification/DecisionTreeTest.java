@@ -105,6 +105,37 @@ public class DecisionTreeTest {
             int[] trainy = Math.slice(y, loocv.train[i]);
 
             Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
+            smile.math.Random rand = new smile.math.Random(i);
+            DecisionTree tree = new DecisionTree(attrs, trainx, trainy, Integer.MAX_VALUE, rand);
+            if (y[loocv.test[i]] != tree.predict(x[loocv.test[i]]))
+                error++;
+        }
+
+        debugPrint("Decision Tree error = " + error);
+        assertEquals(8, error);
+    }
+
+    @Test
+    public void testIrisDepth4() throws IOException, ParseException {
+        URL url = new URL(
+            "https://gist.githubusercontent.com/myui/143fa9d05bd6e7db0114/raw/500f178316b802f1cade6e3bf8dc814a96e84b1e/iris.arff");
+        InputStream is = new BufferedInputStream(url.openStream());
+
+        ArffParser arffParser = new ArffParser();
+        arffParser.setResponseIndex(4);
+
+        AttributeDataset iris = arffParser.parse(is);
+        double[][] x = iris.toArray(new double[iris.size()][]);
+        int[] y = iris.toArray(new int[iris.size()]);
+
+        int n = x.length;
+        LOOCV loocv = new LOOCV(n);
+        int error = 0;
+        for (int i = 0; i < n; i++) {
+            double[][] trainx = Math.slice(x, loocv.train[i]);
+            int[] trainy = Math.slice(y, loocv.train[i]);
+
+            Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
             DecisionTree tree = new DecisionTree(attrs, trainx, trainy, 4);
             if (y[loocv.test[i]] != tree.predict(x[loocv.test[i]]))
                 error++;

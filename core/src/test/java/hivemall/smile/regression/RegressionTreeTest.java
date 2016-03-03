@@ -63,8 +63,9 @@ public class RegressionTreeTest {
         for (int i = 0; i < n; i++) {
             double[][] trainx = Math.slice(longley, loocv.train[i]);
             double[] trainy = Math.slice(y, loocv.train[i]);
-            int maxLeafs = 2;
-            RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs);
+            int maxLeafs = 10;
+            smile.math.Random rand = new smile.math.Random(i);
+            RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs, rand);
 
             double r = y[loocv.test[i]] - tree.predict(longley[loocv.test[i]]);
             rss += r * r;
@@ -106,7 +107,7 @@ public class RegressionTreeTest {
         for (int i = 0; i < n; i++) {
             double[][] trainx = Math.slice(longley, loocv.train[i]);
             double[] trainy = Math.slice(y, loocv.train[i]);
-            int maxLeafs = 2;
+            int maxLeafs = Integer.MAX_VALUE;
             RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs);
 
             byte[] b = tree.predictSerCodegen(true);

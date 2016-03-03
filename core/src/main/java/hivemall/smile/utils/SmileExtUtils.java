@@ -246,4 +246,24 @@ public final class SmileExtUtils {
         x[j] = s;
     }
 
+    @Nonnull
+    public static int[] bagsToSamples(@Nonnull final int[] bags) {
+        int maxIndex = -1;
+        for (int e : bags) {
+            if (e > maxIndex) {
+                maxIndex = e;
+            }
+        }
+        return bagsToSamples(bags, maxIndex + 1);
+    }
+
+    @Nonnull
+    public static int[] bagsToSamples(@Nonnull final int[] bags, final int samplesLength) {
+        final int[] samples = new int[samplesLength];
+        for (int i = 0, size = bags.length; i < size; i++) {
+            samples[bags[i]]++;
+        }
+        return samples;
+    }
+
 }

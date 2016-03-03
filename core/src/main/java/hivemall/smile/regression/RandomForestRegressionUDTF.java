@@ -34,6 +34,7 @@ import hivemall.utils.lang.Primitives;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -326,6 +327,8 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         forwardObjs[4] = new DoubleWritable(oobErrors);
         forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
+
+        logger.info("Forwarded " + modelId + "-th RegressionTree out of " + _numTrees);
     }
 
     /**
@@ -389,30 +392,33 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 _seed).nextLong();
             final smile.math.Random rnd1 = new smile.math.Random(s);
             final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
-            final int n = _x.length;
+            final int N = _x.length;
+
             // Training samples draw with replacement.
-            int[] samples = new int[n];
-            for (int i = 0; i < n; i++) {
-                samples[rnd1.nextInt(n)]++;
+            final int[] bags = new int[N];
+            final BitSet sampled = new BitSet(N);
+            for (int i = 0; i < N; i++) {
+                int index = rnd1.nextInt(N);
+                bags[i] = index;
+                sampled.set(index);
             }
 
             RegressionTree tree = new RegressionTree(_attributes, _x, _y, _numVars,
                 _udtf._maxDepth, _udtf._maxLeafNodes, _udtf._minSamplesSplit,
-                _udtf._minSamplesLeaf, _order, samples, rnd2);
+                _udtf._minSamplesLeaf, _order, bags, rnd2);
 
             // out-of-bag prediction
-            for (int i = 0; i < n; i++) {
-                if (samples[i] == 0) {
-                    double pred = tree.predict(_x[i]);
-                    synchronized (_x[i]) {
-                        _prediction[i] += pred;
-                        _oob[i]++;
-                    }
+            for (int i = sampled.nextClearBit(0); i < N; i = sampled.nextClearBit(i + 1)) {
+                double pred = tree.predict(_x[i]);
+                synchronized (_x[i]) {
+                    _prediction[i] += pred;
+                    _oob[i]++;
                 }
             }
 
             Text model = getModel(tree, _udtf._outputType);
             double[] importance = tree.importance();
+            tree = null; // help GC
             int remain = _remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
             _udtf.forward(_taskId + 1, model, importance, _y, _prediction, _oob, lastTask);
