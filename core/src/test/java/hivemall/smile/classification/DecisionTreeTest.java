@@ -105,13 +105,14 @@ public class DecisionTreeTest {
             int[] trainy = Math.slice(y, loocv.train[i]);
 
             Attribute[] attrs = SmileExtUtils.convertAttributeTypes(iris.attributes());
-            DecisionTree tree = new DecisionTree(attrs, trainx, trainy, Integer.MAX_VALUE);
+            smile.math.Random rand = new smile.math.Random(i);
+            DecisionTree tree = new DecisionTree(attrs, trainx, trainy, Integer.MAX_VALUE, rand);
             if (y[loocv.test[i]] != tree.predict(x[loocv.test[i]]))
                 error++;
         }
 
         debugPrint("Decision Tree error = " + error);
-        assertEquals(7, error);
+        assertEquals(8, error);
     }
 
     @Test

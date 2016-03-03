@@ -64,7 +64,8 @@ public class RegressionTreeTest {
             double[][] trainx = Math.slice(longley, loocv.train[i]);
             double[] trainy = Math.slice(y, loocv.train[i]);
             int maxLeafs = 10;
-            RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs);            
+            smile.math.Random rand = new smile.math.Random(i);
+            RegressionTree tree = new RegressionTree(attrs, trainx, trainy, maxLeafs, rand);
 
             double r = y[loocv.test[i]] - tree.predict(longley[loocv.test[i]]);
             rss += r * r;
