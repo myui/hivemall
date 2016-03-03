@@ -21,7 +21,9 @@ import hivemall.utils.lang.ArrayUtils;
 
 import java.util.Arrays;
 
-public final class SparseIntArray {
+public final class SparseIntArray implements IntArray {
+    private static final long serialVersionUID = -2814248784231540118L;
+
     private int[] mKeys;
     private int[] mValues;
     private int mSize;
@@ -32,7 +34,7 @@ public final class SparseIntArray {
 
     public SparseIntArray(int initialCapacity) {
         mKeys = new int[initialCapacity];
-        mValues = new int[mKeys.length];
+        mValues = new int[initialCapacity];
         mSize = 0;
     }
 
@@ -42,7 +44,7 @@ public final class SparseIntArray {
         this.mSize = mSize;
     }
 
-    public SparseIntArray deepCopy() {
+    public IntArray deepCopy() {
         int[] newKeys = new int[mSize];
         int[] newValues = new int[mSize];
         System.arraycopy(mKeys, 0, newKeys, 0, mSize);
@@ -50,10 +52,12 @@ public final class SparseIntArray {
         return new SparseIntArray(newKeys, newValues, mSize);
     }
 
+    @Override
     public int get(int key) {
         return get(key, 0);
     }
 
+    @Override
     public int get(int key, int valueIfKeyNotFound) {
         int i = Arrays.binarySearch(mKeys, 0, mSize, key);
         if (i < 0) {
@@ -76,6 +80,7 @@ public final class SparseIntArray {
         mSize--;
     }
 
+    @Override
     public void put(int key, int value) {
         int i = Arrays.binarySearch(mKeys, 0, mSize, key);
         if (i >= 0) {
@@ -88,10 +93,24 @@ public final class SparseIntArray {
         }
     }
 
+    public void increment(int key, int value) {
+        int i = Arrays.binarySearch(mKeys, 0, mSize, key);
+        if (i >= 0) {
+            mValues[i] += value;
+        } else {
+            i = ~i;
+            mKeys = ArrayUtils.insert(mKeys, mSize, i, key);
+            mValues = ArrayUtils.insert(mValues, mSize, i, value);
+            mSize++;
+        }
+    }
+
+    @Override
     public int size() {
         return mSize;
     }
 
+    @Override
     public int keyAt(int index) {
         return mKeys[index];
     }
