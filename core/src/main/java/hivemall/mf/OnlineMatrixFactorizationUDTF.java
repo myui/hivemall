@@ -50,6 +50,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.Counters.Counter;
 
 public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         implements RatingInitilizer {
@@ -463,6 +465,10 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
         assert (inputBuf != null);
         assert (fileIO != null);
         final long numTrainingExamples = count;
+        
+        final Reporter reporter = getReportter();
+        final Counter iterCounter = (reporter == null) ? null : reporter.getCounter(
+            "hivemall.mf.MatrixFactorization$Counter", "iteration");
 
         try {
             if(lastWritePos == 0) {// run iterations w/o temporary file
@@ -473,6 +479,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
                 int i = 1;
                 for(; i < iterations; i++) {
+                    reportProgress(reporter);
+                    setCounterValue(iterCounter, i);
+                    
                     while(inputBuf.remaining() > 0) {
                         int user = inputBuf.getInt();
                         int item = inputBuf.getInt();
@@ -515,10 +524,13 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions
 
                 // run iterations
                 int i = 1;
-                for(; i < iterations; i++) {
+                for(; i < iterations; i++) {                   
+                    setCounterValue(iterCounter, i);
+                    
                     inputBuf.clear();
                     long seekPos = 0L;
                     while(true) {
+                        reportProgress(reporter);
                         // TODO prefetch
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;

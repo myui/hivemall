@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -60,6 +61,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Reporter;
 
 @Description(
         name = "train_randomforest_regression",
@@ -96,6 +99,11 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     private long _seed;
     private Attribute[] _attributes;
     private ModelType _outputType;
+
+    @Nullable
+    private Reporter _progressReporter;
+    @Nullable
+    private Counter _treeBuildTaskCounter;
 
     @Override
     protected Options getOptions() {
@@ -222,8 +230,13 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        int numExamples = featuresList.size();
+        this._progressReporter = getReportter();
+        this._treeBuildTaskCounter = (_progressReporter == null) ? null
+                : _progressReporter.getCounter("hivemall.smile.RandomForestRegression$Counter",
+                    "finishedTreeBuildTasks");
+        reportProgress(_progressReporter);
 
+        int numExamples = featuresList.size();
         if (numExamples > 0) {
             double[][] x = featuresList.toArray(new double[numExamples][]);
             this.featuresList = null;
@@ -327,6 +340,9 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         forwardObjs[4] = new DoubleWritable(oobErrors);
         forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
+
+        reportProgress(_progressReporter);
+        incrCounter(_treeBuildTaskCounter, 1);
 
         logger.info("Forwarded " + modelId + "-th RegressionTree out of " + _numTrees);
     }

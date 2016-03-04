@@ -39,6 +39,7 @@ import java.util.BitSet;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -58,6 +59,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Reporter;
 
 @Description(name = "train_gradient_tree_boosting_classifier",
         value = "_FUNC_(double[] features, int label [, string options]) - "
@@ -102,6 +105,11 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
     private long _seed;
     private Attribute[] _attributes;
     private ModelType _outputType;
+
+    @Nullable
+    private Reporter _progressReporter;
+    @Nullable
+    private Counter _iterationCounter;
 
     @Override
     protected Options getOptions() {
@@ -239,6 +247,11 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
+        this._progressReporter = getReportter();
+        this._iterationCounter = (_progressReporter == null) ? null : _progressReporter.getCounter(
+            "hivemall.smile.GradientTreeBoostingClassifier$Counter", "iteration");
+        reportProgress(_progressReporter);
+
         int numExamples = featuresList.size();
         double[][] x = featuresList.toArray(new double[numExamples][]);
         this.featuresList = null;
@@ -343,6 +356,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         final smile.math.Random rnd2 = new smile.math.Random(rnd1.nextLong());
 
         for (int m = 0; m < _numTrees; m++) {
+            reportProgress(_progressReporter);
+
             SmileExtUtils.shuffle(perm, rnd1);
             for (int i = 0; i < numSamples; i++) {
                 int index = perm[i];
@@ -447,6 +462,8 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
             int oobTests = 0, oobErrors = 0;
 
             for (int j = 0; j < k; j++) {
+                reportProgress(_progressReporter);
+
                 final double[] response_j = response[j];
                 final double[] p_j = p[j];
                 final double[] h_j = h[j];
@@ -527,6 +544,9 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
         forwardObjs[6] = new FloatWritable(oobErrorRate);
 
         forward(forwardObjs);
+
+        reportProgress(_progressReporter);
+        incrCounter(_iterationCounter, 1);
 
         logger.info("Forwarded the output of " + m + "-th Boosting iteration out of " + _numTrees);
     }
