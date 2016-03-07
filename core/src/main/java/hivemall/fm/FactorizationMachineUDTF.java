@@ -60,6 +60,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Reporter;
 
 @Description(
         name = "train_fm",
@@ -543,6 +545,10 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         final long numTrainingExamples = _t;
         final boolean adaregr = _va_rand != null;
 
+        final Reporter reporter = getReporter();
+        final Counter iterCounter = (reporter == null) ? null : reporter.getCounter(
+            "hivemall.fm.FactorizationMachines$Counter", "iteration");
+
         try {
             if (fileIO.getPosition() == 0L) {// run iterations w/o temporary file
                 if (inputBuf.position() == 0) {
@@ -552,6 +558,9 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
                 int i = 1;
                 for (; i < iterations; i++) {
+                    reportProgress(reporter);
+                    setCounterValue(iterCounter, i);
+
                     while (inputBuf.remaining() > 0) {
                         int bytes = inputBuf.getInt();
                         assert (bytes > 0) : bytes;
@@ -598,9 +607,12 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
                 // run iterations
                 int i = 1;
                 for (; i < iterations; i++) {
+                    setCounterValue(iterCounter, i);
+
                     inputBuf.clear();
                     fileIO.resetPosition();
                     while (true) {
+                        reportProgress(reporter);
                         // TODO prefetch
                         // writes training examples to a buffer in the temporary file
                         final int bytesRead;

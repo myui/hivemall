@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -60,6 +61,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Reporter;
 
 @Description(
         name = "train_randomforest_classifier",
@@ -97,6 +100,11 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     private Attribute[] _attributes;
     private ModelType _outputType;
     private SplitRule _splitRule;
+
+    @Nullable
+    private Reporter _progressReporter;
+    @Nullable
+    private Counter _treeBuildTaskCounter;
 
     @Override
     protected Options getOptions() {
@@ -227,8 +235,12 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        int numExamples = featuresList.size();
+        this._progressReporter = getReporter();
+        this._treeBuildTaskCounter = (_progressReporter == null) ? null : _progressReporter.getCounter(
+            "hivemall.smile.RandomForestClassifier$Counter", "finishedTreeBuildTasks");
+        reportProgress(_progressReporter);
 
+        int numExamples = featuresList.size();
         if (numExamples > 0) {
             double[][] x = featuresList.toArray(new double[numExamples][]);
             this.featuresList = null;
@@ -333,6 +345,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         forwardObjs[4] = new IntWritable(oobErrors);
         forwardObjs[5] = new IntWritable(oobTests);
         forward(forwardObjs);
+
+        reportProgress(_progressReporter);
+        incrCounter(_treeBuildTaskCounter, 1);
 
         logger.info("Forwarded " + modelId + "-th DecisionTree out of " + _numTrees);
     }
