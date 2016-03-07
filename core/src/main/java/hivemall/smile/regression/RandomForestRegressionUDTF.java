@@ -230,7 +230,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        this._progressReporter = getReportter();
+        this._progressReporter = getReporter();
         this._treeBuildTaskCounter = (_progressReporter == null) ? null
                 : _progressReporter.getCounter("hivemall.smile.RandomForestRegression$Counter",
                     "finishedTreeBuildTasks");

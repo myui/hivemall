@@ -247,7 +247,7 @@ public final class GradientTreeBoostingClassifierUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        this._progressReporter = getReportter();
+        this._progressReporter = getReporter();
         this._iterationCounter = (_progressReporter == null) ? null : _progressReporter.getCounter(
             "hivemall.smile.GradientTreeBoostingClassifier$Counter", "iteration");
         reportProgress(_progressReporter);

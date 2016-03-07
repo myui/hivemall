@@ -51,12 +51,12 @@ public abstract class UDTFWithOptions extends GenericUDTF {
     protected MapredContext mapredContext;
 
     @Override
-    public void configure(MapredContext mapredContext) {
+    public final void configure(MapredContext mapredContext) {
         this.mapredContext = mapredContext;
     }
 
     @Nullable
-    protected Reporter getReportter() {
+    protected final Reporter getReporter() {
         if (mapredContext == null) {
             return null;
         }

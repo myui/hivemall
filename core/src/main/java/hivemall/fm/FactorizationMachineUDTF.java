@@ -545,7 +545,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         final long numTrainingExamples = _t;
         final boolean adaregr = _va_rand != null;
 
-        final Reporter reporter = getReportter();
+        final Reporter reporter = getReporter();
         final Counter iterCounter = (reporter == null) ? null : reporter.getCounter(
             "hivemall.fm.FactorizationMachines$Counter", "iteration");
 
