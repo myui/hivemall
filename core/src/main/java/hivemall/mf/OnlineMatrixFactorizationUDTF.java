@@ -39,7 +39,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.ql.exec.MapredContextAccessor;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -473,11 +472,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
         final Reporter reporter = getReporter();
         final Counter iterCounter = (reporter == null) ? null : reporter.getCounter(
             "hivemall.mf.MatrixFactorization$Counter", "iteration");
-
-        logger.info("mapredContext: " + mapredContext + ", mapredContext: "
-                + MapredContextAccessor.get());
-        logger.info("Got a reporter: " + reporter);
-        logger.info("Got a counter: " + iterCounter);
 
         try {
             if (lastWritePos == 0) {// run iterations w/o temporary file
