@@ -27,6 +27,7 @@ import hivemall.smile.vm.StackMachine;
 import hivemall.utils.collections.DoubleArrayList;
 import hivemall.utils.compress.Base91;
 import hivemall.utils.compress.DeflateCodec;
+import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.io.IOUtils;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
@@ -104,6 +106,10 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     private Reporter _progressReporter;
     @Nullable
     private Counter _treeBuildTaskCounter;
+    @Nullable
+    private Counter _treeConstuctionTimeCounter;
+    @Nullable
+    private Counter _treeSerializationTimeCounter;
 
     @Override
     protected Options getOptions() {
@@ -233,7 +239,14 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         this._progressReporter = getReporter();
         this._treeBuildTaskCounter = (_progressReporter == null) ? null
                 : _progressReporter.getCounter("hivemall.smile.RandomForestRegression$Counter",
-                    "finishedTreeBuildTasks");
+                    "Number of finished tree construction tasks");
+        this._treeConstuctionTimeCounter = (_progressReporter == null) ? null
+                : _progressReporter.getCounter("hivemall.smile.RandomForestRegression$Counter",
+                    "Elapsed time in seconds for tree construction");
+        this._treeSerializationTimeCounter = (_progressReporter == null) ? null
+                : _progressReporter.getCounter("hivemall.smile.RandomForestRegression$Counter",
+                    "Elapsed time in seconds for tree serialization");
+
         reportProgress(_progressReporter);
 
         int numExamples = featuresList.size();
@@ -419,9 +432,11 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 sampled.set(index);
             }
 
+            StopWatch stopwatch = new StopWatch();
             RegressionTree tree = new RegressionTree(_attributes, _x, _y, _numVars,
                 _udtf._maxDepth, _udtf._maxLeafNodes, _udtf._minSamplesSplit,
                 _udtf._minSamplesLeaf, _order, bags, rnd2);
+            incrCounter(_udtf._treeConstuctionTimeCounter, stopwatch.elapsed(TimeUnit.SECONDS));
 
             // out-of-bag prediction
             for (int i = sampled.nextClearBit(0); i < N; i = sampled.nextClearBit(i + 1)) {
@@ -432,12 +447,14 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 }
             }
 
+            stopwatch.reset().start();
             Text model = getModel(tree, _udtf._outputType);
             double[] importance = tree.importance();
             tree = null; // help GC
             int remain = _remainingTasks.decrementAndGet();
             boolean lastTask = (remain == 0);
             _udtf.forward(_taskId + 1, model, importance, _y, _prediction, _oob, lastTask);
+            incrCounter(_udtf._treeSerializationTimeCounter, stopwatch.elapsed(TimeUnit.SECONDS));
 
             return Integer.valueOf(remain);
         }

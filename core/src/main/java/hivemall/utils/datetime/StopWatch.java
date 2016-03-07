@@ -18,6 +18,10 @@
  */
 package hivemall.utils.datetime;
 
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nonnull;
+
 /**
  * StopWatch provides a API for timings.
  */
@@ -63,27 +67,32 @@ public final class StopWatch {
         begin += (System.currentTimeMillis() - end);
     }
 
-    public void reset() {
+    public StopWatch reset() {
         begin = 0;
         end = 0;
+        return this;
     }
 
     public long elapsed() {
-        if(end != 0) {
+        if (end != 0) {
             return end - begin;
         } else {
             return System.currentTimeMillis() - begin;
         }
     }
 
+    public long elapsed(@Nonnull TimeUnit unit) {
+        return unit.convert(elapsed(), TimeUnit.MILLISECONDS);
+    }
+
     @Override
     public String toString() {
         final StringBuilder buf = new StringBuilder();
-        if(label != null) {
+        if (label != null) {
             buf.append(label + ": ");
         }
         long t = elapsed();
-        if(showInSec) {
+        if (showInSec) {
             buf.append(DateTimeFormatter.formatTimeInSec(t));
             buf.append("sec");
         } else {
