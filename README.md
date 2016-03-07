@@ -160,5 +160,3 @@ Acknowledgment
 --------------
 
 This work was supported in part by a JSPS grant-in-aid for young scientists (B) #24700111 and a JSPS grant-in-aid for scientific research (A) #24240015.
-
-[![Analytics](https://ga-beacon.appspot.com/UA-104966-13/myui/hivemall)](https://github.com/myui/hivemall)
