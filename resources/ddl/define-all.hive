@@ -297,6 +297,9 @@ create temporary function quantified_features as 'hivemall.ftvec.trans.Quantifie
 drop temporary function quantitative_features;
 create temporary function quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeaturesUDF';
 
+drop temporary function binarize_label;
+create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
