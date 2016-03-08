@@ -486,8 +486,10 @@ public class RegressionTree implements Regression<double[]> {
                 // smile.math.Math uses a static object of random number generator.
                 SmileExtUtils.shuffle(variables, _rnd);
             }
+
+            final int[] samples = SmileExtUtils.bagsToSamples(bags, x.length);
             for (int j = 0; j < _numVars; j++) {
-                Node split = findBestSplit(numSamples, sum, variables[j]);
+                Node split = findBestSplit(numSamples, sum, variables[j], samples);
                 if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
                     node.splitFeatureType = split.splitFeatureType;
@@ -509,9 +511,8 @@ public class RegressionTree implements Regression<double[]> {
          * @param impurity the impurity of this node.
          * @param j the attribute to split on.
          */
-        private Node findBestSplit(final int n, final double sum, final int j) {
+        private Node findBestSplit(final int n, final double sum, final int j, final int[] samples) {
             final int N = x.length;
-            final int[] samples = SmileExtUtils.bagsToSamples(bags, N);
 
             final Node split = new Node(0.d);
             if (_attributes[j].type == AttributeType.NOMINAL) {

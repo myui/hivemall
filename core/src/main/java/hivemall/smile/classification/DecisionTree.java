@@ -123,6 +123,7 @@ public class DecisionTree implements Classifier<double[]> {
      * The attributes of independent variable.
      */
     private final Attribute[] _attributes;
+    private final boolean _hasNumericType;
     /**
      * Variable importance. Every time a split of a node is made on variable the (GINI, information
      * gain, etc.) impurity criterion for the two descendant nodes is less than the parent node.
@@ -493,10 +494,12 @@ public class DecisionTree implements Classifier<double[]> {
                 SmileExtUtils.shuffle(variableIndex, _rnd);
             }
 
+            final int[] samples = _hasNumericType ? SmileExtUtils.bagsToSamples(bags, x.length)
+                    : null;
             final int[] falseCount = new int[_k];
             for (int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(numSamples, count, falseCount, impurity,
-                    variableIndex[j]);
+                    variableIndex[j], samples);
                 if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
                     node.splitFeatureType = split.splitFeatureType;
@@ -520,7 +523,7 @@ public class DecisionTree implements Classifier<double[]> {
          * @param j the attribute index to split on.
          */
         private Node findBestSplit(final int n, final int[] count, final int[] falseCount,
-                final double impurity, final int j) {
+                final double impurity, final int j, @Nullable final int[] samples) {
             final Node splitNode = new Node();
 
             if (_attributes[j].type == AttributeType.NOMINAL) {
@@ -565,7 +568,7 @@ public class DecisionTree implements Classifier<double[]> {
                 double prevx = Double.NaN;
                 int prevy = -1;
 
-                final int[] samples = SmileExtUtils.bagsToSamples(bags, x.length);
+                assert (samples != null);
                 for (final int i : _order[j]) {
                     final int sample = samples[i];
                     if (sample > 0) {
@@ -804,6 +807,7 @@ public class DecisionTree implements Classifier<double[]> {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
+        this._hasNumericType = SmileExtUtils.containsNumericType(_attributes);
 
         this._numVars = numVars;
         this._maxDepth = maxDepth;
