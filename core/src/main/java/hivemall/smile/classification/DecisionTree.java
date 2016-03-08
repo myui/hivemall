@@ -493,10 +493,12 @@ public class DecisionTree implements Classifier<double[]> {
                 SmileExtUtils.shuffle(variableIndex, _rnd);
             }
 
+            final int[] samples = SmileExtUtils.containsNumericType(_attributes) ? SmileExtUtils.bagsToSamples(
+                bags, x.length) : null;
             final int[] falseCount = new int[_k];
             for (int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(numSamples, count, falseCount, impurity,
-                    variableIndex[j]);
+                    variableIndex[j], samples);
                 if (split.splitScore > node.splitScore) {
                     node.splitFeature = split.splitFeature;
                     node.splitFeatureType = split.splitFeatureType;
@@ -520,7 +522,7 @@ public class DecisionTree implements Classifier<double[]> {
          * @param j the attribute index to split on.
          */
         private Node findBestSplit(final int n, final int[] count, final int[] falseCount,
-                final double impurity, final int j) {
+                final double impurity, final int j, @Nullable final int[] samples) {
             final Node splitNode = new Node();
 
             if (_attributes[j].type == AttributeType.NOMINAL) {
@@ -565,7 +567,7 @@ public class DecisionTree implements Classifier<double[]> {
                 double prevx = Double.NaN;
                 int prevy = -1;
 
-                final int[] samples = SmileExtUtils.bagsToSamples(bags, x.length);
+                assert (samples != null);
                 for (final int i : _order[j]) {
                     final int sample = samples[i];
                     if (sample > 0) {

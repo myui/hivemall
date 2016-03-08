@@ -266,4 +266,13 @@ public final class SmileExtUtils {
         return samples;
     }
 
+    public static boolean containsNumericType(@Nonnull final Attribute[] attributes) {
+        for (Attribute attr : attributes) {
+            if (attr.type == AttributeType.NUMERIC) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
