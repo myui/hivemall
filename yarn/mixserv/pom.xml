@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>io.github.myui</groupId>
+		<artifactId>hivemall-yarn</artifactId>
+		<version>0.4.1-alpha.2</version>
+	</parent>
+	<artifactId>hivemall-yarn-mixserv</artifactId>
+	<name>Hivemall Mix Server on Yarn</name>
+	<packaging>jar</packaging>
+
+	<properties>
+		<guice.version>3.0</guice.version>
+		<jetty.version>9.2.15.v20160210</jetty.version>
+		<jersey.version>1.9</jersey.version>
+	</properties>
+
+	<dependencies>
+		<!-- provided scope -->
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-yarn-api</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- compile scope -->
+		<dependency>
+			<groupId>io.github.myui</groupId>
+			<artifactId>yarnkit-appmaster</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+        <dependency>
+            <groupId>io.github.myui</groupId>
+            <artifactId>hivemall-mixserv-api</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-server</artifactId>
+			<version>${jetty.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<version>${jetty.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey.contribs</groupId>
+			<artifactId>jersey-guice</artifactId>
+			<version>${jersey.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-json</artifactId>
+			<version>${jersey.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-servlet</artifactId>
+			<version>${guice.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- test scope -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+</project>

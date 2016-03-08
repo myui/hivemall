@@ -22,6 +22,12 @@ import static yarnkit.config.YarnkitFields.KEY_APP_CONFIG_FILENAME;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.annotation.Nonnull;
 
@@ -37,11 +43,17 @@ import yarnkit.YarnkitException;
 import yarnkit.config.YarnkitConfig;
 import yarnkit.config.hocon.HoconConfigLoader;
 
-public final class ApplicationMaster extends Configured implements Tool {
+public class ApplicationMaster extends Configured implements Tool {
     private static final Log LOG = LogFactory.getLog(ApplicationMaster.class);
 
-    private ApplicationMaster() {
+    protected ApplicationMaster() {
         super();
+    }
+
+    @Nonnull
+    protected List<Runnable> getAuxiliaryServices(@Nonnull YarnkitConfig appConf,
+            @Nonnull Configuration jobConf) {
+        return Collections.emptyList();
     }
 
     @Override
@@ -49,14 +61,22 @@ public final class ApplicationMaster extends Configured implements Tool {
         Configuration jobConf = getConf();
 
         YarnkitConfig appConf = getApplicationConfigFile(jobConf);
-        ApplicationMasterParameters params = new ApplicationMasterParametersImpl(appConf, jobConf);
-        ApplicationMasterService service = new ApplicationMasterService(params);
+        ApplicationMasterParameters params = getApplicationMasterParameters(appConf, jobConf);
+        ApplicationMasterService appmaster = new ApplicationMasterService(params);
 
-        service.startAndWait();
-        while (service.hasRunningContainers()) {
+        // First, start auxiliary service
+        List<Future<?>> services = runAuxiliaryServices(appConf, jobConf);
+        // Then, launch ApplicationMaster
+        appmaster.startAndWait();
+
+        while (appmaster.hasRunningContainers()) {
             Thread.sleep(1000);
         }
-        service.stopAndWait();
+
+        for (Future<?> f : services) {
+            f.cancel(true);
+        }
+        appmaster.stopAndWait();
         return 0;
     }
 
@@ -75,6 +95,30 @@ public final class ApplicationMaster extends Configured implements Tool {
         }
         FileInputStream is = new FileInputStream(file);
         return HoconConfigLoader.load(is);
+    }
+
+    @Nonnull
+    protected ApplicationMasterParameters getApplicationMasterParameters(
+            @Nonnull YarnkitConfig appConf, @Nonnull Configuration jobConf) {
+        return new ApplicationMasterParametersImpl(appConf, jobConf);
+    }
+
+    @Nonnull
+    private List<Future<?>> runAuxiliaryServices(@Nonnull YarnkitConfig appConf,
+            @Nonnull Configuration jobConf) {
+        List<Runnable> runnables = getAuxiliaryServices(appConf, jobConf);
+        if (runnables.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        int size = runnables.size();
+        ExecutorService execServ = Executors.newFixedThreadPool(size);
+        List<Future<?>> futures = new ArrayList<Future<?>>(size);
+        for (Runnable task : runnables) {
+            Future<?> f = execServ.submit(task);
+            futures.add(f);
+        }
+        return futures;
     }
 
     public static void main(String[] args) throws Exception {

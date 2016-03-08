@@ -25,6 +25,7 @@ import static yarnkit.config.YarnkitFields.TAG_VISIBILITY;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +56,8 @@ public final class HoconConfig implements YarnkitConfig {
     private static final Log LOG = LogFactory.getLog(HoconConfig.class);
 
     @Nonnull
+    private final Map<String, String> env;
+    @Nonnull
     private final Config rootConf;
     @Nonnull
     private final Config conf;
@@ -64,13 +67,35 @@ public final class HoconConfig implements YarnkitConfig {
     }
 
     private HoconConfig(@Nonnull Config rootConf, @Nonnull Config conf) {
+        this.env = new HashMap<String, String>();
+        this.rootConf = rootConf;
+        this.conf = conf;
+    }
+
+    private HoconConfig(@Nonnull Map<String, String> env, @Nonnull Config rootConf) {
+        this(env, rootConf, rootConf);
+    }
+
+    private HoconConfig(@Nonnull Map<String, String> env, @Nonnull Config rootConf,
+            @Nonnull Config conf) {
+        this.env = env;
         this.rootConf = rootConf;
         this.conf = conf;
     }
 
     @Override
+    public void setEnv(String key, String value) {
+        env.put(key, value);
+    }
+
+    @Override
+    public Map<String, String> getEnv() {
+        return env;
+    }
+
+    @Override
     public YarnkitConfig getRoot() {
-        return new HoconConfig(rootConf);
+        return new HoconConfig(env, rootConf);
     }
 
     @Override
@@ -91,15 +116,13 @@ public final class HoconConfig implements YarnkitConfig {
         return file;
     }
 
-
-
     @Override
     public YarnkitConfig getConfig(@Nonnull String path) {
         if (!conf.hasPath(path)) {
             throw new IllegalArgumentException(path + "does not found in " + conf);
         }
         Config newConf = conf.getConfig(path);
-        return new HoconConfig(rootConf, newConf);
+        return new HoconConfig(env, rootConf, newConf);
     }
 
     @Override

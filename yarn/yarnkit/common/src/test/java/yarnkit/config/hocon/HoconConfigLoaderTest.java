@@ -32,5 +32,11 @@ public class HoconConfigLoaderTest {
         YarnkitConfig containerConfig = rootConfig.getConfig("application.container");
         Assert.assertNotNull(containerConfig.getRoot().getConfig("application.appmaster"));
     }
+    
+    @Test
+    public void testDefault() throws IOException {
+        YarnkitConfig rootConfig = HoconConfigLoader.load("yarnkit/default.conf");
+        System.out.println(rootConfig);
+    }
 
 }

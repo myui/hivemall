@@ -18,6 +18,7 @@
 package yarnkit.client;
 
 import static yarnkit.config.YarnkitFields.OPT_APPMASTER_JAR;
+import static yarnkit.config.YarnkitFields.PATH_APPMASTER_CLASS;
 import static yarnkit.config.YarnkitFields.YARNKIT_APPMASTER_CLASS;
 
 import javax.annotation.Nonnull;
@@ -59,21 +60,27 @@ public final class YarnkitClient extends Configured implements Tool {
         }
 
         String scriptPath = Preconditions.checkNotNull(args[0]);
-        YarnkitConfig config = HoconConfigLoader.load(scriptPath);
+        YarnkitConfig appConf = HoconConfigLoader.load(scriptPath);
         Configuration jobConf = getConf();
-        configureAppmasterJar(jobConf);
-        YarnClientParameters params = new YarnClientParametersImpl(config, jobConf);
+        configureAppmasterJar(appConf, jobConf);
+        YarnClientParameters params = new YarnClientParametersImpl(appConf, jobConf);
 
         YarnClientService service = new YarnClientService(params);
         return handle(service);
     }
 
     @Nonnull
-    private void configureAppmasterJar(@Nonnull Configuration jobConf) throws YarnkitException {
-        String jarPath = YarnUtils.findJar(YARNKIT_APPMASTER_CLASS, getClass().getClassLoader());
+    private void configureAppmasterJar(@Nonnull YarnkitConfig appConf,
+            @Nonnull Configuration jobConf) throws YarnkitException {
+        if (jobConf.get(OPT_APPMASTER_JAR) != null) {
+            return;
+        }
+
+        String appmasterClass = appConf.getString(PATH_APPMASTER_CLASS, YARNKIT_APPMASTER_CLASS);
+        String jarPath = YarnUtils.findJar(appmasterClass, getClass().getClassLoader());
         if (jarPath != null) {
             LOG.info("Adding " + jarPath + " to LocalResource");
-            jobConf.setIfUnset(OPT_APPMASTER_JAR, jarPath);
+            jobConf.set(OPT_APPMASTER_JAR, jarPath);
         }
     }
 
@@ -96,7 +103,7 @@ public final class YarnkitClient extends Configured implements Tool {
                         LOG.info("Application is running, but did not specify a tracking URL");
                         trackingUrl = "";
                     } else {
-                        LOG.info("Master Tracking URL = " + trackingUrl);
+                        LOG.info("Master Tracking URL: " + trackingUrl);
                     }
                 }
             }

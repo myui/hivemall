@@ -24,8 +24,8 @@ import static yarnkit.config.YarnkitFields.PATH_APPMASTER_CONTAINER_RESOURCES;
 import static yarnkit.config.YarnkitFields.PATH_APPMASTER_JAR;
 import static yarnkit.config.YarnkitFields.PATH_CONTAINER_JAR;
 import static yarnkit.config.YarnkitFields.PATH_CONTAINER_RESOURCES;
-import static yarnkit.config.YarnkitFields.TAG_ENV;
 import static yarnkit.config.YarnkitFields.YARNKIT_APPMASTER_CLASS;
+import static yarnkit.config.YarnkitFields.YARN_APPLICATION_ID;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,10 +62,17 @@ public final class AppmasterContainerLaunchParameters extends AbstractContainerL
     }
 
     @Override
+    public Map<String, String> getEnvironment() {
+        Map<String, String> env = super.getEnvironment();
+        env.put(YARN_APPLICATION_ID, applicationId.toString());
+        return env;
+    }
+
+    @Override
     public List<String> getCommands() {
         /* @formatter:off */
         String cmd = Environment.JAVA_HOME.$() + "/bin/java" +
-                " -server -Xmx256M" +
+                " -server -Xmx512M" +
                 " -Dlog4j.configuration=yarnkit/log4j.properties" +
                 " " + YARNKIT_APPMASTER_CLASS +
                 " -D " + KEY_APP_CONFIG_FILENAME + "=" + APP_CONFIG_FILENAME +
@@ -73,14 +80,6 @@ public final class AppmasterContainerLaunchParameters extends AbstractContainerL
                 " 2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr";
         /* @formatter:on */
         return Collections.singletonList(cmd);
-    }
-
-    @Override
-    public Map<String, String> getEnvironment() {
-        Map<String, String> env = Maps.newHashMap();
-        YarnUtils.setupAppMasterEnv(env, jobConf);
-        config.loadProperties(TAG_ENV, env);
-        return env;
     }
 
     @Override
@@ -106,7 +105,8 @@ public final class AppmasterContainerLaunchParameters extends AbstractContainerL
         if (rootConfig.hasPath(PATH_CONTAINER_JAR)) {
             String containerJarPath = rootConfig.getString(PATH_CONTAINER_JAR);
             if (!containerJarPath.equals(appmasterJarPath)) {
-                YarnUtils.mapLocalResourceToHDFS(fs, containerJarPath, appHdfsDir, containerResourceMapping);
+                YarnUtils.mapLocalResourceToHDFS(fs, containerJarPath, appHdfsDir,
+                    containerResourceMapping);
             }
         }
 

@@ -17,6 +17,7 @@
  */
 package yarnkit.config.hocon;
 
+import static yarnkit.config.YarnkitFields.PATH_APPLICATION;
 import static yarnkit.config.YarnkitFields.PATH_APPMASTER_CONTAINER_RESOURCES;
 import static yarnkit.config.YarnkitFields.PATH_CONTAINER_RESOURCES;
 import static yarnkit.config.YarnkitFields.TAG_FILE;
@@ -67,7 +68,7 @@ public final class HoconConfigLoader {
 
     private static void validateConfig(@Nonnull Config conf) {
         Config reference = ConfigFactory.parseResources("yarnkit/reference.conf");
-        conf.checkValid(reference);
+        conf.checkValid(reference, PATH_APPLICATION);
 
         for (Config cfg : conf.getConfigList(PATH_APPMASTER_CONTAINER_RESOURCES)) {
             validateResource(cfg);

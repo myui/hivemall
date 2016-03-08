@@ -41,6 +41,9 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.util.Records;
 
 import yarnkit.config.YarnkitConfig;
+import yarnkit.utils.YarnUtils;
+
+import com.google.common.collect.Maps;
 
 public abstract class AbstractContainerLaunchParameters implements ContainerLaunchParameters {
 
@@ -133,7 +136,11 @@ public abstract class AbstractContainerLaunchParameters implements ContainerLaun
 
     @Override
     public Map<String, String> getEnvironment() {
-        return config.getProperties(TAG_ENV);
+        Map<String, String> env = Maps.newHashMap();
+        YarnUtils.configureClasspath(env, jobConf);
+        config.loadProperties(TAG_ENV, env);
+        env.putAll(config.getEnv());
+        return env;
     }
 
     @Override

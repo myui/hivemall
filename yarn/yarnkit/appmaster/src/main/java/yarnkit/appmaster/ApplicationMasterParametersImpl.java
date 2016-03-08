@@ -36,12 +36,12 @@ import yarnkit.config.YarnkitConfig;
 import yarnkit.container.ApplicationContainerLaunchParameters;
 import yarnkit.container.ContainerLaunchParameters;
 
-public final class ApplicationMasterParametersImpl implements ApplicationMasterParameters {
+public class ApplicationMasterParametersImpl implements ApplicationMasterParameters {
 
     @Nonnull
-    private final YarnkitConfig config;
+    protected final YarnkitConfig config;
     @Nonnull
-    private final Configuration jobConf;
+    protected final Configuration jobConf;
 
     public ApplicationMasterParametersImpl(@Nonnull YarnkitConfig config,
             @Nonnull Configuration jobConf) {

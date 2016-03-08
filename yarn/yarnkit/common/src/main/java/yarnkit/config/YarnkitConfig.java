@@ -31,6 +31,11 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 
 public interface YarnkitConfig {
 
+    public void setEnv(@Nonnull String key, @Nonnull String value);
+
+    @Nonnull
+    public Map<String, String> getEnv();
+
     @Nonnull
     public YarnkitConfig getRoot();
 

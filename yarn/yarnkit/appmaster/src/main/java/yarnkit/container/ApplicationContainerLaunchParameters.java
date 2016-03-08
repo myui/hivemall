@@ -18,6 +18,7 @@
 package yarnkit.container;
 
 import static yarnkit.config.YarnkitFields.PATH_APP_RESOURCE_MAPPING;
+import static yarnkit.config.YarnkitFields.YARN_APPLICATION_ID;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -32,7 +33,7 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 import yarnkit.config.YarnkitConfig;
 import yarnkit.utils.YarnUtils;
 
-public final class ApplicationContainerLaunchParameters extends AbstractContainerLaunchParameters {
+public class ApplicationContainerLaunchParameters extends AbstractContainerLaunchParameters {
 
     public ApplicationContainerLaunchParameters(@Nonnull YarnkitConfig conf,
             @Nonnull Configuration jobConf) {
@@ -40,13 +41,21 @@ public final class ApplicationContainerLaunchParameters extends AbstractContaine
     }
 
     @Override
+    public Map<String, String> getEnvironment() {
+        Map<String, String> env = super.getEnvironment();
+        String appId = System.getenv(YARN_APPLICATION_ID);
+        if (appId != null) {
+            env.put(YARN_APPLICATION_ID, appId);
+        }
+        return env;
+    }
+
+    @Override
     public Map<String, LocalResource> getLocalResources() throws IOException {
         YarnkitConfig rootConfig = config.getRoot();
-
         if (!rootConfig.hasPath(PATH_APP_RESOURCE_MAPPING)) {
             return Collections.emptyMap();
         }
-
         Map<String, String> mapping = rootConfig.getProperties(PATH_APP_RESOURCE_MAPPING);
         if (mapping.isEmpty()) {
             return Collections.emptyMap();

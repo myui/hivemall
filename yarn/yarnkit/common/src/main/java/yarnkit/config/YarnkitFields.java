@@ -18,6 +18,8 @@
 package yarnkit.config;
 
 public final class YarnkitFields {
+    
+    public static final String YARN_APPLICATION_ID = "YARN_APPLICATION_ID";
 
     public static final String KEY_APP_CONFIG_FILENAME = "appconf";
     public static final String APP_CONFIG_FILENAME = "application.conf";
@@ -43,6 +45,7 @@ public final class YarnkitFields {
             + ".allowed_failures";
     public static final String PATH_APPMASTER_CONF = PATH_APPMASTER + ".conf";
     public static final String PATH_APPMASTER_JAR = PATH_APPMASTER + ".jar";
+    public static final String PATH_APPMASTER_CLASS = PATH_APPMASTER + ".class";
 
     // application.appmaster.container
     // application.container
@@ -72,7 +75,6 @@ public final class YarnkitFields {
     // application.appmaster.container.commands
     // application.container.commands
     public static final String TAG_COMMAND = "command";
-    public static final String TAG_ARGS = "args";
     public static final String TAG_ENV = "env";
 
     // application.appmaster.container.resurces

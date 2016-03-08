@@ -11,7 +11,7 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>yarnkit</module>
-		<module>applications</module>
+		<module>mixserv</module>
 	</modules>
 
 	<dependencies>

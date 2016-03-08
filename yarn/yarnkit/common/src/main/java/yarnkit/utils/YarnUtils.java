@@ -58,7 +58,12 @@ public final class YarnUtils {
 
     public static Path createApplicationTempDir(@Nonnull FileSystem fs, @Nonnull ApplicationId appId)
             throws IOException {
-        Path dir = new Path(fs.getHomeDirectory(), appId.toString());
+        return createApplicationTempDir(fs, appId.toString());
+    }
+
+    public static Path createApplicationTempDir(@Nonnull FileSystem fs, @Nonnull String appId)
+            throws IOException {
+        Path dir = new Path(fs.getHomeDirectory(), appId);
         if (!fs.exists(dir)) {
             fs.mkdirs(dir);
             fs.deleteOnExit(dir);
@@ -137,7 +142,7 @@ public final class YarnUtils {
         }
     }
 
-    public static void setupAppMasterEnv(@Nonnull final Map<String, String> env,
+    public static void configureClasspath(@Nonnull final Map<String, String> env,
             @Nonnull final Configuration conf) {
         for (String c : conf.getStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
             YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH)) {
@@ -146,6 +151,13 @@ public final class YarnUtils {
         }
         Apps.addToEnvironment(env, ApplicationConstants.Environment.CLASSPATH.name(),
             ApplicationConstants.Environment.PWD.$() + File.separator + "*", ":");
+    }
+
+    @Nullable
+    public static String findJar(Class<?> klass) {
+        String className = klass.getName();
+        ClassLoader cl = klass.getClassLoader();
+        return findJar(className, cl);
     }
 
     /**
@@ -208,7 +220,7 @@ public final class YarnUtils {
             return Collections.emptyMap();
         }
         final Map<String, LocalResource> converted = new HashMap<String, LocalResource>(
-            mapping.size());
+            mapping.size() * 2);
         for (Map.Entry<String, String> e : mapping.entrySet()) {
             String name = e.getKey();
             String value = e.getValue();
