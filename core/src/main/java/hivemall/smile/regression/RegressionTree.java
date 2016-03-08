@@ -111,6 +111,7 @@ public class RegressionTree implements Regression<double[]> {
      * The attributes of independent variable.
      */
     private final Attribute[] _attributes;
+    private final boolean _hasNumericType;
     /**
      * Variable importance. Every time a split of a node is made on variable the impurity criterion
      * for the two descendant nodes is less than the parent node. Adding up the decreases for each
@@ -487,7 +488,8 @@ public class RegressionTree implements Regression<double[]> {
                 SmileExtUtils.shuffle(variables, _rnd);
             }
 
-            final int[] samples = SmileExtUtils.bagsToSamples(bags, x.length);
+            final int[] samples = _hasNumericType ? SmileExtUtils.bagsToSamples(bags, x.length)
+                    : null;
             for (int j = 0; j < _numVars; j++) {
                 Node split = findBestSplit(numSamples, sum, variables[j], samples);
                 if (split.splitScore > node.splitScore) {
@@ -511,26 +513,22 @@ public class RegressionTree implements Regression<double[]> {
          * @param impurity the impurity of this node.
          * @param j the attribute to split on.
          */
-        private Node findBestSplit(final int n, final double sum, final int j, final int[] samples) {
-            final int N = x.length;
-
+        private Node findBestSplit(final int n, final double sum, final int j,
+                @Nullable final int[] samples) {
             final Node split = new Node(0.d);
             if (_attributes[j].type == AttributeType.NOMINAL) {
                 final int m = _attributes[j].getSize();
                 final double[] trueSum = new double[m];
                 final int[] trueCount = new int[m];
 
-                for (int i = 0; i < N; i++) {
-                    if (samples[i] > 0) {
-                        double target = samples[i] * y[i];
-
-                        // For each true feature of this datum increment the
-                        // sufficient statistics for the "true" branch to evaluate
-                        // splitting on this feature.
-                        int index = (int) x[i][j];
-                        trueSum[index] += target;
-                        trueCount[index] += samples[i];
-                    }
+                for (int b = 0, size = bags.length; b < size; b++) {
+                    int i = bags[b];
+                    // For each true feature of this datum increment the
+                    // sufficient statistics for the "true" branch to evaluate
+                    // splitting on this feature.
+                    int index = (int) x[i][j];
+                    trueSum[index] += y[i];
+                    ++trueCount[index];
                 }
 
                 for (int k = 0; k < m; k++) {
@@ -564,11 +562,12 @@ public class RegressionTree implements Regression<double[]> {
                 double prevx = Double.NaN;
 
                 for (int i : _order[j]) {
-                    if (samples[i] > 0) {
+                    final int sample = samples[i];
+                    if (sample > 0) {
                         if (Double.isNaN(prevx) || x[i][j] == prevx) {
                             prevx = x[i][j];
-                            trueSum += samples[i] * y[i];
-                            trueCount += samples[i];
+                            trueSum += sample * y[i];
+                            trueCount += sample;
                             continue;
                         }
 
@@ -577,8 +576,8 @@ public class RegressionTree implements Regression<double[]> {
                         // If either side is empty, skip this feature.
                         if (trueCount < _minSplit || falseCount < _minSplit) {
                             prevx = x[i][j];
-                            trueSum += samples[i] * y[i];
-                            trueCount += samples[i];
+                            trueSum += sample * y[i];
+                            trueCount += sample;
                             continue;
                         }
 
@@ -603,8 +602,8 @@ public class RegressionTree implements Regression<double[]> {
                         }
 
                         prevx = x[i][j];
-                        trueSum += samples[i] * y[i];
-                        trueCount += samples[i];
+                        trueSum += sample * y[i];
+                        trueCount += sample;
                     }
                 }
             } else {
@@ -754,6 +753,7 @@ public class RegressionTree implements Regression<double[]> {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
+        this._hasNumericType = SmileExtUtils.containsNumericType(_attributes);
 
         this._numVars = numVars;
         this._maxDepth = maxDepth;
