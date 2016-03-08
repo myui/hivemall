@@ -27,7 +27,8 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "r2", value = "_FUNC_(predicted, actual) - Return R Squared (coefficient of determination)")
+@Description(name = "r2",
+        value = "_FUNC_(predicted, actual) - Return R Squared (coefficient of determination)")
 public final class R2UDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
@@ -43,10 +44,10 @@ public final class R2UDAF extends UDAF {
 
         public boolean iterate(DoubleWritable predicted, DoubleWritable actual)
                 throws HiveException {
-            if(predicted == null || actual == null) {// skip
+            if (predicted == null || actual == null) {// skip
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.iterate(predicted.get(), actual.get());
@@ -58,10 +59,10 @@ public final class R2UDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) throws HiveException {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.merge(other);
@@ -69,7 +70,7 @@ public final class R2UDAF extends UDAF {
         }
 
         public double terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return 0.d;
             }
             return partial.getR2();
@@ -84,9 +85,9 @@ public final class R2UDAF extends UDAF {
         long count;
 
         PartialResult() {
-            this.residual_sum_of_squares = 0d;
+            this.residual_sum_of_squares = 0.d;
             this.actuals = new ArrayList<Double>();
-            this.sum_actuals=0d;
+            this.sum_actuals = 0.d;
             this.count = 0L;
         }
 
@@ -105,13 +106,17 @@ public final class R2UDAF extends UDAF {
         }
 
         double getR2() {
-        	double avg_actuals = this.sum_actuals/this.count;
-        	double total_sum_of_squares = 0d;
-        	
-        	for (Double a : actuals) {
-        		total_sum_of_squares += Math.pow(a-avg_actuals, 2.d);
-			}
-            return 1 - this.residual_sum_of_squares/total_sum_of_squares;
+            double avg_actuals = this.sum_actuals / this.count;
+            double total_sum_of_squares = 0.d;
+
+            for (Double a : actuals) {
+                total_sum_of_squares += Math.pow(a - avg_actuals, 2.d);
+            }
+
+            if (total_sum_of_squares == 0.d) {
+                return 1.d;
+            }
+            return 1.d - this.residual_sum_of_squares / total_sum_of_squares;
         }
 
     }
