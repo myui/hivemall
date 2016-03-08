@@ -544,6 +544,10 @@ CREATE FUNCTION mse as 'hivemall.evaluation.MeanSquaredErrorUDAF' USING JAR '${h
 DROP FUNCTION IF EXISTS rmse;
 CREATE FUNCTION rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS r2;
+CREATE FUNCTION r2 as 'hivemall.evaluation.R2UDAF' USING JAR '${hivemall_jar}';
+
+
 --------------------------
 -- Matrix Factorization --
 --------------------------
