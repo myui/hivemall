@@ -29,37 +29,39 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 
-@Description(name = "rf_ensemble", value = "_FUNC_(int y) - Returns emsebled prediction results of Random Forest classifiers")
+@Description(name = "rf_ensemble",
+        value = "_FUNC_(int y) - Returns emsebled prediction results of Random Forest classifiers")
 public final class RandomForestEnsembleUDAF extends UDAF {
 
     public static class RandomForestPredictUDAFEvaluator implements UDAFEvaluator {
 
         private Counter<Integer> partial;
 
+        @Override
         public void init() {
             this.partial = null;
         }
 
         public boolean iterate(Integer k) {
-            if(k == null) {
+            if (k == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new Counter<Integer>();
             }
             partial.increment(k);
             return true;
         }
 
-        /**
-         * @see https://cwiki.apache.org/confluence/display/Hive/GenericUDAFCaseStudy#GenericUDAFCaseStudy-terminatePartial
+        /*
+         * https://cwiki.apache.org/confluence/display/Hive/GenericUDAFCaseStudy#GenericUDAFCaseStudy-terminatePartial
          */
         public Map<Integer, Integer> terminatePartial() {
-            if(partial == null) {
+            if (partial == null) {
                 return null;
             }
 
-            if(partial.size() == 0) {
+            if (partial.size() == 0) {
                 return null;
             } else {
                 return partial.getMap(); // CAN NOT return Counter here
@@ -67,23 +69,22 @@ public final class RandomForestEnsembleUDAF extends UDAF {
         }
 
         public boolean merge(Map<Integer, Integer> o) {
-            if(o == null) {
+            if (o == null) {
                 return true;
             }
 
-            if(partial == null) {
-                this.partial = new Counter<Integer>(o);
-            } else {
-                partial.addAll(o);
+            if (partial == null) {
+                this.partial = new Counter<Integer>();
             }
+            partial.addAll(o);
             return true;
         }
 
         public Result terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null;
             }
-            if(partial.size() == 0) {
+            if (partial.size() == 0) {
                 return null;
             }
 
@@ -108,12 +109,12 @@ public final class RandomForestEnsembleUDAF extends UDAF {
             long totalCnt = 0L;
             Integer maxKey = null;
             int maxCnt = Integer.MIN_VALUE;
-            for(Map.Entry<Integer, Integer> e : counts.entrySet()) {
+            for (Map.Entry<Integer, Integer> e : counts.entrySet()) {
                 Integer key = e.getKey();
                 keyList.add(key);
                 int cnt = e.getValue().intValue();
                 totalCnt += cnt;
-                if(cnt >= maxCnt) {
+                if (cnt >= maxCnt) {
                     maxCnt = cnt;
                     maxKey = key;
                 }
@@ -125,9 +126,9 @@ public final class RandomForestEnsembleUDAF extends UDAF {
 
             double totalCnt_d = (double) totalCnt;
             final Double[] probabilities = new Double[Math.max(2, last + 1)];
-            for(int i = 0, len = probabilities.length; i < len; i++) {
+            for (int i = 0, len = probabilities.length; i < len; i++) {
                 final Integer cnt = counts.get(Integer.valueOf(i));
-                if(cnt == null) {
+                if (cnt == null) {
                     probabilities[i] = Double.valueOf(0d);
                 } else {
                     probabilities[i] = Double.valueOf(cnt.intValue() / totalCnt_d);
