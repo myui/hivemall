@@ -20,7 +20,7 @@ package hivemall;
 
 public final class HivemallConstants {
 
-    public static final String VERSION = "0.4.1-alpha.5";
+    public static final String VERSION = "0.4.1-alpha.6";
 
     public static final String BIAS_CLAUSE = "0";
     public static final String CONFKEY_RAND_AMPLIFY_SEED = "hivemall.amplify.seed";

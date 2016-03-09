@@ -4,7 +4,7 @@
 
 	<groupId>io.github.myui</groupId>
 	<artifactId>hivemall</artifactId>
-	<version>0.4.1-alpha.5</version>
+	<version>0.4.1-alpha.6</version>
 
 	<name>Hivemall</name>
 	<description>Scalable Machine Learning Library for Apache Hive</description>
