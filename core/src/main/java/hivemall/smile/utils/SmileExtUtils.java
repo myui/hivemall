@@ -76,6 +76,9 @@ public final class SmileExtUtils {
             for (int j = 0; j < size; j++) {
                 Attribute attr = attributes[j];
                 if (attr.type == AttributeType.NOMINAL) {
+                    if (attr.getSize() != -1) {
+                        continue;
+                    }
                     int max_x = 0;
                     for (int i = 0; i < x.length; i++) {
                         int x_ij = (int) x[i][j];
@@ -97,12 +100,14 @@ public final class SmileExtUtils {
         for (int i = 0; i < size; i++) {
             smile.data.Attribute o = original[i];
             switch (o.type) {
-                case NOMINAL:
+                case NOMINAL: {
                     dst[i] = new NominalAttribute(i);
                     break;
-                case NUMERIC:
+                }
+                case NUMERIC: {
                     dst[i] = new NumericAttribute(i);
                     break;
+                }
                 default:
                     throw new UnsupportedOperationException("Unsupported type: " + o.type);
             }

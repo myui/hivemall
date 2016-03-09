@@ -36,6 +36,9 @@ public abstract class Attribute {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @return -1 if not set
+     */
     public int getSize() {
         throw new UnsupportedOperationException();
     }
@@ -94,6 +97,7 @@ public abstract class Attribute {
 
         public NominalAttribute(int attrIndex) {
             super(AttributeType.NOMINAL, attrIndex);
+            this.size = -1;
         }
 
         @Override
