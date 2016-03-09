@@ -106,7 +106,7 @@ import smile.regression.Regression;
  * @see GradientTreeBoost
  * @see RandomForest
  */
-public class RegressionTree implements Regression<double[]> {
+public final class RegressionTree implements Regression<double[]> {
     /**
      * The attributes of independent variable.
      */
@@ -167,7 +167,7 @@ public class RegressionTree implements Regression<double[]> {
     /**
      * Regression tree node.
      */
-    public static class Node implements Externalizable {
+    public static final class Node implements Externalizable {
 
         /**
          * Predicted real value for this node.
@@ -396,7 +396,7 @@ public class RegressionTree implements Regression<double[]> {
     /**
      * Regression tree node for training purpose.
      */
-    class TrainNode implements Comparable<TrainNode> {
+    private final class TrainNode implements Comparable<TrainNode> {
 
         /**
          * The associated regression tree node.
@@ -480,14 +480,12 @@ public class RegressionTree implements Regression<double[]> {
                 variables[i] = i;
             }
 
-            // Loop through features and compute the reduction of squared error,
-            // which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2                    
             if (_numVars < p) {
-                // Training of Random Forest will get into this race condition.
-                // smile.math.Math uses a static object of random number generator.
                 SmileExtUtils.shuffle(variables, _rnd);
             }
 
+            // Loop through features and compute the reduction of squared error,
+            // which is trueCount * trueMean^2 + falseCount * falseMean^2 - count * parentMean^2      
             final int[] samples = _hasNumericType ? SmileExtUtils.bagsToSamples(bags, x.length)
                     : null;
             for (int j = 0; j < _numVars; j++) {
@@ -749,7 +747,7 @@ public class RegressionTree implements Regression<double[]> {
         checkArgument(x, y, numVars, maxDepth, maxLeafs, minSplits, minLeafSize);
 
         this._attributes = SmileExtUtils.attributeTypes(attributes, x);
-        if (attributes.length != x[0].length) {
+        if (_attributes.length != x[0].length) {
             throw new IllegalArgumentException("-attrs option is invliad: "
                     + Arrays.toString(attributes));
         }
@@ -759,8 +757,8 @@ public class RegressionTree implements Regression<double[]> {
         this._maxDepth = maxDepth;
         this._minSplit = minSplits;
         this._minLeafSize = minLeafSize;
-        this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
-        this._importance = new double[attributes.length];
+        this._order = (order == null) ? SmileExtUtils.sort(_attributes, x) : order;
+        this._importance = new double[_attributes.length];
         this._rnd = (rand == null) ? new smile.math.Random() : rand;
         this._nodeOutput = output;
 

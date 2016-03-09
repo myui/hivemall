@@ -118,7 +118,7 @@ import smile.math.Random;
  * Some techniques such as bagging, boosting, and random forest use more than one decision tree for
  * their analysis.
  */
-public class DecisionTree implements Classifier<double[]> {
+public final class DecisionTree implements Classifier<double[]> {
     /**
      * The attributes of independent variable.
      */
@@ -193,7 +193,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * Classification tree node.
      */
-    public static class Node implements Externalizable {
+    public static final class Node implements Externalizable {
 
         /**
          * Predicted class label for this node.
@@ -412,7 +412,7 @@ public class DecisionTree implements Classifier<double[]> {
     /**
      * Classification tree node for training purpose.
      */
-    class TrainNode implements Comparable<TrainNode> {
+    private final class TrainNode implements Comparable<TrainNode> {
         /**
          * The associated regression tree node.
          */
@@ -464,19 +464,7 @@ public class DecisionTree implements Classifier<double[]> {
 
             // Sample count in each class.
             final int[] count = new int[_k];
-            int label = -1;
-            boolean pure = true;
-            for (int i = 0; i < numSamples; i++) {
-                int index = bags[i];
-                int y_i = y[index];
-                count[y_i]++;
-
-                if (label == -1) {
-                    label = y_i;
-                } else if (y_i != label) {
-                    pure = false;
-                }
-            }
+            final boolean pure = sampleCount(count);
 
             // Since all instances have same label, stop splitting.
             if (pure) {
@@ -511,6 +499,23 @@ public class DecisionTree implements Classifier<double[]> {
             }
 
             return (node.splitFeature != -1);
+        }
+
+        private boolean sampleCount(@Nonnull final int[] count) {
+            int label = -1;
+            boolean pure = true;
+            for (int i = 0; i < bags.length; i++) {
+                int index = bags[i];
+                int y_i = y[index];
+                count[y_i]++;
+
+                if (label == -1) {
+                    label = y_i;
+                } else if (y_i != label) {
+                    pure = false;
+                }
+            }
+            return pure;
         }
 
         /**
@@ -814,8 +819,8 @@ public class DecisionTree implements Classifier<double[]> {
         this._minSplit = minSplits;
         this._minLeafSize = minLeafSize;
         this._rule = rule;
-        this._order = (order == null) ? SmileExtUtils.sort(attributes, x) : order;
-        this._importance = new double[attributes.length];
+        this._order = (order == null) ? SmileExtUtils.sort(_attributes, x) : order;
+        this._importance = new double[_attributes.length];
         this._rnd = (rand == null) ? new smile.math.Random() : rand;
 
         final int n = y.length;
