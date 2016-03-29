@@ -18,7 +18,6 @@
  */
 package hivemall.mf;
 
-
 public interface RatingInitilizer {
 
     public Rating newRating(float v);
