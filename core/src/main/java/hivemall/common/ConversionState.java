@@ -69,6 +69,10 @@ public final class ConversionState {
     public void multiplyLoss(double multi) {
         this.currLosses = currLosses * multi;
     }
+    
+    public boolean isLossIncreased() {
+        return currLosses > prevLosses;
+    }
 
     public boolean isConverged(final int iter, final long obserbedTrainingExamples) {
         if(conversionCheck == false) {

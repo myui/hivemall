@@ -18,6 +18,7 @@
  */
 package hivemall.common;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -57,7 +58,7 @@ public abstract class EtaEstimator {
 
         @Override
         public float eta(final long t) {
-            if(t > total_steps) {
+            if (t > total_steps) {
                 return finalEta;
             }
             return (float) (eta0 / (1.d + (t / total_steps)));
@@ -82,20 +83,44 @@ public abstract class EtaEstimator {
 
     }
 
+    /**
+     * bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, KDD 2011.
+     */
+    public static final class AdjustingEtaEstimator extends EtaEstimator {
+
+        private final float eta0;
+        private float eta;
+
+        public AdjustingEtaEstimator(float eta) {
+            this.eta0 = eta;
+            this.eta = eta;
+        }
+
+        public void update(@Nonnegative float multipler) {
+            this.eta = Math.max(eta0, eta * multipler);
+        }
+
+        @Override
+        public float eta(long t) {
+            return eta;
+        }
+
+    }
+
     @Nonnull
     public static EtaEstimator get(@Nullable CommandLine cl) throws UDFArgumentException {
-        if(cl == null) {
+        if (cl == null) {
             return new InvscalingEtaEstimator(0.1f, 0.1f);
         }
 
         String etaValue = cl.getOptionValue("eta");
-        if(etaValue != null) {
+        if (etaValue != null) {
             float eta = Float.parseFloat(etaValue);
             return new FixedEtaEstimator(eta);
         }
 
         double eta0 = Double.parseDouble(cl.getOptionValue("eta0", "0.1"));
-        if(cl.hasOption("t")) {
+        if (cl.hasOption("t")) {
             long t = Long.parseLong(cl.getOptionValue("t"));
             return new SimpleEtaEstimator(eta0, t);
         }

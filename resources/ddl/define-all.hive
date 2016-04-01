@@ -300,6 +300,13 @@ create temporary function quantitative_features as 'hivemall.ftvec.trans.Quantit
 drop temporary function binarize_label;
 create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
 
+---------------------------------
+-- sampling of feature vectors --
+---------------------------------
+
+drop temporary function bpr_sampling;
+create temporary function bpr_sampling as 'hivemall.ftvec.sampling.BprSamplingUDTF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -558,6 +565,12 @@ create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDT
 
 drop temporary function train_mf_adagrad;
 create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
+
+drop temporary function train_bprmf;
+create temporary function train_bprmf as 'hivemall.mf.BPRMatrixFactorizationUDTF';
+
+drop temporary function bprmf_predict;
+create temporary function bprmf_predict as 'hivemall.mf.BPRMFPredictionUDF';
 
 ---------------------------
 -- Factorization Machine --

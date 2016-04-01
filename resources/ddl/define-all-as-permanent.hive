@@ -304,6 +304,13 @@ CREATE FUNCTION quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeatu
 DROP FUNCTION IF EXISTS binarize_label;
 CREATE FUNCTION binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF' USING JAR '${hivemall_jar}';
 
+---------------------------------
+-- sampling of feature vectors --
+---------------------------------
+
+DROP FUNCTION IF EXISTS bpr_sampling;
+CREATE FUNCTION bpr_sampling as 'hivemall.ftvec.sampling.BprSamplingUDTF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -550,7 +557,6 @@ CREATE FUNCTION rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF' USING JAR
 DROP FUNCTION IF EXISTS r2;
 CREATE FUNCTION r2 as 'hivemall.evaluation.R2UDAF' USING JAR '${hivemall_jar}';
 
-
 --------------------------
 -- Matrix Factorization --
 --------------------------
@@ -563,6 +569,12 @@ CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING J
 
 DROP FUNCTION IF EXISTS train_mf_adagrad;
 CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_bprmf;
+CREATE FUNCTION train_bprmf as 'hivemall.mf.BPRMatrixFactorizationUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS bprmf_predict;
+CREATE FUNCTION bprmf_predict as 'hivemall.mf.BPRMFPredictionUDF' USING JAR '${hivemall_jar}';
 
 ---------------------------
 -- Factorization Machine --

@@ -46,7 +46,7 @@ public final class MathUtils {
      * Returns a bit mask for the specified number of bits.
      */
     public static int bitMask(final int numberOfBits) {
-        if(numberOfBits >= 32) {
+        if (numberOfBits >= 32) {
             return -1;
         }
         return (numberOfBits == 0 ? 0 : powerOf(2, numberOfBits) - 1);
@@ -56,11 +56,11 @@ public final class MathUtils {
      * Power of method for integer math.
      */
     public static int powerOf(final int value, final int powerOf) {
-        if(powerOf == 0) {
+        if (powerOf == 0) {
             return 0;
         }
         int r = value;
-        for(int x = 1; x < powerOf; x++) {
+        for (int x = 1; x < powerOf; x++) {
             r = r * value;
         }
         return r;
@@ -71,7 +71,7 @@ public final class MathUtils {
      */
     public static int bitsRequired(int value) {
         int bits = 0;
-        while(value != 0) {
+        while (value != 0) {
             bits++;
             value >>= 1;
         }
@@ -82,15 +82,22 @@ public final class MathUtils {
         return 1.d / (1.d + Math.exp(-x));
     }
 
+    public static double lnSigmoid(final double x) {
+        double ex = Math.exp(-x);
+        return ex / (1.d + ex);
+    }
+
     /**
-     * Returns the inverse erf. This code is based on erfInv() in org.apache.commons.math3.special.Erf.
+     * Returns the inverse erf. This code is based on erfInv() in
+     * org.apache.commons.math3.special.Erf.
      * <p>
-     * This implementation is described in the paper:
-     * <a href="http://people.maths.ox.ac.uk/gilesm/files/gems_erfinv.pdf">Approximating
-     * the erfinv function</a> by Mike Giles, Oxford-Man Institute of Quantitative Finance,
-     * which was published in GPU Computing Gems, volume 2, 2010.
-     * The source code is available <a href="http://gpucomputing.net/?q=node/1828">here</a>.
+     * This implementation is described in the paper: <a
+     * href="http://people.maths.ox.ac.uk/gilesm/files/gems_erfinv.pdf">Approximating the erfinv
+     * function</a> by Mike Giles, Oxford-Man Institute of Quantitative Finance, which was published
+     * in GPU Computing Gems, volume 2, 2010. The source code is available <a
+     * href="http://gpucomputing.net/?q=node/1828">here</a>.
      * </p>
+     * 
      * @param x the value
      * @return t such that x = erf(t)
      */
@@ -103,7 +110,7 @@ public final class MathUtils {
         double w = -Math.log((1.0 - x) * (1.0 + x));
         double p;
 
-        if(w < 6.25) {
+        if (w < 6.25) {
             w = w - 3.125;
             p = -3.6444120640178196996e-21;
             p = -1.685059138182016589e-19 + p * w;
@@ -128,7 +135,7 @@ public final class MathUtils {
             p = -0.0060336708714301490533 + p * w;
             p = 0.24015818242558961693 + p * w;
             p = 1.6536545626831027356 + p * w;
-        } else if(w < 16.0) {
+        } else if (w < 16.0) {
             w = Math.sqrt(w) - 3.25;
             p = 2.2137376921775787049e-09;
             p = 9.0756561938885390979e-08 + p * w;
@@ -149,7 +156,7 @@ public final class MathUtils {
             p = 0.005370914553590063617 + p * w;
             p = 1.0052589676941592334 + p * w;
             p = 3.0838856104922207635 + p * w;
-        } else if(!Double.isInfinite(w)) {
+        } else if (!Double.isInfinite(w)) {
             w = Math.sqrt(w) - 5.0;
             p = -2.7109920616438573243e-11;
             p = -2.5556418169965252055e-10 + p * w;
@@ -189,7 +196,7 @@ public final class MathUtils {
 
     public static float l2norm(final float[] elements) {
         double sqsum = 0.d;
-        for(float e : elements) {
+        for (float e : elements) {
             sqsum += (e * e);
         }
         return (float) Math.sqrt(sqsum);
