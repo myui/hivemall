@@ -179,26 +179,6 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
 
         processOptions(argOIs);
 
-        ArrayList<String> fieldNames = new ArrayList<String>();
-        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-
-        fieldNames.add("idx");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
-        fieldNames.add("Pu");
-        fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
-        fieldNames.add("Qi");
-        fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
-        if (useBiasClause) {
-            fieldNames.add("Bu");
-            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-            fieldNames.add("Bi");
-            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-            if (updateMeanRating) {
-                fieldNames.add("mu");
-                fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-            }
-        }
-
         this.model = new FactorizedModel(this, factor, meanRating, rankInit);
         this.count = 0L;
         this.lastWritePos = 0L;
@@ -224,6 +204,24 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
             this.inputBuf = ByteBuffer.allocateDirect(65536); // 64 KiB
         }
 
+        ArrayList<String> fieldNames = new ArrayList<String>();
+        ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+        fieldNames.add("idx");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldNames.add("Pu");
+        fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
+        fieldNames.add("Qi");
+        fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
+        if (useBiasClause) {
+            fieldNames.add("Bu");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            fieldNames.add("Bi");
+            fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            if (updateMeanRating) {
+                fieldNames.add("mu");
+                fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
+            }
+        }
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
