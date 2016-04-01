@@ -75,14 +75,14 @@
 			<version>r09-jarjar</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<!-- compile scope -->
 		<dependency>
 			<groupId>io.github.myui</groupId>
 			<artifactId>hivemall-core</artifactId>
 			<version>${project.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
+
+		<!-- compile scope -->
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-kuromoji</artifactId>
