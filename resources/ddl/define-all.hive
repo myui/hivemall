@@ -482,6 +482,9 @@ create temporary function rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF'
 drop temporary function r2;
 create temporary function r2 as 'hivemall.evaluation.R2UDAF';
 
+drop temporary function ndcg;
+create temporary function ndcg as 'hivemall.evaluation.NDCGUDAF';
+
 --------------------------
 -- Matrix Factorization --
 --------------------------

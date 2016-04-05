@@ -60,6 +60,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInsp
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
@@ -199,6 +200,10 @@ public final class HiveUtils {
         }
     }
 
+    public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
+        return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
+    }
+
     public static boolean isNumberTypeInfo(@Nonnull TypeInfo typeInfo) {
         if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
             return false;
@@ -214,6 +219,29 @@ public final class HiveUtils {
             default:
                 return false;
         }
+    }
+
+    public static boolean isIntegerTypeInfo(@Nonnull TypeInfo typeInfo) {
+        if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            return false;
+        }
+        switch (((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory()) {
+            case BYTE:
+            case SHORT:
+            case INT:
+            case LONG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static ListTypeInfo asListTypeInfo(@Nonnull TypeInfo typeInfo)
+            throws UDFArgumentException {
+        if (!typeInfo.getCategory().equals(Category.LIST)) {
+            throw new UDFArgumentException("Expected list type: " + typeInfo);
+        }
+        return (ListTypeInfo) typeInfo;
     }
 
     @SuppressWarnings("unchecked")
@@ -424,8 +452,8 @@ public final class HiveUtils {
         return ary;
     }
 
-    /**    
-     * @return the number of true bits 
+    /**
+     * @return the number of true bits
      */
     @Nonnull
     public static int setBits(@Nullable final Object argObj,

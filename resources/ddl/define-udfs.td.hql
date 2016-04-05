@@ -99,7 +99,7 @@ create temporary function quantitative_features as 'hivemall.ftvec.trans.Quantit
 create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
 
 -- sampling of feature vectors
--- create temporary function bpr_sampling as 'hivemall.ftvec.sampling.BprSamplingUDTF';
+create temporary function bpr_sampling as 'hivemall.ftvec.sampling.BprSamplingUDTF';
 
 -- ftvec/text functions
 create temporary function tf as 'hivemall.ftvec.text.TermFrequencyUDAF';
@@ -177,13 +177,14 @@ create temporary function mae as 'hivemall.evaluation.MeanAbsoluteErrorUDAF';
 create temporary function mse as 'hivemall.evaluation.MeanSquaredErrorUDAF';
 create temporary function rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF';
 create temporary function r2 as 'hivemall.evaluation.R2UDAF';
+create temporary function ndcg as 'hivemall.evaluation.NDCGUDAF';
 
 -- Matrix Factorization 
 create temporary function mf_predict as 'hivemall.mf.MFPredictionUDF';
 create temporary function train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF';
 create temporary function train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF';
--- create temporary function train_bprmf as 'hivemall.mf.BPRMatrixFactorizationUDTF';
--- create temporary function bprmf_predict as 'hivemall.mf.BPRMFPredictionUDF';
+create temporary function train_bprmf as 'hivemall.mf.BPRMatrixFactorizationUDTF';
+create temporary function bprmf_predict as 'hivemall.mf.BPRMFPredictionUDF';
 
 -- Factorization Machine
 create temporary function fm_predict as 'hivemall.fm.FMPredictGenericUDAF';
