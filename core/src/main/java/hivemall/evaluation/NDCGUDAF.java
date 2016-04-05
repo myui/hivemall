@@ -100,7 +100,7 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
             if (mode == Mode.PARTIAL1 || mode == Mode.PARTIAL2) {// terminatePartial
                 outputOI = internalMergeOI();
             } else {// terminate
-                outputOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
+                outputOI = PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
             }
             return outputOI;
         }
@@ -205,7 +205,7 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
         }
 
         void iterate(@Nonnull List<?> rankedList, @Nonnull List<?> correctList) {
-            sum += Measures.nDCG(rankedList, correctList);
+            sum += BinaryResponsesMeasures.nDCG(rankedList, correctList);
             count++;
         }
 

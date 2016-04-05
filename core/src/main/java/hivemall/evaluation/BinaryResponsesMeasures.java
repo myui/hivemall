@@ -27,9 +27,9 @@ import javax.annotation.Nonnull;
  * 
  * See http://recsyswiki.com/wiki/Discounted_Cumulative_Gain
  */
-public final class Measures {
+public final class BinaryResponsesMeasures {
 
-    private Measures() {}
+    private BinaryResponsesMeasures() {}
 
     public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth) {
         double dcg = 0.d;
