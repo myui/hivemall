@@ -220,6 +220,18 @@ public final class HiveUtils {
                 return false;
         }
     }
+    
+    public static boolean isBooleanTypeInfo(@Nonnull TypeInfo typeInfo) {
+        if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            return false;
+        }
+        switch (((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory()) {
+            case BOOLEAN:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public static boolean isIntegerTypeInfo(@Nonnull TypeInfo typeInfo) {
         if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {

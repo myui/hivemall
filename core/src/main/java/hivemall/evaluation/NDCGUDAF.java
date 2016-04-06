@@ -26,6 +26,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
@@ -43,8 +44,10 @@ import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.LongWritable;
 
-@Description(name = "ndcg", value = "_FUNC_(array rankItems, array correctItems)"
-        + " - Returns nDCG")
+@Description(
+        name = "ndcg",
+        value = "_FUNC_(array rankItems, array correctItems [, const boolean binaryResponses = true])"
+                + " - Returns nDCG")
 public final class NDCGUDAF extends AbstractGenericUDAFResolver {
 
     // prevent instantiation
@@ -52,9 +55,19 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
 
     @Override
     public GenericUDAFEvaluator getEvaluator(@Nonnull TypeInfo[] typeInfo) throws SemanticException {
-        if (typeInfo.length != 2) {
-            throw new UDFArgumentTypeException(typeInfo.length - 1, "_FUNC_ takes two arguments");
+        if (typeInfo.length != 2 && typeInfo.length != 3) {
+            throw new UDFArgumentTypeException(typeInfo.length - 1,
+                "_FUNC_ takes two or three arguments");
         }
+        boolean binaryResponses = true;
+        if (typeInfo.length == 3) {
+            binaryResponses = HiveUtils.isBooleanTypeInfo(typeInfo[2]);
+            if (binaryResponses == false) {
+                throw new UDFArgumentException(
+                    "nDCG computation for Graded Responses is not supported yet");
+            }
+        }
+
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
         if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
