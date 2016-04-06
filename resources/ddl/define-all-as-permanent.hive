@@ -352,11 +352,12 @@ CREATE FUNCTION subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF' US
 DROP FUNCTION IF EXISTS subarray_startwith;
 CREATE FUNCTION subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS collect_all;
-CREATE FUNCTION collect_all as 'hivemall.tools.array.CollectAllUDAF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS array_concat;
+CREATE FUNCTION array_concat as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
+-- alias for backward compatibility
 DROP FUNCTION IF EXISTS concat_array;
-CREATE FUNCTION concat_array as 'hivemall.tools.array.ConcatArrayUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION concat_array as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS subarray;
 CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hivemall_jar}';

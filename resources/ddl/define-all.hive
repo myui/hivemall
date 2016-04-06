@@ -348,11 +348,12 @@ create temporary function subarray_endwith as 'hivemall.tools.array.SubarrayEndW
 drop temporary function subarray_startwith;
 create temporary function subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF';
 
-drop temporary function collect_all;
-create temporary function collect_all as 'hivemall.tools.array.CollectAllUDAF';
+drop temporary function array_concat;
+create temporary function array_concat as 'hivemall.tools.array.ArrayConcatUDF';
 
+-- alias for backward compatibility
 drop temporary function concat_array;
-create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
+create temporary function concat_array as 'hivemall.tools.array.ArrayConcatUDF';
 
 drop temporary function subarray;
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
