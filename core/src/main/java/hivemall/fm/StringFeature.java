@@ -23,14 +23,25 @@ import hivemall.utils.io.NIOUtils;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class StringFeature extends Feature {
 
-    private String feature;
+    private String field, feature;
 
     public StringFeature(@Nonnull String feature, double value) {
         super(value);
         this.feature = feature;
+        int index = feature.indexOf(":");
+        if(index >= 0) {
+            this.field = feature.substring(0, index);
+        }
+    }
+    
+    public StringFeature(@Nullable String field, @Nonnull String feature, double value) {
+        super(value);
+        this.field = field;
+        this.feature = (field==null ? "" : field+":") + feature;
     }
 
     public StringFeature(@Nonnull ByteBuffer src) {
@@ -44,8 +55,18 @@ public final class StringFeature extends Feature {
     }
 
     @Override
+    public void setField(String f) {
+        this.field = f;
+    }
+
+    @Override
     public void setFeature(@Nonnull String f) {
         this.feature = f;
+    }
+
+    @Override
+    public String getField() {
+        return field;
     }
 
     @Override
@@ -55,7 +76,7 @@ public final class StringFeature extends Feature {
 
     @Override
     public int bytes() {
-        return NIOUtils.requiredBytes(feature) + Double.SIZE / 8;
+        return NIOUtils.requiredBytes(field) + NIOUtils.requiredBytes(feature) + Double.SIZE / 8;
     }
 
     @Override

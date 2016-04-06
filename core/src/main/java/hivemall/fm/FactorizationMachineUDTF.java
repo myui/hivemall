@@ -66,7 +66,7 @@ import org.apache.hadoop.mapred.Reporter;
 @Description(
         name = "train_fm",
         value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
-public final class FactorizationMachineUDTF extends UDTFWithOptions {
+public class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
 
@@ -74,16 +74,16 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private PrimitiveObjectInspector _yOI;
 
     // Learning hyper-parameters/options    
-    private boolean _classification;
-    private long _seed;
+    protected boolean _classification;
+    protected long _seed;
     private int _iterations;
-    private int _factor;
-    private float _lambda0;
-    private double _sigma;
+    protected int _factor;
+    protected float _lambda0;
+    protected double _sigma;
 
     // Hyperparameter for regression
-    private double _min_target;
-    private double _max_target;
+    protected double _min_target;
+    protected double _max_target;
 
     // adaptive regularization
     @Nullable
@@ -91,8 +91,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     private float _validationRatio;
     private int _validationThreshold;
 
-    private LossFunction _lossFunction;
-    private EtaEstimator _etaEstimator;
+    protected LossFunction _lossFunction;
+    protected EtaEstimator _etaEstimator;
 
     /**
      * The size of x
@@ -101,7 +101,7 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
 
     private FactorizationMachineModel _model;
 
-    private VInitScheme _vInit;
+    protected VInitScheme _vInit;
 
     /**
      * Probe for the input X
@@ -113,8 +113,8 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
     /**
      * The number of training examples processed
      */
-    private long _t;
-    private ConversionState _cvState;
+    protected long _t;
+    protected ConversionState _cvState;
 
     // file IO
     private ByteBuffer _inputBuf;
@@ -248,8 +248,13 @@ public final class FactorizationMachineUDTF extends UDTFWithOptions {
         return cl;
     }
 
-    FactorizationMachineModel getModel() {
+    protected FactorizationMachineModel getModel() {
         return _model;
+    }
+    
+    protected void setModel(FactorizationMachineModel model) {
+        _model = model;
+        return;
     }
 
     @Override

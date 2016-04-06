@@ -36,6 +36,22 @@ public abstract class Feature {
         this.value = value;
     }
 
+    public void setField(String f) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public String getField() {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void setFieldIndex(int i) {
+        throw new UnsupportedOperationException();
+    }
+
+    public int getFieldIndex() {
+        throw new UnsupportedOperationException();
+    }
+ 
     public void setFeature(String f) {
         throw new UnsupportedOperationException();
     }
@@ -44,11 +60,11 @@ public abstract class Feature {
         throw new UnsupportedOperationException();
     }
 
-    public void setIndex(int i) {
+    public void setFeatureIndex(int i) {
         throw new UnsupportedOperationException();
     }
 
-    public int getIndex() {
+    public int getFeatureIndex() {
         throw new UnsupportedOperationException();
     }
 
@@ -151,7 +167,7 @@ public abstract class Feature {
                 if(index < 0) {
                     throw new HiveException("Feature index MUST be greater than 0: " + s);
                 }
-                probe.setIndex(index);
+                probe.setFeatureIndex(index);
             } else {
                 probe.setFeature(s);
             }
@@ -165,7 +181,7 @@ public abstract class Feature {
                     throw new HiveException("Feature index MUST be greater than 0: " + s);
                 }
                 double value = Double.parseDouble(s2);
-                probe.setIndex(index);
+                probe.setFeatureIndex(index);
                 probe.value = value;
             } else {
                 probe.setFeature(s1);

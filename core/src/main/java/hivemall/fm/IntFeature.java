@@ -23,11 +23,11 @@ import java.nio.ByteBuffer;
 import javax.annotation.Nonnull;
 
 public final class IntFeature extends Feature {
-    private int index;
+    private int featureIndex;
 
     public IntFeature(int index, double value) {
         super(value);
-        this.index = index;
+        this.featureIndex = index;
     }
 
     public IntFeature(@Nonnull ByteBuffer src) {
@@ -37,17 +37,17 @@ public final class IntFeature extends Feature {
 
     @Override
     public String getFeature() {
-        return Integer.toString(index);
+        return Integer.toString(featureIndex);
     }
 
     @Override
-    public int getIndex() {
-        return index;
+    public int getFeatureIndex() {
+        return featureIndex;
     }
 
     @Override
-    public void setIndex(int i) {
-        this.index = i;
+    public void setFeatureIndex(int i) {
+        this.featureIndex = i;
     }
 
     @Override
@@ -57,19 +57,19 @@ public final class IntFeature extends Feature {
 
     @Override
     public void writeTo(@Nonnull final ByteBuffer dst) {
-        dst.putInt(index);
+        dst.putInt(featureIndex);
         dst.putDouble(value);
     }
 
     @Override
     public void readFrom(@Nonnull final ByteBuffer src) {
-        this.index = src.getInt();
+        this.featureIndex = src.getInt();
         this.value = src.getDouble();
     }
 
     @Override
     public String toString() {
-        return index + ":" + value;
+        return featureIndex + ":" + value;
     }
 
 }

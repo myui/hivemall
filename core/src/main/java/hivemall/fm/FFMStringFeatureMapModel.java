@@ -24,17 +24,18 @@ import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
-public class FMStringFeatureMapModel extends FactorizationMachineModel {
+
+public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 4096;
 
     // LEARNING PARAMS
     private float _w0;
     private final OpenHashTable<String, Entry> _map;
 
-    public FMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._w0 = 0.f;
-        this._map = new OpenHashTable<String, FMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+        this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
 
     @Override
@@ -45,7 +46,7 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
     IMapIterator<String, Entry> entries() {
         return _map.entries();
     }
-
+    
     @Override
     public float getW0() {
         return _w0;
@@ -84,8 +85,8 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    public float getV(@Nonnull Feature x, int f) {
-        String j = x.getFeature();
+    public float getV(@Nonnull Feature x, @Nonnull Object yField, int f) {//V_x,yField,f
+        String j = x.getFeature() + "::" + yField;
         assert (j != null);
 
         final float[] V;
@@ -102,8 +103,8 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    protected void setV(@Nonnull Feature x, int f, float nextVif) {
-        String j = x.getFeature();
+    protected void setV(@Nonnull Feature x, @Nonnull Feature y, int f, float nextVif) {
+        String j = x.getFeature() + "::" + y.getField();
         assert (j != null);
 
         final float[] V;
@@ -118,7 +119,7 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
         }
         V[f] = nextVif;
     }
-
+    
     static final class Entry {
 
         float W;
