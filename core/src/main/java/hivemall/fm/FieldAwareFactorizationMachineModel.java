@@ -21,8 +21,8 @@ package hivemall.fm;
 import hivemall.common.EtaEstimator;
 import hivemall.utils.lang.NumberUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -38,7 +38,6 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
 
-    //args require current feature and interacting field
     @Override
     public float getV(Feature x, int f) {
         throw new UnsupportedOperationException();
@@ -100,7 +99,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         setV(x, field.toString(), f, nextV);
     }
 
-    double[][][] sumVfX(Feature[] x, ArrayList<Object> fieldList) {
+    double[][][] sumVfX(@Nonnull Feature[] x, @Nonnull List<String> fieldList) {
         final int k = _factor;
         final int listSize = fieldList.size();
         final int xSize = x.length;
@@ -115,15 +114,15 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
-    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final Object a,
+    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final String field,
             final int f) {
         double ret = 0.d;
-        //find all other features whose field matches a
+        // find all other features whose field matches field
         for (Feature e : x) {
-            if (x[i].getFeature().equals(e.getFeature())) {//ignore x[i] = e
+            if (x[i].getFeature().equals(e.getFeature())) { // ignore x[i] = e
                 continue;
             }
-            if (e.getField().equals(a)) {//multiply x_e and v_d,field(e),f
+            if (e.getField().equals(field)) { // multiply x_e and v_d,field(e),f
                 double xj = x[i].getValue();
                 float Vjf = getV(e, x[i].getField(), f);
                 ret += Vjf * xj;

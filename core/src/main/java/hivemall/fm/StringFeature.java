@@ -27,7 +27,10 @@ import javax.annotation.Nullable;
 
 public final class StringFeature extends Feature {
 
-    private String field, feature;
+    @Nullable
+    private String field;
+    @Nonnull
+    private String feature;
 
     public StringFeature(@Nonnull String feature, double value) {
         super(value);

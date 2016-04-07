@@ -18,125 +18,88 @@
  */
 package hivemall.fm;
 
-import hivemall.common.LossFunctions;
-
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
 
-    protected boolean constantTerm;
-    protected boolean linearTerm;
-    private ArrayList<Object> fieldList = new ArrayList<Object>();
+    private boolean globalBias;
+    private boolean linearCoeff;
+    @Nonnull
+    private final List<String> fieldList;
+
+    public FieldAwareFactorizationMachineUDTF() {
+        super();
+        this.fieldList = new ArrayList<String>();
+    }
 
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("const", "constant_term", false,
-            "Whether to include constant bias term [default: OFF]");
-        opts.addOption("lin", "linear_term", false, "Whether to include linear term [default: OFF]");
+        opts.addOption("w0", "global_bias", false,
+            "Whether to include global bias term w0 [default: OFF]");
+        opts.addOption("w_i", "linear_coeff", false,
+            "Whether to include linear term [default: OFF]");
         return opts;
+    }
+
+    @Override
+    protected boolean isAdaptiveRegularizationSupported() {
+        return false;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        this.constantTerm = cl.hasOption("const");
-        this.linearTerm = cl.hasOption("lin");
+        if (_parseFeatureAsInt) {
+            throw new UDFArgumentException("int_feature option is not supported yet");
+        }
+        this.globalBias = cl.hasOption("global_bias");
+        this.linearCoeff = cl.hasOption("linear_coeff");
         return cl;
     }
 
     @Override
-    public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {//TODO _parseFeatureAsInt true will not work (IntFeature must be updated)
-        StructObjectInspector result = super.initialize(argOIs);
-        super.setModel(new FFMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma,
-            _seed, _min_target, _max_target, _etaEstimator, _vInit));
-        return result;
-    }
-
-    @Override
-    public void process(Object[] args) throws HiveException {
-        Feature[] x = Feature.parseFeatures(args[0], _xOI, _probes, _parseFeatureAsInt);
-        if (x == null) {
-            return;
-        }
-        this._probes = x;
-
-        addNewFieldsFrom(x);
-
-        double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
-        if (_classification) {
-            y = (y > 0.d) ? 1.d : -1.d;
-        }
-
-        ++_t;
-        recordTrain(x, y);
-        boolean adaptiveRegularization = false;//TODO support
-        train(x, y, adaptiveRegularization);
-    }
-
-    @Override
-    public void train(Feature[] x, double y, boolean adaptiveRegularization) throws HiveException {
-        // check
-        getModel().check(x);
-        try {
-            trainTheta(x, y);
-        } catch (Exception e) {
-            throw new HiveException("Exception caused in the " + _t + "-th call of train()", e);
-        }
-        return;
-    }
-
-    private void addNewFieldsFrom(Feature[] x) {
-        for (Feature e : x) {
-            boolean exists = false;
-            Object field = e.getField();
-            for (Object s : fieldList) {
-                if (field.equals(s)) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                fieldList.add(field);
-            }
-        }
+    protected FactorizationMachineModel initModel() {
+        return new FFMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
+            _min_target, _max_target, _etaEstimator, _vInit);
     }
 
     @Override
     protected void trainTheta(Feature[] x, double y) throws HiveException {
-        FieldAwareFactorizationMachineModel m = (FieldAwareFactorizationMachineModel) getModel();
+        final FieldAwareFactorizationMachineModel m = (FieldAwareFactorizationMachineModel) getModel();
         final float eta = _etaEstimator.eta(_t);
 
         final double p = m.predict(x);
         final double lossGrad = m.dloss(p, y);
 
-        double norm = norm(x, m);
-        assert (!Double.isNaN(norm));
-
-        double loss = LossFunctions.logLoss(p, y);
+        double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
 
         // w0 update
-        if (constantTerm) {
+        if (globalBias) {
             m.updateW0(lossGrad, eta);
         }
 
         // wi update
-        if (linearTerm) {
+        if (linearCoeff) {
             for (int i = 0; i < x.length; ++i) {
                 m.updateWi(lossGrad, x[i], eta);
             }
         }
 
-        final double[][][] sumVfx = m.sumVfX(x, fieldList);//[i as in index for x][index for field list][index for factorized dimension]
+        // ViFf update
+        List<String> fieldList = getFieldList(x);
+        // sumVfX[i as in index for x][index for field list][index for factorized dimension]
+        final double[][][] sumVfx = m.sumVfX(x, fieldList);
         for (int i = 0; i < x.length; ++i) {
             for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
                 for (int f = 0, k = _factor; f < k; ++f) {
@@ -146,32 +109,15 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
                 }
             }
         }
+        fieldList.clear();
     }
 
-    private double norm(Feature[] x, FieldAwareFactorizationMachineModel m) {
-        double ret = 0.d;
-        // w0
-        if (constantTerm) {
-            ret = m.getW0();
-            ret *= ret;
+    @Nonnull
+    private List<String> getFieldList(@Nonnull Feature[] x) {
+        for (Feature e : x) {
+            String field = e.getField();
+            fieldList.add(field);
         }
-        // W
-        if (linearTerm) {
-            for (Feature e : x) {
-                float w = m.getW(e);
-                double w2 = w * w;
-                ret += w2;
-            }
-        }
-        // V
-        for (int f = 0, k = _factor; f < k; f++) {
-            for (int i = 0; i < x.length; ++i) {
-                for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
-                    float vijf = m.getV(x[i], fieldList.get(fieldIndex), f);
-                    ret += vijf * vijf;
-                }
-            }
-        }
-        return ret;
+        return fieldList;
     }
 }

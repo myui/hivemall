@@ -146,13 +146,15 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("cv_rate", "convergence_rate", true,
             "Threshold to determine convergence [default: 0.005]");
         // adaptive regularization
-        opts.addOption("adareg", "adaptive_regularizaion", false,
-            "Whether to enable adaptive regularization [default: OFF]");
-        opts.addOption("va_ratio", "validation_ratio", true,
-            "Ratio of training data used for validation [default: 0.05f]");
-        opts.addOption("va_threshold", "validation_threshold", true,
-            "Threshold to start validation. "
-                    + "At least N training examples are used before validation [default: 1000]");
+        if (isAdaptiveRegularizationSupported()) {
+            opts.addOption("adareg", "adaptive_regularizaion", false,
+                "Whether to enable adaptive regularization [default: OFF]");
+            opts.addOption("va_ratio", "validation_ratio", true,
+                "Ratio of training data used for validation [default: 0.05f]");
+            opts.addOption("va_threshold", "validation_threshold", true,
+                "Threshold to start validation. "
+                        + "At least N training examples are used before validation [default: 1000]");
+        }
         // initialization of V
         opts.addOption("init_v", true,
             "Initialization strategy of matrix V [random, gaussian] (default: random)");
@@ -164,6 +166,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("int_feature", "feature_as_integer", false,
             "Parse a feature as integer [default: OFF, ON if -p option is specified]");
         return opts;
+    }
+
+    protected boolean isAdaptiveRegularizationSupported() {
+        return true;
     }
 
     @Override
@@ -251,11 +257,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     protected FactorizationMachineModel getModel() {
         return _model;
     }
-    
-    protected void setModel(FactorizationMachineModel model) {
-        _model = model;
-        return;
-    }
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -274,18 +275,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
         processOptions(argOIs);
 
-        if (_parseFeatureAsInt) {
-            if (_p == -1) {
-                this._model = new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma,
-                    _seed, _min_target, _max_target, _etaEstimator, _vInit);
-            } else {
-                this._model = new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p,
-                    _seed, _min_target, _max_target, _etaEstimator, _vInit);
-            }
-        } else {
-            this._model = new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma,
-                _seed, _min_target, _max_target, _etaEstimator, _vInit);
-        }
+        this._model = initModel();
         this._t = 0L;
 
         ArrayList<String> fieldNames = new ArrayList<String>();
@@ -302,6 +292,21 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableFloatObjectInspector));
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+    }
+
+    protected FactorizationMachineModel initModel() {
+        if (_parseFeatureAsInt) {
+            if (_p == -1) {
+                return new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
+                    _min_target, _max_target, _etaEstimator, _vInit);
+            } else {
+                return new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p, _seed,
+                    _min_target, _max_target, _etaEstimator, _vInit);
+            }
+        } else {
+            return new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
+                _min_target, _max_target, _etaEstimator, _vInit);
+        }
     }
 
     @Override
@@ -379,7 +384,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     public void train(@Nonnull final Feature[] x, final double y,
             final boolean adaptiveRegularization) throws HiveException {
-        // check
         _model.check(x);
 
         try {

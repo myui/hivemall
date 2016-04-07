@@ -81,14 +81,14 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public float getW(@Nonnull final Feature x) {
-        int i = x.getFeatureIndex();
+        int i = x.getIndex();
         assert (i >= 0) : i;
         return _w[i];
     }
 
     @Override
     protected void setW(@Nonnull Feature x, float nextWi) {
-        int i = x.getFeatureIndex();
+        int i = x.getIndex();
         assert (i >= 0) : i;
         _w[i] = nextWi;
     }
@@ -103,7 +103,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public float getV(@Nonnull final Feature x, int f) {
-        final int i = x.getFeatureIndex();
+        final int i = x.getIndex();
         if(i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
@@ -112,7 +112,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     protected void setV(@Nonnull Feature x, int f, float nextVif) {
-        final int i = x.getFeatureIndex();
+        final int i = x.getIndex();
         if(i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
@@ -122,7 +122,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
     @Override
     public void check(@Nonnull Feature[] x) throws HiveException {
         for(Feature e : x) {
-            if(e != null && e.getFeatureIndex() < 1) {
+            if(e != null && e.getIndex() < 1) {
                 throw new HiveException("Index of x should be greater than or equals to 1: "
                         + Arrays.toString(x));
             }
