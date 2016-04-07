@@ -18,29 +18,32 @@
  */
 package hivemall.fm;
 
+import hivemall.common.EtaEstimator;
+import hivemall.utils.lang.NumberUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 
-import hivemall.common.EtaEstimator;
-import hivemall.utils.lang.NumberUtils;
-
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
-    public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0, double sigma,
-            long seed, double minTarget, double maxTarget, EtaEstimator eta, VInitScheme vInit) {
+    public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0,
+            double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta,
+            VInitScheme vInit) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull Object field, int f);
+
     protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
-    
+
     //args require current feature and interacting field
     @Override
     public float getV(Feature x, int f) {
         throw new UnsupportedOperationException();
     }
+
     @Override
     protected void setV(Feature x, int f, float nextVif) {
         throw new UnsupportedOperationException();
@@ -60,15 +63,15 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         // V
         for (int f = 0, k = _factor; f < k; f++) {
             for (int i = 0; i < x.length; ++i) {
-                for (int j = i+1; j < x.length; ++j) {
+                for (int j = i + 1; j < x.length; ++j) {
                     Feature ei = x[i];
                     Feature ej = x[j];
                     double xi = ei.getValue();
                     double xj = ej.getValue();
                     float vijf = getV(ei, ej.getField(), f);
                     float vjif = getV(ej, ei.getField(), f);
-                    ret += vijf*vjif*xi*xj;
-                    assert(!Double.isNaN(ret));
+                    ret += vijf * vjif * xi * xj;
+                    assert (!Double.isNaN(ret));
                 }
             }
         }
@@ -79,11 +82,9 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         }
         return ret;
     }
-    
-//    void updateV()
 
-    void updateV(final double dloss, @Nonnull final Feature x, final int f,
-            final double sumViX, final float eta, Object field) {
+    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
+            final float eta, Object field) {
         final double Xi = x.getValue();
         float currentV = getV(x, field, f);
         double h = Xi * sumViX;
@@ -114,7 +115,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
-    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final Object a, final int f) {
+    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final Object a,
+            final int f) {
         double ret = 0.d;
         //find all other features whose field matches a
         for (Feature e : x) {
@@ -128,8 +130,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             }
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Got " + ret + " for sumV[ " + i + "][ " + f + "]X.\n" + "x = "
-                    + Arrays.toString(x));
+            throw new IllegalStateException("Got " + ret + " for sumV[ " + i + "][ " + f + "]X.\n"
+                    + "x = " + Arrays.toString(x));
         }
         return ret;
     }

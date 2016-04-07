@@ -24,7 +24,6 @@ import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
-
 public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 4096;
 
@@ -32,7 +31,9 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
     private float _w0;
     private final OpenHashTable<String, Entry> _map;
 
-    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
+            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
+            @Nonnull VInitScheme vInit) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._w0 = 0.f;
         this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
@@ -46,7 +47,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
     IMapIterator<String, Entry> entries() {
         return _map.entries();
     }
-    
+
     @Override
     public float getW0() {
         return _w0;
@@ -63,7 +64,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             return 0.f;
         }
         return entry.W;
@@ -75,7 +76,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             float[] Vf = initV();
             entry = new Entry(nextWi, Vf);
             _map.put(j, entry);
@@ -91,7 +92,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
             entry = new Entry(0.f, V);
             _map.put(j, entry);
@@ -109,7 +110,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
             entry = new Entry(0.f, V);
             _map.put(j, entry);
@@ -119,7 +120,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         }
         V[f] = nextVif;
     }
-    
+
     static final class Entry {
 
         float W;

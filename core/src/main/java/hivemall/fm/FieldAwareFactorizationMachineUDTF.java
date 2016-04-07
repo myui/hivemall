@@ -18,6 +18,8 @@
  */
 package hivemall.fm;
 
+import hivemall.common.LossFunctions;
+
 import java.util.ArrayList;
 
 import org.apache.commons.cli.CommandLine;
@@ -28,10 +30,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
-import hivemall.common.LossFunctions;
-
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
-    
+
     protected boolean constantTerm;
     protected boolean linearTerm;
     private ArrayList<Object> fieldList = new ArrayList<Object>();
@@ -39,7 +39,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("const", "constant_term", false, "Whether to include constant bias term [default: OFF]");
+        opts.addOption("const", "constant_term", false,
+            "Whether to include constant bias term [default: OFF]");
         opts.addOption("lin", "linear_term", false, "Whether to include linear term [default: OFF]");
         return opts;
     }
@@ -51,12 +52,12 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         this.linearTerm = cl.hasOption("lin");
         return cl;
     }
-    
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {//TODO _parseFeatureAsInt true will not work (IntFeature must be updated)
         StructObjectInspector result = super.initialize(argOIs);
         super.setModel(new FFMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma,
-                _seed, _min_target, _max_target, _etaEstimator, _vInit));
+            _seed, _min_target, _max_target, _etaEstimator, _vInit));
         return result;
     }
 
@@ -67,7 +68,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             return;
         }
         this._probes = x;
-        
+
         addNewFieldsFrom(x);
 
         double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
@@ -86,7 +87,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         // check
         getModel().check(x);
         try {
-            trainTheta(x,y);
+            trainTheta(x, y);
         } catch (Exception e) {
             throw new HiveException("Exception caused in the " + _t + "-th call of train()", e);
         }
@@ -118,8 +119,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         final double lossGrad = m.dloss(p, y);
 
         double norm = norm(x, m);
-        assert(!Double.isNaN(norm));
-        
+        assert (!Double.isNaN(norm));
+
         double loss = LossFunctions.logLoss(p, y);
         _cvState.incrLoss(loss);
 
@@ -127,7 +128,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         if (constantTerm) {
             m.updateW0(lossGrad, eta);
         }
-        
+
         // wi update
         if (linearTerm) {
             for (int i = 0; i < x.length; ++i) {
@@ -140,22 +141,22 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
                 for (int f = 0, k = _factor; f < k; ++f) {
                     // Vif update
-                    //_model.updateV(x, lossGrad, i, f, eta);
-                    m.updateV(lossGrad, x[i], f, sumVfx[i][fieldIndex][f], eta, fieldList.get(fieldIndex));
+                    m.updateV(lossGrad, x[i], f, sumVfx[i][fieldIndex][f], eta,
+                        fieldList.get(fieldIndex));
                 }
             }
         }
     }
-    
+
     private double norm(Feature[] x, FieldAwareFactorizationMachineModel m) {
         double ret = 0.d;
         // w0
-        if(constantTerm) {
+        if (constantTerm) {
             ret = m.getW0();
             ret *= ret;
         }
         // W
-        if(linearTerm) {
+        if (linearTerm) {
             for (Feature e : x) {
                 float w = m.getW(e);
                 double w2 = w * w;
@@ -167,7 +168,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             for (int i = 0; i < x.length; ++i) {
                 for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
                     float vijf = m.getV(x[i], fieldList.get(fieldIndex), f);
-                    ret += vijf*vijf;
+                    ret += vijf * vijf;
                 }
             }
         }
