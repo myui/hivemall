@@ -103,8 +103,8 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
     }
 
     @Override
-    protected void setV(@Nonnull Feature x, @Nonnull Feature y, int f, float nextVif) {
-        String j = x.getFeature() + "::" + y.getField();
+    protected void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif) {
+        String j = x.getFeature() + "::" + yField;
         assert (j != null);
 
         final float[] V;

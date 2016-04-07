@@ -34,46 +34,50 @@ public class FieldAwareFactorizationMachineUDTFTest {
         FactorizationMachineModel model = udtf.getModel();
         Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FFMStringFeatureMapModel);
         
-        System.out.println(new File(".").getAbsolutePath());
-//        
-//        BufferedReader data;
-//        try {
-//            data = new BufferedReader(new FileReader("bigdata.tr.txt"));
-//            for(int i = 0; i < 50; ++i) {
-//                //gather features in current line
-//                final String input = data.readLine();
-//                if(input == null) {
-//                    System.out.println("EOF reached");
-//                    break;
-//                }
-//                ArrayList<String> featureStrings = new ArrayList<String>();
-//                ArrayList<StringFeature> features = new ArrayList<StringFeature>();
-//                
-//                //make StringFeature for each word = data point
-//                String remaining = input;
-//                int wordCut = remaining.indexOf(' ');
-//                while(wordCut != -1) {
-//                    featureStrings.add(remaining.substring(0, wordCut));
-//                    remaining = remaining.substring(wordCut + 1);
-//                    wordCut = remaining.indexOf(' ');
-//                }
-//                int end = featureStrings.size();
-//                double y = Double.parseDouble(featureStrings.get(0));
-//                for (int j = 1; j < end; ++j) {
-//                    String entireFeature = featureStrings.get(j);
-//                    int featureCut = StringUtils.ordinalIndexOf(entireFeature, ":", 2);
-//                    String feature = entireFeature.substring(0, featureCut);
-//                    double value = Double.parseDouble(entireFeature.substring(featureCut + 1));
-//                    features.add(new StringFeature(feature, value));
-//                }
-//                udtf.process(new Object[] { toStringArray(features), y });
-//                System.out.println("Hello world");
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (HiveException e) {
-//            e.printStackTrace();
-//        }
+        BufferedReader data;
+        try {
+            data = new BufferedReader(new FileReader("src/test/java/hivemall/fm/bigdata.tr.txt"));
+            double loss = udtf._cvState.getCumulativeLoss();
+            for(int i = 0; i < 1000; ++i) {
+                //gather features in current line
+                final String input = data.readLine();
+                if(input == null) {
+                    System.out.println("EOF reached");
+                    break;
+                }
+                ArrayList<String> featureStrings = new ArrayList<String>();
+                ArrayList<StringFeature> features = new ArrayList<StringFeature>();
+                
+                //make StringFeature for each word = data point
+                String remaining = input;
+                int wordCut = remaining.indexOf(' ');
+                while(wordCut != -1) {
+                    featureStrings.add(remaining.substring(0, wordCut));
+                    remaining = remaining.substring(wordCut + 1);
+                    wordCut = remaining.indexOf(' ');
+                }
+                int end = featureStrings.size();
+                double y = Double.parseDouble(featureStrings.get(0));
+                if(y == 0) {
+                    y = -1;//LibFFM data uses {0, 1}; Hivemall uses {-1, 1}
+                }
+                for (int j = 1; j < end; ++j) {
+                    String entireFeature = featureStrings.get(j);
+                    int featureCut = StringUtils.ordinalIndexOf(entireFeature, ":", 2);
+                    String feature = entireFeature.substring(0, featureCut);
+                    double value = Double.parseDouble(entireFeature.substring(featureCut + 1));
+                    features.add(new StringFeature(feature, value));
+                }
+                udtf.process(new Object[] { toStringArray(features), y });
+                loss = udtf._cvState.getCumulativeLoss() - loss;
+                System.out.println("loss for this iteration: " + loss + "; average loss up to this iteration: " + udtf._cvState.getCumulativeLoss()/i);
+                loss = udtf._cvState.getCumulativeLoss();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (HiveException e) {
+            e.printStackTrace();
+        }
     }
     
     private static String[] toStringArray(ArrayList<StringFeature> x) {

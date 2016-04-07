@@ -34,7 +34,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull Object field, int f);
-    protected abstract void setV(@Nonnull Feature x, @Nonnull Feature y, int f, float nextVif);
+    protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
     
     //args require current feature and interacting field
     @Override
@@ -96,7 +96,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + LambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(x, f, nextV);
+        setV(x, field.toString(), f, nextV);
     }
 
     double[][][] sumVfX(Feature[] x, ArrayList<Object> fieldList) {
