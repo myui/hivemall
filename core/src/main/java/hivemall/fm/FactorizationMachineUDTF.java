@@ -70,8 +70,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
 
-    private ListObjectInspector _xOI;
-    private PrimitiveObjectInspector _yOI;
+    protected ListObjectInspector _xOI;
+    protected PrimitiveObjectInspector _yOI;
 
     // Learning hyper-parameters/options    
     protected boolean _classification;
@@ -87,9 +87,9 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     // adaptive regularization
     @Nullable
-    private Random _va_rand;
+    protected Random _va_rand;
     private float _validationRatio;
-    private int _validationThreshold;
+    protected int _validationThreshold;
 
     protected LossFunction _lossFunction;
     protected EtaEstimator _etaEstimator;
@@ -107,8 +107,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
      * Probe for the input X
      */
     @Nullable
-    private Feature[] _probes;
-    private boolean _parseFeatureAsInt;
+    protected Feature[] _probes;
+    protected boolean _parseFeatureAsInt;
 
     /**
      * The number of training examples processed

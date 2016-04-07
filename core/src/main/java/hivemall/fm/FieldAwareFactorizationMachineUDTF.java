@@ -28,30 +28,27 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
+import hivemall.common.LossFunctions;
+
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
     
     protected boolean constantTerm;
     protected boolean linearTerm;
-    private ArrayList<Object> fieldList;
-
-    public FieldAwareFactorizationMachineUDTF() {
-        super();
-        this.fieldList = new ArrayList<Object>();
-    }
+    private ArrayList<Object> fieldList = new ArrayList<Object>();
 
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("const", "constant_term", true, "Whether to include constant bias term [default false]");
-        opts.addOption("lin", "linear_term", true, "Whether to include linear term [default false]");
+        opts.addOption("const", "constant_term", false, "Whether to include constant bias term [default: OFF]");
+        opts.addOption("lin", "linear_term", false, "Whether to include linear term [default: OFF]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        this.constantTerm = Boolean.valueOf(cl.getOptionValue("const", "false"));
-        this.linearTerm = Boolean.valueOf(cl.getOptionValue("lin", "false"));
+        this.constantTerm = cl.hasOption("const");
+        this.linearTerm = cl.hasOption("lin");
         return cl;
     }
     
@@ -64,9 +61,28 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
+    public void process(Object[] args) throws HiveException {
+        Feature[] x = Feature.parseFeatures(args[0], _xOI, _probes, _parseFeatureAsInt);
+        if (x == null) {
+            return;
+        }
+        this._probes = x;
+        
+        addNewFieldsFrom(x);
+
+        double y = PrimitiveObjectInspectorUtils.getDouble(args[1], _yOI);
+        if (_classification) {
+            y = (y > 0.d) ? 1.d : -1.d;
+        }
+
+        ++_t;
+        recordTrain(x, y);
+        boolean adaptiveRegularization = false;//TODO support
+        train(x, y, adaptiveRegularization);
+    }
+
+    @Override
     public void train(Feature[] x, double y, boolean adaptiveRegularization) throws HiveException {
-        addField(x);
-        //TODO support adaptiveRegularization
         // check
         getModel().check(x);
         try {
@@ -77,7 +93,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         return;
     }
 
-    private void addField(Feature[] x) {
+    private void addNewFieldsFrom(Feature[] x) {
         for (Feature e : x) {
             boolean exists = false;
             Object field = e.getField();
@@ -101,10 +117,10 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         final double p = m.predict(x);
         final double lossGrad = m.dloss(p, y);
 
-        double norm = calcNorm(x, m);
+        double norm = norm(x, m);
         assert(!Double.isNaN(norm));
         
-        double loss = logLossWithRegularization(p, y, _lambda0, norm);
+        double loss = LossFunctions.logLoss(p, y);
         _cvState.incrLoss(loss);
 
         // w0 update
@@ -130,36 +146,20 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             }
         }
     }
-
-    //TODO how to move loss function with regularization into hivemall.common.LossFunctions? (does not fit into LossFunction interface due to num args)
-    private double logLossWithRegularization(final double p, final double y, final float lambda, final double norm) {
-        if(!(y == 1.f || y == -1.f)) {
-            throw new IllegalArgumentException("target must be [+1,-1]: " + y);
-        }//BinaryLoss.checkTarget(y);
-
-        final double z = y * p;
-        if(z > 18.f) {
-            return Math.exp(-z);
-        }
-        if(z < -18.f) {
-            return -z;
-        }
-        return Math.log(1.d + Math.exp(-z) + (lambda * norm / 2.d));
-    }
     
-    private double calcNorm(Feature[] x, FieldAwareFactorizationMachineModel m) {
-        double norm = 0.d;
+    private double norm(Feature[] x, FieldAwareFactorizationMachineModel m) {
+        double ret = 0.d;
         // w0
         if(constantTerm) {
-            norm = m.getW0();
-            norm *= norm;
+            ret = m.getW0();
+            ret *= ret;
         }
         // W
         if(linearTerm) {
             for (Feature e : x) {
                 float w = m.getW(e);
                 double w2 = w * w;
-                norm += w2;
+                ret += w2;
             }
         }
         // V
@@ -167,10 +167,10 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             for (int i = 0; i < x.length; ++i) {
                 for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
                     float vijf = m.getV(x[i], fieldList.get(fieldIndex), f);
-                    norm += vijf*vijf;
+                    ret += vijf*vijf;
                 }
             }
         }
-        return norm;
+        return ret;
     }
 }
