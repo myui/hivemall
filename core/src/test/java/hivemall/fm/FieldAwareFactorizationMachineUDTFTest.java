@@ -1,9 +1,8 @@
 package hivemall.fm;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.commons.lang.StringUtils;
@@ -35,8 +34,8 @@ public class FieldAwareFactorizationMachineUDTFTest {
         Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FFMStringFeatureMapModel);
         
         BufferedReader data;
-        try {
-            data = new BufferedReader(new FileReader("src/test/java/hivemall/fm/bigdata.tr.txt"));
+        try {            
+            data = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("bigdata.tr.txt")));
             double loss = udtf._cvState.getCumulativeLoss();
             for(int i = 0; i < 1000; ++i) {
                 //gather features in current line
