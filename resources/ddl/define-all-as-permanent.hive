@@ -378,6 +378,12 @@ CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING
 DROP FUNCTION IF EXISTS bitset_collect;
 CREATE FUNCTION bitset_collect as 'hivemall.tools.bits.BitsetCollectUDAF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS to_bits;
+CREATE FUNCTION to_bits as 'hivemall.tools.bits.ToBitsUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS unbits;
+CREATE FUNCTION unbits as 'hivemall.tools.bits.UnBitsUDF' USING JAR '${hivemall_jar}';
+
 ---------------------------
 -- compression functions --
 ---------------------------

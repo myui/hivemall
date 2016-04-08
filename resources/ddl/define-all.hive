@@ -374,6 +374,12 @@ create temporary function to_string_array as 'hivemall.tools.array.ToStringArray
 drop temporary function bitset_collect;
 create temporary function bitset_collect as 'hivemall.tools.bits.BitsetCollectUDAF';
 
+drop temporary function to_bits;
+create temporary function to_bits as 'hivemall.tools.bits.ToBitsUDF';
+
+drop temporary function unbits;
+create temporary function unbits as 'hivemall.tools.bits.UnBitsUDF';
+
 ---------------------------
 -- compression functions --
 ---------------------------

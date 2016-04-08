@@ -58,6 +58,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
@@ -220,7 +221,7 @@ public final class HiveUtils {
                 return false;
         }
     }
-    
+
     public static boolean isBooleanTypeInfo(@Nonnull TypeInfo typeInfo) {
         if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
             return false;
@@ -445,6 +446,24 @@ public final class HiveUtils {
     }
 
     @Nonnull
+    public static long[] asLongArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI, @Nonnull LongObjectInspector elemOI) {
+        if (argObj == null) {
+            return null;
+        }
+        final int length = listOI.getListLength(argObj);
+        final long[] ary = new long[length];
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                continue;
+            }
+            ary[i] = elemOI.get(o);
+        }
+        return ary;
+    }
+
+    @Nonnull
     public static double[] asDoubleArray(@Nullable final Object argObj,
             @Nonnull final ListObjectInspector listOI,
             @Nonnull final PrimitiveObjectInspector elemOI) {
@@ -541,6 +560,14 @@ public final class HiveUtils {
             throw new UDFArgumentException("Argument type must be INT: " + argOI.getTypeName());
         }
         return (IntObjectInspector) argOI;
+    }
+
+    public static LongObjectInspector asLongOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!BIGINT_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be BIGINT: " + argOI.getTypeName());
+        }
+        return (LongObjectInspector) argOI;
     }
 
     public static PrimitiveObjectInspector asIntCompatibleOI(@Nonnull final ObjectInspector argOI)
