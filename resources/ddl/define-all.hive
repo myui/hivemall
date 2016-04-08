@@ -367,6 +367,13 @@ create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
 
+-----------------------------
+-- bit operation functions --
+-----------------------------
+
+drop temporary function bitset_collect;
+create temporary function bitset_collect as 'hivemall.tools.bits.BitsetCollectUDAF';
+
 ---------------------------
 -- compression functions --
 ---------------------------
