@@ -33,8 +33,8 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
     public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
+            @Nonnull VInitScheme vInit, boolean useAdaGrad) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad);
         this._w0 = 0.f;
         this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
@@ -84,7 +84,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
             entry.W = nextWi;
         }
     }
-
+    
     /**
      * @return V_x,yField,f
      */
@@ -96,7 +96,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         Entry entry = _map.get(j);
         if (entry == null) {
             V = initV();
-            entry = new Entry(0.f, V);
+            entry = newEntry(V);
             _map.put(j, entry);
         } else {
             V = entry.Vf;
@@ -121,18 +121,10 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         }
         V[f] = nextVif;
     }
-
-    static final class Entry {
-
-        float W;
-        @Nonnull
-        final float[] Vf;
-
-        Entry(float W, @Nonnull float[] Vf) {
-            this.W = W;
-            this.Vf = Vf;
-        }
-
+    
+    @Override
+    protected Entry getEntry(@Nonnull Feature x, @Nonnull String yField) {
+        return _map.get(x.getFeature() + ':' + yField);
     }
 
 }

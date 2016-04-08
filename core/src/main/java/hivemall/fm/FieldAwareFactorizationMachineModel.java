@@ -28,10 +28,14 @@ import javax.annotation.Nonnull;
 
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
+    private boolean useAdaGrad;
+    public double eta_debug;
+
     public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta,
-            VInitScheme vInit) {
+            VInitScheme vInit, boolean useAdaGrad) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
+        this.useAdaGrad = useAdaGrad;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull String field, int f);
@@ -75,26 +79,33 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             }
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Detected " + ret
-                    + " in predict. We recommend to normalize training examples.\n"
-                    + "Dumping variables ...\n" + super.varDump(x));
+            throw new IllegalStateException(
+                "Detected " + ret + " in predict. We recommend to normalize training examples.\n"
+                        + "Dumping variables ...\n" + super.varDump(x));
         }
         return ret;
     }
 
     void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
-            final float eta, String field) {
+            float eta, final double eps, final double scaling, String field) {
         final double Xi = x.getValue();
         float currentV = getV(x, field, f);
         double h = Xi * sumViX;
         float gradV = (float) (dloss * h);
         float LambdaVf = getLambdaV(f);
+        if (useAdaGrad) {
+            Entry current = getEntry(x, field);
+            current.addGradient(gradV, scaling);
+            double adagrad = current.getSumOfSquaredGradients();
+            eta /= Math.sqrt(eps + adagrad);
+            eta_debug = eta;
+        }
         float nextV = currentV - eta * (gradV + 2.f * LambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
-            throw new IllegalStateException("Got " + nextV + " for next V" + f + '['
-                    + x.getFeature() + "]\n" + "Xi=" + Xi + ", Vif=" + currentV + ", h=" + h
-                    + ", gradV=" + gradV + ", lambdaVf=" + LambdaVf + ", dloss=" + dloss
-                    + ", sumViX=" + sumViX);
+            throw new IllegalStateException(
+                "Got " + nextV + " for next V" + f + '[' + x.getFeature() + "]\n" + "Xi=" + Xi
+                        + ", Vif=" + currentV + ", h=" + h + ", gradV=" + gradV + ", lambdaVf="
+                        + LambdaVf + ", dloss=" + dloss + ", sumViX=" + sumViX);
         }
         setV(x, field, f, nextV);
     }
@@ -136,5 +147,54 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + "x = " + Arrays.toString(x));
         }
         return ret;
+    }
+
+    protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull String yField);//TODO yField should be Object, not String (for IntFeature support)
+
+    protected Entry newEntry(float[] V) {
+        if (useAdaGrad) {
+            return new AdaGradEntry(0.f, V);
+        } else {
+            return new Entry(0.f, V);
+        }
+    }
+    
+    static class Entry {
+        float W;
+        @Nonnull
+        final float[] Vf;
+
+        Entry(float W, @Nonnull float[] Vf) {
+            this.W = W;
+            this.Vf = Vf;
+        }
+
+        public double getSumOfSquaredGradients() {
+            throw new UnsupportedOperationException();
+        }
+
+        public void addGradient(double grad, double scaling) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    static class AdaGradEntry extends Entry {
+        double sumOfSqGradients;
+
+        AdaGradEntry(float W, float[] Vf) {
+            super(W, Vf);
+            sumOfSqGradients = 0.d;
+        }
+
+        @Override
+        public double getSumOfSquaredGradients() {
+            return sumOfSqGradients;
+        }
+
+        @Override
+        public void addGradient(double grad, double scaling) {
+            sumOfSqGradients += grad * grad/scaling;
+        }
+
     }
 }
