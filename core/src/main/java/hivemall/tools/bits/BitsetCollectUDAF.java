@@ -31,10 +31,10 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
@@ -58,7 +58,8 @@ public final class BitsetCollectUDAF extends AbstractGenericUDAFResolver {
 
     public static class Evaluator extends GenericUDAFEvaluator {
         private PrimitiveObjectInspector inputOI;
-        private StandardListObjectInspector internalMergeOI;
+        private ListObjectInspector mergeOI;
+        private PrimitiveObjectInspector mergeListElemOI;
 
         @Override
         public ObjectInspector init(Mode mode, ObjectInspector[] argOIs) throws HiveException {
@@ -69,7 +70,8 @@ public final class BitsetCollectUDAF extends AbstractGenericUDAFResolver {
             if (mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
                 this.inputOI = HiveUtils.asLongCompatibleOI(argOIs[0]);
             } else {// from partial aggregation
-                this.internalMergeOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableLongObjectInspector);
+                this.mergeOI = HiveUtils.asListOI(argOIs[0]);
+                this.mergeListElemOI = HiveUtils.asPrimitiveObjectInspector(mergeOI.getListElementObjectInspector());
             }
 
             // initialize output
@@ -129,8 +131,7 @@ public final class BitsetCollectUDAF extends AbstractGenericUDAFResolver {
                 return;
             }
             ArrayAggregationBuffer agg = (ArrayAggregationBuffer) aggr;
-            long[] longs = HiveUtils.asLongArray(other, internalMergeOI,
-                PrimitiveObjectInspectorFactory.writableLongObjectInspector);
+            long[] longs = HiveUtils.asLongArray(other, mergeOI, mergeListElemOI);
             BitSet otherBitset = BitSet.valueOf(longs);
             agg.bitset.or(otherBitset);
         }
