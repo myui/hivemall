@@ -41,12 +41,12 @@ public final class IntFeature extends Feature {
     }
 
     @Override
-    public int getIndex() {
+    public int getFeatureIndex() {
         return index;
     }
 
     @Override
-    public void setIndex(int i) {
+    public void setFeatureIndex(int i) {
         this.index = i;
     }
 

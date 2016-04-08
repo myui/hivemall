@@ -34,7 +34,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
     }
 
-    public abstract float getV(@Nonnull Feature x, @Nonnull Object field, int f);
+    public abstract float getV(@Nonnull Feature x, @Nonnull String field, int f);
 
     protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
 
@@ -83,7 +83,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
-            final float eta, Object field) {
+            final float eta, String field) {
         final double Xi = x.getValue();
         float currentV = getV(x, field, f);
         double h = Xi * sumViX;
@@ -96,18 +96,21 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + LambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(x, field.toString(), f, nextV);
+        setV(x, field, f, nextV);
     }
 
+    /**
+     * sum{XiViaf} where a is field index of Xi
+     */
     double[][][] sumVfX(@Nonnull Feature[] x, @Nonnull List<String> fieldList) {
-        final int k = _factor;
-        final int listSize = fieldList.size();
+        final int factors = _factor;
+        final int fieldSize = fieldList.size();
         final int xSize = x.length;
-        final double[][][] ret = new double[xSize][listSize][k];
+        final double[][][] ret = new double[xSize][fieldSize][factors];
         for (int i = 0; i < xSize; ++i) {
-            for (int a = 0; a < listSize; ++a) {
-                for (int f = 0; f < k; f++) {
-                    ret[i][a][f] = sumVfX(x, i, fieldList.get(a), f);
+            for (int fieldIndex = 0; fieldIndex < fieldSize; ++fieldIndex) {
+                for (int f = 0; f < factors; f++) {
+                    ret[i][fieldIndex][f] = sumVfX(x, i, fieldList.get(fieldIndex), f);
                 }
             }
         }

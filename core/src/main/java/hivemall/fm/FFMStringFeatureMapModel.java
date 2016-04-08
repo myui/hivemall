@@ -89,7 +89,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
      * @return V_x,yField,f
      */
     @Override
-    public float getV(@Nonnull Feature x, @Nonnull Object yField, int f) {
+    public float getV(@Nonnull Feature x, @Nonnull String yField, int f) {
         String j = x.getFeature() + ':' + yField;
 
         final float[] V;

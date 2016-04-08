@@ -91,18 +91,18 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
         // wi update
         if (linearCoeff) {
-            for (int i = 0; i < x.length; ++i) {
+            for (int i = 0; i < x.length; i++) {
                 m.updateWi(lossGrad, x[i], eta);
             }
         }
 
         // ViFf update
-        List<String> fieldList = getFieldList(x);
+        final List<String> fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
         final double[][][] sumVfx = m.sumVfX(x, fieldList);
-        for (int i = 0; i < x.length; ++i) {
-            for (int fieldIndex = 0; fieldIndex < fieldList.size(); ++fieldIndex) {
-                for (int f = 0, k = _factor; f < k; ++f) {
+        for (int i = 0; i < x.length; i++) {
+            for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
+                for (int f = 0, k = _factor; f < k; f++) {
                     // Vif update
                     m.updateV(lossGrad, x[i], f, sumVfx[i][fieldIndex][f], eta,
                         fieldList.get(fieldIndex));
