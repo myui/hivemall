@@ -28,14 +28,19 @@ import javax.annotation.Nonnull;
 
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
-    private boolean useAdaGrad;
-    public double eta_debug;
+    protected final boolean useAdaGrad;
+    protected final float eta0_V;
+    protected final float eps;
+    protected final float scaling;
 
     public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta,
-            VInitScheme vInit, boolean useAdaGrad) {
+            VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this.useAdaGrad = useAdaGrad;
+        this.eta0_V = eta0_V;
+        this.eps = eps;
+        this.scaling = scaling;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull String field, int f);
@@ -79,35 +84,41 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             }
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException(
-                "Detected " + ret + " in predict. We recommend to normalize training examples.\n"
-                        + "Dumping variables ...\n" + super.varDump(x));
+            throw new IllegalStateException("Detected " + ret
+                    + " in predict. We recommend to normalize training examples.\n"
+                    + "Dumping variables ...\n" + super.varDump(x));
         }
         return ret;
     }
 
-    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
-            float eta, final double eps, final double scaling, String field) {
+    void updateV(final double dloss, @Nonnull final Feature x, @Nonnull final String field,
+            final int f, final double sumViX, long t) {
         final double Xi = x.getValue();
         float currentV = getV(x, field, f);
         double h = Xi * sumViX;
         float gradV = (float) (dloss * h);
-        float LambdaVf = getLambdaV(f);
-        if (useAdaGrad) {
-            Entry current = getEntry(x, field);
-            current.addGradient(gradV, scaling);
-            double adagrad = current.getSumOfSquaredGradients();
-            eta /= Math.sqrt(eps + adagrad);
-            eta_debug = eta;
-        }
-        float nextV = currentV - eta * (gradV + 2.f * LambdaVf * currentV);
+        float lambdaVf = getLambdaV(f);
+        float eta = etaV(t, x, field, gradV);
+        float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
-            throw new IllegalStateException(
-                "Got " + nextV + " for next V" + f + '[' + x.getFeature() + "]\n" + "Xi=" + Xi
-                        + ", Vif=" + currentV + ", h=" + h + ", gradV=" + gradV + ", lambdaVf="
-                        + LambdaVf + ", dloss=" + dloss + ", sumViX=" + sumViX);
+            throw new IllegalStateException("Got " + nextV + " for next V" + f + '['
+                    + x.getFeature() + "]\n" + "Xi=" + Xi + ", Vif=" + currentV + ", h=" + h
+                    + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
+                    + ", sumViX=" + sumViX);
         }
         setV(x, field, f, nextV);
+    }
+
+    protected final float etaV(final long t, @Nonnull final Feature x, @Nonnull final String field,
+            final float grad) {
+        if (useAdaGrad) {
+            Entry theta = getEntry(x, field);
+            double gg = theta.getSumOfSquaredGradients(scaling);
+            theta.addGradient(grad, scaling);
+            return (float) (eta0_V / Math.sqrt(eps + gg));
+        } else {
+            return _eta.eta(t);
+        }
     }
 
     /**
@@ -158,7 +169,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             return new Entry(0.f, V);
         }
     }
-    
+
     static class Entry {
         float W;
         @Nonnull
@@ -169,11 +180,11 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             this.Vf = Vf;
         }
 
-        public double getSumOfSquaredGradients() {
+        public double getSumOfSquaredGradients(float scaling) {
             throw new UnsupportedOperationException();
         }
 
-        public void addGradient(double grad, double scaling) {
+        public void addGradient(float grad, float scaling) {
             throw new UnsupportedOperationException();
         }
     }
@@ -187,13 +198,13 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         }
 
         @Override
-        public double getSumOfSquaredGradients() {
-            return sumOfSqGradients;
+        public double getSumOfSquaredGradients(float scaling) {
+            return sumOfSqGradients * scaling;
         }
 
         @Override
-        public void addGradient(double grad, double scaling) {
-            sumOfSqGradients += grad * grad/scaling;
+        public void addGradient(float grad, float scaling) {
+            sumOfSqGradients += grad * grad / scaling;
         }
 
     }

@@ -18,6 +18,8 @@
  */
 package hivemall.fm;
 
+import hivemall.utils.lang.Primitives;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,15 +31,18 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 
-import hivemall.utils.lang.Primitives;
-
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
 
     private boolean globalBias;
     private boolean linearCoeff;
+
+    // adagrad
     private boolean useAdaGrad;
-    private double eps;
-    private double scaling;
+    private float eta0_V;
+    private float eps;
+    private float scaling;
+
+    private FieldAwareFactorizationMachineModel model;
 
     @Nonnull
     private final List<String> fieldList;
@@ -54,8 +59,10 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             "Whether to include global bias term w0 [default: OFF]");
         opts.addOption("w_i", "linear_coeff", false,
             "Whether to include linear term [default: OFF]");
+        // adagrad
         opts.addOption("adagrad", false,
             "Whether to use AdaGrad for tuning learning rate [default: OFF]");
+        opts.addOption("eta0_V", true, "The initial learning rate for V [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true,
             "Internal scaling/descaling factor for cumulative weights [100]");
@@ -76,7 +83,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         this.globalBias = cl.hasOption("global_bias");
         this.linearCoeff = cl.hasOption("linear_coeff");
         this.useAdaGrad = cl.hasOption("adagrad");
-        Primitives.parseFloat(cl.getOptionValue("eta"), 1.f);
+        this.eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), 1.f);
         this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
         this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
         return cl;
@@ -84,44 +91,44 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
     @Override
     protected FieldAwareFactorizationMachineModel initModel() {
-        return new FFMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
-            _min_target, _max_target, _etaEstimator, _vInit, useAdaGrad);
+        FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(_classification, _factor,
+            _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit, useAdaGrad,
+            eta0_V, eps, scaling);
+        this.model = model;
+        return model;
     }
 
     @Override
     protected void trainTheta(Feature[] x, double y) throws HiveException {
-        final FieldAwareFactorizationMachineModel m =
-                (FieldAwareFactorizationMachineModel) getModel();
-        final float eta = _etaEstimator.eta(_t);
+        final float eta_t = _etaEstimator.eta(_t);
 
-        final double p = m.predict(x);
-        final double lossGrad = m.dloss(p, y);
+        final double p = model.predict(x);
+        final double lossGrad = model.dloss(p, y);
 
         double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
 
         // w0 update
         if (globalBias) {
-            m.updateW0(lossGrad, eta);
+            model.updateW0(lossGrad, eta_t);
         }
 
         // wi update
         if (linearCoeff) {
             for (int i = 0; i < x.length; i++) {
-                m.updateWi(lossGrad, x[i], eta);
+                model.updateWi(lossGrad, x[i], eta_t);
             }
         }
 
         // ViFf update
         final List<String> fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
-        final double[][][] sumVfx = m.sumVfX(x, fieldList);
+        final double[][][] sumVfx = model.sumVfX(x, fieldList);
         for (int i = 0; i < x.length; i++) {
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
+                String feild = fieldList.get(fieldIndex);
                 for (int f = 0, k = _factor; f < k; f++) {
-                    // Vif update
-                    m.updateV(lossGrad, x[i], f, sumVfx[i][fieldIndex][f], eta, eps, scaling,
-                        fieldList.get(fieldIndex));
+                    model.updateV(lossGrad, x[i], feild, f, sumVfx[i][fieldIndex][f], _t);
                 }
             }
         }

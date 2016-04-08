@@ -33,8 +33,8 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
     public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit, boolean useAdaGrad) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad);
+            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
         this._w0 = 0.f;
         this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
@@ -84,13 +84,13 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
             entry.W = nextWi;
         }
     }
-    
+
     /**
      * @return V_x,yField,f
      */
     @Override
     public float getV(@Nonnull Feature x, @Nonnull String yField, int f) {
-        String j = x.getFeature() + ':' + yField;
+        String j = getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -107,7 +107,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
     @Override
     protected void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif) {
-        String j = x.getFeature() + ':' + yField;
+        String j = getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -121,10 +121,16 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
         }
         V[f] = nextVif;
     }
-    
+
     @Override
     protected Entry getEntry(@Nonnull Feature x, @Nonnull String yField) {
-        return _map.get(x.getFeature() + ':' + yField);
+        String j = getFeatureOfField(x, yField);
+        return _map.get(j);
+    }
+
+    @Nonnull
+    private static String getFeatureOfField(@Nonnull Feature x, @Nonnull String yField) {
+        return x.getFeature() + ':' + yField;
     }
 
 }

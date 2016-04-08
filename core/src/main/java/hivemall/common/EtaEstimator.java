@@ -30,33 +30,40 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 
 public abstract class EtaEstimator {
 
+    protected final float eta0;
+
+    public EtaEstimator(float eta0) {
+        this.eta0 = eta0;
+    }
+
+    public float eta0() {
+        return eta0;
+    }
+
     public abstract float eta(long t);
 
     public void update(@Nonnegative float multipler) {}
 
     public static final class FixedEtaEstimator extends EtaEstimator {
 
-        private final float eta;
-
         public FixedEtaEstimator(float eta) {
-            this.eta = eta;
+            super(eta);
         }
 
         @Override
         public float eta(long t) {
-            return eta;
+            return eta0;
         }
 
     }
 
     public static final class SimpleEtaEstimator extends EtaEstimator {
 
-        private final double eta0;
         private final float finalEta;
         private final double total_steps;
 
-        public SimpleEtaEstimator(double eta0, long total_steps) {
-            this.eta0 = eta0;
+        public SimpleEtaEstimator(float eta0, long total_steps) {
+            super(eta0);
             this.finalEta = (float) (eta0 / 2.d);
             this.total_steps = total_steps;
         }
@@ -73,11 +80,10 @@ public abstract class EtaEstimator {
 
     public static final class InvscalingEtaEstimator extends EtaEstimator {
 
-        private final double eta0;
         private final double power_t;
 
-        public InvscalingEtaEstimator(double eta0, double power_t) {
-            this.eta0 = eta0;
+        public InvscalingEtaEstimator(float eta0, double power_t) {
+            super(eta0);
             this.power_t = power_t;
         }
 
@@ -94,11 +100,10 @@ public abstract class EtaEstimator {
      */
     public static final class AdjustingEtaEstimator extends EtaEstimator {
 
-        private final float eta0;
         private float eta;
 
         public AdjustingEtaEstimator(float eta) {
-            this.eta0 = eta;
+            super(eta);
             this.eta = eta;
         }
 
@@ -136,13 +141,13 @@ public abstract class EtaEstimator {
             return new FixedEtaEstimator(eta);
         }
 
-        double eta0 = Double.parseDouble(cl.getOptionValue("eta0", "0.1"));
+        float eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.1f);
         if (cl.hasOption("t")) {
             long t = Long.parseLong(cl.getOptionValue("t"));
             return new SimpleEtaEstimator(eta0, t);
         }
 
-        double power_t = Double.parseDouble(cl.getOptionValue("power_t", "0.1"));
+        double power_t = Primitives.parseDouble(cl.getOptionValue("power_t"), 0.1d);
         return new InvscalingEtaEstimator(eta0, power_t);
     }
 

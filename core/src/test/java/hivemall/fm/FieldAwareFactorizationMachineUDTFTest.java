@@ -21,7 +21,6 @@ package hivemall.fm;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import org.apache.commons.lang.StringUtils;
@@ -35,16 +34,15 @@ import org.junit.Test;
 
 public class FieldAwareFactorizationMachineUDTFTest {
 
-    private final int TRAIN = 1000;
-    private final int MAX_LINES = 200;
+    private static final int ITERATIONS = 100;
+    private static final int MAX_LINES = 200;
 
     @Test
     public void testSGD() throws HiveException, IOException {
         System.out.println("SGD test");
         FieldAwareFactorizationMachineUDTF udtf = new FieldAwareFactorizationMachineUDTF();
         ObjectInspector[] argOIs = new ObjectInspector[] {
-                ObjectInspectorFactory.getStandardListObjectInspector(
-                    PrimitiveObjectInspectorFactory.javaStringObjectInspector),
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
@@ -57,10 +55,9 @@ public class FieldAwareFactorizationMachineUDTFTest {
 
 
         double cumul = 0.d;
-        String output = "";
-        for (int trainingIteration = 1; trainingIteration <= TRAIN; ++trainingIteration) {
-            BufferedReader data = new BufferedReader(
-                new InputStreamReader(getClass().getResourceAsStream("bigdata.tr.txt")));
+        for (int trainingIteration = 1; trainingIteration <= ITERATIONS; ++trainingIteration) {
+            BufferedReader data = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("bigdata.tr.txt")));
             double loss = udtf._cvState.getCumulativeLoss();
             int lines = 0;
             for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber, ++lines) {
@@ -97,25 +94,25 @@ public class FieldAwareFactorizationMachineUDTFTest {
             }
             cumul = udtf._cvState.getCumulativeLoss();
             loss = (cumul - loss) / lines;
+            /*
             // output with explanations
-//            System.out.println(
-//                "average loss for this iteration: " + loss + "; average loss up to this iteration: "
-//                        + udtf._cvState.getCumulativeLoss() / (trainingIteration * lines));
+            System.out.println("average loss for this iteration: " + loss
+                    + "; average loss up to this iteration: " + udtf._cvState.getCumulativeLoss()
+                    / (trainingIteration * lines));                     
+            */
             // output for plotting
-            output += loss + " " + cumul / (trainingIteration * lines) + System.getProperty("line.separator");
+            System.out.println(trainingIteration + " " + loss + " " + cumul
+                    / (trainingIteration * lines));
             data.close();
         }
-        PrintWriter out = new PrintWriter("~/Documents/output.txt");
-        System.out.println(output);
     }
-    
+
     @Test
     public void testAdaGrad() throws HiveException, IOException {
         System.out.println("AdaGrad test");
         FieldAwareFactorizationMachineUDTF udtf = new FieldAwareFactorizationMachineUDTF();
         ObjectInspector[] argOIs = new ObjectInspector[] {
-                ObjectInspectorFactory.getStandardListObjectInspector(
-                    PrimitiveObjectInspectorFactory.javaStringObjectInspector),
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
@@ -128,10 +125,9 @@ public class FieldAwareFactorizationMachineUDTFTest {
 
 
         double cumul = 0.d;
-        String output = "";
-        for (int trainingIteration = 1; trainingIteration <= TRAIN; ++trainingIteration) {
-            BufferedReader data = new BufferedReader(
-                new InputStreamReader(getClass().getResourceAsStream("bigdata.tr.txt")));
+        for (int trainingIteration = 1; trainingIteration <= ITERATIONS; ++trainingIteration) {
+            BufferedReader data = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("bigdata.tr.txt")));
             double loss = udtf._cvState.getCumulativeLoss();
             int lines = 0;
             for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber, ++lines) {
@@ -168,15 +164,17 @@ public class FieldAwareFactorizationMachineUDTFTest {
             }
             cumul = udtf._cvState.getCumulativeLoss();
             loss = (cumul - loss) / lines;
+            /*
             // output with explanations
-//            System.out.println(
-//                "average loss for this iteration: " + loss + "; average loss up to this iteration: "
-//                        + udtf._cvState.getCumulativeLoss() / (trainingIteration * lines) + "; adagrad eta: " + model.eta_debug);
+            System.out.println("average loss for this iteration: " + loss
+                    + "; average loss up to this iteration: " + udtf._cvState.getCumulativeLoss()
+                    / (trainingIteration * lines));                     
+            */
             // output for plotting
-            output += loss + " " + cumul / (trainingIteration * lines) + " " + model.eta_debug + System.getProperty("line.separator");
+            System.out.println(trainingIteration + " " + loss + " " + cumul
+                    / (trainingIteration * lines));
             data.close();
         }
-        System.out.println(output);
     }
 
     private static String[] toStringArray(ArrayList<StringFeature> x) {
