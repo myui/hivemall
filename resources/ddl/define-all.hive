@@ -284,6 +284,9 @@ create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelU
 drop temporary function bpr_sampling;
 create temporary function bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF';
 
+drop temporary function populate_not_in;
+create temporary function populate_not_in as 'hivemall.ftvec.ranking.PopulateNotInUDTF';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------

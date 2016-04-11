@@ -288,6 +288,9 @@ CREATE FUNCTION binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF' USING
 DROP FUNCTION IF EXISTS bpr_sampling;
 CREATE FUNCTION bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS populate_not_in;
+CREATE FUNCTION populate_not_in as 'hivemall.ftvec.ranking.PopulateNotInUDTF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
