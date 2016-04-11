@@ -277,12 +277,12 @@ create temporary function quantitative_features as 'hivemall.ftvec.trans.Quantit
 drop temporary function binarize_label;
 create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
 
----------------------------------
--- sampling of feature vectors --
----------------------------------
+------------------------------
+-- ranking helper functions --
+------------------------------
 
 drop temporary function bpr_sampling;
-create temporary function bpr_sampling as 'hivemall.ftvec.sampling.BprSamplingUDTF';
+create temporary function bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF';
 
 --------------------------
 -- ftvec/text functions --
