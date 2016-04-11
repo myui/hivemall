@@ -110,9 +110,14 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
+        Object arg0 = args[0];
+        if (arg0 == null || listOI.getListLength(arg0) == 0) {
+            populateAll();
+        }
+
         final BitSet bits;
         if (bitsetInput) {
-            long[] longs = HiveUtils.asLongArray(args[0], listOI, listElemOI);
+            long[] longs = HiveUtils.asLongArray(arg0, listOI, listElemOI);
             bits = BitSet.valueOf(longs);
         } else {
             if (_bitset == null) {
@@ -122,7 +127,7 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
                 bits = _bitset;
                 bits.clear();
             }
-            HiveUtils.setBits(args[0], listOI, listElemOI, bits);
+            HiveUtils.setBits(arg0, listOI, listElemOI, bits);
         }
 
         populateItems(bits);
@@ -130,6 +135,13 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
 
     private void populateItems(@Nonnull BitSet bits) throws HiveException {
         for (int i = bits.nextClearBit(0); i <= maxItemId; i = bits.nextClearBit(i + 1)) {
+            populatedItemId.set(i);
+            forward(forwardObjs);
+        }
+    }
+
+    private void populateAll() throws HiveException {
+        for (int i = 0; i <= maxItemId; i++) {
             populatedItemId.set(i);
             forward(forwardObjs);
         }
