@@ -66,7 +66,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("bitset", "bitset_input", true,
+        opts.addOption("bitset", "bitset_input", false,
             "Use Bitset for the input of pos_items [default:false]");
         opts.addOption("sampling", "sampling_rate", true,
             "Sampling rates of positive items [default: 1.0]");
@@ -110,6 +110,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
         }
         this.listOI = HiveUtils.asListOI(argOIs[0]);
         this.listElemOI = HiveUtils.asPrimitiveObjectInspector(listOI.getListElementObjectInspector());
+        processOptions(argOIs);
 
         this.maxItemId = HiveUtils.getAsConstInt(argOIs[1]);
         if (maxItemId <= 0) {
@@ -133,24 +134,24 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     @Override
     public void process(Object[] args) throws HiveException {
         final int numPosItems;
-        final BitSet bs;
+        final BitSet bits;
         if (bitsetInput) {
             if (_rand == null) {
                 this._rand = new Random(43);
             }
             long[] longs = HiveUtils.asLongArray(args[0], listOI, listElemOI);
-            bs = BitSet.valueOf(longs);
-            numPosItems = bs.cardinality();
+            bits = BitSet.valueOf(longs);
+            numPosItems = bits.cardinality();
         } else {
             if (_bitset == null) {
-                bs = new BitSet();
-                this._bitset = bs;
+                bits = new BitSet();
+                this._bitset = bits;
                 this._rand = new Random(43);
             } else {
-                bs = _bitset;
-                bs.clear();
+                bits = _bitset;
+                bits.clear();
             }
-            numPosItems = HiveUtils.setBits(args[0], listOI, listElemOI, bs);
+            numPosItems = HiveUtils.setBits(args[0], listOI, listElemOI, bits);
         }
 
         if (numPosItems == 0) {
@@ -165,9 +166,9 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
         }
 
         if (withReplacement) {
-            sampleWithReplacement(numPosItems, numNegItems, bs);
+            sampleWithReplacement(numPosItems, numNegItems, bits);
         } else {
-            sampleWithoutReplacement(numPosItems, numNegItems, bs);
+            sampleWithoutReplacement(numPosItems, numNegItems, bits);
         }
     }
 
@@ -184,7 +185,9 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
                 }
             }
             if (i == -1) {
-                throw new UDFArgumentException("Illegal i value: " + i);
+                throw new UDFArgumentException("Cannot find a value for " + nth
+                        + "-th element in bitset " + bitset.toString() + " where numPosItems = "
+                        + numPosItems);
             }
 
             nth = _rand.nextInt(numNegItems);
@@ -207,8 +210,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     private void sampleWithoutReplacement(int numPosItems, int numNegItems,
             @Nonnull final BitSet bitset) throws HiveException {
         final BitSet bitsetForPosSampling = bitset;
-        final BitSet bitsetForNegSampling = new BitSet();
-        bitsetForPosSampling.or(bitset);
+        final BitSet bitsetForNegSampling = BitSet.valueOf(bitset.toLongArray());
 
         final int numSamples = Math.max(1, Math.round(numPosItems * samplingRate));
         for (int s = 0; s < numSamples; s++) {
@@ -221,7 +223,9 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
                 }
             }
             if (i == -1) {
-                throw new UDFArgumentException("Illegal i value: " + i);
+                throw new UDFArgumentException("Cannot find a value for " + nth
+                        + "-th element in bitset " + bitset.toString() + " where numPosItems = "
+                        + numPosItems);
             }
             bitsetForPosSampling.set(i, false);
             --numPosItems;

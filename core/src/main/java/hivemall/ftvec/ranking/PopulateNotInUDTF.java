@@ -60,7 +60,7 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("bitset", "bitset_input", true,
+        opts.addOption("bitset", "bitset_input", false,
             "Use Bitset for the input of pos_items [default:false]");
         return opts;
     }
@@ -90,6 +90,7 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
         }
         this.listOI = HiveUtils.asListOI(argOIs[0]);
         this.listElemOI = HiveUtils.asPrimitiveObjectInspector(listOI.getListElementObjectInspector());
+        processOptions(argOIs);
 
         this.maxItemId = HiveUtils.getAsConstInt(argOIs[1]);
         if (maxItemId <= 0) {
