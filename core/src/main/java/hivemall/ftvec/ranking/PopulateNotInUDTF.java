@@ -113,6 +113,7 @@ public final class PopulateNotInUDTF extends UDTFWithOptions {
         Object arg0 = args[0];
         if (arg0 == null || listOI.getListLength(arg0) == 0) {
             populateAll();
+            return;
         }
 
         final BitSet bits;
