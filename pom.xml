@@ -44,6 +44,7 @@
 		<module>core</module>
 		<module>nlp</module>
 		<module>mixserv</module>
+		<module>spark</module>
 	</modules>
 
 	<properties>
