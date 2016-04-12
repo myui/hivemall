@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-
 import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
@@ -60,10 +58,11 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         final CommandLine cl = super.processOptions(argOIs);
         float a = 1.f;
         int degree = 2;
+        boolean pki = false;
         if (cl != null) {
             String a_str = cl.getOptionValue("a");
             String d_str = cl.getOptionValue("d");
-            boolean pki = cl.hasOption("PKI");
+            pki = cl.hasOption("PKI");
             if (a_str != null) {
                 a = Float.parseFloat(a_str);
             }
@@ -74,11 +73,11 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                         "Polynomial Kernel Degree d must be d >= 1: " + degree);
                 }
             }
-            if (pki) {
-                supportVectorsPKI = new HashMap<String, HashSet<FeatureValue[]>>();
-            } else {
-                supportVectors = new ArrayList<FeatureValue[]>();
-            }
+        }
+        if (pki) {
+            supportVectorsPKI = new HashMap<String, HashSet<FeatureValue[]>>();
+        } else {
+            supportVectors = new ArrayList<FeatureValue[]>();
         }
 
         this.a = a;
@@ -93,12 +92,8 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
             throw new UDFArgumentException(
                 "KernelizedPassiveAggressiveUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
         }
+        processOptions(argOIs);
         return super.initialize(argOIs);
-    }
-
-    @Override
-    void train(List<?> features, int label) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
