@@ -18,6 +18,8 @@
  */
 package hivemall.tools.map;
 
+import hivemall.utils.hadoop.HiveUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,23 +39,25 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 /**
  * Convert two aggregated columns into a key-value map.
  * 
- * The key must be a primitive type (int, boolean, float, string, ...) and the
- * value may be a primitive or a complex type (structs, maps, arrays).
+ * The key must be a primitive type (int, boolean, float, string, ...) and the value may be a
+ * primitive or a complex type (structs, maps, arrays).
  * 
  * @see https://cwiki.apache.org/Hive/genericudafcasestudy.html
  */
-@Description(name = "to_map", value = "_FUNC_(key, value) - Convert two aggregated columns into a key-value map")
+@Description(name = "to_map",
+        value = "_FUNC_(key, value) - Convert two aggregated columns into a key-value map")
 public class UDAFToMap extends AbstractGenericUDAFResolver {
 
     @Override
-    public GenericUDAFEvaluator getEvaluator(TypeInfo[] parameters) throws SemanticException {
-        if(parameters.length != 2) {
-            throw new UDFArgumentTypeException(parameters.length - 1, "Exactly one argument is expected.");
+    public GenericUDAFEvaluator getEvaluator(TypeInfo[] typeInfo) throws SemanticException {
+        if (typeInfo.length != 2) {
+            throw new UDFArgumentTypeException(typeInfo.length - 1,
+                "Expecting exactly two arguments: " + typeInfo.length);
         }
-
-        if(parameters[0].getCategory() != ObjectInspector.Category.PRIMITIVE) {
-            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted for the key but "
-                    + parameters[0].getTypeName() + " was passed as parameter 1.");
+        if (typeInfo[0].getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0,
+                "Only primitive type arguments are accepted for the key but "
+                        + typeInfo[0].getTypeName() + " was passed as parameter 1.");
         }
 
         return new UDAFToMapEvaluator();
@@ -63,77 +67,77 @@ public class UDAFToMap extends AbstractGenericUDAFResolver {
 
         protected PrimitiveObjectInspector inputKeyOI;
         protected ObjectInspector inputValueOI;
-        protected StandardMapObjectInspector loi;
-
         protected StandardMapObjectInspector internalMergeOI;
 
         @Override
-        public ObjectInspector init(Mode m, ObjectInspector[] parameters) throws HiveException {
-            super.init(m, parameters);
-            if(m == Mode.PARTIAL1) {
-                inputKeyOI = (PrimitiveObjectInspector) parameters[0];
-                inputValueOI = (ObjectInspector) parameters[1];
-                return ObjectInspectorFactory.getStandardMapObjectInspector((PrimitiveObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(inputKeyOI), (ObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(inputValueOI));
-            } else {
-                if(!(parameters[0] instanceof StandardMapObjectInspector)) {
-                    inputKeyOI = (PrimitiveObjectInspector) parameters[0];
-                    inputValueOI = (ObjectInspector) parameters[1];
-                    return ObjectInspectorFactory.getStandardMapObjectInspector((PrimitiveObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(inputKeyOI), (ObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(inputValueOI));
-                } else {
-                    internalMergeOI = (StandardMapObjectInspector) parameters[0];
-                    inputKeyOI = (PrimitiveObjectInspector) internalMergeOI.getMapKeyObjectInspector();
-                    inputValueOI = (ObjectInspector) internalMergeOI.getMapValueObjectInspector();
-                    loi = (StandardMapObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(internalMergeOI);
-                    return loi;
-                }
+        public ObjectInspector init(Mode mode, ObjectInspector[] argOIs) throws HiveException {
+            super.init(mode, argOIs);
+
+            // initialize input
+            if (mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
+                inputKeyOI = HiveUtils.asPrimitiveObjectInspector(argOIs[0]);
+                inputValueOI = argOIs[1];
+            } else {// from partial aggregation
+                internalMergeOI = (StandardMapObjectInspector) argOIs[0];
+                inputKeyOI = HiveUtils.asPrimitiveObjectInspector(internalMergeOI.getMapKeyObjectInspector());
+                inputValueOI = internalMergeOI.getMapValueObjectInspector();
             }
+
+            return ObjectInspectorFactory.getStandardMapObjectInspector(
+                ObjectInspectorUtils.getStandardObjectInspector(inputKeyOI),
+                ObjectInspectorUtils.getStandardObjectInspector(inputValueOI));
         }
 
-        static class MkMapAggregationBuffer implements AggregationBuffer {
+        static class MapAggregationBuffer implements AggregationBuffer {
             Map<Object, Object> container;
         }
 
+        @Override
         public void reset(AggregationBuffer agg) throws HiveException {
-            ((MkMapAggregationBuffer) agg).container = new HashMap<Object, Object>(144);
+            ((MapAggregationBuffer) agg).container = new HashMap<Object, Object>(64);
         }
 
+        @Override
         public AggregationBuffer getNewAggregationBuffer() throws HiveException {
-            MkMapAggregationBuffer ret = new MkMapAggregationBuffer();
+            MapAggregationBuffer ret = new MapAggregationBuffer();
             reset(ret);
             return ret;
         }
 
+        @Override
         public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
             assert (parameters.length == 2);
             Object key = parameters[0];
             Object value = parameters[1];
 
-            if(key != null) {
-                MkMapAggregationBuffer myagg = (MkMapAggregationBuffer) agg;
+            if (key != null) {
+                MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
                 putIntoMap(key, value, myagg);
             }
         }
 
-        public Object terminatePartial(AggregationBuffer agg) throws HiveException {
-            MkMapAggregationBuffer myagg = (MkMapAggregationBuffer) agg;
+        @Override
+        public Map<Object, Object> terminatePartial(AggregationBuffer agg) throws HiveException {
+            MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
             return myagg.container;
         }
 
+        @Override
         public void merge(AggregationBuffer agg, Object partial) throws HiveException {
-            MkMapAggregationBuffer myagg = (MkMapAggregationBuffer) agg;
-            @SuppressWarnings("unchecked")
-            Map<Object, Object> partialResult = (Map<Object, Object>) internalMergeOI.getMap(partial);
-            for(Map.Entry<Object, Object> entry : partialResult.entrySet()) {
+            MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
+            Map<?, ?> partialResult = internalMergeOI.getMap(partial);
+            for (Map.Entry<?, ?> entry : partialResult.entrySet()) {
                 putIntoMap(entry.getKey(), entry.getValue(), myagg);
             }
         }
 
-        public Object terminate(AggregationBuffer agg) throws HiveException {
-            MkMapAggregationBuffer myagg = (MkMapAggregationBuffer) agg;
+        @Override
+        public Map<Object, Object> terminate(AggregationBuffer agg) throws HiveException {
+            MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
             return myagg.container;
         }
 
-        protected void putIntoMap(Object key, Object value, MkMapAggregationBuffer myagg) {
+        protected void putIntoMap(Object key, Object value, MapAggregationBuffer myagg) {
             Object pKeyCopy = ObjectInspectorUtils.copyToStandardObject(key, this.inputKeyOI);
             Object pValueCopy = ObjectInspectorUtils.copyToStandardObject(value, this.inputValueOI);
             myagg.container.put(pKeyCopy, pValueCopy);
