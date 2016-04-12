@@ -374,6 +374,9 @@ CREATE FUNCTION array_sum as 'hivemall.tools.array.ArraySumUDAF' USING JAR '${hi
 DROP FUNCTION IF EXISTS to_string_array;
 CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS array_intersect;
+CREATE FUNCTION array_intersect as 'hivemall.tools.array.ArrayIntersectUDF' USING JAR '${hivemall_jar}';
+
 -----------------------------
 -- bit operation functions --
 -----------------------------
