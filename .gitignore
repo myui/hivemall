@@ -10,3 +10,5 @@ logs
 *.iml
 .DS_Store
 *~
+bin/apache-maven-*
+bin/zinc-*
