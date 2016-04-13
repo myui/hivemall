@@ -386,6 +386,9 @@ create temporary function to_bits as 'hivemall.tools.bits.ToBitsUDF';
 drop temporary function unbits;
 create temporary function unbits as 'hivemall.tools.bits.UnBitsUDF';
 
+drop temporary function bits_or;
+create temporary function bits_or as 'hivemall.tools.bits.BitsORUDF';
+
 ---------------------------
 -- compression functions --
 ---------------------------

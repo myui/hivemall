@@ -390,6 +390,9 @@ CREATE FUNCTION to_bits as 'hivemall.tools.bits.ToBitsUDF' USING JAR '${hivemall
 DROP FUNCTION IF EXISTS unbits;
 CREATE FUNCTION unbits as 'hivemall.tools.bits.UnBitsUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS bits_or;
+CREATE FUNCTION bits_or as 'hivemall.tools.bits.BitsORUDF' USING JAR '${hivemall_jar}';
+
 ---------------------------
 -- compression functions --
 ---------------------------
