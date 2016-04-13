@@ -377,8 +377,8 @@ create temporary function array_intersect as 'hivemall.tools.array.ArrayIntersec
 -- bit operation functions --
 -----------------------------
 
-drop temporary function bitset_collect;
-create temporary function bitset_collect as 'hivemall.tools.bits.BitsetCollectUDAF';
+drop temporary function bits_collect;
+create temporary function bits_collect as 'hivemall.tools.bits.BitsCollectUDAF';
 
 drop temporary function to_bits;
 create temporary function to_bits as 'hivemall.tools.bits.ToBitsUDF';
