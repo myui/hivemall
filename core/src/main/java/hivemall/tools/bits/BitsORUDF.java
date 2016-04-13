@@ -37,14 +37,14 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 
 @Description(name = "bits_or",
         value = "_FUNC_(array<long> b1, array<long> b2, ..) - Retrurns a logical OR given bitsets")
-public final class BitORUDF extends GenericUDF {
+public final class BitsORUDF extends GenericUDF {
 
     private ListObjectInspector[] _listOIs;
     private PrimitiveObjectInspector _listElemOI;
 
     private BitSet _bitset;
 
-    public BitORUDF() {}
+    public BitsORUDF() {}
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
