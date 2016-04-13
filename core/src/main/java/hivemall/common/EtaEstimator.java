@@ -18,6 +18,8 @@
  */
 package hivemall.common;
 
+import hivemall.utils.lang.NumberUtils;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -84,7 +86,8 @@ public abstract class EtaEstimator {
     }
 
     /**
-     * bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, KDD 2011.
+     * bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic
+     * gradient descent, KDD 2011.
      */
     public static final class AdjustingEtaEstimator extends EtaEstimator {
 
@@ -97,7 +100,12 @@ public abstract class EtaEstimator {
         }
 
         public void update(@Nonnegative float multipler) {
-            this.eta = Math.max(eta0, eta * multipler);
+            float newEta = eta * multipler;
+            if (!NumberUtils.isFinite(newEta)) {
+                // avoid NaN or INFINITY
+                return;
+            }
+            this.eta = Math.min(eta0, newEta); // never be larger than eta0
         }
 
         @Override

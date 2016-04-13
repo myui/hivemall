@@ -337,6 +337,10 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         for (int k = 0, size = factor; k < size; k++) {
             ret += userProbe[k] * itemProbe[k];
         }
+        if (!NumberUtils.isFinite(ret)) {
+            throw new IllegalStateException("Detected " + ret + " in predict where user=" + user
+                    + " and item=" + item);
+        }
         return ret;
     }
 
@@ -367,7 +371,11 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
             final float h_jf, final double dloss, final float eta) {
         double grad = dloss * (h_if - h_jf) - regU * w_uf;
         float delta = (float) (eta * grad);
-        rating.setWeight(w_uf + delta);
+        float newWeight = w_uf + delta;
+        if (!NumberUtils.isFinite(newWeight)) {
+            throw new IllegalStateException("Detected " + newWeight + " for w_uf");
+        }
+        rating.setWeight(newWeight);
         cvState.incrLoss(regU * w_uf * w_uf);
     }
 
@@ -375,7 +383,11 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
             final double dloss, final float eta, final float reg) {
         double grad = dloss * w_uf - reg * h_f;
         float delta = (float) (eta * grad);
-        rating.setWeight(h_f + delta);
+        float newWeight = h_f + delta;
+        if (!NumberUtils.isFinite(newWeight)) {
+            throw new IllegalStateException("Detected " + newWeight + " for h_f");
+        }
+        rating.setWeight(newWeight);
         cvState.incrLoss(reg * h_f * h_f);
     }
 
@@ -383,12 +395,18 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         float Bi = model.getItemBias(i);
         double Gi = dloss - regBias * Bi;
         Bi += eta * Gi;
+        if (!NumberUtils.isFinite(Bi)) {
+            throw new IllegalStateException("Detected " + Bi + " for Bi");
+        }
         model.setItemBias(i, Bi);
         cvState.incrLoss(regBias * Bi * Bi);
 
         float Bj = model.getItemBias(j);
         double Gj = -dloss - regBias * Bj;
         Bj += eta * Gj;
+        if (!NumberUtils.isFinite(Bj)) {
+            throw new IllegalStateException("Detected " + Bj + " for Bj");
+        }
         model.setItemBias(j, Bj);
         cvState.incrLoss(regBias * Bj * Bj);
     }
