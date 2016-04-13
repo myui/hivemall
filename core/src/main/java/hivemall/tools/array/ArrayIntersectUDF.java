@@ -59,7 +59,7 @@ public final class ArrayIntersectUDF extends GenericUDF {
         }
 
         ListObjectInspector[] argListOIs = new ListObjectInspector[argLength];
-        ListObjectInspector arg0ListOI = HiveUtils.asListOI(argOIs[0]);;
+        ListObjectInspector arg0ListOI = HiveUtils.asListOI(argOIs[0]);
         ObjectInspector arg0ElemOI = arg0ListOI.getListElementObjectInspector();
         argListOIs[0] = arg0ListOI;
         for (int i = 1; i < argLength; i++) {
