@@ -29,7 +29,6 @@ import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -118,7 +117,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         int label = PrimitiveObjectInspectorUtils.getInt(args[1], labelOI);
         checkLabelValue(label);
 
-        ++count;
+        count++;
         train(featureVector, label);
     }
 
@@ -206,67 +205,6 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     @Nonnull
-    protected PredictionResult calcScoreWithKernelAndNorm(
-            @Nonnull final Collection<FeatureValue[]> supportVectors,
-            @Nonnull final FeatureValue[] features, float a, int degree) {
-        float score = 0.f;
-        float squared_norm = 0.f;
-
-        for (FeatureValue[] s : supportVectors) {
-            final Object k;
-            float alpha = 0.f;
-            for (FeatureValue feat : s) {
-                if (feat != null) {
-                    k = feat.getFeature();
-                    alpha = model.getWeight(k);
-                    break;
-                }
-            }
-            double kk = kernel(features, s, a, degree);
-            score += alpha * kk;
-        }
-        for (FeatureValue f : features) {// a += w[i] * x[i]
-            if (f == null) {
-                continue;
-            }
-            final float v = f.getValueAsFloat();
-            squared_norm += (v * v);
-        }
-
-        return new PredictionResult(score).squaredNorm(squared_norm);
-    }
-
-    private double kernel(@Nonnull FeatureValue[] featA, @Nonnull FeatureValue[] featB, float c, int degree) {//poly kernel
-        double ret = 0.d;
-        int i = 0;
-        int j = 0;
-        while (i < featA.length && j < featB.length) {
-            FeatureValue a = featA[i];
-            FeatureValue b = featB[j];
-            if (a == null) {
-                ++i;
-                continue;
-            }
-            if (b == null) {
-                ++j;
-                continue;
-            }
-            int comparison = (a.compareTo(b));
-            if (comparison < 0) {
-                ++i;
-            } else if (comparison > 0) {
-                ++j;
-            } else if (comparison == 0) {
-                ret += a.getValue() * b.getValue();
-                ++i;
-                ++j;
-            }
-        }
-        ret = Math.pow(ret + c, degree);
-        return ret;
-    }
-
-    @Nonnull
     protected PredictionResult calcScoreAndVariance(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float variance = 0.f;
@@ -305,18 +243,6 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             float old_w = model.getWeight(k);
             float new_w = old_w + (coeff * v);
             model.set(k, new WeightValue(new_w));
-        }
-    }
-
-    protected void updateKernelWeights(@Nonnull final FeatureValue[] features,
-            final float updateDiff) {
-        for (FeatureValue f : features) {// alpha[f] += loss/||x||^2
-            if (f == null) {
-                continue;
-            }
-            final Object k = f.getFeature();
-
-            model.set(k, new WeightValue(model.getWeight(k) + updateDiff));
         }
     }
 
