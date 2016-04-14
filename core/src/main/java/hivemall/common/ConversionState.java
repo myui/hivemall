@@ -58,6 +58,10 @@ public final class ConversionState {
         return currLosses;
     }
 
+    public double getPreviousLoss() {
+        return prevLosses;
+    }
+
     public void incrError(double error) {
         this.totalErrors += error;
     }
@@ -69,18 +73,18 @@ public final class ConversionState {
     public void multiplyLoss(double multi) {
         this.currLosses = currLosses * multi;
     }
-    
+
     public boolean isLossIncreased() {
         return currLosses > prevLosses;
     }
 
     public boolean isConverged(final int iter, final long obserbedTrainingExamples) {
-        if(conversionCheck == false) {
+        if (conversionCheck == false) {
             return false;
         }
 
-        if(currLosses > prevLosses) {
-            if(logger.isInfoEnabled()) {
+        if (currLosses > prevLosses) {
+            if (logger.isInfoEnabled()) {
                 logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
             }
             this.prevLosses = currLosses;
@@ -90,8 +94,8 @@ public final class ConversionState {
         }
 
         final double changeRate = (prevLosses - currLosses) / prevLosses;
-        if(changeRate < convergenceRate) {
-            if(readyToFinishIterations) {
+        if (changeRate < convergenceRate) {
+            if (readyToFinishIterations) {
                 // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
                 logger.info("Training converged at " + iter + "-th iteration. [curLosses="
                         + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
@@ -101,7 +105,7 @@ public final class ConversionState {
                 this.readyToFinishIterations = true;
             }
         } else {
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
                         + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
                         + obserbedTrainingExamples + "]");
@@ -112,6 +116,13 @@ public final class ConversionState {
         this.prevLosses = currLosses;
         this.currLosses = 0.d;
         return false;
+    }
+
+    public void logState(int iter, float eta) {
+        if (logger.isInfoEnabled()) {
+            logger.info("[iter " + iter + "] curLoss=" + currLosses + ", prevLoss=" + prevLosses
+                    + ", eta=" + eta);
+        }
     }
 
 }

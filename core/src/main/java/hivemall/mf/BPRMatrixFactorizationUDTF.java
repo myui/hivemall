@@ -109,7 +109,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         this.regU = 0.0025f;
         this.regI = 0.0025f;
         this.regJ = 0.00125f;
-        this.regBias = 1.f;
+        this.regBias = 0.01f;
         this.useBiasClause = true;
         this.iterations = 30;
     }
@@ -157,7 +157,8 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         opts.addOption("reg_j", true,
             "The regularization factor for negative item [default: 0.00125 (reg_i/2) ]");
         // bias
-        opts.addOption("reg_bias", true, "The regularization factor for bias clause [default: 1.0]");
+        opts.addOption("reg_bias", true,
+            "The regularization factor for bias clause [default: 0.01]");
         opts.addOption("disable_bias", "no_bias", false, "Turn off bias clause");
         // learning rates
         opts.addOption("eta0", true, "The initial learning rate [default 0.03]");
@@ -475,8 +476,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                 }
                 inputBuf.flip();
 
-                int iter = 1;
-                for (; iter < iterations; iter++) {
+                for (int iter = 2; iter <= iterations; iter++) {
                     reportProgress(reporter);
                     setCounterValue(iterCounter, iter);
 
@@ -489,9 +489,10 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                         train(u, i, j);
                     }
                     cvState.multiplyLoss(0.5d);
+                    cvState.logState(iter, eta());
+
                     boolean isLossIncreased = cvState.isLossIncreased();
-                    if (isLossIncreased == false
-                            && cvState.isConverged(iter + 1, numTrainingExamples)) {
+                    if (isLossIncreased == false && cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                     if (isLossIncreased) {
@@ -501,7 +502,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                     }
                     inputBuf.rewind();
                 }
-                LOG.info("Performed " + iter + " iterations of "
+                LOG.info("Performed " + iterations + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total) ");
@@ -528,8 +529,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                 }
 
                 // run iterations
-                int iter = 1;
-                for (; iter < iterations; iter++) {
+                for (int iter = 2; iter <= iterations; iter++) {
                     setCounterValue(iterCounter, iter);
 
                     inputBuf.clear();
@@ -566,9 +566,10 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                         inputBuf.compact();
                     }
                     cvState.multiplyLoss(0.5d);
+                    cvState.logState(iter, eta());
+
                     boolean isLossIncreased = cvState.isLossIncreased();
-                    if (isLossIncreased == false
-                            && cvState.isConverged(iter + 1, numTrainingExamples)) {
+                    if (isLossIncreased == false && cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                     if (isLossIncreased) {
@@ -577,7 +578,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                         etaEstimator.update(0.5f);
                     }
                 }
-                LOG.info("Performed " + iter + " iterations of "
+                LOG.info("Performed " + iterations + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples using a secondary storage (thus "
                         + NumberUtils.formatNumber(count) + " training updates in total)");
