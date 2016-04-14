@@ -21,8 +21,19 @@ package hivemall.classifier;
 import static org.junit.Assert.assertEquals;
 import hivemall.io.PredictionResult;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
+import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -88,9 +99,9 @@ public class KernelizedPassiveAggressiveUDTFTest {
         /* check weights */
         assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
         assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(-1.7777777f, udtf.model.get(3).get(), 1e-5f);
-        assertEquals(-2.1111111f, udtf.model.get(4).get(), 1e-5f);
-        assertEquals(-2.1111111f, udtf.model.get(5).get(), 1e-5f);
+        assertEquals(-0.4444444f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(-0.7777777f, udtf.model.get(4).get(), 1e-5f);
+        assertEquals(-0.7777777f, udtf.model.get(5).get(), 1e-5f);
     }
 
     @Test
@@ -219,13 +230,49 @@ public class KernelizedPassiveAggressiveUDTFTest {
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
     
-    //TODO make new tests
     @Test
     public void testOptions() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
+        KernelizedPassiveAggressiveUDTF udtf2 = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-a 0.5 -d 3 -PKI");
+        ObjectInspector param2 = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-a 1.0 -d 2");
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI, param });
+        udtf2.initialize(new ObjectInspector[] { intListOI, intOI, param2 });
+        
+        /* train weights by List<Object> */
+        List<Integer> features1 = new ArrayList<Integer>();
+        features1.add(1);
+        features1.add(2);
+        features1.add(3);
+        udtf.train(features1, 1);
+        udtf2.train(features1, 1);
+
+        /* check weights */
+        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf2.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf2.model.get(2).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf2.model.get(3).get(), 1e-5f);
+
+        /* train weights by Object[] */
+        List<?> features2 = (List<?>) intListOI.getList(new Object[] { 3, 4, 5 });
+        udtf.train(features2, -1);
+        udtf2.train(features2, -1);
+
+        /* check weights */
+        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
+        assertEquals(-4.7638888f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(-5.0972222f, udtf.model.get(4).get(), 1e-5f);
+        assertEquals(-5.0972222f, udtf.model.get(5).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf2.model.get(1).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf2.model.get(2).get(), 1e-5f);
+        assertEquals(-0.4444444f, udtf2.model.get(3).get(), 1e-5f);
+        assertEquals(-0.7777777f, udtf2.model.get(4).get(), 1e-5f);
+        assertEquals(-0.7777777f, udtf2.model.get(5).get(), 1e-5f);
 
     }
     
@@ -234,17 +281,63 @@ public class KernelizedPassiveAggressiveUDTFTest {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
-
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
+        udtf.initialize(new ObjectInspector[] { intListOI, intOI, param });
     }
     
     @Test
-    public void testNews20() throws UDFArgumentException {
+    public void testNews20() throws UDFArgumentException, IOException, ParseException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
+        KernelizedPassiveAggressiveUDTF udtfPKI = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
-        udtf.initialize(new ObjectInspector[] { intListOI, intOI });
-
+        ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
+        ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
+        ObjectInspector paramPKI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-PKI");
+        udtf.initialize(new ObjectInspector[] { stringListOI, intOI, param });
+        udtfPKI.initialize(new ObjectInspector[] { stringListOI, intOI, paramPKI });
+        
+        BufferedReader news20 = new BufferedReader(new FileReader("src/test/java/hivemall/classifier/news20-small.binary"));//Change to news20-small.binary for smaller test data (100 lines 682KB)
+        ArrayList<String> words = new ArrayList<String>();
+        StringTokenizer tokens;
+        String line = news20.readLine();
+        int pos = 0;
+        int posPKI = 0;
+        int neg = 0;
+        int negPKI = 0;
+        int i = 0;
+        while(line != null) {
+            if (i == 50){
+                i += 1;
+                i -= 1;
+            }
+            tokens = new StringTokenizer(line, " ");
+            int label = Integer.parseInt(tokens.nextToken());
+            while (tokens.hasMoreTokens()) {
+                words.add(tokens.nextToken());
+            }
+            if (words.size() > 1) {
+                udtf.train(words, label);
+                udtfPKI.train(words, label);
+            }
+            if(udtf.getLoss() > 0) {
+                ++pos;
+            } else {
+                ++neg;
+            }
+            if(udtfPKI.getLoss() > 0) {
+                ++posPKI;
+            } else {
+                ++negPKI;
+            }
+            ++i;
+            System.out.println(i + " " + udtf.getLoss() + " " + udtfPKI.getLoss());
+            words.clear();
+            line = news20.readLine();
+        }
+        System.out.println("Positive loss: " + pos + " " + posPKI + " cases.");
+        System.out.println("Negative loss: " + neg + " " + negPKI + " cases.");
+        news20.close();
     }
 
 }

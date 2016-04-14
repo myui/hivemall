@@ -215,14 +215,15 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         for (FeatureValue[] s : supportVectors) {
             final Object k;
             float alpha = 0.f;
-            for (int i = 0; i < s.length; ++i) {
-                if (s[i] != null) {
-                    k = s[i].getFeature();
+            for (FeatureValue feat : s) {
+                if (feat != null) {
+                    k = feat.getFeature();
                     alpha = model.getWeight(k);
                     break;
                 }
             }
-            score += alpha * kernel(features, s, a, degree);
+            double kk = kernel(features, s, a, degree);
+            score += alpha * kk;
         }
         for (FeatureValue f : features) {// a += w[i] * x[i]
             if (f == null) {
@@ -235,15 +236,31 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).squaredNorm(squared_norm);
     }
 
-    private double kernel(FeatureValue[] featA, FeatureValue[] featB, float c, int degree) {//poly kernel
+    private double kernel(@Nonnull FeatureValue[] featA, @Nonnull FeatureValue[] featB, float c, int degree) {//poly kernel
         double ret = 0.d;
-        for (int i = 0; i < featA.length; ++i) {
+        int i = 0;
+        int j = 0;
+        while (i < featA.length && j < featB.length) {
             FeatureValue a = featA[i];
-            FeatureValue b = featB[i];
-            if (a == null || b == null) {
+            FeatureValue b = featB[j];
+            if (a == null) {
+                ++i;
                 continue;
             }
-            ret += a.getValue() * b.getValue();
+            if (b == null) {
+                ++j;
+                continue;
+            }
+            int comparison = (a.compareTo(b));
+            if (comparison < 0) {
+                ++i;
+            } else if (comparison > 0) {
+                ++j;
+            } else if (comparison == 0) {
+                ret += a.getValue() * b.getValue();
+                ++i;
+                ++j;
+            }
         }
         ret = Math.pow(ret + c, degree);
         return ret;
