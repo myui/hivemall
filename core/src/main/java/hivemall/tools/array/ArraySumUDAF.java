@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "array_sum", value = "_FUNC_(array) - Returns an array<double>"
+@Description(name = "array_sum", value = "_FUNC_(array<number>) - Returns an array<double>"
         + " in which each element is summed up")
 public final class ArraySumUDAF extends UDAF {
 
@@ -49,14 +49,14 @@ public final class ArraySumUDAF extends UDAF {
         }
 
         public boolean iterate(List<Double> tuple) throws HiveException {
-            if(tuple == null) {
+            if (tuple == null) {
                 return true;
             }
-            if(tuple.isEmpty()) {// a special case
+            if (tuple.isEmpty()) {// a special case
                 return true;
             }
             final int size = tuple.size();
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult(size);
             }
             partial.update(tuple);
@@ -68,10 +68,10 @@ public final class ArraySumUDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) throws HiveException {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult(other._size);
             }
             partial.merge(other);
@@ -79,7 +79,7 @@ public final class ArraySumUDAF extends UDAF {
         }
 
         public List<DoubleWritable> terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null;
             }
 
@@ -87,7 +87,7 @@ public final class ArraySumUDAF extends UDAF {
             final List<Double> sum = partial._sum;
 
             final DoubleWritable[] ary = new DoubleWritable[size];
-            for(int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
                 Double d = sum.get(i);
                 ary[i] = new DoubleWritable(d.doubleValue());
             }
@@ -110,14 +110,14 @@ public final class ArraySumUDAF extends UDAF {
         }
 
         void update(@Nonnull final List<Double> tuple) throws HiveException {
-            if(tuple.size() != _size) {// a corner case
+            if (tuple.size() != _size) {// a corner case
                 throw new HiveException("Mismatch in the number of elements at tuple: "
                         + tuple.toString());
             }
             final List<Double> sum = _sum;
-            for(int i = 0, len = _size; i < len; i++) {
+            for (int i = 0, len = _size; i < len; i++) {
                 Double v = tuple.get(i);
-                if(v != null) {
+                if (v != null) {
                     double d = sum.get(i).doubleValue() + v.doubleValue();
                     sum.set(i, Double.valueOf(d));
                 }
@@ -125,11 +125,11 @@ public final class ArraySumUDAF extends UDAF {
         }
 
         void merge(PartialResult other) throws HiveException {
-            if(other._size != _size) {
+            if (other._size != _size) {
                 throw new HiveException("Mismatch in the number of elements");
             }
             final List<Double> sum = _sum, o_sum = other._sum;
-            for(int i = 0, len = _size; i < len; i++) {
+            for (int i = 0, len = _size; i < len; i++) {
                 double d = sum.get(i).doubleValue() + o_sum.get(i).doubleValue();
                 sum.set(i, Double.valueOf(d));
             }

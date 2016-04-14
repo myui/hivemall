@@ -25,20 +25,21 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "subarray", value = "_FUNC_(orignal, fromIndex, toIndex) - Returns a slice of the orignal array "
-        + "between the specified fromIndex, inclusive, and toIndex, exclusive")
+@Description(name = "subarray", value = "_FUNC_(array<int> orignal, int fromIndex, int toIndex)"
+        + " - Returns a slice of the original array"
+        + " between the inclusive fromIndex and the exclusive toIndex")
 @UDFType(deterministic = true, stateful = false)
 public class SubarrayUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> array, int fromIndex, int toIndex) {
-        if(array == null) {
+        if (array == null) {
             return null;
         }
         final int arraylength = array.size();
-        if(fromIndex < 0) {
+        if (fromIndex < 0) {
             fromIndex = 0;
         }
-        if(toIndex > arraylength) {
+        if (toIndex > arraylength) {
             toIndex = arraylength;
         }
         return array.subList(fromIndex, toIndex);

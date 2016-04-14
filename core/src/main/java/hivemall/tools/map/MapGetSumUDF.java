@@ -30,16 +30,16 @@ import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "map_get_sum", value = "_FUNC_(map<int,float> src, array<int> keys) - Returns sum of values "
-        + "that are retrieved by keys")
+@Description(name = "map_get_sum", value = "_FUNC_(map<int,float> src, array<int> keys)"
+        + " - Returns sum of values that are retrieved by keys")
 @UDFType(deterministic = true, stateful = false)
 public class MapGetSumUDF extends UDF {
 
     public DoubleWritable evaluate(Map<IntWritable, FloatWritable> map, List<IntWritable> keys) {
         double sum = 0d;
-        for(IntWritable k : keys) {
+        for (IntWritable k : keys) {
             FloatWritable v = map.get(k);
-            if(v != null) {
+            if (v != null) {
                 sum += (double) v.get();
             }
         }

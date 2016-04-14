@@ -41,7 +41,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.LongWritable;
 
 @Description(name = "bits_collect",
-        value = "_FUNC_(int|long x) - Retrurns a bitset in array<long>")
+        value = "_FUNC_(int|long x) - Returns a bitset in array<long>")
 public final class BitsCollectUDAF extends AbstractGenericUDAFResolver {
 
     @Override

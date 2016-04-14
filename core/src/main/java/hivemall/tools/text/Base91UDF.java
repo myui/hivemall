@@ -38,7 +38,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 
 @Description(name = "base91",
-        value = "_FUNC_(bin) - Convert the argument from binary to a BASE91 string")
+        value = "_FUNC_(BINARY bin) - Convert the argument from binary to a BASE91 string")
 @UDFType(deterministic = true, stateful = false)
 public final class Base91UDF extends GenericUDF {
 

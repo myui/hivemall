@@ -21,7 +21,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.io.LongWritable;
 
 @Description(name = "unbits",
-        value = "_FUNC_(long[] bitset) - Returns an long array of the give bitset represention")
+        value = "_FUNC_(long[] bitset) - Returns an long array of the give bitset representation")
 @UDFType(deterministic = true, stateful = false)
 public final class UnBitsUDF extends GenericUDF {
 
