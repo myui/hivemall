@@ -22,8 +22,8 @@ import static org.junit.Assert.assertEquals;
 import hivemall.model.PredictionResult;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -299,8 +299,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[] {stringListOI, intOI, param});
         udtfPKI.initialize(new ObjectInspector[] {stringListOI, intOI, paramPKI});
 
-        BufferedReader news20 = new BufferedReader(new FileReader(
-            "src/test/java/hivemall/classifier/news20-small.binary"));//Change to news20-small.binary for smaller test data (100 lines 682KB)
+        BufferedReader news20 = new BufferedReader(new InputStreamReader(
+            getClass().getResourceAsStream("news20-small.binary")));
         ArrayList<String> words = new ArrayList<String>();
         String line = news20.readLine();
         for (int i = 1; line != null; i++) {
