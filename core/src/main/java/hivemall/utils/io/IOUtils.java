@@ -18,9 +18,11 @@
  */
 package hivemall.utils.io;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import javax.annotation.Nonnull;
@@ -84,6 +86,12 @@ public final class IOUtils {
             count += n;
         }
         return count;
+    }
+
+    @Nonnull
+    public static BufferedReader bufferedReader(@Nonnull InputStream is) {
+        InputStreamReader in = new InputStreamReader(is);
+        return new BufferedReader(in);
     }
 
 }
