@@ -20,7 +20,7 @@ package hivemall.mf;
 
 import hivemall.UDTFWithOptions;
 import hivemall.common.ConversionState;
-import hivemall.common.EtaEstimator.AdjustingEtaEstimator;
+import hivemall.common.EtaEstimator;
 import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
@@ -82,7 +82,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
     /** Initialization strategy of rank matrix */
     protected RankInitScheme rankInit;
     /** Learning rate */
-    protected AdjustingEtaEstimator etaEstimator;
+    protected EtaEstimator etaEstimator;
 
     // Variable managing status of learning
     /** The number of processed training examples */
@@ -161,7 +161,13 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
             "The regularization factor for bias clause [default: 0.01]");
         opts.addOption("disable_bias", "no_bias", false, "Turn off bias clause");
         // learning rates
-        opts.addOption("eta0", true, "The initial learning rate [default 0.03]");
+        opts.addOption("eta", true, "The initial learning rate [default: 0.001]");
+        opts.addOption("eta0", true, "The initial learning rate [default 0.3]");
+        opts.addOption("t", "total_steps", true, "The total number of training examples");
+        opts.addOption("power_t", true,
+            "The exponent for inverse scaling learning rate [default 0.1]");
+        opts.addOption("boldDriver", "bold_driver", false,
+            "Whether to use Bold Driver for learning rate [default: false]");
         // conversion check
         opts.addOption("disable_cv", "disable_cvtest", false,
             "Whether to disable convergence check [default: enabled]");
@@ -178,7 +184,6 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         String rankInitOpt = null;
         float maxInitValue = 1.f;
         double initStdDev = 0.1d;
-        float eta0 = 0.03f;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
 
@@ -204,8 +209,6 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
             maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
             initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
 
-            eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), eta0);
-
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             this.useBiasClause = !cl.hasOption("no_bias");
@@ -216,7 +219,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
         rankInit.setMaxInitValue(maxInitValue);
         initStdDev = Math.max(initStdDev, 1.0d / factor);
         rankInit.setInitStdDev(initStdDev);
-        this.etaEstimator = new AdjustingEtaEstimator(eta0);
+        this.etaEstimator = EtaEstimator.get(cl);
         this.cvState = new ConversionState(conversionCheck, convergenceRate);
         return cl;
     }
@@ -348,7 +351,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
     protected double dloss(final double x, @Nonnull final LossFunction loss) {
         switch (loss) {
             case sigmoid: {
-                return 1.d / (1.d + Math.exp(x)); // gradient ascent
+                return 1.d / (1.d + Math.exp(x));
             }
             case logistic: {
                 double sigmoid = MathUtils.sigmoid(x);
@@ -476,7 +479,8 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                 }
                 inputBuf.flip();
 
-                for (int iter = 2; iter <= iterations; iter++) {
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
                     reportProgress(reporter);
                     setCounterValue(iterCounter, iter);
 
@@ -500,7 +504,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                     }
                     inputBuf.rewind();
                 }
-                LOG.info("Performed " + iterations + " iterations of "
+                LOG.info("Performed " + Math.max(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total) ");
@@ -527,7 +531,8 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                 }
 
                 // run iterations
-                for (int iter = 2; iter <= iterations; iter++) {
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
                     setCounterValue(iterCounter, iter);
 
                     inputBuf.clear();
@@ -574,7 +579,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                         etaEstimator.update(0.5f);
                     }
                 }
-                LOG.info("Performed " + iterations + " iterations of "
+                LOG.info("Performed " + Math.max(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples using a secondary storage (thus "
                         + NumberUtils.formatNumber(count) + " training updates in total)");

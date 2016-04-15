@@ -19,6 +19,7 @@
 package hivemall.common;
 
 import hivemall.utils.lang.NumberUtils;
+import hivemall.utils.lang.Primitives;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
@@ -30,6 +31,8 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 public abstract class EtaEstimator {
 
     public abstract float eta(long t);
+
+    public void update(@Nonnegative float multipler) {}
 
     public static final class FixedEtaEstimator extends EtaEstimator {
 
@@ -99,6 +102,12 @@ public abstract class EtaEstimator {
             this.eta = eta;
         }
 
+        @Override
+        public float eta(long t) {
+            return eta;
+        }
+
+        @Override
         public void update(@Nonnegative float multipler) {
             float newEta = eta * multipler;
             if (!NumberUtils.isFinite(newEta)) {
@@ -108,17 +117,17 @@ public abstract class EtaEstimator {
             this.eta = Math.min(eta0, newEta); // never be larger than eta0
         }
 
-        @Override
-        public float eta(long t) {
-            return eta;
-        }
-
     }
 
     @Nonnull
     public static EtaEstimator get(@Nullable CommandLine cl) throws UDFArgumentException {
         if (cl == null) {
             return new InvscalingEtaEstimator(0.1f, 0.1f);
+        }
+
+        if (cl.hasOption("boldDriver")) {
+            float eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.3f);
+            return new AdjustingEtaEstimator(eta0);
         }
 
         String etaValue = cl.getOptionValue("eta");

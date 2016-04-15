@@ -74,6 +74,42 @@ public class BPRMatrixFactorizationUDTFTest {
         Assert.assertTrue("finishedIter: " + finishedIter, finishedIter < iterations);
     }
 
+    @Test
+    public void testMovielens1kBoldDriver() throws HiveException, IOException {
+        final int iterations = 50;
+        BPRMatrixFactorizationUDTF bpr = new BPRMatrixFactorizationUDTF();
+
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.writableIntObjectInspector;
+        ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, new String(
+                "-boldDriver -factor 10 -iter " + iterations));
+        ObjectInspector[] argOIs = new ObjectInspector[] {intOI, intOI, intOI, param};
+
+        MapredContext mapredContext = MapredContextAccessor.create(true, null);
+        bpr.configure(mapredContext);
+        bpr.setCollector(new Collector() {
+            @Override
+            public void collect(Object args) throws HiveException {}
+        });
+        bpr.initialize(argOIs);
+
+        final IntWritable user = new IntWritable();
+        final IntWritable posItem = new IntWritable();
+        final IntWritable negItem = new IntWritable();
+        final Object[] args = new Object[] {user, posItem, negItem};
+
+        BufferedReader train = IOUtils.bufferedReader(getClass().getResourceAsStream("ml1k.train"));
+        String line;
+        while ((line = train.readLine()) != null) {
+            parseLine(line, user, posItem, negItem);
+            bpr.process(args);
+        }
+        bpr.close();
+        int finishedIter = bpr.cvState.getCurrentIteration();
+        Assert.assertTrue("finishedIter: " + finishedIter, finishedIter < iterations);
+    }
+
+
     private static void parseLine(@Nonnull String line, @Nonnull IntWritable user,
             @Nonnull IntWritable posItem, @Nonnull IntWritable negItem) {
         String[] cols = StringUtils.split(line, ' ');
