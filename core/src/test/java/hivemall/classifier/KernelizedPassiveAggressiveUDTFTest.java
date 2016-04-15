@@ -89,20 +89,15 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf.train(features1, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
 
         /* train weights by Object[] */
         List<?> features2 = (List<?>) intListOI.getList(new Object[] {3, 4, 5});
         udtf.train(features2, -1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(-0.4444444f, udtf.model.get(3).get(), 1e-5f);
-        assertEquals(-0.7777777f, udtf.model.get(4).get(), 1e-5f);
-        assertEquals(-0.7777777f, udtf.model.get(5).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        assertEquals(-0.7777777f, udtf.getAlpha(1), 1e-5f);
     }
 
     @Test
@@ -171,9 +166,7 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf.train(features, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
     }
 
     @Test
@@ -193,9 +186,7 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf.train(features, 1);
 
         /* check weights */
-        assertEquals(0.1000000f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(0.1000000f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(0.1000000f, udtf.getAlpha(0), 1e-5f);
     }
 
     @Test
@@ -263,12 +254,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf2.train(features1, 1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(3).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf2.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf2.model.get(2).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf2.model.get(3).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        assertEquals(0.3333333f, udtf2.getAlpha(0), 1e-5f);
 
         /* train weights by Object[] */
         List<?> features2 = (List<?>) intListOI.getList(new Object[] {3, 4, 5});
@@ -276,16 +263,10 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf2.train(features2, -1);
 
         /* check weights */
-        assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(-0.375f, udtf.model.get(3).get(), 1e-5f);
-        assertEquals(-0.7083333f, udtf.model.get(4).get(), 1e-5f);
-        assertEquals(-0.7083333f, udtf.model.get(5).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf2.model.get(1).get(), 1e-5f);
-        assertEquals(0.3333333f, udtf2.model.get(2).get(), 1e-5f);
-        assertEquals(-0.4444444f, udtf2.model.get(3).get(), 1e-5f);
-        assertEquals(-0.7777777f, udtf2.model.get(4).get(), 1e-5f);
-        assertEquals(-0.7777777f, udtf2.model.get(5).get(), 1e-5f);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        assertEquals(-0.7083333f, udtf.getAlpha(1), 1e-5f);
+        assertEquals(0.3333333f, udtf2.getAlpha(0), 1e-5f);
+        assertEquals(-0.7777777f, udtf2.getAlpha(1), 1e-5f);
 
     }
 
@@ -409,7 +390,7 @@ public class KernelizedPassiveAggressiveUDTFTest {
         news20.close();
         end = System.nanoTime();
         long timePKISplit = end - start;
-        
+
         Assert.assertEquals("Loss values do not match", losses, lossesPKI);
 
         System.out.println("split " + timeSplit + " splitPKI " + timePKISplit);//can't really assert one to be smaller than the other because PKI speed depends strongly on the sparsity of the data
