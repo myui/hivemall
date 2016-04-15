@@ -151,14 +151,16 @@ public final class FeatureValue implements Comparable<FeatureValue>{
         if(feature instanceof Integer) {
             return ((Integer) feature).compareTo((Integer) o.getFeature());
         }
-        if(feature instanceof String) {
+        if(feature instanceof Text) {
             try {
-                return (new Integer((String) feature).compareTo(new Integer((String) o.getFeature())));
+                Integer f = Integer.valueOf(feature.toString());
+                Integer fo = Integer.valueOf(o.getFeature().toString());
+                return f.compareTo(fo);
             } catch (NumberFormatException e) {
-                return ((String) feature).compareTo((String) o.getFeature());
+                return ((Text) feature).compareTo((Text) o.getFeature());   
             }
         }
-        return 0;
+        throw new ClassCastException();
     }
 
 }

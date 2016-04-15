@@ -19,13 +19,13 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import hivemall.model.PredictionResult;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -40,30 +40,36 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
+import hivemall.model.PredictionResult;
+
 public class KernelizedPassiveAggressiveUDTFTest {
 
     @Test
     public void testInitialize() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* test for INT_TYPE_NAME feature */
-        StructObjectInspector intListSOI = udtf.initialize(new ObjectInspector[] {intListOI, intOI});
+        StructObjectInspector intListSOI =
+                udtf.initialize(new ObjectInspector[] {intListOI, intOI});
         assertEquals("struct<feature:int,weight:float>", intListSOI.getTypeName());
 
         /* test for STRING_TYPE_NAME feature */
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-        ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
-        StructObjectInspector stringListSOI = udtf.initialize(new ObjectInspector[] {stringListOI,
-                intOI});
+        ListObjectInspector stringListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
+        StructObjectInspector stringListSOI =
+                udtf.initialize(new ObjectInspector[] {stringListOI, intOI});
         assertEquals("struct<feature:string,weight:float>", stringListSOI.getTypeName());
 
         /* test for BIGINT_TYPE_NAME feature */
         ObjectInspector longOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
-        ListObjectInspector longListOI = ObjectInspectorFactory.getStandardListObjectInspector(longOI);
-        StructObjectInspector longListSOI = udtf.initialize(new ObjectInspector[] {longListOI,
-                intOI});
+        ListObjectInspector longListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(longOI);
+        StructObjectInspector longListSOI =
+                udtf.initialize(new ObjectInspector[] {longListOI, intOI});
         assertEquals("struct<feature:bigint,weight:float>", longListSOI.getTypeName());
     }
 
@@ -71,7 +77,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
     public void testTrain() throws HiveException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         udtf.initialize(new ObjectInspector[] {intListOI, intOI});
 
         /* train weights by List<Object> */
@@ -113,10 +120,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA1Eta() throws UDFArgumentException {
+    public void testKPA1Eta() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA1();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 3.0");
 
@@ -134,10 +142,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA1EtaDefaultParameter() throws UDFArgumentException {
+    public void testKPA1EtaDefaultParameter() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA1();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         udtf.initialize(new ObjectInspector[] {intListOI, intOI});
         float loss = 0.1f;
@@ -148,10 +157,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA1TrainWithoutParameter() throws UDFArgumentException {
+    public void testKPA1TrainWithoutParameter() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA1();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* define aggressive parameter */
         udtf.initialize(new ObjectInspector[] {intListOI, intOI});
@@ -167,10 +177,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA1TrainWithParameter() throws UDFArgumentException {
+    public void testKPA1TrainWithParameter() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA1();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 0.1");
@@ -188,10 +199,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA2EtaWithoutParameter() throws UDFArgumentException {
+    public void testKPA2EtaWithoutParameter() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA2();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
 
         /* do initialize() with aggressiveness parameter */
         udtf.initialize(new ObjectInspector[] {intListOI, intOI});
@@ -207,10 +219,11 @@ public class KernelizedPassiveAggressiveUDTFTest {
     }
 
     @Test
-    public void testPA2EtaWithParameter() throws UDFArgumentException {
+    public void testKPA2EtaWithParameter() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KPA2();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-c 3.0");
 
@@ -232,7 +245,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
         KernelizedPassiveAggressiveUDTF udtf2 = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-a 0.5 -d 3 -PKI");
         ObjectInspector param2 = ObjectInspectorUtils.getConstantObjectInspector(
@@ -264,9 +278,9 @@ public class KernelizedPassiveAggressiveUDTFTest {
         /* check weights */
         assertEquals(0.3333333f, udtf.model.get(1).get(), 1e-5f);
         assertEquals(0.3333333f, udtf.model.get(2).get(), 1e-5f);
-        assertEquals(-4.7638888f, udtf.model.get(3).get(), 1e-5f);
-        assertEquals(-5.0972222f, udtf.model.get(4).get(), 1e-5f);
-        assertEquals(-5.0972222f, udtf.model.get(5).get(), 1e-5f);
+        assertEquals(-0.375f, udtf.model.get(3).get(), 1e-5f);
+        assertEquals(-0.7083333f, udtf.model.get(4).get(), 1e-5f);
+        assertEquals(-0.7083333f, udtf.model.get(5).get(), 1e-5f);
         assertEquals(0.3333333f, udtf2.model.get(1).get(), 1e-5f);
         assertEquals(0.3333333f, udtf2.model.get(2).get(), 1e-5f);
         assertEquals(-0.4444444f, udtf2.model.get(3).get(), 1e-5f);
@@ -279,7 +293,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
     public void testLoss() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        ListObjectInspector intListOI = ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
         udtf.initialize(new ObjectInspector[] {intListOI, intOI, param});
@@ -291,7 +306,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
         KernelizedPassiveAggressiveUDTF udtfPKI = new KernelizedPassiveAggressiveUDTF();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-        ListObjectInspector stringListOI = ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
+        ListObjectInspector stringListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
         ObjectInspector paramPKI = ObjectInspectorUtils.getConstantObjectInspector(
@@ -299,8 +315,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
         udtf.initialize(new ObjectInspector[] {stringListOI, intOI, param});
         udtfPKI.initialize(new ObjectInspector[] {stringListOI, intOI, paramPKI});
 
-        BufferedReader news20 = new BufferedReader(new InputStreamReader(
-            getClass().getResourceAsStream("news20-small.binary")));
+        BufferedReader news20 = new BufferedReader(
+            new InputStreamReader(getClass().getResourceAsStream("news20-small.binary")));
         ArrayList<String> words = new ArrayList<String>();
         String line = news20.readLine();
         for (int i = 1; line != null; i++) {
@@ -317,11 +333,85 @@ public class KernelizedPassiveAggressiveUDTFTest {
             float lossPKI = udtfPKI.getLoss();
 
             Assert.assertEquals("iter#" + i + " loss (" + loss + ") != lossPKI (" + lossPKI
-                    + ") at Line:\n" + line + '\n', loss, lossPKI, 0.f);
+                    + ") at Line:\n" + line + '\n',
+                loss, lossPKI, 0.f);
 
             words.clear();
             line = news20.readLine();
         }
         news20.close();
+    }
+
+    @Test
+    public void testTime() throws UDFArgumentException, IOException, ParseException {
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
+        ListObjectInspector stringListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
+        long start;
+        long end;
+        BufferedReader news20;
+        String fileName = "news20-small.binary";//choose from news20-tiny.binary, -small.binary, or -medium.binary. Alternatively, make your own! Original news20.binary is online and easily searchable if needed.
+        String line;
+
+        KernelizedPassiveAggressiveUDTF udtfSplit = new KernelizedPassiveAggressiveUDTF();
+        ObjectInspector paramSplit = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
+        udtfSplit.initialize(new ObjectInspector[] {stringListOI, intOI, paramSplit});
+        start = System.nanoTime();
+        news20 = new BufferedReader(
+            new InputStreamReader(getClass().getResourceAsStream(fileName)));
+        line = news20.readLine();
+        ArrayList<Float> losses = new ArrayList<Float>();
+        for (int i = 1; line != null; i++) {
+            int space = line.indexOf(' ');
+            int len = line.length();
+            if (space == -1 || len <= space + 1) {
+                line = news20.readLine();
+                continue;
+            }
+            int label = Integer.parseInt(line.substring(0, space));
+            line = line.substring(space + 1);
+            List<String> wordsSplit = Arrays.asList(line.split(" "));
+            udtfSplit.train(wordsSplit, label);
+            float loss = udtfSplit.getLoss();
+            losses.add(loss);
+            line = news20.readLine();
+        }
+        news20.close();
+        end = System.nanoTime();
+        long timeSplit = end - start;
+
+        KernelizedPassiveAggressiveUDTF udtfPKISplit = new KernelizedPassiveAggressiveUDTF();
+        ObjectInspector paramPKISplit = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-PKI");
+        udtfPKISplit.initialize(new ObjectInspector[] {stringListOI, intOI, paramPKISplit});
+        start = System.nanoTime();
+        news20 = new BufferedReader(
+            new InputStreamReader(getClass().getResourceAsStream(fileName)));
+        line = news20.readLine();
+        ArrayList<Float> lossesPKI = new ArrayList<Float>();
+        for (int i = 1; line != null; i++) {
+            int space = line.indexOf(' ');
+            int len = line.length();
+            if (space == -1 || len <= space + 1) {
+                line = news20.readLine();
+                continue;
+            }
+            int label = Integer.parseInt(line.substring(0, space));
+            line = line.substring(space + 1);
+            List<String> wordsSplit = Arrays.asList(line.split(" "));
+            udtfPKISplit.train(wordsSplit, label);
+            float lossPKI = udtfPKISplit.getLoss();
+            lossesPKI.add(lossPKI);
+            line = news20.readLine();
+        }
+        news20.close();
+        end = System.nanoTime();
+        long timePKISplit = end - start;
+        
+        Assert.assertEquals("Loss values do not match", losses, lossesPKI);
+
+        System.out.println("split " + timeSplit + " splitPKI " + timePKISplit);//can't really assert one to be smaller than the other because PKI speed depends strongly on the sparsity of the data
     }
 }

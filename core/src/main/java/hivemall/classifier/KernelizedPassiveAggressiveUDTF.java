@@ -41,7 +41,6 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
     private float a;
     private int degree;
-    private int capSV;
     private float loss;
     private boolean pki;
     private Map<Object, BitSet> supportVectorsIndicesPKI;
@@ -53,13 +52,8 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         opts.addOption("a", "kernelconstant", true,
             "Constant a inside polynomial kernel K = (dot(xi,xj) + a)^d [default 1.0]");
         opts.addOption("d", "degree", true, "Degree of polynomial kernel d [default 2]");
-        opts.addOption(
-            "PKI",
-            "invertedindex",
-            false,
-            "Whether to use inverted index maps for finding support vectors (better time complexity, worse spacial complexity) [default: OFF]");
-        opts.addOption("capSV", "supportvectorcapacity", true,
-            "Maximum number of support vectors to keep [default 1000]");
+        opts.addOption("PKI", "invertedindex", false,
+            "Whether to use inverted index maps for finding support vectors (better time complexity for sparse data, worse spacial complexity) [default: OFF]");
         return opts;
     }
 
@@ -68,12 +62,10 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         final CommandLine cl = super.processOptions(argOIs);
         float a = 1.f;
         int degree = 2;
-        int capSV = 1000;
         this.pki = false;
         if (cl != null) {
             String a_str = cl.getOptionValue("a");
             String d_str = cl.getOptionValue("d");
-            String m_str = cl.getOptionValue("capSV");
             this.pki = cl.hasOption("PKI");
             if (a_str != null) {
                 a = Float.parseFloat(a_str);
@@ -81,14 +73,8 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
             if (d_str != null) {
                 degree = Integer.parseInt(d_str);
                 if (!(degree >= 1)) {
-                    throw new UDFArgumentException("Polynomial Kernel Degree d must be d >= 1: "
-                            + degree);
-                }
-            }
-            if (m_str != null) {
-                capSV = Integer.parseInt(m_str);
-                if (capSV <= 0) {
-                    capSV = Integer.MAX_VALUE;
+                    throw new UDFArgumentException(
+                        "Polynomial Kernel Degree d must be d >= 1: " + degree);
                 }
             }
         }
@@ -98,7 +84,6 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
         this.a = a;
         this.degree = degree;
-        this.capSV = capSV;
         return cl;
     }
 
@@ -187,11 +172,10 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                     continue;
                 }
                 Object f = fv.getFeature();
-                alpha = model.getWeight(f);
+                alpha = model.getWeight(f);//using model weight for alpha since weight vector is unnecessary in kernelized algorithms
                 break;
             }
-            double kk = polynomialKernel(features, sv, a, degree);
-            score += alpha * kk;
+            score += alpha * polynomialKernel(features, sv, a, degree);
         }
         for (FeatureValue f : features) {// a += w[i] * x[i]
             if (f == null) {
@@ -212,7 +196,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
             }
             Object f = fv.getFeature();
             float w = model.getWeight(f) + updateDiff;
-            model.set(f, new WeightValue(w));
+            model.set(f, new WeightValue(w));//using model weight for alpha since weight vector is unnecessary in kernelized algorithms
         }
     }
 
@@ -242,6 +226,9 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                 ++i;
                 ++j;
             }
+        }
+        if (ret == 0.d) {
+            return 0.d;
         }
         ret = Math.pow(ret + c, degree);
         return ret;
@@ -274,8 +261,8 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                 if (c_str != null) {
                     c = Float.parseFloat(c_str);
                     if (!(c > 0.f)) {
-                        throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
-                                + c);
+                        throw new UDFArgumentException(
+                            "Aggressiveness parameter C must be C > 0: " + c);
                     }
                 }
             }
