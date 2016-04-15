@@ -70,6 +70,8 @@ public class BPRMatrixFactorizationUDTFTest {
             bpr.process(args);
         }
         bpr.close();
+        int finishedIter = bpr.cvState.getCurrentIteration();
+        Assert.assertTrue("finishedIter: " + finishedIter, finishedIter < iterations);
     }
 
     private static void parseLine(@Nonnull String line, @Nonnull IntWritable user,

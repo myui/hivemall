@@ -37,6 +37,9 @@ public final class ConversionState {
     /** The cumulative losses in an iteration */
     protected double currLosses, prevLosses;
 
+    protected int curIter;
+    protected float curEta;
+
     public ConversionState() {
         this(true, 0.005d);
     }
@@ -48,6 +51,8 @@ public final class ConversionState {
         this.totalErrors = 0.d;
         this.currLosses = 0.d;
         this.prevLosses = Double.POSITIVE_INFINITY;
+        this.curIter = 0;
+        this.curEta = Float.NaN;
     }
 
     public double getTotalErrors() {
@@ -125,6 +130,16 @@ public final class ConversionState {
             logger.info("[iter " + iter + "] curLoss=" + currLosses + ", prevLoss=" + prevLosses
                     + ", eta=" + eta);
         }
+        this.curIter = iter;
+        this.curEta = eta;
+    }
+
+    public int getCurrentIteration() {
+        return curIter;
+    }
+
+    public float getCurrentEta() {
+        return curEta;
     }
 
 }
