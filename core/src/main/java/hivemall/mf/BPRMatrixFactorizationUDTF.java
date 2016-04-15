@@ -490,12 +490,10 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                     }
                     cvState.multiplyLoss(0.5d);
                     cvState.logState(iter, eta());
-
-                    boolean isLossIncreased = cvState.isLossIncreased();
-                    if (isLossIncreased == false && cvState.isConverged(iter, numTrainingExamples)) {
+                    if (cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
-                    if (isLossIncreased) {
+                    if (cvState.isLossIncreased()) {
                         etaEstimator.update(1.1f);
                     } else {
                         etaEstimator.update(0.5f);
@@ -567,12 +565,10 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                     }
                     cvState.multiplyLoss(0.5d);
                     cvState.logState(iter, eta());
-
-                    boolean isLossIncreased = cvState.isLossIncreased();
-                    if (isLossIncreased == false && cvState.isConverged(iter, numTrainingExamples)) {
+                    if (cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
-                    if (isLossIncreased) {
+                    if (cvState.isLossIncreased()) {
                         etaEstimator.update(1.1f);
                     } else {
                         etaEstimator.update(0.5f);

@@ -80,6 +80,8 @@ public final class ConversionState {
 
     public boolean isConverged(final int iter, final long obserbedTrainingExamples) {
         if (conversionCheck == false) {
+            this.prevLosses = currLosses;
+            this.currLosses = 0.d;
             return false;
         }
 
