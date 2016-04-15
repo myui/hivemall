@@ -21,7 +21,7 @@ package hivemall.classifier;
 import hivemall.common.LossFunctions;
 import hivemall.model.FeatureValue;
 import hivemall.model.PredictionResult;
-import hivemall.utils.collections.DoubleArrayList;
+import hivemall.utils.collections.FloatArrayList;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -45,7 +45,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
     private boolean pki;
     private Map<Object, BitSet> supportVectorsIndicesPKI;
     private List<FeatureValue[]> supportVectors;
-    private DoubleArrayList alpha;
+    private FloatArrayList alpha;
 
     @Override
     protected Options getOptions() {
@@ -82,7 +82,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         if (this.pki) {
             supportVectorsIndicesPKI = new HashMap<Object, BitSet>();
         }
-        alpha = new DoubleArrayList();
+        alpha = new FloatArrayList();
 
         this.a = a;
         this.degree = degree;
@@ -105,7 +105,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         return loss;
     }
     
-    double getAlpha(int index) {//only used for testing purposes at the moment
+    float getAlpha(int index) {//only used for testing purposes at the moment
         return this.alpha.get(index);
     }
 
@@ -123,7 +123,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
             }
             int size = svIndex.cardinality();
             List<FeatureValue[]> supportVectorsPKI = new ArrayList<FeatureValue[]>(size);
-            DoubleArrayList alpha = new DoubleArrayList(size);
+            FloatArrayList alpha = new FloatArrayList(size);
             for (int i = svIndex.nextSetBit(0); i >= 0; i = svIndex.nextSetBit(i + 1)) {
                 FeatureValue[] sv = supportVectors.get(i);
                 supportVectorsPKI.add(sv);
@@ -150,7 +150,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
     }
 
-    protected void train(@Nonnull List<FeatureValue[]> supportVectors, @Nonnull DoubleArrayList alpha,
+    protected void train(@Nonnull List<FeatureValue[]> supportVectors, @Nonnull FloatArrayList alpha,
             @Nonnull final FeatureValue[] features, final int label) {
         final float y = label > 0 ? 1.f : -1.f;
 
@@ -171,14 +171,14 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
     @Nonnull
     protected PredictionResult calcScoreWithKernelAndNorm(
-            @Nonnull final List<FeatureValue[]> supportVectors, @Nonnull DoubleArrayList alpha,
+            @Nonnull final List<FeatureValue[]> supportVectors, @Nonnull FloatArrayList alpha,
             @Nonnull final FeatureValue[] features, float a, int degree) {
         float score = 0.f;
         float squared_norm = 0.f;
 
         for (int i = 0; i < supportVectors.size(); ++i) {
             FeatureValue[] sv = supportVectors.get(i);
-            double currentAlpha = alpha.get(i);
+            float currentAlpha = alpha.get(i);
             score += currentAlpha * polynomialKernel(features, sv, a, degree);
         }
         for (FeatureValue f : features) {// a += w[i] * x[i]
