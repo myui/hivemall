@@ -23,8 +23,6 @@
 _DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Preserve the calling directory
 _CALLING_DIR="$(pwd)"
-# Options used during compilation
-_COMPILE_JVM_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
 
 # Installs any application tarball given a URL, the expected tarball name,
 # and, optionally, a checkable binary path to determine if the binary has
@@ -72,21 +70,6 @@ install_mvn() {
   MVN_BIN="${_DIR}/apache-maven-${MVN_VERSION}/bin/mvn"
 }
 
-# Install zinc under the bin/ folder
-install_zinc() {
-  local zinc_path="zinc-0.3.9/bin/zinc"
-  [ ! -f "${_DIR}/${zinc_path}" ] && ZINC_INSTALL_FLAG=1
-  install_app \
-    "http://downloads.typesafe.com/zinc/0.3.9" \
-    "zinc-0.3.9.tgz" \
-    "${zinc_path}"
-  ZINC_BIN="${_DIR}/${zinc_path}"
-}
-
-# Setup healthy defaults for the Zinc port if none were provided from
-# the environment
-ZINC_PORT=${ZINC_PORT:-"3030"}
-
 # Check for the `--force` flag dictating that `mvn` should be downloaded
 # regardless of whether the system already has a `mvn` install
 if [ "$1" == "--force" ]; then
@@ -101,24 +84,10 @@ if [ ! "$MVN_BIN" -o -n "$FORCE_MVN" ]; then
   install_mvn
 fi
 
-# Install Zinc for the bin/
-install_zinc
-
 # Reset the current working directory
 cd "${_CALLING_DIR}"
-
-# Now that zinc is ensured to be installed, check its status and, if its
-# not running or just installed, start it
-if [ -n "${ZINC_INSTALL_FLAG}" -o -z "`"${ZINC_BIN}" -status -port ${ZINC_PORT}`" ]; then
-  export ZINC_OPTS=${ZINC_OPTS:-"$_COMPILE_JVM_OPTS"}
-  "${ZINC_BIN}" -shutdown -port ${ZINC_PORT}
-  "${ZINC_BIN}" -start -port ${ZINC_PORT} &>/dev/null
-fi
-
-# Set any `mvn` options if not already present
-export MAVEN_OPTS=${MAVEN_OPTS:-"$_COMPILE_JVM_OPTS"}
 
 echo "Using \`mvn\` from path: $MVN_BIN" 1>&2
 
 # Last, call the `mvn` command as usual
-${MVN_BIN} -DzincPort=${ZINC_PORT} "$@"
+${MVN_BIN} "$@"
