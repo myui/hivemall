@@ -231,7 +231,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
      * [info]   at org.apache.spark.sql.hive.HiveSimpleUDF$$anonfun$method$1.apply(hiveUDFs.scala:119)
      * ...
      */
-    val rows = DummyInputData.select(sigmoid($"data")).collect
+    val rows = DummyInputData.select(sigmoid($"c0")).collect
     assert(rows(0).getDouble(0) ~== 0.500)
     assert(rows(1).getDouble(0) ~== 0.731)
     assert(rows(2).getDouble(0) ~== 0.880)
@@ -380,7 +380,8 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     import hiveContext.implicits._
     Seq("voted_avg", "weight_voted_avg")
       .map { udaf =>
-        TinyScoreData.groupby().agg("score"->udaf)
+        Seq((0, 1), (0, 1), (0, 1)).toDF("c0", "c1")
+          .groupby("c0").agg("c1"->udaf)
           .foreach(_ => {})
       }
     Seq("rf_ensemble")
