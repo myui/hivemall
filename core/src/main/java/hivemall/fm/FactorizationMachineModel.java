@@ -214,7 +214,7 @@ public abstract class FactorizationMachineModel {
         float nextW0 = prevW0 - eta * (gradW0 + 2.f * _lambdaW0 * prevW0);
         if (!NumberUtils.isFinite(nextW0)) {
             throw new IllegalStateException("Got " + nextW0 + " for next W0\n" + "gradW0=" + gradW0
-                    + ", prevW0=" + prevW0 + ", dloss=" + dloss);
+                    + ", prevW0=" + prevW0 + ", dloss=" + dloss + ", eta=" + eta);
         }
         setW0(nextW0);
     }
@@ -226,7 +226,8 @@ public abstract class FactorizationMachineModel {
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
         if (!NumberUtils.isFinite(nextWi)) {
             throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
-                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss);
+                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss
+                    + ", eta=" + eta);
         }
         setW(x, nextWi);
     }
@@ -243,7 +244,7 @@ public abstract class FactorizationMachineModel {
             throw new IllegalStateException("Got " + nextVif + " for next V" + f + '['
                     + x.getFeature() + "]\n" + "Xi=" + Xi + ", Vif=" + Vif + ", h=" + h
                     + ", gradV=" + gradV + ", lambdaVf=" + LambdaVf + ", dloss=" + dloss
-                    + ", sumViX=" + sumViX);
+                    + ", sumViX=" + sumViX + ", eta=" + eta);
         }
         setV(x, f, nextVif);
     }
