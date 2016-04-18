@@ -16,7 +16,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scala.version>2.10.4</scala.version>
+		<scala.version>2.11.8</scala.version>
 	</properties>
 
 	<repositories>
@@ -58,25 +58,25 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_2.10</artifactId>
+			<artifactId>spark-core_2.11</artifactId>
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql_2.10</artifactId>
+			<artifactId>spark-sql_2.11</artifactId>
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-hive_2.10</artifactId>
+			<artifactId>spark-hive_2.11</artifactId>
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-mllib_2.10</artifactId>
+			<artifactId>spark-mllib_2.11</artifactId>
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
@@ -94,7 +94,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
+			<artifactId>scalatest_2.11</artifactId>
 			<version>2.2.4</version>
 			<scope>test</scope>
 		</dependency>

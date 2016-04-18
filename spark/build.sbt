@@ -12,6 +12,8 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 // spark-package settings
 spName := "maropu/hivemall-spark"
 
+scalaVersion := "2.11.8"
+
 sparkVersion := "1.6.1"
 
 sparkComponents ++= Seq("sql", "mllib", "hive")
@@ -27,7 +29,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-compress" % "1.8",
   "io.github.myui" % "hivemall-core" % "0.4.1-alpha.6",
   "io.github.myui" % "hivemall-mixserv" % "0.4.1-alpha.6",
-  "org.scalatest" % "scalatest_2.10" % "2.2.4" % "provided",
+  "org.scalatest" % "scalatest_2.11" % "2.2.4" % "provided",
   "org.xerial" % "xerial-core" % "3.2.3" % "provided"
 )
 
