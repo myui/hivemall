@@ -17,7 +17,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spark.version>1.6.1</spark.version>
-		<scala.version>2.10.4</scala.version>
 		<scala.version>2.11.8</scala.version>
 	</properties>
 
@@ -89,12 +88,6 @@
 			<scope>compile</scope>
 		</dependency>
 		<!-- test dependencies -->
-		<dependency>
-			<groupId>com.holdenkarau</groupId>
-			<artifactId>spark-testing-base_2.10</artifactId>
-			<version>${spark.version}_0.3.2</version>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>xerial-core</artifactId>

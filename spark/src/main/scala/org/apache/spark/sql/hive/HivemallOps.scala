@@ -725,7 +725,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def angular_similarity(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.similarity.AngularSimilarityUDF"), exprs.map(_.expr))
   }
 
@@ -735,7 +735,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def euclid_similarity(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.similarity.EuclidSimilarity"), exprs.map(_.expr))
   }
 
@@ -745,7 +745,8 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def distance2similarity(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    // TODO: Need a wrapper class because of using unsupported types
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.similarity.Distance2SimilarityUDF"), exprs.map(_.expr))
   }
 
@@ -785,7 +786,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def euclid_distance(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.distance.EuclidDistanceUDF"), exprs.map(_.expr))
   }
 
@@ -795,7 +796,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def cosine_distance(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.distance.CosineDistanceUDF"), exprs.map(_.expr))
   }
 
@@ -805,7 +806,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def angular_distance(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.distance.AngularDistanceUDF"), exprs.map(_.expr))
   }
 
@@ -815,7 +816,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def manhattan_distance(exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.distance.ManhattanDistanceUDF"), exprs.map(_.expr))
   }
 
@@ -825,7 +826,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def minkowski_distance (exprs: Column*): Column = {
-    HiveSimpleUDF(new HiveFunctionWrapper(
+    HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.knn.distance.MinkowskiDistanceUDF"), exprs.map(_.expr))
   }
 
@@ -931,6 +932,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def array_hash_values(exprs: Column*): Column = {
+    // TODO: Need a wrapper class because of using unsupported types
     HiveSimpleUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.hashing.ArrayHashValuesUDF"), exprs.map(_.expr))
   }
@@ -941,6 +943,7 @@ object HivemallOps {
    */
   @scala.annotation.varargs
   def prefixed_hash_values(exprs: Column*): Column = {
+    // TODO: Need a wrapper class because of using unsupported types
     HiveSimpleUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF"), exprs.map(_.expr))
   }
@@ -975,19 +978,11 @@ object HivemallOps {
   }
 
   /**
-   * @see hivemall.ftvec.conv.ConvertToDenseModelUDAF
-   * @group ftvec.conv
-   */
-  def conv2dense(expr: Column): Column = {
-    HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.conv.ConvertToDenseModelUDAF"), Seq(expr.expr))
-  }
-
-  /**
    * @see hivemall.ftvec.conv.ToDenseFeaturesUDF
    * @group ftvec.conv
    */
   def to_dense_features(expr: Column): Column = {
+    // TODO: Need a wrapper class because of using unsupported types
     HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.conv.ToDenseFeaturesUDF"), Seq(expr.expr))
   }
@@ -997,6 +992,7 @@ object HivemallOps {
    * @group ftvec.conv
    */
   def to_sparse_features(expr: Column): Column = {
+    // TODO: Need a wrapper class because of using unsupported types
     HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.conv.ToSparseFeaturesUDF"), Seq(expr.expr))
   }

@@ -29,7 +29,171 @@ import org.apache.spark.test.TestUtils._
 
 final class HivemallOpsSuite extends HivemallQueryTest {
 
-  test("hivemall_version") {
+  test("knn.similarity") {
+    val row1 = DummyInputData.select(cosine_sim(Seq(1, 2, 3, 4), Seq(3, 4, 5, 6))).collect
+    assert(row1(0).getFloat(0) ~== 0.500f)
+    val row2 = DummyInputData.select(jaccard(5, 6)).collect
+    assert(row2(0).getFloat(0) ~== 0.96875f)
+    val row3 = DummyInputData.select(angular_similarity(Seq(1, 2, 3), Seq(4, 5, 6))).collect
+    assert(row3(0).getFloat(0) ~== 0.500f)
+    val row4 = DummyInputData.select(euclid_similarity(Seq(5, 3, 1), Seq(2, 8, 3))).collect
+    assert(row4(0).getFloat(0) ~== 0.33333334f)
+    // TODO: $"c0" throws AnalysisException, why?
+    // val row5 = DummyInputData.select(distance2similarity(DummyInputData("c0"))).collect
+    // assert(row5(0).getFloat(0) ~== 0.1f)
+  }
+
+  test("knn.distance") {
+    val row1 = DummyInputData.select(hamming_distance(1, 3)).collect
+    assert(row1(0).getInt(0) == 1)
+    val row2 = DummyInputData.select(popcnt(1)).collect
+    assert(row2(0).getInt(0) == 1)
+    val row3 = DummyInputData.select(kld(0.1, 0.5, 0.2, 0.5)).collect
+    assert(row3(0).getDouble(0) ~== 0.01)
+    val row4 = DummyInputData.select(
+      euclid_distance(Seq("0.1", "0.5"), Seq("0.2", "0.5"))).collect
+    assert(row4(0).getFloat(0) ~== 1.4142135f)
+    val row5 = DummyInputData.select(
+      cosine_distance(Seq("0.8", "0.3"), Seq("0.4", "0.6"))).collect
+    assert(row5(0).getFloat(0) ~== 1.0f)
+    val row6 = DummyInputData.select(
+      angular_distance(Seq("0.1", "0.1"), Seq("0.3", "0.8"))).collect
+    assert(row6(0).getFloat(0) ~== 0.50f)
+    val row7 = DummyInputData.select(
+      manhattan_distance(Seq("0.7", "0.8"), Seq("0.5", "0.6"))).collect
+    assert(row7(0).getFloat(0) ~== 4.0f)
+    val row8 = DummyInputData.select(
+      minkowski_distance(Seq("0.1", "0.2"), Seq("0.2", "0.2"), 1.0)).collect
+    assert(row8(0).getFloat(0) ~== 2.0f)
+  }
+
+  test("knn.lsh") {
+    import hiveContext.implicits._
+    assert(IntList2Data.minhash(1, $"target").count() > 0)
+
+    assert(DummyInputData.select(bbit_minhash(Seq("1:0.1", "2:0.5"), false)).count
+      == DummyInputData.count)
+    assert(DummyInputData.select(minhashes(Seq("1:0.1", "2:0.5"), false)).count
+      == DummyInputData.count)
+  }
+
+  test("ftvec - add_bias") {
+    // TODO: This import does not work and why?
+    // import hiveContext.implicits._
+    assert(TinyTrainData.select(add_bias(TinyTrainData.col("features"))).collect.toSet
+      === Set(
+        Row(Seq("1:0.8", "2:0.2", "0:1.0")),
+        Row(Seq("2:0.7", "0:1.0")),
+        Row(Seq("1:0.9", "0:1.0"))))
+  }
+
+  test("ftvec - extract_feature") {
+    val row = DummyInputData.select(extract_feature("1:0.8")).collect
+    assert(row(0).getString(0) == "1")
+  }
+
+  test("ftvec - extract_weight") {
+    val row = DummyInputData.select(extract_weight("3:0.1")).collect
+    assert(row(0).getDouble(0) ~== 0.1)
+  }
+
+  test("ftvec - explode_array") {
+    import hiveContext.implicits._
+    assert(TinyTrainData.explode_array("features")
+        .select($"feature").collect.toSet
+      === Set(Row("1:0.8"), Row("2:0.2"), Row("2:0.7"), Row("1:0.9")))
+  }
+
+  test("ftvec - add_feature_index") {
+    // import hiveContext.implicits._
+    val doubleListData = {
+      // TODO: Use `toDF`
+      val rowRdd = hiveContext.sparkContext.parallelize(
+          Row(0.8 :: 0.5 :: Nil) ::
+          Row(0.3 :: 0.1 :: Nil) ::
+          Row(0.2 :: Nil) ::
+          Nil
+        )
+      hiveContext.createDataFrame(
+        rowRdd,
+        StructType(
+          StructField("data", ArrayType(DoubleType), true) ::
+          Nil)
+        )
+    }
+
+    assert(doubleListData.select(
+        add_feature_index(doubleListData.col("data"))).collect.toSet
+      === Set(
+        Row(Seq("1:0.8", "2:0.5")),
+        Row(Seq("1:0.3", "2:0.1")),
+        Row(Seq("1:0.2"))))
+  }
+
+  test("ftvec - sort_by_feature") {
+    // import hiveContext.implicits._
+    val intFloatMapData = {
+      // TODO: Use `toDF`
+      val rowRdd = hiveContext.sparkContext.parallelize(
+          Row(Map(1->0.3f, 2->0.1f, 3->0.5f)) ::
+          Row(Map(2->0.4f, 1->0.2f)) ::
+          Row(Map(2->0.4f, 3->0.2f, 1->0.1f, 4->0.6f)) ::
+          Nil
+        )
+      hiveContext.createDataFrame(
+        rowRdd,
+        StructType(
+          StructField("data", MapType(IntegerType, FloatType), true) ::
+          Nil)
+        )
+    }
+
+    val sortedKeys = intFloatMapData.select(sort_by_feature(intFloatMapData.col("data")))
+      .collect.map {
+        case Row(m: Map[Int, Float]) => m.keysIterator.toSeq
+    }
+
+    assert(sortedKeys.toSet === Set(Seq(1, 2, 3), Seq(1, 2), Seq(1, 2, 3, 4)))
+  }
+
+  test("ftvec.hash") {
+    assert(DummyInputData.select(mhash("test")).count == DummyInputData.count)
+    assert(DummyInputData.select(sha1("test")).count == DummyInputData.count)
+    // assert(DummyInputData.select(array_hash_values(Seq("aaa", "bbb"))).count
+    //   == DummyInputData.count)
+    // assert(DummyInputData.select(prefixed_hash_values(Seq("ccc", "ddd"), "prefix")).count
+    //   == DummyInputData.count)
+  }
+
+  test("ftvec.scaling") {
+    assert(TinyTrainData.select(rescale(2.0f, 1.0, 5.0)).collect.toSet
+      === Set(Row(0.25f)))
+    assert(TinyTrainData.select(zscore(1.0f, 0.5, 0.5)).collect.toSet
+      === Set(Row(1.0f)))
+    assert(TinyTrainData.select(normalize(TinyTrainData.col("features"))).collect.toSet
+      === Set(
+        Row(Seq("1:0.9701425", "2:0.24253562")),
+        Row(Seq("2:1.0")),
+        Row(Seq("1:1.0"))))
+  }
+
+  test("ftvec.conv - quantify") {
+    import hiveContext.implicits._
+    val testDf = Seq((1, "aaa", true), (2, "bbb", false), (3, "aaa", false)).toDF
+    // This test is done in a single parition because `HivemallOps#quantify` assigns indentifiers
+    // for non-numerical values in each partition.
+    assert(testDf.coalesce(1).quantify(Seq[Column](true) ++ testDf.cols: _*).collect.toSet
+      === Set(Row(1, 0, 0), Row(2, 1, 1), Row(3, 0, 1)))
+  }
+
+  test("ftvec.amplify") {
+    import hiveContext.implicits._
+    assert(TinyTrainData.amplify(3, $"label", $"features").count() == 9)
+    assert(TinyTrainData.rand_amplify(3, 128, $"label", $"features").count() == 9)
+    assert(TinyTrainData.part_amplify(3).count() == 9)
+  }
+
+  test("misc - hivemall_version") {
     assert(DummyInputData.select(hivemall_version()).collect.toSet === Set(Row("0.4.1-alpha.6")))
     /**
      * TODO: Why a test below does fail?
@@ -56,97 +220,12 @@ final class HivemallOpsSuite extends HivemallQueryTest {
      */
   }
 
-  test("bbit_minhash") {
-    // Assume no exception
-    assert(DummyInputData.select(bbit_minhash(Seq("1:0.1", "2:0.5"), false)).count
-      == DummyInputData.count)
+  test("misc - rowid") {
+    val df = DummyInputData.select(rowid())
+    assert(df.distinct.count == df.count)
   }
 
-  test("minhashes") {
-    // Assume no exception
-    assert(DummyInputData.select(minhashes(Seq("1:0.1", "2:0.5"), false)).count
-      == DummyInputData.count)
-  }
-
-  test("cosine_sim") {
-    val row = DummyInputData.select(cosine_sim(Seq(1, 2, 3, 4), Seq(3, 4, 5, 6))).collect
-    assert(row(0).getFloat(0) ~== 0.500f)
-  }
-
-  test("hamming_distance") {
-    val row = DummyInputData.select(hamming_distance(1, 3)).collect
-    assert(row(0).getInt(0) == 1)
-  }
-
-  test("jaccard") {
-    val row = DummyInputData.select(jaccard(5, 6)).collect
-    assert(row(0).getFloat(0) ~== 0.96875f)
-  }
-
-  test("popcnt") {
-    val row = DummyInputData.select(popcnt(1)).collect
-    assert(row(0).getInt(0) == 1)
-  }
-
-  test("kld") {
-    val row = DummyInputData.select(kld(0.1, 0.5, 0.2, 0.5)).collect
-    assert(row(0).getDouble(0) ~== 0.01)
-  }
-
-  test("add_bias") {
-    // TODO: This import does not work and why?
-    // import hiveContext.implicits._
-    assert(TinyTrainData.select(add_bias(TinyTrainData.col("features"))).collect.toSet
-      === Set(
-        Row(Seq("1:0.8", "2:0.2", "0:1.0")),
-        Row(Seq("2:0.7", "0:1.0")),
-        Row(Seq("1:0.9", "0:1.0"))))
-  }
-
-  test("extract_feature") {
-    val row = DummyInputData.select(extract_feature("1:0.8")).collect
-    assert(row(0).getString(0) == "1")
-  }
-
-  test("extract_weight") {
-    val row = DummyInputData.select(extract_weight("3:0.1")).collect
-    assert(row(0).getDouble(0) ~== 0.1)
-  }
-
-  test("explode_array") {
-    import hiveContext.implicits._
-    assert(TinyTrainData.explode_array("features")
-        .select($"feature").collect.toSet
-      === Set(Row("1:0.8"), Row("2:0.2"), Row("2:0.7"), Row("1:0.9")))
-  }
-
-  test("add_feature_index") {
-    // import hiveContext.implicits._
-    val doubleListData = {
-      // TODO: Use `toDF`
-      val rowRdd = hiveContext.sparkContext.parallelize(
-          Row(0.8 :: 0.5 :: Nil) ::
-          Row(0.3 :: 0.1 :: Nil) ::
-          Row(0.2 :: Nil) ::
-          Nil
-        )
-      hiveContext.createDataFrame(
-        rowRdd,
-        StructType(
-          StructField("data", ArrayType(DoubleType), true) ::
-          Nil)
-        )
-    }
-
-    assert(doubleListData.select(
-        add_feature_index(doubleListData.col("data"))).collect.toSet
-      === Set(
-        Row(Seq("1:0.8", "2:0.5")),
-        Row(Seq("1:0.3", "2:0.1")),
-        Row(Seq("1:0.2"))))
-  }
-
-  test("each_top_k") {
+  test("misc - each_top_k") {
     // import hiveContext.implicits._
     val groupedData = {
       // TODO: Use `toDF`
@@ -177,51 +256,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
       Set(Row("3"), Row("4"), Row("6")))
   }
 
-  test("mhash") {
-    // Assume no exception
-    assert(DummyInputData.select(mhash("test")).count == DummyInputData.count)
-  }
-
-  test("sha1") {
-    // Assume no exception
-    assert(DummyInputData.select(sha1("test")).count == DummyInputData.count)
-  }
-
-  test("rowid") {
-    val df = DummyInputData.select(rowid())
-    assert(df.distinct.count == df.count)
-  }
-
-  // TODO: Support testing equality between two floating points
-  test("rescale") {
-   assert(TinyTrainData.select(rescale(2.0f, 1.0, 5.0)).collect.toSet
-      === Set(Row(0.25f)))
-  }
-
-  test("zscore") {
-   assert(TinyTrainData.select(zscore(1.0f, 0.5, 0.5)).collect.toSet
-      === Set(Row(1.0f)))
-  }
-
-  test("normalize") {
-    // import hiveContext.implicits._
-    assert(TinyTrainData.select(normalize(TinyTrainData.col("features"))).collect.toSet
-      === Set(
-        Row(Seq("1:0.9701425", "2:0.24253562")),
-        Row(Seq("2:1.0")),
-        Row(Seq("1:1.0"))))
-  }
-
-  test("quantify") {
-    import hiveContext.implicits._
-    val testDf = Seq((1, "aaa", true), (2, "bbb", false), (3, "aaa", false)).toDF
-    // This test is done in a single parition because `HivemallOps#quantify` assigns indentifiers
-    // for non-numerical values in each partition.
-    assert(testDf.coalesce(1).quantify(Seq[Column](true) ++ testDf.cols: _*).collect.toSet
-      === Set(Row(1, 0, 0), Row(2, 1, 1), Row(3, 0, 1)))
-  }
-
-  test("sigmoid") {
+  test("misc - sigmoid") {
     import hiveContext.implicits._
     /**
      * TODO: SigmodUDF only accepts floating-point types in spark-v1.5.0?
@@ -240,30 +275,8 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     assert(rows(3).getDouble(0) ~== 0.952)
   }
 
-  test("sort_by_feature") {
-    // import hiveContext.implicits._
-    val intFloatMapData = {
-      // TODO: Use `toDF`
-      val rowRdd = hiveContext.sparkContext.parallelize(
-          Row(Map(1->0.3f, 2->0.1f, 3->0.5f)) ::
-          Row(Map(2->0.4f, 1->0.2f)) ::
-          Row(Map(2->0.4f, 3->0.2f, 1->0.1f, 4->0.6f)) ::
-          Nil
-        )
-      hiveContext.createDataFrame(
-        rowRdd,
-        StructType(
-          StructField("data", MapType(IntegerType, FloatType), true) ::
-          Nil)
-        )
-    }
-
-    val sortedKeys = intFloatMapData.select(sort_by_feature(intFloatMapData.col("data")))
-      .collect.map {
-        case Row(m: Map[Int, Float]) => m.keysIterator.toSeq
-    }
-
-    assert(sortedKeys.toSet === Set(Seq(1, 2, 3), Seq(1, 2), Seq(1, 2, 3, 4)))
+  test("misc - lr_datagen") {
+    assert(TinyTrainData.lr_datagen("-n_examples 100 -n_features 10 -seed 100").count >= 100)
   }
 
   test("invoke regression functions") {
@@ -333,14 +346,6 @@ final class HivemallOpsSuite extends HivemallQueryTest {
       "train_randomforest_classifier"
     ).map { func =>
       invokeFunc(new HivemallOps(testDf.coalesce(1)), func, Seq($"features", $"label"))
-        .foreach(_ => {}) // Just call it
-    }
-  }
-
-  test("invoke misc udtf functions") {
-    import hiveContext.implicits._
-    Seq("minhash").map { func =>
-      invokeFunc(new HivemallOps(TinyTrainData), func, Seq($"label", $"features"))
         .foreach(_ => {}) // Just call it
     }
   }
@@ -417,16 +422,5 @@ final class HivemallOpsSuite extends HivemallQueryTest {
       .map { udaf =>
       invokeFunc(IntList2Data.groupby(), udaf, "predict", "target")
     }
-  }
-
-  test("amplify functions") {
-    import hiveContext.implicits._
-    assert(TinyTrainData.amplify(3, $"label", $"features").count() == 9)
-    assert(TinyTrainData.rand_amplify(3, 128, $"label", $"features").count() == 9)
-    assert(TinyTrainData.part_amplify(3).count() == 9)
-  }
-
-  test("lr_datagen") {
-    assert(TinyTrainData.lr_datagen("-n_examples 100 -n_features 10 -seed 100").count >= 100)
   }
 }
