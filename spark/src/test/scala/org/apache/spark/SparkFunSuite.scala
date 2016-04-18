@@ -44,5 +44,4 @@ private[spark] abstract class SparkFunSuite extends FunSuite with Logging {
       logInfo(s"\n\n===== FINISHED $shortSuiteName: '$testName' =====\n")
     }
   }
-
 }
