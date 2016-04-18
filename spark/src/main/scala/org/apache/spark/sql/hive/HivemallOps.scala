@@ -867,10 +867,10 @@ object HivemallOps {
    * HiveInspectors.toInspector has a bug in spark.
    * Need to fix it later.
    */
-  @scala.annotation.varargs
-  def extract_feature(exprs: Column*): Column = {
+  def extract_feature(expr: Column): Column = {
     val hiveUdf = HiveGenericUDF(
-      new HiveFunctionWrapper("hivemall.ftvec.ExtractFeatureUDFWrapper"), exprs.map(_.expr))
+      new HiveFunctionWrapper("hivemall.ftvec.ExtractFeatureUDFWrapper"),
+      expr.expr :: Nil)
     Column(hiveUdf).as("feature")
   }
 
@@ -882,10 +882,10 @@ object HivemallOps {
    * HiveInspectors.toInspector has a bug in spark.
    * Need to fix it later.
    */
-  @scala.annotation.varargs
-  def extract_weight(exprs: Column*): Column = {
+  def extract_weight(expr: Column): Column = {
     val hiveUdf = HiveGenericUDF(
-      new HiveFunctionWrapper("hivemall.ftvec.ExtractWeightUDFWrapper"), exprs.map(_.expr))
+      new HiveFunctionWrapper("hivemall.ftvec.ExtractWeightUDFWrapper"),
+      expr.expr :: Nil)
     Column(hiveUdf).as("value")
   }
 
@@ -893,40 +893,36 @@ object HivemallOps {
    * @see hivemall.ftvec.AddFeatureIndexUDFWrapper
    * @group ftvec
    */
-  @scala.annotation.varargs
-  def add_feature_index(exprs: Column*): Column = {
+  def add_feature_index(expr: Column): Column = {
     HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.AddFeatureIndexUDFWrapper"), exprs.map(_.expr))
+      "hivemall.ftvec.AddFeatureIndexUDFWrapper"), expr.expr :: Nil)
   }
 
   /**
    * @see hivemall.ftvec.SortByFeatureUDF
    * @group ftvec
    */
-  @scala.annotation.varargs
-  def sort_by_feature(exprs: Column*): Column = {
+  def sort_by_feature(expr: Column): Column = {
     HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.SortByFeatureUDFWrapper"), exprs.map(_.expr))
+      "hivemall.ftvec.SortByFeatureUDFWrapper"), expr.expr :: Nil)
   }
 
   /**
    * @see hivemall.ftvec.hashing.MurmurHash3UDF
    * @group ftvec.hashing
    */
-  @scala.annotation.varargs
-  def mhash(exprs: Column*): Column = {
+  def mhash(expr: Column): Column = {
     HiveSimpleUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.hashing.MurmurHash3UDF"), exprs.map(_.expr))
+      "hivemall.ftvec.hashing.MurmurHash3UDF"), expr.expr :: Nil)
   }
 
   /**
    * @see hivemall.ftvec.hashing.Sha1UDF
    * @group ftvec.hashing
    */
-  @scala.annotation.varargs
-  def sha1(exprs: Column*): Column = {
+  def sha1(expr: Column): Column = {
     HiveSimpleUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.hashing.Sha1UDF"), exprs.map(_.expr))
+      "hivemall.ftvec.hashing.Sha1UDF"), expr.expr :: Nil)
   }
 
   /**
@@ -973,10 +969,9 @@ object HivemallOps {
    * @see hivemall.ftvec.scaling.L2NormalizationUDF
    * @group ftvec.scaling
    */
-  @scala.annotation.varargs
-  def normalize(exprs: Column*): Column = {
+  def normalize(expr: Column): Column = {
     HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.scaling.L2NormalizationUDFWrapper"), exprs.map(_.expr))
+      "hivemall.ftvec.scaling.L2NormalizationUDFWrapper"), expr.expr :: Nil)
   }
 
   /**
@@ -1085,8 +1080,6 @@ object HivemallOps {
     /**
      * TODO: SigmodUDF only accepts floating-point types in spark-v1.5.0?
      */
-    // HiveSimpleUDF(new HiveFunctionWrapper(
-    //   "hivemall.tools.math.SigmodUDF"), exprs.map(_.expr))
     val value = exprs.head
     val one: () => Literal = () => Literal.create(1.0, DoubleType)
     Column(one()) / (Column(one()) + exp(-value))
