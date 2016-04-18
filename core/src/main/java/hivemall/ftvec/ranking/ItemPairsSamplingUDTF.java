@@ -41,10 +41,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "bpr_sampling",
+@Description(name = "item_pairs_sampling",
         value = "_FUNC_(array<int|long> pos_items, const int max_item_id [, const string options])"
                 + "- Returns a relation consists of <int pos_item_id, int neg_item_id>")
-public final class BprSamplingUDTF extends UDTFWithOptions {
+public final class ItemPairsSamplingUDTF extends UDTFWithOptions {
 
     private ListObjectInspector listOI;
     private PrimitiveObjectInspector listElemOI;
@@ -61,7 +61,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     private BitSet _bitset;
     private Random _rand;
 
-    public BprSamplingUDTF() {}
+    public ItemPairsSamplingUDTF() {}
 
     @Override
     protected Options getOptions() {
@@ -105,7 +105,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length != 2 && argOIs.length != 3) {
             throw new UDFArgumentException(
-                "bpr_sampling(array<long>, const long max_item_id [, const string options])"
+                "_FUNC_(array<long>, const long max_item_id [, const string options])"
                         + " takes at least two arguments");
         }
         this.listOI = HiveUtils.asListOI(argOIs[0]);
