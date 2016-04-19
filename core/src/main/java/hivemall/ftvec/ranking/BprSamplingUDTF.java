@@ -300,7 +300,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
                 negItem = rand.nextInt(maxItemId);
             } while (posItems.contains(negItem));
 
-            posItems.remove(posItem);
+            posItems.remove(posItemIndex);
             if (posItems.isEmpty()) {
                 feedback.removeFeedback(user);
                 userBits.clear(user);
