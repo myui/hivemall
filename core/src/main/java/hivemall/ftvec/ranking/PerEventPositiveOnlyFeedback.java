@@ -32,8 +32,8 @@ public final class PerEventPositiveOnlyFeedback extends PositiveOnlyFeedback {
     @Nonnull
     private final IntArrayList posItems;
 
-    public PerEventPositiveOnlyFeedback() {
-        super();
+    public PerEventPositiveOnlyFeedback(int maxItemId) {
+        super(maxItemId);
         this.users = new IntArrayList(1024);
         this.posItems = new IntArrayList(1024);
         this.totalFeedbacks = 0;

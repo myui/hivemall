@@ -20,6 +20,7 @@ package hivemall.ftvec.ranking;
 
 import hivemall.UDTFWithOptions;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.BitUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.util.ArrayList;
@@ -178,12 +179,7 @@ public final class ItemPairsSamplingUDTF extends UDTFWithOptions {
         for (int s = 0; s < numSamples; s++) {
             int nth = _rand.nextInt(numPosItems);
 
-            int i = bitset.nextSetBit(0);
-            for (int c = 0; i >= 0; i = bitset.nextSetBit(i + 1), c++) {
-                if (c == nth) {
-                    break;
-                }
-            }
+            int i = BitUtils.indexOfSetBit(bitset, nth);
             if (i == -1) {
                 throw new UDFArgumentException("Cannot find a value for " + nth
                         + "-th element in bitset " + bitset.toString() + " where numPosItems = "
@@ -191,12 +187,7 @@ public final class ItemPairsSamplingUDTF extends UDTFWithOptions {
             }
 
             nth = _rand.nextInt(numNegItems);
-            int j = bitset.nextClearBit(0);
-            for (int c = 0; j <= maxItemId; j = bitset.nextClearBit(j + 1), c++) {
-                if (c == nth) {
-                    break;
-                }
-            }
+            int j = BitUtils.indexOfClearBit(bitset, nth, maxItemId);
             if (j < 0 || j > maxItemId) {
                 throw new UDFArgumentException("j MUST be in [0," + maxItemId + "] but j was " + j);
             }
@@ -215,13 +206,7 @@ public final class ItemPairsSamplingUDTF extends UDTFWithOptions {
         final int numSamples = Math.max(1, Math.round(numPosItems * samplingRate));
         for (int s = 0; s < numSamples; s++) {
             int nth = _rand.nextInt(numPosItems);
-
-            int i = bitsetForPosSampling.nextSetBit(0);
-            for (int c = 0; i >= 0; i = bitsetForPosSampling.nextSetBit(i + 1), c++) {
-                if (c == nth) {
-                    break;
-                }
-            }
+            int i = BitUtils.indexOfSetBit(bitsetForPosSampling, nth);
             if (i == -1) {
                 throw new UDFArgumentException("Cannot find a value for " + nth
                         + "-th element in bitset " + bitset.toString() + " where numPosItems = "
@@ -231,12 +216,7 @@ public final class ItemPairsSamplingUDTF extends UDTFWithOptions {
             --numPosItems;
 
             nth = _rand.nextInt(numNegItems);
-            int j = bitsetForNegSampling.nextClearBit(0);
-            for (int c = 0; j <= maxItemId; j = bitsetForNegSampling.nextClearBit(j + 1), c++) {
-                if (c == nth) {
-                    break;
-                }
-            }
+            int j = BitUtils.indexOfClearBit(bitsetForNegSampling, nth, maxItemId);
             if (j < 0 || j > maxItemId) {
                 throw new UDFArgumentException("j MUST be in [0," + maxItemId + "] but j was " + j);
             }

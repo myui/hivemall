@@ -21,9 +21,11 @@ package hivemall.ftvec.ranking;
 import hivemall.UDTFWithOptions;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.lang.BitUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Random;
 
 import javax.annotation.Nonnull;
@@ -56,7 +58,7 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
 
     // sampling options
     private float samplingRate;
-    private boolean withReplacement;
+    private boolean withoutReplacement;
     private boolean pairSampling;
 
     private Object[] forwardObjs;
@@ -71,10 +73,11 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("sampling", "sampling_rate", true,
             "Sampling rates of positive items [default: 1.0]");
-        opts.addOption("with_replacement", false, "Do sampling with-replacement [default: false]");
+        opts.addOption("without_replacement", false,
+            "Do sampling without-replacement sampling [default: false]");
         opts.addOption("uniform_pair_sampling", "pair_sampling", false,
             "Sampling pairs uniform from feedbacks [default: false]");
-        opts.addOption("maxcol", true, "Max col index [default: -1]");
+        opts.addOption("maxcol", "max_itemid", true, "Max item id index [default: -1]");
         return opts;
     }
 
@@ -83,31 +86,30 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
             throws UDFArgumentException {
         CommandLine cl = null;
 
-        int maxCol = -1;
+        int maxItemId = -1;
         float samplingRate = 1.f;
-        boolean withReplacement = false;
+        boolean withoutReplacement = false;
         boolean pairSampling = false;
 
         if (argOIs.length >= 3) {
             String args = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(args);
 
-            maxCol = Primitives.parseInt(cl.getOptionValue("maxcol"), maxCol);
-            withReplacement = cl.hasOption("with_replacement");
+            maxItemId = Primitives.parseInt(cl.getOptionValue("max_itemid"), maxItemId);
+            withoutReplacement = cl.hasOption("without_replacement");
             pairSampling = cl.hasOption("uniform_pair_sampling");
 
             samplingRate = Primitives.parseFloat(cl.getOptionValue("sampling_rate"), samplingRate);
-            if (withReplacement == false && samplingRate > 1.f) {
-                throw new UDFArgumentException(
-                    "sampling_rate MUST be in less than or equals to 1 where withReplacement is false: "
-                            + samplingRate);
+            if (withoutReplacement && samplingRate > 1.f) {
+                throw new UDFArgumentException("sampling_rate MUST be in less than or equals to 1"
+                        + " where without-replacement is true: " + samplingRate);
             }
         }
 
-        this.feedback = new PositiveOnlyFeedback(maxCol);
-
+        this.feedback = pairSampling ? new PerEventPositiveOnlyFeedback(maxItemId)
+                : new PositiveOnlyFeedback(maxItemId);
         this.samplingRate = samplingRate;
-        this.withReplacement = withReplacement;
+        this.withoutReplacement = withoutReplacement;
         this.pairSampling = pairSampling;
         return cl;
     }
@@ -186,16 +188,16 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
 
         if (pairSampling) {
             PerEventPositiveOnlyFeedback evFeedback = (PerEventPositiveOnlyFeedback) feedback;
-            if (withReplacement) {
-                uniformPairSamplingWithReplacement(evFeedback, numSamples);
-            } else {
+            if (withoutReplacement) {
                 uniformPairSamplingWithoutReplacement(evFeedback, numSamples);
+            } else {
+                uniformPairSamplingWithReplacement(evFeedback, numSamples);
             }
         } else {
-            if (withReplacement) {
-                uniformUserSamplingWithReplacement(feedback, numSamples);
-            } else {
+            if (withoutReplacement) {
                 uniformUserSamplingWithoutReplacement(feedback, numSamples);
+            } else {
+                uniformUserSamplingWithReplacement(feedback, numSamples);
             }
         }
     }
@@ -221,14 +223,26 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
             return;
         }
         final int maxItemId = feedback.getMaxItemId();
-        final Random rand = new Random(31L);
+        if (maxItemId <= 0) {
+            throw new HiveException("Invalid maxItemId: " + maxItemId);
+        }
+        final int numItems = maxItemId + 1;
+        final int[] users = feedback.getUsers();
+        assert (users.length == numUsers);
 
+        final Random rand = new Random(31L);
         for (int i = 0; i < numSamples; i++) {
-            int user = rand.nextInt(numUsers);
+            int user = users[rand.nextInt(numUsers)];
+
             IntArrayList posItems = feedback.getItems(user, true);
             assert (posItems != null) : user;
             int size = posItems.size();
             assert (size > 0) : size;
+            if (size == numItems) {// cannot draw a negative item      
+                --i;
+                continue;
+            }
+
             int posItem = rand.nextInt(size);
             int negItem;
             do {
@@ -248,20 +262,36 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
     private void uniformUserSamplingWithoutReplacement(
             @Nonnull final PositiveOnlyFeedback feedback, final int numSamples)
             throws HiveException {
+        int numUsers = feedback.getNumUsers();
+        if (numUsers == 0) {
+            return;
+        }
         final int maxItemId = feedback.getMaxItemId();
-        final Random rand = new Random(31L);
+        if (maxItemId <= 0) {
+            throw new HiveException("Invalid maxItemId: " + maxItemId);
+        }
+        final int numItems = maxItemId + 1;
+        final BitSet userBits = new BitSet(numUsers);
+        feedback.getUsers(userBits);
 
-        for (int i = 0; i < numSamples; i++) {
-            int numUsers = feedback.getNumUsers();
-            if (numUsers == 0) {
-                break;
+        final Random rand = new Random(31L);
+        for (int i = 0; i < numSamples && numUsers > 0; i++) {
+            int nthUser = rand.nextInt(numUsers);
+            int user = BitUtils.indexOfSetBit(userBits, nthUser);
+            if (user == -1) {
+                throw new HiveException("Cannot find " + nthUser + "-th user among " + numUsers
+                        + " users");
             }
 
-            int user = rand.nextInt(numUsers);
             IntArrayList posItems = feedback.getItems(user, true);
             assert (posItems != null) : user;
             int size = posItems.size();
             assert (size > 0) : size;
+            if (size == numItems) {// cannot draw a negative item                
+                --i;
+                continue;
+            }
+
             int posItem = rand.nextInt(size);
             int negItem;
             do {
@@ -271,6 +301,8 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
             posItems.remove(posItem);
             if (posItems.isEmpty()) {
                 feedback.removeFeedback(user);
+                userBits.clear(user);
+                --numUsers;
             }
 
             forward(user, posItem, negItem);
@@ -287,9 +319,12 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
         if (numFeedbacks == 0) {
             return;
         }
-        final Random rand = new Random(31L);
         final int maxItemId = feedback.getMaxItemId();
+        if (maxItemId <= 0) {
+            throw new HiveException("Invalid maxItemId: " + maxItemId);
+        }
 
+        final Random rand = new Random(31L);
         for (int i = 0; i < numSamples; i++) {
             int index = rand.nextInt(numFeedbacks);
             int user = feedback.getUser(index);
@@ -320,9 +355,12 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
         if (numFeedbacks == 0) {
             return;
         }
-        final Random rand = new Random(31L);
         final int maxItemId = feedback.getMaxItemId();
+        if (maxItemId <= 0) {
+            throw new HiveException("Invalid maxItemId: " + maxItemId);
+        }
 
+        final Random rand = new Random(31L);
         final int[] perm = feedback.getRandomIndex(rand);
         for (int index : perm) {
             int user = feedback.getUser(index);
@@ -338,7 +376,6 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
 
             forward(user, posItem, negItem);
         }
-
     }
 
     private static void validateIndex(final int index) throws UDFArgumentException {

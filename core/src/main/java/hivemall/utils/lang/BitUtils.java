@@ -20,6 +20,8 @@ package hivemall.utils.lang;
 
 import java.util.BitSet;
 
+import javax.annotation.Nonnull;
+
 public final class BitUtils {
 
     private BitUtils() {}
@@ -27,8 +29,8 @@ public final class BitUtils {
     public static BitSet toBitSet(final String s) {
         final int len = s.length();
         final BitSet result = new BitSet(len);
-        for(int i = 0; i < len; i++) {
-            if(s.charAt(i) == '1') {
+        for (int i = 0; i < len; i++) {
+            if (s.charAt(i) == '1') {
                 result.set(len - i - 1);
             }
         }
@@ -38,10 +40,38 @@ public final class BitUtils {
     public static String toBinaryString(final BitSet bits) {
         final int len = bits.length();
         final char[] data = new char[len];
-        for(int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             data[len - i - 1] = bits.get(i) ? '1' : '0';
         }
         return String.valueOf(data);
+    }
+
+    /**
+     * @param nth index starting from 0
+     * @return index of n-th set bit or -1 if not found
+     */
+    public static int indexOfSetBit(@Nonnull final BitSet bits, final int nth) {
+        if (nth < 0) {
+            throw new IllegalArgumentException("Invalid nth: " + nth);
+        }
+
+        int pos = bits.nextSetBit(0);
+        for (int i = 0; pos >= 0; pos = bits.nextSetBit(pos + 1), i++) {
+            if (i == nth) {
+                break;
+            }
+        }
+        return pos;
+    }
+    
+    public static int indexOfClearBit(@Nonnull final BitSet bits, final int nth, final int lastIndex) {
+        int j = bits.nextClearBit(0);
+        for (int c = 0; j <= lastIndex; j = bits.nextClearBit(j + 1), c++) {
+            if (c == nth) {
+                break;
+            }
+        }
+        return j;
     }
 
 }

@@ -20,20 +20,20 @@ package hivemall.ftvec.ranking;
 
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.collections.IntOpenHashMap;
+import hivemall.utils.collections.IntOpenHashMap.IMapIterator;
+
+import java.util.BitSet;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class PositiveOnlyFeedback {
 
     @Nonnull
     protected final IntOpenHashMap<IntArrayList> rows;
-    
+
     protected int maxItemId;
     protected int totalFeedbacks;
-
-    public PositiveOnlyFeedback() {
-        this(-1);
-    }
 
     public PositiveOnlyFeedback(int maxItemId) {
         this.rows = new IntOpenHashMap<IntArrayList>(1024);
@@ -58,6 +58,29 @@ public class PositiveOnlyFeedback {
     }
 
     @Nonnull
+    public int[] getUsers() {
+        final int size = rows.size();
+        final int[] keys = new int[size];
+        final IMapIterator<IntArrayList> itor = rows.entries();
+        for (int i = 0; i < size; i++) {
+            if (itor.next() == -1) {
+                throw new IllegalStateException();
+            }
+            int key = itor.getKey();
+            keys[i] = key;
+        }
+        return keys;
+    }
+
+    public void getUsers(@Nonnull final BitSet bitset) {
+        final IMapIterator<IntArrayList> itor = rows.entries();
+        while (itor.next() != -1) {
+            int key = itor.getKey();
+            bitset.set(key);
+        }
+    }
+
+    @Nullable
     public IntArrayList getItems(final int userId, boolean nonEmptyCheck) {
         IntArrayList items = rows.get(userId);
         if (nonEmptyCheck) {
@@ -77,7 +100,7 @@ public class PositiveOnlyFeedback {
 
     public void addFeedback(final int userId, @Nonnull final IntArrayList itemIds) {
         validateIndex(userId);
-        if(itemIds.isEmpty()) {
+        if (itemIds.isEmpty()) {
             return;
         }
 
