@@ -621,6 +621,27 @@ public final class HiveUtils {
         return oi;
     }
 
+    public static PrimitiveObjectInspector asIntegerOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if (argOI.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
+                    + argOI.getTypeName() + " is passed.");
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case BYTE:
+                break;
+            default:
+                throw new UDFArgumentTypeException(0, "Unxpected type '" + argOI.getTypeName()
+                        + "' is passed.");
+        }
+        return oi;
+    }
+
+
     public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentTypeException {
         if (argOI.getCategory() != Category.PRIMITIVE) {

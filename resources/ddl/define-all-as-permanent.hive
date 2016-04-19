@@ -285,6 +285,9 @@ CREATE FUNCTION binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF' USING
 -- ranking helper functions --
 ------------------------------
 
+DROP FUNCTION IF EXISTS bpr_sampling;
+CREATE FUNCTION bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS item_pairs_sampling;
 CREATE FUNCTION item_pairs_sampling as 'hivemall.ftvec.ranking.ItemPairsSamplingUDTF' USING JAR '${hivemall_jar}';
 

@@ -44,16 +44,16 @@ public final class IntArrayList implements Serializable {
         this.used = initValues.length;
     }
 
-    public void add(int value) {
-        if(used >= data.length) {
+    public void add(final int value) {
+        if (used >= data.length) {
             expand(used + 1);
         }
         data[used++] = value;
     }
 
-    public void add(int[] values) {
+    public void add(final int[] values) {
         final int needs = used + values.length;
-        if(needs >= data.length) {
+        if (needs >= data.length) {
             expand(needs);
         }
         System.arraycopy(values, 0, data, used, values.length);
@@ -63,8 +63,8 @@ public final class IntArrayList implements Serializable {
     /**
      * dynamic expansion.
      */
-    private void expand(int max) {
-        while(data.length < max) {
+    private void expand(final int max) {
+        while (data.length < max) {
             final int len = data.length;
             int[] newArray = new int[len * 2];
             System.arraycopy(data, 0, newArray, 0, len);
@@ -76,11 +76,11 @@ public final class IntArrayList implements Serializable {
         return data[--used];
     }
 
-    public int remove(int index) {
+    public int remove(final int index) {
         final int ret;
-        if(index > used) {
+        if (index > used) {
             throw new IndexOutOfBoundsException();
-        } else if(index == used) {
+        } else if (index == used) {
             ret = data[--used];
         } else { // index < used
             // removed value
@@ -96,27 +96,36 @@ public final class IntArrayList implements Serializable {
         return ret;
     }
 
-    public void set(int index, int value) {
-        if(index > used) {
-            throw new IllegalArgumentException("Index MUST be less than \"size()\".");
-        } else if(index == used) {
+    public void set(final int index, final int value) {
+        if (index > used) {
+            throw new IllegalArgumentException("Index " + index + " MUST be less than size() "
+                    + used);
+        } else if (index == used) {
             ++used;
         }
         data[index] = value;
     }
 
-    public int get(int index) {
-        if(index >= used)
-            throw new IndexOutOfBoundsException();
+    public int get(final int index) {
+        if (index >= used) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds " + used);
+        }
         return data[index];
     }
 
-    public int fastGet(int index) {
+    public int fastGet(final int index) {
         return data[index];
     }
 
-    public int indexOf(int key) {
+    /**
+     * @return -1 if not found.
+     */
+    public int indexOf(final int key) {
         return ArrayUtils.indexOf(data, key, 0, used);
+    }
+
+    public boolean contains(final int key) {
+        return ArrayUtils.indexOf(data, key, 0, used) != -1;
     }
 
     public int size() {
@@ -145,8 +154,8 @@ public final class IntArrayList implements Serializable {
     public String toString() {
         final StringBuilder buf = new StringBuilder();
         buf.append('[');
-        for(int i = 0; i < used; i++) {
-            if(i != 0) {
+        for (int i = 0; i < used; i++) {
+            if (i != 0) {
                 buf.append(", ");
             }
             buf.append(data[i]);

@@ -281,6 +281,9 @@ create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelU
 -- ranking helper functions --
 ------------------------------
 
+drop temporary function bpr_sampling;
+create temporary function bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF';
+
 drop temporary function item_pairs_sampling;
 create temporary function item_pairs_sampling as 'hivemall.ftvec.ranking.ItemPairsSamplingUDTF';
 
