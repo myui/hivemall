@@ -243,7 +243,8 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
                 continue;
             }
 
-            int posItem = rand.nextInt(size);
+            int posItemIndex = rand.nextInt(size);
+            int posItem = posItems.fastGet(posItemIndex);
             int negItem;
             do {
                 negItem = rand.nextInt(maxItemId);
@@ -292,7 +293,8 @@ public final class BprSamplingUDTF extends UDTFWithOptions {
                 continue;
             }
 
-            int posItem = rand.nextInt(size);
+            int posItemIndex = rand.nextInt(size);
+            int posItem = posItems.fastGet(posItemIndex);
             int negItem;
             do {
                 negItem = rand.nextInt(maxItemId);
