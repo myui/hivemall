@@ -16,46 +16,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model.dense;
 
-import hivemall.io.WeightValue.WeightValueParamsF1;
-import hivemall.io.WeightValue.WeightValueParamsF2;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.*;
+import hivemall.model.Solver.SolverType;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class DenseModel extends AbstractPredictionModel {
+public final class NewDenseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;
     private float[] weights;
     private float[] covars;
 
-    // optional values for adagrad
-    private float[] sum_of_squared_gradients;
-    // optional value for adadelta
-    private float[] sum_of_squared_delta_x;
-    // optional value for adagrad+rda
-    private float[] sum_of_gradients;
+    // Implement a solver to update weights
+    private final Solver solverImpl;
 
     // optional value for MIX
+    // TODO: Move these to more optimal classes
     private short[] clocks;
     private byte[] deltaUpdates;
 
-    public DenseModel(int ndims) {
+    public NewDenseModel(int ndims) {
         this(ndims, false);
     }
 
-    public DenseModel(int ndims, boolean withCovar) {
+    public NewDenseModel(int ndims, boolean withCovar) {
+        this(ndims, withCovar, SolverType.Default, new HashMap<String, String>());
+    }
+
+    public NewDenseModel(int ndims, boolean withCovar, SolverType solverType, Map<String, String> options) {
         super();
         int size = ndims + 1;
         this.size = size;
@@ -67,9 +69,7 @@ public final class DenseModel extends AbstractPredictionModel {
         } else {
             this.covars = null;
         }
-        this.sum_of_squared_gradients = null;
-        this.sum_of_squared_delta_x = null;
-        this.sum_of_gradients = null;
+        this.solverImpl = DenseSolverFactory.create(solverType, ndims, options);
         this.clocks = null;
         this.deltaUpdates = null;
     }
@@ -85,17 +85,7 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {
-        if(sum_of_squared_gradients) {
-            this.sum_of_squared_gradients = new float[size];
-        }
-        if(sum_of_squared_delta_x) {
-            this.sum_of_squared_delta_x = new float[size];
-        }
-        if(sum_of_gradients) {
-            this.sum_of_gradients = new float[size];
-        }
-    }
+    public void configureParams(boolean v1, boolean v2, boolean v3) {}
 
     @Override
     public void configureClock() {
@@ -128,15 +118,6 @@ public final class DenseModel extends AbstractPredictionModel {
                 this.covars = Arrays.copyOf(covars, newSize);
                 Arrays.fill(covars, oldSize, newSize, 1.f);
             }
-            if(sum_of_squared_gradients != null) {
-                this.sum_of_squared_gradients = Arrays.copyOf(sum_of_squared_gradients, newSize);
-            }
-            if(sum_of_squared_delta_x != null) {
-                this.sum_of_squared_delta_x = Arrays.copyOf(sum_of_squared_delta_x, newSize);
-            }
-            if(sum_of_gradients != null) {
-                this.sum_of_gradients = Arrays.copyOf(sum_of_gradients, newSize);
-            }
             if(clocks != null) {
                 this.clocks = Arrays.copyOf(clocks, newSize);
                 this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
@@ -151,19 +132,7 @@ public final class DenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return null;
         }
-        if(sum_of_squared_gradients != null) {
-            if(sum_of_squared_delta_x != null) {
-                return (T) new WeightValueParamsF2(weights[i], sum_of_squared_gradients[i], sum_of_squared_delta_x[i]);
-            } else if(sum_of_gradients != null) {
-                return (T) new WeightValueParamsF2(weights[i], sum_of_squared_gradients[i], sum_of_gradients[i]);
-            } else {
-                return (T) new WeightValueParamsF1(weights[i], sum_of_squared_gradients[i]);
-            }
-        } else if(covars != null) {
-            return (T) new WeightValueWithCovar(weights[i], covars[i]);
-        } else {
-            return (T) new WeightValue(weights[i]);
-        }
+        return (T) new WeightValue(weights[i]);
     }
 
     @Override
@@ -177,15 +146,6 @@ public final class DenseModel extends AbstractPredictionModel {
         if(hasCovar) {
             covar = value.getCovariance();
             covars[i] = covar;
-        }
-        if(sum_of_squared_gradients != null) {
-            sum_of_squared_gradients[i] = value.getSumOfSquaredGradients();
-        }
-        if(sum_of_squared_delta_x != null) {
-            sum_of_squared_delta_x[i] = value.getSumOfSquaredDeltaX();
-        }
-        if(sum_of_gradients != null) {
-            sum_of_gradients[i] = value.getSumOfGradients();
         }
         short clock = 0;
         int delta = 0;
@@ -201,6 +161,17 @@ public final class DenseModel extends AbstractPredictionModel {
     }
 
     @Override
+    public void updateWeight(@Nonnull FeatureValue[] features, float gradient) {
+        for(FeatureValue f : features) {
+            int i = HiveUtils.parseInt(f.getFeature());
+            ensureCapacity(i);
+            weights[i] = solverImpl.computeUpdatedValue(
+                    f.getFeature(), weights[i], f.getValueAsFloat(), gradient);
+        }
+        solverImpl.proceedStep();
+    }
+
+    @Override
     public void delete(@Nonnull Object feature) {
         final int i = HiveUtils.parseInt(feature);
         if(i >= size) {
@@ -209,15 +180,6 @@ public final class DenseModel extends AbstractPredictionModel {
         weights[i] = 0.f;
         if(covars != null) {
             covars[i] = 1.f;
-        }
-        if(sum_of_squared_gradients != null) {
-            sum_of_squared_gradients[i] = 0.f;
-        }
-        if(sum_of_squared_delta_x != null) {
-            sum_of_squared_delta_x[i] = 0.f;
-        }
-        if(sum_of_gradients != null) {
-            sum_of_gradients[i] = 0.f;
         }
         // avoid clock/delta
     }
@@ -283,11 +245,11 @@ public final class DenseModel extends AbstractPredictionModel {
     private final class Itr implements IMapIterator<Number, IWeightValue> {
 
         private int cursor;
-        private final WeightValueWithCovar tmpWeight;
+        private final WeightValue.WeightValueWithCovar tmpWeight;
 
         private Itr() {
             this.cursor = -1;
-            this.tmpWeight = new WeightValueWithCovar();
+            this.tmpWeight = new WeightValue.WeightValueWithCovar();
         }
 
         @Override
@@ -319,7 +281,7 @@ public final class DenseModel extends AbstractPredictionModel {
             } else {
                 float w = weights[cursor];
                 float cov = covars[cursor];
-                WeightValueWithCovar v = new WeightValueWithCovar(w, cov);
+                WeightValue.WeightValueWithCovar v = new WeightValue.WeightValueWithCovar(w, cov);
                 v.setTouched(w != 0.f || cov != 1.f);
                 return v;
             }
@@ -328,7 +290,7 @@ public final class DenseModel extends AbstractPredictionModel {
         @Override
         public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             float w = weights[cursor];
-            tmpWeight.value = w;
+            tmpWeight.set(w);
             float cov = 1.f;
             if(covars != null) {
                 cov = covars[cursor];

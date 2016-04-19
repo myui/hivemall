@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import javax.annotation.Nonnegative;
 
@@ -77,6 +77,11 @@ public class WeightValue implements IWeightValue {
     }
 
     @Override
+    public void setSumOfSquaredGradients(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public float getSumOfSquaredDeltaX() {
         return 0.f;
     }
@@ -84,6 +89,26 @@ public class WeightValue implements IWeightValue {
     @Override
     public float getSumOfGradients() {
         return 0.f;
+    }
+
+    @Override
+    public float getM() {
+        return 0.f;
+    }
+
+    @Override
+    public void setM(float M) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getV() {
+        return 0.f;
+    }
+
+    @Override
+    public void setV(float V) {
+        throw new UnsupportedOperationException();
     }
 
     /** 
@@ -137,7 +162,7 @@ public class WeightValue implements IWeightValue {
     }
 
     public static final class WeightValueParamsF1 extends WeightValue {
-        private final float f1;
+        private float f1;
 
         public WeightValueParamsF1(float weight, float f1) {
             super(weight);
@@ -162,14 +187,19 @@ public class WeightValue implements IWeightValue {
             return f1;
         }
 
+        @Override
+        public void setSumOfSquaredGradients(float value) {
+            this.f1 = value;
+        }
+
     }
 
     /**
      * WeightValue with Sum of Squared Gradients
      */
     public static final class WeightValueParamsF2 extends WeightValue {
-        private final float f1;
-        private final float f2;
+        private float f1;
+        private float f2;
 
         public WeightValueParamsF2(float weight, float f1, float f2) {
             super(weight);
@@ -205,6 +235,26 @@ public class WeightValue implements IWeightValue {
         @Override
         public float getSumOfGradients() {
             return f2;
+        }
+
+        @Override
+        public float getM() {
+            return f1;
+        }
+
+        @Override
+        public void setM(float M) {
+            f1 = M;
+        }
+
+        @Override
+        public float getV() {
+            return f2;
+        }
+
+        @Override
+        public void setV(float V) {
+            f2 = V;
         }
 
     }

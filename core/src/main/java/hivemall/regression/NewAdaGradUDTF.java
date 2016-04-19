@@ -20,12 +20,9 @@ package hivemall.regression;
 
 import hivemall.common.LossFunctions;
 import hivemall.model.FeatureValue;
-import hivemall.model.IWeightValue;
-import hivemall.model.WeightValue.WeightValueParamsF1;
-import hivemall.utils.lang.Primitives;
+import hivemall.model.Solver.SolverType;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -34,24 +31,25 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
- * ADAGRAD algorithm with element-wise adaptive learning rates. 
+ * ADAGRAD algorithm with element-wise adaptive learning rates.
  */
-public final class AdaGradUDTF extends RegressionBaseUDTF {
-
-    private float eta;
-    private float eps;
-    private float scaling;
+public final class NewAdaGradUDTF extends RegressionBaseUDTF {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
         if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("AdagradUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, float target [, constant string options]");
+            throw new UDFArgumentException("NewAdagradUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, float target [, constant string options]");
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
         model.configureParams(true, false, false);
         return oi;
+    }
+
+    @Override
+    protected SolverType getSolverType() {
+        return SolverType.AdaGrad;
     }
 
     @Override
@@ -66,14 +64,14 @@ public final class AdaGradUDTF extends RegressionBaseUDTF {
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        if(cl == null) {
-            this.eta = 1.f;
-            this.eps = 1.f;
-            this.scaling = 100f;
-        } else {
-            this.eta = Primitives.parseFloat(cl.getOptionValue("eta"), 1.f);
-            this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
-            this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
+        if (cl.hasOption("eta")) {
+            solverOptions.put("eta", cl.getOptionValue("eta"));
+        }
+        if (cl.hasOption("eps")) {
+            solverOptions.put("eps", cl.getOptionValue("eps"));
+        }
+        if (cl.hasOption("scale")) {
+            solverOptions.put("scale", cl.getOptionValue("scale"));
         }
         return cl;
     }
@@ -93,41 +91,7 @@ public final class AdaGradUDTF extends RegressionBaseUDTF {
 
     @Override
     protected void onlineUpdate(@Nonnull final FeatureValue[] features, float gradient) {
-        final float g_g = gradient * (gradient / scaling);
-
-        for(FeatureValue f : features) {// w[i] += y * x[i]
-            if(f == null) {
-                continue;
-            }
-            Object x = f.getFeature();
-            float xi = f.getValueAsFloat();
-
-            IWeightValue old_w = model.get(x);
-            IWeightValue new_w = getNewWeight(old_w, xi, gradient, g_g);
-            model.set(x, new_w);
-        }
-    }
-
-    @Nonnull
-    protected IWeightValue getNewWeight(@Nullable final IWeightValue old, final float xi, final float gradient, final float g_g) {
-        float old_w = 0.f;
-        float scaled_sum_sqgrad = 0.f;
-
-        if(old != null) {
-            old_w = old.get();
-            scaled_sum_sqgrad = old.getSumOfSquaredGradients();
-        }
-        scaled_sum_sqgrad += g_g;
-
-        float coeff = eta(scaled_sum_sqgrad) * gradient;
-        float new_w = old_w + (coeff * xi);
-        return new WeightValueParamsF1(new_w, scaled_sum_sqgrad);
-    }
-
-    protected float eta(final double scaledSumOfSquaredGradients) {
-        double sumOfSquaredGradients = scaledSumOfSquaredGradients * scaling;
-        //return eta / (float) Math.sqrt(sumOfSquaredGradients);
-        return eta / (float) Math.sqrt(eps + sumOfSquaredGradients); // always less than eta0
+        model.updateWeight(features, gradient);
     }
 
 }

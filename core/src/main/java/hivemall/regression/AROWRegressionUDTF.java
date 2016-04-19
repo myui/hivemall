@@ -20,10 +20,10 @@ package hivemall.regression;
 
 import hivemall.common.LossFunctions;
 import hivemall.common.OnlineVariance;
-import hivemall.io.FeatureValue;
-import hivemall.io.IWeightValue;
-import hivemall.io.PredictionResult;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.PredictionResult;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 
 import javax.annotation.Nonnull;
 

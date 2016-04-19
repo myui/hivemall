@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import hivemall.utils.collections.IMapIterator;
 
@@ -133,6 +133,11 @@ public final class SynchronizedModelWrapper implements PredictionModel {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public void updateWeight(@Nonnull FeatureValue[] features, float gradient) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

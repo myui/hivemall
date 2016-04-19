@@ -16,11 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model.dense;
 
-import hivemall.io.WeightValue.WeightValueParamsF1;
-import hivemall.io.WeightValue.WeightValueParamsF2;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.AbstractPredictionModel;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.WeightValue;
+import hivemall.model.WeightValue.WeightValueParamsF1;
+import hivemall.model.WeightValue.WeightValueParamsF2;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
@@ -227,6 +231,11 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     @Override
+    public void updateWeight(@Nonnull FeatureValue[] features, float gradient) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void delete(@Nonnull Object feature) {
         final int i = HiveUtils.parseInt(feature);
         if(i >= size) {
@@ -354,7 +363,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         @Override
         public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             float w = getWeight(cursor);
-            tmpWeight.value = w;
+            tmpWeight.set(w);
             float cov = 1.f;
             if(covars != null) {
                 cov = getCovar(cursor);

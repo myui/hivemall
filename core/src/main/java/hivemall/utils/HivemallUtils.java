@@ -18,7 +18,7 @@
  */
 package hivemall.utils;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 
 import java.util.Arrays;
 import java.util.Collections;

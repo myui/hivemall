@@ -19,7 +19,7 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import hivemall.io.PredictionResult;
+import hivemall.model.PredictionResult;
 
 import java.util.ArrayList;
 import java.util.List;

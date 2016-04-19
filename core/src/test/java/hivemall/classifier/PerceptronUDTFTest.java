@@ -19,7 +19,7 @@
 package hivemall.classifier;
 
 import static org.junit.Assert.assertEquals;
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;

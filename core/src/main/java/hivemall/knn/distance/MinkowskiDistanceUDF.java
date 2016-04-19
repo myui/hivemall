@@ -18,7 +18,7 @@
  */
 package hivemall.knn.distance;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.Arrays;

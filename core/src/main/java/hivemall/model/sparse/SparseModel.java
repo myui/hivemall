@@ -16,11 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model.sparse;
 
-import hivemall.io.WeightValueWithClock.WeightValueParamsF1Clock;
-import hivemall.io.WeightValueWithClock.WeightValueParamsF2Clock;
-import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
+import hivemall.model.AbstractPredictionModel;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.WeightValueWithClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 
@@ -94,6 +95,11 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
+    public void updateWeight(@Nonnull FeatureValue[] features, float gradient) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void delete(@Nonnull Object feature) {
         weights.remove(feature);
     }
@@ -106,13 +112,13 @@ public final class SparseModel extends AbstractPredictionModel {
                     wrapper = new WeightValueWithClock(value);
                     break;
                 case ParamsCovar:
-                    wrapper = new WeightValueWithCovarClock(value);
+                    wrapper = new WeightValueWithClock.WeightValueWithCovarClock(value);
                     break;
                 case ParamsF1:
-                    wrapper = new WeightValueParamsF1Clock(value);
+                    wrapper = new WeightValueWithClock.WeightValueParamsF1Clock(value);
                     break;
                 case ParamsF2:
-                    wrapper = new WeightValueParamsF2Clock(value);
+                    wrapper = new WeightValueWithClock.WeightValueParamsF2Clock(value);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value type: " + value.getType());

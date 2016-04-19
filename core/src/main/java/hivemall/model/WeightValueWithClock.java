@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import javax.annotation.Nonnegative;
 
@@ -79,6 +79,11 @@ public class WeightValueWithClock implements IWeightValue {
     }
 
     @Override
+    public void setSumOfSquaredGradients(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public float getSumOfSquaredDeltaX() {
         return 0.f;
     }
@@ -86,6 +91,26 @@ public class WeightValueWithClock implements IWeightValue {
     @Override
     public float getSumOfGradients() {
         return 0.f;
+    }
+
+    @Override
+    public float getM() {
+        return 0.f;
+    }
+
+    @Override
+    public void setM(float M) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getV() {
+        return 0.f;
+    }
+
+    @Override
+    public void setV(float V) {
+        throw new UnsupportedOperationException();
     }
 
     /** 
@@ -219,6 +244,26 @@ public class WeightValueWithClock implements IWeightValue {
         @Override
         public float getSumOfGradients() {
             return f2;
+        }
+
+        @Override
+        public float getM() {
+            return 0.f;
+        }
+
+        @Override
+        public void setM(float M) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public float getV() {
+            return 0.f;
+        }
+
+        @Override
+        public void setV(float V) {
+            throw new UnsupportedOperationException();
         }
 
     }

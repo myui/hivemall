@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import hivemall.utils.lang.Copyable;
 
@@ -44,9 +44,17 @@ public interface IWeightValue extends Copyable<IWeightValue> {
 
     float getSumOfSquaredGradients();
 
+    void setSumOfSquaredGradients(float value);
+
     float getSumOfSquaredDeltaX();
 
     float getSumOfGradients();
+
+    // For Adam
+    float getM();
+    void setM(float M);
+    float getV();
+    void setV(float V);
 
     /** 
      * @return whether touched in training or not
