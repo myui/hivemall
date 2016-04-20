@@ -21,7 +21,8 @@ package hivemall.model.sparse;
 import hivemall.model.Solver;
 import hivemall.model.Solver.SolverType;
 import hivemall.model.WeightValue;
-import hivemall.utils.collections.OpenHashMap;
+import hivemall.utils.unsafe.Platform;
+import hivemall.utils.unsafe.UnsafeOpenHashMap;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -47,66 +48,126 @@ public final class SparseSolverFactory {
 
     private static final class AdaGradSolver extends Solver.AdaGradSolver {
 
-        private final OpenHashMap<Object, Float> sum_of_squared_gradients;
+        private int size;
+
+        // private final OpenHashMap<Object, Float> sum_of_squared_gradients;
+        private Object[] keys;
+        private byte[] sum_of_squared_gradients;
+
+        // This hashmap maps `keys` to `sum_of_squared_gradients`
+        private UnsafeOpenHashMap<Object> mapper;
 
         // Reused to use `AdaGradSolver.computeUpdateValue`
         private WeightValue.WeightValueParamsF1 weightValueReused;
 
         public AdaGradSolver(int size, Map<String, String> solverOptions) {
             super(solverOptions);
-            sum_of_squared_gradients = new OpenHashMap<Object, Float>(size);
+            this.size = size;
+            this.mapper = new UnsafeOpenHashMap<Object>();
+            int requiredSize = mapper.resize(size);
+            this.keys = new Object[requiredSize];
+            this.sum_of_squared_gradients = new byte[requiredSize * 4];
+            mapper.reset(this.keys);
         }
 
         @Override
         public float computeUpdatedValue(@Nonnull Object feature, float weight, float xi, float gradient) {
-            float sqg = 0.f;
-            if (sum_of_squared_gradients.containsKey(feature)) {
-                sqg = sum_of_squared_gradients.get(feature);
+            int offset = mapper.get(feature);
+            if (offset == -1) {
+                offset = mapper.put(feature);
+                if (offset == -1) {
+                    // Make space bigger
+                    reserveInternal(size * 2);
+                    offset = mapper.put(feature);
+                }
             }
+            float sqg = Platform.getFloat(sum_of_squared_gradients, offset * 4);
             weightValueReused.set(weight);
             weightValueReused.setSumOfSquaredGradients(sqg);
             computeUpdateValue(weightValueReused, xi, gradient);
-            sum_of_squared_gradients.put(feature, weightValueReused.getSumOfSquaredGradients());
+            Platform.putFloat(sum_of_squared_gradients, offset * 4, weightValueReused.getSumOfSquaredGradients());
             return weightValueReused.get();
         }
 
+        private void reserveInternal(int size) {
+            int requiredSize = mapper.resize(size);
+            Object[] newKeys = new Object[requiredSize];
+            byte[] newValues = new byte[requiredSize * 4];
+            mapper.reset(newKeys);
+            for (int i = 0; i < keys.length; i++) {
+                if (keys[i] == null) continue;
+                int newOffset = mapper.put(keys[i]);
+                float oldValue = Platform.getFloat(keys, i * 4);
+                Platform.putFloat(newValues, newOffset * 4, oldValue);
+            }
+            this.keys = newKeys;
+            this.sum_of_squared_gradients = newValues;
+            this.size = size;
+        }
     }
 
     private static final class AdamSolver extends Solver.AdamSolver {
 
-        private class PairValue {
-            public float val_m = 0.f;
-            public float val_v = 0.f;
-        }
+        private int size;
 
-        private final OpenHashMap<Object, PairValue> values;
+        // private final OpenHashMap<Object, Float> sum_of_squared_gradients;
+        private Object[] keys;
+        private byte[] values;
+
+        // This hashmap maps `keys` to `sum_of_squared_gradients`
+        private UnsafeOpenHashMap<Object> mapper;
 
         // Reused to use `AdamSolver.computeUpdateValue`
         private WeightValue.WeightValueParamsF1 weightValueReused;
 
         public AdamSolver(int size, Map<String, String> solverOptions) {
             super(solverOptions);
-            values = new OpenHashMap<Object, PairValue>(size);
+            this.size = size;
+            this.mapper = new UnsafeOpenHashMap<Object>();
+            int requiredSize = mapper.resize(size);
+            this.keys = new Object[requiredSize];
+            this.values = new byte[requiredSize * 8];
         }
 
         @Override
         public float computeUpdatedValue(@Nonnull Object feature, float weight, float xi, float gradient) {
-            PairValue pvalue;
-            if (values.containsKey(feature)) {
-                pvalue  = values.get(feature);
-            } else {
-                pvalue = new PairValue();
-                values.put(feature, pvalue);
+            int offset = mapper.get(feature);
+            if (offset == -1) {
+                offset = mapper.put(feature);
+                if (offset == -1) {
+                    // Make space bigger
+                    reserveInternal(size * 2);
+                    offset = mapper.put(feature);
+                }
             }
+            float val_m = Platform.getFloat(values, offset * 8);
+            float val_v = Platform.getFloat(values, offset * 8 + 4);
             weightValueReused.set(weight);
-            weightValueReused.setM(pvalue.val_m);
-            weightValueReused.setM(pvalue.val_v);
+            weightValueReused.setV(val_m);
+            weightValueReused.setV(val_v);
             computeUpdateValue(weightValueReused, xi, gradient);
-            pvalue.val_m = weightValueReused.getM();
-            pvalue.val_v = weightValueReused.getV();
+            Platform.putFloat(values, offset * 8, val_m);
+            Platform.putFloat(values, offset * 8 + 4, val_v);
             return weightValueReused.get();
         }
 
+        private void reserveInternal(int size) {
+            int requiredSize = mapper.resize(size);
+            Object[] newKeys = new Object[requiredSize];
+            byte[] newValues = new byte[requiredSize * 8];
+            mapper.reset(newKeys);
+            for (int i = 0; i < keys.length; i++) {
+                if (keys[i] == null) continue;
+                int newOffset = mapper.put(keys[i]);
+                float oldValue1 = Platform.getFloat(keys, i * 8);
+                float oldValue2 = Platform.getFloat(keys, i * 8 + 4);
+                Platform.putFloat(newValues, newOffset * 8, oldValue1);
+                Platform.putFloat(newValues, newOffset * 8, oldValue2 + 4);
+            }
+            this.keys = newKeys;
+            this.values = newValues;
+            this.size = size;
+        }
     }
 
 }

@@ -18,25 +18,32 @@
  */
 package hivemall.model.sparse;
 
-import hivemall.model.*;
-import hivemall.model.Solver.SolverType;
-import hivemall.utils.collections.IMapIterator;
-import hivemall.utils.collections.OpenHashMap;
 
 import javax.annotation.Nonnull;
 
-import hivemall.utils.lang.Copyable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import hivemall.utils.lang.Copyable;
+import hivemall.utils.unsafe.Platform;
+import hivemall.utils.unsafe.UnsafeOpenHashMap;
+import hivemall.model.*;
+import hivemall.model.Solver.SolverType;
+import hivemall.utils.collections.IMapIterator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public final class NewSparseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(SparseModel.class);
 
-    private final OpenHashMap<Object, Float> weights;
-    private final OpenHashMap<Object, Float> covars;
+    private int size;
+
+    private Object[] keys;
+    private byte[] model;
+
+    private UnsafeOpenHashMap<Object> mapper;
+
     private final boolean hasCovar;
 
     // Implement a solver to update weights
@@ -50,8 +57,13 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     public NewSparseModel(int size, boolean hasCovar, SolverType solverType, Map<String, String> options) {
         super();
-        this.weights = new OpenHashMap<Object, Float>(size);
-        this.covars = null; // Not used supported
+        this.size = size;
+        // this.covars = null; // Not used supported
+        this.mapper = new UnsafeOpenHashMap<Object>();
+        int requiredSize = mapper.resize(size);
+        this.keys = new Object[requiredSize];
+        this.model = new byte[requiredSize * 4];
+        this.mapper.reset(keys);
         this.hasCovar = hasCovar;
         this.solverImpl = SparseSolverFactory.create(solverType, size, options);
         this.clockEnabled = false;
@@ -83,7 +95,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends IWeightValue> T get(final Object feature) {
-        return (T) new WeightValue(weights.get(feature));
+        return (T) new WeightValue(getWeight(feature));
     }
 
     @Override
@@ -96,19 +108,41 @@ public final class NewSparseModel extends AbstractPredictionModel {
         for(FeatureValue f : features) {
             Object feature = f.getFeature();
             float xi = f.getValueAsFloat();
-            if (weights.containsKey(feature)) {
-                final Float weight = weights.get(feature);
-                weights.put(feature, solverImpl.computeUpdatedValue(feature, weight, xi, gradient));
-            } else {
-                weights.put(feature, solverImpl.computeUpdatedValue(feature, 0.f, xi, gradient));
+            int offset = mapper.get(feature);
+            if (offset == -1) {
+                offset = mapper.put(feature);
+                if (offset == -1) {
+                    // Make space bigger
+                    reserveInternal(size * 2);
+                    offset = mapper.put(feature);
+                }
             }
+            float oldWeight = Platform.getFloat(model, offset * 4);
+            float newWeight = solverImpl.computeUpdatedValue(feature, oldWeight, xi, gradient);
+            Platform.putFloat(model, offset * 4, newWeight);
         }
         solverImpl.proceedStep();
     }
 
+    private void reserveInternal(int size) {
+        int requiredSize = mapper.resize(size);
+        Object[] newKeys = new Object[requiredSize];
+        byte[] newValues = new byte[requiredSize * 4];
+        mapper.reset(newKeys);
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i] == null) continue;
+            int newOffset = mapper.put(keys[i]);
+            float oldValue = Platform.getFloat(keys, i * 4);
+            Platform.putFloat(newValues, newOffset * 4, oldValue);
+        }
+        this.keys = newKeys;
+        this.model = newValues;
+        this.size = size;
+    }
+
     @Override
     public void delete(@Nonnull Object feature) {
-        weights.remove(feature);
+        mapper.remove(feature);
     }
 
     private IWeightValue wrapIfRequired(final IWeightValue value) {
@@ -138,8 +172,8 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     @Override
     public float getWeight(final Object feature) {
-        Float v = weights.get(feature);
-        return v == null ? 0.f : v;
+        int offset = mapper.get(feature);
+        return offset == -1? 0.f : Platform.getFloat(model, offset * 4);
     }
 
     @Override
@@ -159,12 +193,12 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     @Override
     public int size() {
-        return weights.size();
+        return mapper.size();
     }
 
     @Override
     public boolean contains(final Object feature) {
-        return weights.containsKey(feature);
+        return mapper.containsKey(feature);
     }
 
     @SuppressWarnings("unchecked")
@@ -175,33 +209,37 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     private final class Itr implements IMapIterator<Number, IWeightValue> {
 
+        private Object curKey;
+        private int curOffset;
         private final WeightValue.WeightValueWithCovar tmpWeight;
-        private final IMapIterator<Object, Float> weightIter;
+        private final Iterator<Object> keyIter;
 
         private Itr() {
             this.tmpWeight = new WeightValue.WeightValueWithCovar();
-            this.weightIter = weights.entries();
+            this.keyIter = mapper.keySet().iterator();
         }
 
         @Override
         public boolean hasNext() {
-            return weightIter.hasNext();
+            return keyIter.hasNext();
         }
 
         @Override
         public int next() {
-            return weightIter.next();
+            curKey = keyIter.next();
+            curOffset = mapper.get(curKey);
+            return curOffset;
         }
 
         @Override
         public Integer getKey() {
-            return (Integer) weightIter.getKey();
+            return (Integer) curKey;
         }
 
         @Override
         public IWeightValue getValue() {
             assert(!hasCovar);
-            float w = weightIter.getValue();
+            float w = Platform.getFloat(model, curOffset * 4);
             WeightValue v = new WeightValue(w);
             v.setTouched(w != 0f);
             return v;
@@ -210,7 +248,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
         @Override
         public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             assert(!hasCovar);
-            float w = weightIter.getValue();
+            float w = Platform.getFloat(model, curOffset * 4);
             tmpWeight.set(w);
             tmpWeight.setTouched(w != 0.f);
             probe.copyFrom(tmpWeight);
