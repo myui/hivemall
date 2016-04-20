@@ -24,6 +24,7 @@ import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Copyable;
 import hivemall.utils.math.MathUtils;
+import hivemall.utils.unsafe.Platform;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,8 +39,9 @@ public final class NewDenseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(DenseModel.class);
 
     private int size;
-    private float[] weights;
-    private float[] covars;
+    // If `withCovar` enabled, store a sequence of a pair (weight, covar)
+    private byte[] model;
+    private final int elementSize;
 
     // Implement a solver to update weights
     private final Solver solverImpl;
@@ -60,15 +62,13 @@ public final class NewDenseModel extends AbstractPredictionModel {
     public NewDenseModel(int ndims, boolean withCovar, SolverType solverType, Map<String, String> options) {
         super();
         int size = ndims + 1;
-        this.size = size;
-        this.weights = new float[size];
-        if(withCovar) {
-            float[] covars = new float[size];
-            Arrays.fill(covars, 1f);
-            this.covars = covars;
-        } else {
-            this.covars = null;
+        int elementSize = 4;
+        if (withCovar) {
+            elementSize *= 2; // covar co-located with weight
         }
+        this.size = size;
+        this.elementSize = elementSize;
+        this.model = new byte[elementSize * size];
         this.solverImpl = DenseSolverFactory.create(solverType, ndims, options);
         this.clocks = null;
         this.deltaUpdates = null;
@@ -81,7 +81,7 @@ public final class NewDenseModel extends AbstractPredictionModel {
 
     @Override
     public boolean hasCovariance() {
-        return covars != null;
+        return this.elementSize == 8;
     }
 
     @Override
@@ -113,15 +113,32 @@ public final class NewDenseModel extends AbstractPredictionModel {
             logger.info("Expands internal array size from " + oldSize + " to " + newSize + " ("
                     + bits + " bits)");
             this.size = newSize;
-            this.weights = Arrays.copyOf(weights, newSize);
-            if(covars != null) {
-                this.covars = Arrays.copyOf(covars, newSize);
-                Arrays.fill(covars, oldSize, newSize, 1.f);
+
+            this.model = Arrays.copyOf(model, newSize * elementSize);
+            if (hasCovariance()) {
+                for (int i = oldSize; i < newSize; i++) {
+                    Platform.putFloat(this.model, i * elementSize + 4, 1.f);
+                }
             }
             if(clocks != null) {
                 this.clocks = Arrays.copyOf(clocks, newSize);
                 this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
             }
+        }
+    }
+
+    private float getWeight(int index) {
+        return Platform.getFloat(this.model, index * elementSize);
+    }
+    private void putWeight(int index, float value) {
+        Platform.putFloat(this.model, index * elementSize, value);
+    }
+    private float getCovar(int index) {
+        return hasCovariance()? Platform.getFloat(this.model, index * elementSize + 1) : 1.f;
+    }
+    private void putCovar(int index, float value) {
+        if (hasCovariance()) {
+            Platform.putFloat(this.model, index * elementSize + 1, value);
         }
     }
 
@@ -132,7 +149,7 @@ public final class NewDenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return null;
         }
-        return (T) new WeightValue(weights[i]);
+        return (T) new WeightValue(getWeight(i));
     }
 
     @Override
@@ -140,12 +157,12 @@ public final class NewDenseModel extends AbstractPredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
-        weights[i] = weight;
+        putWeight(i, weight);
         float covar = 1.f;
         boolean hasCovar = value.hasCovariance();
         if(hasCovar) {
             covar = value.getCovariance();
-            covars[i] = covar;
+            putCovar(i, covar);
         }
         short clock = 0;
         int delta = 0;
@@ -165,8 +182,10 @@ public final class NewDenseModel extends AbstractPredictionModel {
         for(FeatureValue f : features) {
             int i = HiveUtils.parseInt(f.getFeature());
             ensureCapacity(i);
-            weights[i] = solverImpl.computeUpdatedValue(
-                    f.getFeature(), weights[i], f.getValueAsFloat(), gradient);
+            float oldWeight = getWeight(i);
+            float weight = solverImpl.computeUpdatedValue(
+                    f.getFeature(), oldWeight, f.getValueAsFloat(), gradient);
+            putWeight(i, weight);
         }
         solverImpl.proceedStep();
     }
@@ -177,10 +196,8 @@ public final class NewDenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return;
         }
-        weights[i] = 0.f;
-        if(covars != null) {
-            covars[i] = 1.f;
-        }
+        putWeight(i, 0.f);
+        putCovar(i, 1.f);
         // avoid clock/delta
     }
 
@@ -190,7 +207,7 @@ public final class NewDenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return 0f;
         }
-        return weights[i];
+        return getWeight(i);
     }
 
     @Override
@@ -199,14 +216,14 @@ public final class NewDenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return 1f;
         }
-        return covars[i];
+        return getCovar(i);
     }
 
     @Override
     protected void _set(Object feature, float weight, short clock) {
         int i = ((Integer) feature).intValue();
         ensureCapacity(i);
-        weights[i] = weight;
+        putWeight(i, weight);
         clocks[i] = clock;
         deltaUpdates[i] = 0;
     }
@@ -215,8 +232,8 @@ public final class NewDenseModel extends AbstractPredictionModel {
     protected void _set(Object feature, float weight, float covar, short clock) {
         int i = ((Integer) feature).intValue();
         ensureCapacity(i);
-        weights[i] = weight;
-        covars[i] = covar;
+        putWeight(i, weight);
+        putCovar(i, covar);
         clocks[i] = clock;
         deltaUpdates[i] = 0;
     }
@@ -232,7 +249,7 @@ public final class NewDenseModel extends AbstractPredictionModel {
         if(i >= size) {
             return false;
         }
-        float w = weights[i];
+        float w = getWeight(i);
         return w != 0.f;
     }
 
@@ -273,14 +290,14 @@ public final class NewDenseModel extends AbstractPredictionModel {
 
         @Override
         public IWeightValue getValue() {
-            if(covars == null) {
-                float w = weights[cursor];
+            if(!hasCovariance()) {
+                float w = getWeight(cursor);
                 WeightValue v = new WeightValue(w);
                 v.setTouched(w != 0f);
                 return v;
             } else {
-                float w = weights[cursor];
-                float cov = covars[cursor];
+                float w = getWeight(cursor);
+                float cov = getCovar(cursor);
                 WeightValue.WeightValueWithCovar v = new WeightValue.WeightValueWithCovar(w, cov);
                 v.setTouched(w != 0.f || cov != 1.f);
                 return v;
@@ -289,11 +306,11 @@ public final class NewDenseModel extends AbstractPredictionModel {
 
         @Override
         public <T extends Copyable<IWeightValue>> void getValue(T probe) {
-            float w = weights[cursor];
+            float w = getWeight(cursor);
             tmpWeight.set(w);
             float cov = 1.f;
-            if(covars != null) {
-                cov = covars[cursor];
+            if(hasCovariance()) {
+                cov = getCovar(cursor);
                 tmpWeight.setCovariance(cov);
             }
             tmpWeight.setTouched(w != 0.f || cov != 1.f);

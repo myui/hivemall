@@ -18,14 +18,14 @@
  */
 package hivemall.model.dense;
 
-import hivemall.model.Solver;
-import hivemall.model.Solver.SolverType;
-
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Arrays;
 import java.util.Map;
 
+import hivemall.model.Solver;
+import hivemall.model.Solver.SolverType;
+import hivemall.utils.unsafe.Platform;
 import hivemall.model.WeightValue;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.math.MathUtils;
@@ -52,14 +52,15 @@ public final class DenseSolverFactory {
     @NotThreadSafe
     static final class AdaGradSolver extends Solver.AdaGradSolver {
 
-        private float[] sum_of_squared_gradients;
+        private byte[] sum_of_squared_gradients;
 
         // Reused to use `AdaGradSolver.updateWeightValue`
         private WeightValue.WeightValueParamsF1 weightValueReused;
 
         public AdaGradSolver(int ndims, Map<String, String> solverOptions) {
             super(solverOptions);
-            sum_of_squared_gradients = new float[ndims];
+            this.sum_of_squared_gradients = new byte[ndims * 4];
+            this.weightValueReused = new WeightValue.WeightValueParamsF1(0.f, 0.f);
         }
 
         @Override
@@ -67,9 +68,9 @@ public final class DenseSolverFactory {
             int i = HiveUtils.parseInt(feature);
             ensureCapacity(i);
             weightValueReused.set(weight);
-            weightValueReused.setSumOfSquaredGradients(sum_of_squared_gradients[i]);
+            weightValueReused.setSumOfSquaredGradients(Platform.getFloat(sum_of_squared_gradients, i * 4));
             computeUpdateValue(weightValueReused, xi, gradient);
-            sum_of_squared_gradients[i] = weightValueReused.getSumOfSquaredGradients();
+            Platform.putFloat(sum_of_squared_gradients, i * 4, weightValueReused.getSumOfSquaredGradients());
             return weightValueReused.get();
         }
 
@@ -86,16 +87,31 @@ public final class DenseSolverFactory {
     @NotThreadSafe
     static final class AdamSolver extends Solver.AdamSolver {
 
-        private float[] val_m;
-        private float[] val_v;
+        // Store a sequence of pairs (val_m, val_v)
+        private byte[] data;
+        private int ndims;
 
         // Reused to use `Adam.updateWeightValue`
         private WeightValue.WeightValueParamsF2 weightValueReused;
 
         public AdamSolver(int ndims, Map<String, String> solverOptions) {
             super(solverOptions);
-            val_m = new float[ndims];
-            val_v = new float[ndims];
+            this.data = new byte[ndims * 8];
+            this.ndims = ndims;
+            this.weightValueReused = new WeightValue.WeightValueParamsF2(0.f, 0.f, 0.f);
+        }
+
+        private float getM(int index) {
+            return Platform.getFloat(data, index * 8);
+        }
+        private void setM(int index, float value) {
+            Platform.putFloat(data, index * 8, value);
+        }
+        private float getV(int index) {
+            return Platform.getFloat(data, index * 8 + 4);
+        }
+        private void setV(int index, float value) {
+            Platform.putFloat(data, index * 8 + 4, value);
         }
 
         @Override
@@ -103,20 +119,19 @@ public final class DenseSolverFactory {
             int i = HiveUtils.parseInt(feature);
             ensureCapacity(i);
             weightValueReused.set(weight);
-            weightValueReused.setM(val_m[i]);
-            weightValueReused.setV(val_v[i]);
+            weightValueReused.setM(getM(i));
+            weightValueReused.setV(getV(i));
             computeUpdateValue(weightValueReused, xi, gradient);
-            val_m[i] = weightValueReused.getM();
-            val_v[i] = weightValueReused.getV();
+            setM(i, weightValueReused.getM());
+            setV(i, weightValueReused.getV());
             return weightValueReused.get();
         }
 
         private void ensureCapacity(final int index) {
-            if(index >= val_m.length) {
+            if(index >= this.ndims) {
                 int bits = MathUtils.bitsRequired(index);
                 int newSize = (1 << bits) + 1;
-                this.val_m = Arrays.copyOf(val_m, newSize);
-                this.val_v = Arrays.copyOf(val_v, newSize);
+                this.data = Arrays.copyOf(data, newSize * 8);
             }
         }
 
