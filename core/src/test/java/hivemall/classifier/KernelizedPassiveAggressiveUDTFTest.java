@@ -344,7 +344,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
             new InputStreamReader(getClass().getResourceAsStream(fileName)));
         line = news20.readLine();
         ArrayList<Float> losses = new ArrayList<Float>();
-        for (int i = 1; line != null; i++) {
+        //for (int i = 1; line != null; i++) {
+        while (line != null) {
             int space = line.indexOf(' ');
             int len = line.length();
             if (space == -1 || len <= space + 1) {
@@ -372,7 +373,8 @@ public class KernelizedPassiveAggressiveUDTFTest {
             new InputStreamReader(getClass().getResourceAsStream(fileName)));
         line = news20.readLine();
         ArrayList<Float> lossesPKI = new ArrayList<Float>();
-        for (int i = 1; line != null; i++) {
+        //for (int i = 1; line != null; i++) {
+        while (line != null) {
             int space = line.indexOf(' ');
             int len = line.length();
             if (space == -1 || len <= space + 1) {
