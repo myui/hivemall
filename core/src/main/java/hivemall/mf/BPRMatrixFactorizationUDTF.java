@@ -504,7 +504,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                     }
                     inputBuf.rewind();
                 }
-                LOG.info("Performed " + Math.max(iter, iterations) + " iterations of "
+                LOG.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total) ");
@@ -579,7 +579,7 @@ public final class BPRMatrixFactorizationUDTF extends UDTFWithOptions implements
                         etaEstimator.update(0.5f);
                     }
                 }
-                LOG.info("Performed " + Math.max(iter, iterations) + " iterations of "
+                LOG.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples using a secondary storage (thus "
                         + NumberUtils.formatNumber(count) + " training updates in total)");
