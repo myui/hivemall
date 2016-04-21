@@ -30,6 +30,10 @@ public final class FFMPredictionModel {
     private OpenHashTable<String, Entry> _map;
 
     public FFMPredictionModel() {}
+    
+    public FFMPredictionModel(String ser) {
+        //TODO
+    }
 
     public int getNumFactors() {
         return _factors;
@@ -39,9 +43,8 @@ public final class FFMPredictionModel {
         return _w0;
     }
 
-    public float getW(@Nonnull Feature e) {
-        // TODO Auto-generated method stub
-        return 0;
+    public float getW1(@Nonnull Feature e) {
+        return _map.get(e.getFeature()).W;
     }
 
     public float getV(@Nonnull Feature x, @Nonnull String field, int f) {
