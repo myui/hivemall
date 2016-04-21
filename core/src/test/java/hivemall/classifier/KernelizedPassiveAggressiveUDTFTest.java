@@ -230,43 +230,111 @@ public class KernelizedPassiveAggressiveUDTFTest {
         float expectedLearningRate2 = 0.5660377f;
         assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
     }
+    
+    @Test
+    public void testKernelExpansion() throws UDFArgumentException {
+        KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KernelExpansionKPA();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        /* test for INT_TYPE_NAME feature */
+        StructObjectInspector intListSOI =
+                udtf.initialize(new ObjectInspector[] {intListOI, intOI});
+        assertEquals("struct<feature:int,weight:float>", intListSOI.getTypeName());
+
+        /* test for STRING_TYPE_NAME feature */
+        ObjectInspector stringOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
+        ListObjectInspector stringListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(stringOI);
+        StructObjectInspector stringListSOI =
+                udtf.initialize(new ObjectInspector[] {stringListOI, intOI});
+        assertEquals("struct<feature:string,weight:float>", stringListSOI.getTypeName());
+
+        /* test for BIGINT_TYPE_NAME feature */
+        ObjectInspector longOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
+        ListObjectInspector longListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(longOI);
+        StructObjectInspector longListSOI =
+                udtf.initialize(new ObjectInspector[] {longListOI, intOI});
+        assertEquals("struct<feature:bigint,weight:float>", longListSOI.getTypeName());
+        
+    }
+
+    @Test
+    public void testKExpKPAWithoutParameter() throws UDFArgumentException {
+        KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF.KernelExpansionKPA();
+        ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
+        ListObjectInspector intListOI =
+                ObjectInspectorFactory.getStandardListObjectInspector(intOI);
+
+        /* do initialize() with aggressiveness parameter */
+        udtf.initialize(new ObjectInspector[] {intListOI, intOI});
+        float loss = 0.1f;
+
+        PredictionResult margin1 = new PredictionResult(0.5f).squaredNorm(0.05f);
+        float expectedLearningRate1 = 2.0f;
+        assertEquals(expectedLearningRate1, udtf.eta(loss, margin1), 1e-5f);
+
+        PredictionResult margin2 = new PredictionResult(0.5f).squaredNorm(0.01f);
+        float expectedLearningRate2 = 10.0f;
+        assertEquals(expectedLearningRate2, udtf.eta(loss, margin2), 1e-5f);
+    }
+    
 
     @Test
     public void testOptions() throws UDFArgumentException {
         KernelizedPassiveAggressiveUDTF udtf = new KernelizedPassiveAggressiveUDTF();
-        KernelizedPassiveAggressiveUDTF udtf2 = new KernelizedPassiveAggressiveUDTF();
+        KernelizedPassiveAggressiveUDTF udtfK = new KernelizedPassiveAggressiveUDTF.KernelExpansionKPA();
         ObjectInspector intOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ListObjectInspector intListOI =
                 ObjectInspectorFactory.getStandardListObjectInspector(intOI);
         ObjectInspector param = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-a 0.5 -d 3 -PKI");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-pkc 0.5 -d 3 -PKI");
         ObjectInspector param2 = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-a 1.0 -d 2");
-        udtf.initialize(new ObjectInspector[] {intListOI, intOI, param});
-        udtf2.initialize(new ObjectInspector[] {intListOI, intOI, param2});
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-pkc 1.0 -d 2");
+        
+        ObjectInspector[] params = {intListOI, intOI, param};
+        ObjectInspector[] params2 = {intListOI, intOI, param2};
 
         /* train weights by List<Object> */
         List<Integer> features1 = new ArrayList<Integer>();
         features1.add(1);
         features1.add(2);
         features1.add(3);
-        udtf.train(features1, 1);
-        udtf2.train(features1, 1);
-
-        /* check weights */
-        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
-        assertEquals(0.3333333f, udtf2.getAlpha(0), 1e-5f);
-
+        
         /* train weights by Object[] */
         List<?> features2 = (List<?>) intListOI.getList(new Object[] {3, 4, 5});
-        udtf.train(features2, -1);
-        udtf2.train(features2, -1);
 
         /* check weights */
+        udtf.initialize(params);
+        udtf.train(features1, 1);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        udtf.train(features2, -1);
         assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
         assertEquals(-0.7083333f, udtf.getAlpha(1), 1e-5f);
-        assertEquals(0.3333333f, udtf2.getAlpha(0), 1e-5f);
-        assertEquals(-0.7777777f, udtf2.getAlpha(1), 1e-5f);
+
+        udtf.initialize(params2);
+        udtf.train(features1, 1);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        udtf.train(features2, -1);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        assertEquals(-0.7777777f, udtf.getAlpha(1), 1e-5f);
+        
+        boolean caught = false;
+        try {
+            udtfK.initialize(params);
+        } catch (UDFArgumentException e) {
+            caught = true;
+        }
+        assert(caught);
+        
+        udtfK.initialize(params2); 
+        udtf.train(features1, 1);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        udtf.train(features2, -1);
+        assertEquals(0.3333333f, udtf.getAlpha(0), 1e-5f);
+        assertEquals(-0.7777777f, udtf.getAlpha(1), 1e-5f);
 
     }
 
@@ -397,4 +465,5 @@ public class KernelizedPassiveAggressiveUDTFTest {
 
         System.out.println("split " + timeSplit + " splitPKI " + timePKISplit);//can't really assert one to be smaller than the other because PKI speed depends strongly on the sparsity of the data
     }
+    
 }

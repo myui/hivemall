@@ -42,11 +42,12 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
     private float pkc;
     private int degree;
-    private float loss;
-    private boolean pki;
-    private Map<Object, BitSet> supportVectorsIndicesPKI;
+    protected FloatArrayList alpha;
     private List<FeatureValue[]> supportVectors;
-    private FloatArrayList alpha;
+    private float loss;
+    //PKI
+    private Map<Object, BitSet> supportVectorsIndicesPKI;
+    private boolean pki;
 
     @Override
     protected Options getOptions() {
@@ -65,11 +66,13 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         final CommandLine cl = super.processOptions(argOIs);
         float pkc = 1.f;
         int degree = 2;
+        this.pki = false;
         if (cl != null) {
-            String a_str = cl.getOptionValue("a");
+            this.pki = cl.hasOption("PKI");
+            String pkc_str = cl.getOptionValue("pkc");
             String d_str = cl.getOptionValue("d");
-            if (a_str != null) {
-                pkc = Float.parseFloat(a_str);
+            if (pkc_str != null) {
+                pkc = Float.parseFloat(pkc_str);
             }
             if (d_str != null) {
                 degree = Integer.parseInt(d_str);
@@ -79,7 +82,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                 }
             }
         }
-        if (pki) {
+        if (this.pki) {
             supportVectorsIndicesPKI = new HashMap<Object, BitSet>();
         }
         alpha = new FloatArrayList();
@@ -161,14 +164,14 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
     @Nonnull
     protected PredictionResult calcScoreWithKernelAndNorm(
             @Nonnull final List<FeatureValue[]> supportVectors, @Nonnull FloatArrayList alpha,
-            @Nonnull final FeatureValue[] features, float a, int degree) {
+            @Nonnull final FeatureValue[] features, float pkc, int degree) {
         float score = 0.f;
         float squared_norm = 0.f;
 
         for (int i = 0; i < supportVectors.size(); ++i) {
             FeatureValue[] sv = supportVectors.get(i);
             float currentAlpha = alpha.get(i);
-            score += currentAlpha * polynomialKernel(features, sv, a, degree);
+            score += currentAlpha * polynomialKernel(features, sv, pkc, degree);
         }
         for (FeatureValue f : features) {
             if (f == null) {
@@ -293,28 +296,49 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
         }
     }
 
-    public class KernelExpansionKPA extends KernelizedPassiveAggressiveUDTF {
-        private boolean exp2;
+    public static class KernelExpansionKPA extends KernelizedPassiveAggressiveUDTF {
         private float w0;
         private HashMap<Object, Double> w1;
         private HashMap<Object, Double> w2;
         private HashMap<Object, Double> w3;
+        private boolean split;
+        private int splitBorder;
 
         @Override
         protected Options getOptions() {
             Options opts = super.getOptions();
-            opts.addOption("exp", "kernelexpansion", false,
-                "Whether to use quadratic kernel expansion for pre-calculating support vector kernels (conflicts with PKI; requires d = 2 (default value)) [default: OFF]");
+            opts.addOption("split", "kernelsplitting", false,
+                "Whether to use kernel splitting via PKI and kernel expansion (overrides -PKI, -exp2.) [default: OFF]");
+            opts.addOption("splitBorder", "kernelsplittingBorderValue", true,
+                "The borderline used when kernel splitting (requires -split): Kernel expansion for features shared 1 to splitBorder-1 times; PKI for remaining features. [default: 100]");
             return opts;
+        }
+        
+        @Override
+        public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+            w0 = 0.f;
+            w1 = new HashMap<Object, Double>();
+            w2 = new HashMap<Object, Double>();
+            w3 = new HashMap<Object, Double>();
+            return super.initialize(argOIs);
         }
 
         @Override
         protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
             final CommandLine cl = super.processOptions(argOIs);
+            int splitBorder = 100;
             if (cl != null) {
-                this.exp2 = cl.hasOption("exp2");
+                this.split = cl.hasOption("split");
+                String border_str = cl.getOptionValue("splitBorder");
+                if (border_str != null) {
+                    splitBorder = Integer.parseInt(border_str);
+                    if (splitBorder < 2) {
+                        throw new UDFArgumentException(
+                            "Kernel splitting borderline must be at least 2: " + splitBorder);
+                    }
+                }
             }
-            if (super.pki && exp2) {
+            if (super.pki) {
                 throw new UDFArgumentException(
                     "PKI conflicts with kernel expansion; use option \"split\" to utilize both.");
             }
@@ -330,20 +354,20 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
 
         @Override
         protected PredictionResult calcScoreWithKernelAndNorm(List<FeatureValue[]> supportVectors,
-                FloatArrayList alpha, FeatureValue[] features, float a, int degree) {//supportVectors unnecessary?
+                FloatArrayList alpha, FeatureValue[] features, float a, int degree) {
             float score = this.w0;
             float norm = 0.f;
             for (int i = 0; i < features.length; ++i) {
                 String key = features[i].getFeature().toString();
-                Double score1 = w1.get(key);
-                Double score2 = w2.get(key);
+                Double score1 = this.w1.get(key);
+                Double score2 = this.w2.get(key);
                 if (score1 == null) {
-                    w1.put(key, 0.d);
+                    this.w1.put(key, 0.d);
                 } else {
                     score += score1.doubleValue();
                 }
                 if (score2 == null) {
-                    w2.put(key, 0.d);
+                    this.w2.put(key, 0.d);
                 } else {
                     score += score2.doubleValue();
                 }
@@ -351,9 +375,9 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                 norm += val * val;
                 for (int j = i + 1; j < features.length; ++j) {
                     String key2 = key + features[j].getFeature().toString();
-                    Double score3 = w3.get(key2);
+                    Double score3 = this.w3.get(key2);
                     if (score3 == null) {
-                        w3.put(key2, 0.d);
+                        this.w3.put(key2, 0.d);
                     } else {
                         score += score3.doubleValue();
                     }
@@ -372,7 +396,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
             }
         }
 
-        private void expandKernel(FeatureValue[] supportVector, float alpha) { 
+        private void expandKernel(FeatureValue[] supportVector, float alpha) {
             int deg = this.getDegree();
             if (deg != 2) {
                 throw new UnsupportedOperationException(
@@ -399,7 +423,7 @@ public class KernelizedPassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF 
                 for (int k = j + 1; k < supportVector.length; ++k) {
                     String key = supportVector[j].getFeature().toString()
                             + supportVector[k].getFeature().toString();
-                    double valueJK = w3.get(key);
+                    double valueJK = this.w3.get(key);
                     double svJ = supportVector[j].getValue();
                     double svK = supportVector[k].getValue();
                     this.w3.put(key, valueJK + alpha * svJ * svK);
