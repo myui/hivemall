@@ -38,7 +38,9 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
 
     private int _minIndex, _maxIndex;
 
-    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma,
+            long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
+            @Nonnull VInitScheme vInit) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._w0 = 0.f;
         this._w = new Int2FloatOpenHash(DEFAULT_MAPSIZE);
@@ -82,7 +84,7 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
     @Override
     public float getW(@Nonnull final Feature x) {
         final int i = x.getFeatureIndex();
-        if(i == 0) {
+        if (i == 0) {
             return _w0;
         } else {
             assert (i >= 1) : i;
@@ -93,7 +95,7 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
     @Override
     protected void setW(@Nonnull Feature x, float nextWi) {
         final int i = x.getFeatureIndex();
-        if(i == 0) {
+        if (i == 0) {
             this._w0 = nextWi;
         } else {
             assert (i >= 1) : i;
@@ -112,7 +114,7 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
         int i = x.getFeatureIndex();
         assert (i >= 1) : i;
         final float[] Vi = _V.get(i);
-        if(Vi == null) {
+        if (Vi == null) {
             return 0.f;
         }
         return Vi[f];
@@ -129,19 +131,19 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
 
     @Override
     public void check(@Nonnull final Feature[] x) throws HiveException {
-        for(Feature e : x) {
-            if(e == null) {
+        for (Feature e : x) {
+            if (e == null) {
                 continue;
             }
             final int idx = e.getFeatureIndex();
-            if(idx < 1) {
+            if (idx < 1) {
                 throw new HiveException("Index of x should be greater than or equals to 1: "
                         + Arrays.toString(x));
             }
-            if(!_w.containsKey(idx)) {
+            if (!_w.containsKey(idx)) {
                 _w.put(idx, 0.f);
             }
-            if(!_V.containsKey(idx)) {
+            if (!_V.containsKey(idx)) {
                 float[] tmp = initV();
                 _V.put(idx, tmp);
             }

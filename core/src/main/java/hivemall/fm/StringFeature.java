@@ -36,15 +36,15 @@ public final class StringFeature extends Feature {
         super(value);
         this.feature = feature;
         int index = feature.indexOf(":");
-        if(index >= 0) {
+        if (index >= 0) {
             this.field = feature.substring(0, index);
         }
     }
-    
+
     public StringFeature(@Nullable String field, @Nonnull String feature, double value) {
         super(value);
         this.field = field;
-        this.feature = (field==null ? "" : field+":") + feature;
+        this.feature = (field == null ? "" : field + ":") + feature;
     }
 
     public StringFeature(@Nonnull ByteBuffer src) {

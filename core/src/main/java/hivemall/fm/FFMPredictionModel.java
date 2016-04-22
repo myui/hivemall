@@ -30,7 +30,7 @@ public final class FFMPredictionModel {
     private OpenHashTable<String, Entry> _map;
 
     public FFMPredictionModel() {}
-    
+
     public FFMPredictionModel(String ser) {
         //TODO
     }

@@ -232,8 +232,8 @@ public abstract class FactorizationMachineModel {
         setW(x, nextWi);
     }
 
-    void updateV(final double dloss, @Nonnull final Feature x, final int f,
-            final double sumViX, final float eta) {
+    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
+            final float eta) {
         final double Xi = x.getValue();
         float Vif = getV(x, f);
         double h = gradV(Xi, Vif, sumViX);

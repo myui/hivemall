@@ -37,14 +37,13 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
-import org.apache.hadoop.io.Text;
 
 @Description(
         name = "ffm_predict",
         value = "_FUNC_(array[string] X, string model) returns a prediction result from a Field-aware Factorization Machine")
 @UDFType(deterministic = true, stateful = false)
 public final class FFMPredictUDF extends GenericUDF {
-    
+
     private ListObjectInspector xOI;
     private StringObjectInspector modelOI;
 
@@ -57,14 +56,14 @@ public final class FFMPredictUDF extends GenericUDF {
         if (argOIs.length != 2) {
             throw new UDFArgumentException("_FUNC_ takes 2 arguments");
         }
-        
+
         xOI = HiveUtils.asListOI(argOIs[0]);
         if (!(xOI.getListElementObjectInspector() instanceof FloatObjectInspector)) {
             throw new UDFArgumentException("Elements of first argument must be float");
         }
-        
+
         modelOI = HiveUtils.asStringOI(argOIs[1]);
-        
+
         return PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
     }
 
@@ -73,10 +72,10 @@ public final class FFMPredictUDF extends GenericUDF {
         @SuppressWarnings("unchecked")
         List<Feature> xList = (List<Feature>) xOI.getList(args[0]);
         Feature[] x = (Feature[]) xList.toArray();
-        
+
         String serModel = modelOI.getPrimitiveWritableObject(args[1]);//FIXME
         model = new FFMPredictionModel(serModel);//FIXME
-        
+
         double result = predict(x, model);
         return new DoubleWritable(result);
     }
