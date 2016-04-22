@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -40,37 +42,72 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "each_top_k", value = "_FUNC_(const int K, Object group, double cmpKey, *) - Returns top-K values (or tail-K values when k is less than 0)")
+@Description(
+        name = "each_top_k",
+        value = "_FUNC_(int K, Object group, double cmpKey, *) - Returns top-K values (or tail-K values when k is less than 0)")
 public final class EachTopKUDTF extends GenericUDTF {
 
-    private transient ObjectInspector[] argOIs;
-    private transient ObjectInspector prevGroupOI;
-    private transient PrimitiveObjectInspector cmpKeyOI;
-    private int sizeK;
+    private ObjectInspector[] argOIs;
+    private PrimitiveObjectInspector kOI;
+    private ObjectInspector prevGroupOI;
+    private PrimitiveObjectInspector cmpKeyOI;
 
-    private BoundedPriorityQueue<TupleWithKey> queue;
+    private boolean _constantK;
+    private int _prevK;
+    private BoundedPriorityQueue<TupleWithKey> _queue;
     private TupleWithKey _tuple;
     private Object _previousGroup;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs < 4) {
-            throw new UDFArgumentException("each_top_k(const int K, Object group, double cmpKey, *) takes at least 4 arguments: "
-                    + numArgs);
+        if (numArgs < 4) {
+            throw new UDFArgumentException(
+                "each_top_k(int K, Object group, double cmpKey, *) takes at least 4 arguments: "
+                        + numArgs);
         }
 
         this.argOIs = argOIs;
-        int k = HiveUtils.getAsConstInt(argOIs[0]);
-        if(k == 0) {
-            throw new UDFArgumentException("k should not be 0");
+        this._constantK = ObjectInspectorUtils.isConstantObjectInspector(argOIs[0]);
+        if (_constantK) {
+            final int k = HiveUtils.getAsConstInt(argOIs[0]);
+            if (k == 0) {
+                throw new UDFArgumentException("k should not be 0");
+            }
+            this._queue = getQueue(k);
+        } else {
+            this.kOI = HiveUtils.asIntCompatibleOI(argOIs[0]);
+            this._prevK = 0;
         }
-        this.prevGroupOI = ObjectInspectorUtils.getStandardObjectInspector(argOIs[1], ObjectInspectorCopyOption.DEFAULT);
+
+        this.prevGroupOI = ObjectInspectorUtils.getStandardObjectInspector(argOIs[1],
+            ObjectInspectorCopyOption.DEFAULT);
         this.cmpKeyOI = HiveUtils.asDoubleCompatibleOI(argOIs[2]);
 
-        this.sizeK = Math.abs(k);
+        this._tuple = null;
+        this._previousGroup = null;
+
+        final ArrayList<String> fieldNames = new ArrayList<String>(numArgs);
+        final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(numArgs);
+        fieldNames.add("rank");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldNames.add("key");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
+        for (int i = 3; i < numArgs; i++) {
+            fieldNames.add("c" + (i - 2));
+            ObjectInspector rawOI = argOIs[i];
+            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI,
+                ObjectInspectorCopyOption.DEFAULT);
+            fieldOIs.add(retOI);
+        }
+        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+    }
+
+    @Nonnull
+    private static BoundedPriorityQueue<TupleWithKey> getQueue(final int k) {
+        int sizeK = Math.abs(k);
         final Comparator<TupleWithKey> comparator;
-        if(k < 0) {
+        if (k < 0) {
             comparator = Collections.reverseOrder();
         } else {
             comparator = new Comparator<TupleWithKey>() {
@@ -81,38 +118,36 @@ public final class EachTopKUDTF extends GenericUDTF {
             };
         }
         //this.queue = new BoundedPriorityQueue<Row>(sizeK, Comparator.nullsFirst(comparator));
-        this.queue = new BoundedPriorityQueue<TupleWithKey>(sizeK, comparator);
-        this._tuple = null;
-        this._previousGroup = null;
-
-        final ArrayList<String> fieldNames = new ArrayList<String>(numArgs);
-        final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(numArgs);
-        fieldNames.add("rank");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
-        fieldNames.add("key");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
-        for(int i = 3; i < numArgs; i++) {
-            fieldNames.add("c" + (i - 2));
-            ObjectInspector rawOI = argOIs[i];
-            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.DEFAULT);
-            fieldOIs.add(retOI);
-        }
-        return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+        return new BoundedPriorityQueue<TupleWithKey>(sizeK, comparator);
     }
 
     @Override
     public void process(Object[] args) throws HiveException {
         final Object arg1 = args[1];
-        if(isSameGroup(arg1) == false) {
-            Object group = ObjectInspectorUtils.copyToStandardObject(arg1, argOIs[1], ObjectInspectorCopyOption.DEFAULT); // arg1 and group may be null
-            drainQueue();
+        if (isSameGroup(arg1) == false) {
+            Object group = ObjectInspectorUtils.copyToStandardObject(arg1, argOIs[1],
+                ObjectInspectorCopyOption.DEFAULT); // arg1 and group may be null
             this._previousGroup = group;
+            if (_queue != null) {
+                drainQueue();
+            }
+
+            if (_constantK == false) {
+                final int k = PrimitiveObjectInspectorUtils.getInt(args[0], kOI);
+                if (k == 0) {
+                    return;
+                }
+                if (k != _prevK) {
+                    this._queue = getQueue(k);
+                    this._prevK = k;
+                }
+            }
         }
 
         final double key = PrimitiveObjectInspectorUtils.getDouble(args[2], cmpKeyOI);
         final Object[] row;
         TupleWithKey tuple = this._tuple;
-        if(_tuple == null) {
+        if (_tuple == null) {
             row = new Object[args.length - 1];
             tuple = new TupleWithKey(key, row);
             this._tuple = tuple;
@@ -120,33 +155,34 @@ public final class EachTopKUDTF extends GenericUDTF {
             row = tuple.getRow();
             tuple.setKey(key);
         }
-        for(int i = 3; i < args.length; i++) {
+        for (int i = 3; i < args.length; i++) {
             Object arg = args[i];
             ObjectInspector argOI = argOIs[i];
-            row[i - 1] = ObjectInspectorUtils.copyToStandardObject(arg, argOI, ObjectInspectorCopyOption.DEFAULT);
+            row[i - 1] = ObjectInspectorUtils.copyToStandardObject(arg, argOI,
+                ObjectInspectorCopyOption.DEFAULT);
         }
 
-        if(queue.offer(tuple)) {
+        if (_queue.offer(tuple)) {
             this._tuple = null;
         }
     }
 
     private boolean isSameGroup(Object arg1) {
-        if(arg1 == null && _previousGroup == null) {
+        if (arg1 == null && _previousGroup == null) {
             return true;
-        } else if(arg1 == null || _previousGroup == null) {
+        } else if (arg1 == null || _previousGroup == null) {
             return false;
         }
         return ObjectInspectorUtils.compare(arg1, argOIs[1], _previousGroup, prevGroupOI) == 0;
     }
 
     private void drainQueue() throws HiveException {
-        final int queueSize = queue.size();
-        if(queueSize > 0) {
+        final int queueSize = _queue.size();
+        if (queueSize > 0) {
             final TupleWithKey[] tuples = new TupleWithKey[queueSize];
-            for(int i = 0; i < queueSize; i++) {
-                TupleWithKey tuple = queue.poll();
-                if(tuple == null) {
+            for (int i = 0; i < queueSize; i++) {
+                TupleWithKey tuple = _queue.poll();
+                if (tuple == null) {
                     throw new IllegalStateException("Found null element in the queue");
                 }
                 tuples[i] = tuple;
@@ -155,11 +191,11 @@ public final class EachTopKUDTF extends GenericUDTF {
             final DoubleWritable keyProbe = new DoubleWritable(Double.NaN);
             int rank = 0;
             double lastKey = Double.NaN;
-            for(int i = queueSize - 1; i >= 0; i--) {
+            for (int i = queueSize - 1; i >= 0; i--) {
                 TupleWithKey tuple = tuples[i];
                 tuples[i] = null; // help GC
                 double key = tuple.getKey();
-                if(key != lastKey) {
+                if (key != lastKey) {
                     ++rank;
                     rankProbe.set(rank);
                     keyProbe.set(key);
@@ -170,7 +206,7 @@ public final class EachTopKUDTF extends GenericUDTF {
                 row[1] = keyProbe;
                 forward(row);
             }
-            queue.clear();
+            _queue.clear();
         }
     }
 
@@ -178,7 +214,7 @@ public final class EachTopKUDTF extends GenericUDTF {
     public void close() throws HiveException {
         drainQueue();
 
-        this.queue = null;
+        this._queue = null;
         this._tuple = null;
     }
 

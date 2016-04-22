@@ -26,16 +26,17 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "subarray_startwith", value = "_FUNC_(original, key) - Returns an array that starts with the specified key")
+@Description(name = "subarray_startwith", value = "_FUNC_(array<int|text> original, int|text key)"
+        + " - Returns an array that starts with the specified key")
 @UDFType(deterministic = true, stateful = false)
 public class SubarrayStartWithUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> original, IntWritable key) {
-        if(original == null) {
+        if (original == null) {
             return null;
         }
         int fromIndex = original.indexOf(key);
-        if(fromIndex == -1) {
+        if (fromIndex == -1) {
             return null;
         }
         int toIndex = original.size();
@@ -43,11 +44,11 @@ public class SubarrayStartWithUDF extends UDF {
     }
 
     public List<Text> evaluate(List<Text> original, Text key) {
-        if(original == null) {
+        if (original == null) {
             return null;
         }
         int fromIndex = original.indexOf(key);
-        if(fromIndex == -1) {
+        if (fromIndex == -1) {
             return null;
         }
         int toIndex = original.size();

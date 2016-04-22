@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.mf;
+package hivemall.evaluation;
 
-public interface RatingInitilizer {
+import java.util.Arrays;
+import java.util.List;
 
-    public Rating newRating(float v);
+import org.junit.Assert;
+import org.junit.Test;
+
+public class BinaryResponsesMeasuresTest {
+
+    @Test
+    public void testNDCG() {
+        List<Integer> rankedList = Arrays.asList(3,0,2,1,1);
+        List<Integer> groundTruth = Arrays.asList(3,2,1,1,4);
+        double actual = BinaryResponsesMeasures.nDCG(rankedList, groundTruth);
+        Assert.assertEquals(0.7860137352654725d, actual, 0.0001d);
+    }
 
 }

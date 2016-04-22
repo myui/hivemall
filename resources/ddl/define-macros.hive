@@ -28,9 +28,6 @@ floor(rand(seed)*k);
 -- Statistics functions --
 --------------------------
 
--- create temporary macro SIGMOID(x DOUBLE)
--- 1.0 / (1.0 + exp(-x));
-
 create temporary macro idf(df_t DOUBLE, n_docs DOUBLE)
 log(10, n_docs / max2(1,df_t)) + 1.0;
 

@@ -37,6 +37,9 @@ public final class ConversionState {
     /** The cumulative losses in an iteration */
     protected double currLosses, prevLosses;
 
+    protected int curIter;
+    protected float curEta;
+
     public ConversionState() {
         this(true, 0.005d);
     }
@@ -48,6 +51,8 @@ public final class ConversionState {
         this.totalErrors = 0.d;
         this.currLosses = 0.d;
         this.prevLosses = Double.POSITIVE_INFINITY;
+        this.curIter = 0;
+        this.curEta = Float.NaN;
     }
 
     public double getTotalErrors() {
@@ -56,6 +61,10 @@ public final class ConversionState {
 
     public double getCumulativeLoss() {
         return currLosses;
+    }
+
+    public double getPreviousLoss() {
+        return prevLosses;
     }
 
     public void incrError(double error) {
@@ -70,13 +79,19 @@ public final class ConversionState {
         this.currLosses = currLosses * multi;
     }
 
+    public boolean isLossIncreased() {
+        return currLosses > prevLosses;
+    }
+
     public boolean isConverged(final int iter, final long obserbedTrainingExamples) {
-        if(conversionCheck == false) {
+        if (conversionCheck == false) {
+            this.prevLosses = currLosses;
+            this.currLosses = 0.d;
             return false;
         }
 
-        if(currLosses > prevLosses) {
-            if(logger.isInfoEnabled()) {
+        if (currLosses > prevLosses) {
+            if (logger.isInfoEnabled()) {
                 logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
             }
             this.prevLosses = currLosses;
@@ -86,8 +101,8 @@ public final class ConversionState {
         }
 
         final double changeRate = (prevLosses - currLosses) / prevLosses;
-        if(changeRate < convergenceRate) {
-            if(readyToFinishIterations) {
+        if (changeRate < convergenceRate) {
+            if (readyToFinishIterations) {
                 // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
                 logger.info("Training converged at " + iter + "-th iteration. [curLosses="
                         + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
@@ -97,7 +112,7 @@ public final class ConversionState {
                 this.readyToFinishIterations = true;
             }
         } else {
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
                         + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
                         + obserbedTrainingExamples + "]");
@@ -108,6 +123,23 @@ public final class ConversionState {
         this.prevLosses = currLosses;
         this.currLosses = 0.d;
         return false;
+    }
+
+    public void logState(int iter, float eta) {
+        if (logger.isInfoEnabled()) {
+            logger.info("[iter " + iter + "] curLoss=" + currLosses + ", prevLoss=" + prevLosses
+                    + ", eta=" + eta);
+        }
+        this.curIter = iter;
+        this.curEta = eta;
+    }
+
+    public int getCurrentIteration() {
+        return curIter;
+    }
+
+    public float getCurrentEta() {
+        return curEta;
     }
 
 }

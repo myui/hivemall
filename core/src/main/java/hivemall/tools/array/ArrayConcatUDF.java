@@ -35,9 +35,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 
-@Description(name = "concat_array", value = "_FUNC_(x1, x2, ..) - Returns a concatinated array")
+@Description(name = "array_concat",
+        value = "_FUNC_(array<ANY> x1, array<ANY> x2, ..) - Returns a concatenated array")
 @UDFType(deterministic = true, stateful = false)
-public class ConcatArrayUDF extends GenericUDF {
+public class ArrayConcatUDF extends GenericUDF {
     /**
      * @see org.apache.hadoop.hive.serde.serdeConstants
      */
@@ -48,14 +49,17 @@ public class ConcatArrayUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length < 1) {
-            throw new UDFArgumentLengthException("The function CONCAT_ARRAY(array1, array2) needs at least 1 argument.");
+        if (arguments.length < 1) {
+            throw new UDFArgumentLengthException(
+                "_FUNC_(array1, array2) needs at least 1 argument.");
         }
         final int nargs = arguments.length;
-        for(int i = 0; i < nargs; i++) {
+        for (int i = 0; i < nargs; i++) {
             switch (arguments[i].getCategory()) {
                 case LIST:
-                    if(((ListObjectInspector) (arguments[i])).getListElementObjectInspector().getCategory().equals(Category.PRIMITIVE)) {
+                    if (((ListObjectInspector) (arguments[i])).getListElementObjectInspector()
+                                                              .getCategory()
+                                                              .equals(Category.PRIMITIVE)) {
                         break;
                     }
                 default:
@@ -67,7 +71,7 @@ public class ConcatArrayUDF extends GenericUDF {
         }
 
         ListObjectInspector[] listOIs = new ListObjectInspector[nargs];
-        for(int i = 0; i < nargs; i++) {
+        for (int i = 0; i < nargs; i++) {
             listOIs[i] = (ListObjectInspector) arguments[i];
         }
         this.argumentOIs = listOIs;
@@ -82,15 +86,15 @@ public class ConcatArrayUDF extends GenericUDF {
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
         ret.clear();
 
-        for(int i = 0; i < arguments.length; i++) {
+        for (int i = 0; i < arguments.length; i++) {
             final Object arrayObject = arguments[i].get();
-            if(arrayObject == null) {
+            if (arrayObject == null) {
                 continue;
             }
 
             final ListObjectInspector arrayOI = (ListObjectInspector) argumentOIs[i];
             final int arraylength = arrayOI.getListLength(arrayObject);
-            for(int j = 0; j < arraylength; j++) {
+            for (int j = 0; j < arraylength; j++) {
                 Object rawObj = arrayOI.getListElement(arrayObject, j);
                 ObjectInspector elemOI = arrayOI.getListElementObjectInspector();
                 Object obj = ObjectInspectorUtils.copyToStandardObject(rawObj, elemOI);

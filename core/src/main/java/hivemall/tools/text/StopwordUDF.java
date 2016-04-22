@@ -27,7 +27,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.BooleanWritable;
 
-@Description(name = "is_stopword", value = "_FUNC_(word) - Returns whether stopword or not")
+@Description(name = "is_stopword", value = "_FUNC_(string word) - Returns whether English stopword or not")
 @UDFType(deterministic = true, stateful = false)
 public final class StopwordUDF extends UDF {
 

@@ -26,14 +26,14 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "array_remove", value = "_FUNC_(original, target) - Returns an array that the target is removed "
-        + "from the original array")
+@Description(name = "array_remove",
+        value = "_FUNC_(array<int|text> original, int|text|array<int> target)"
+                + " - Returns an array that the target is removed " + "from the original array")
 @UDFType(deterministic = true, stateful = false)
 public class ArrayRemoveUDF extends UDF {
 
     public List<IntWritable> evaluate(List<IntWritable> original, IntWritable target) {
-        while(original.remove(target))
-            ;
+        while (original.remove(target));
         return original;
     }
 
@@ -43,8 +43,7 @@ public class ArrayRemoveUDF extends UDF {
     }
 
     public List<Text> evaluate(List<Text> original, Text target) {
-        while(original.remove(target))
-            ;
+        while (original.remove(target));
         return original;
     }
 

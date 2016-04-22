@@ -1,0 +1,65 @@
+DROP FUNCTION IF EXISTS perceptron;
+CREATE FUNCTION perceptron as 'hivemall.classifier.PerceptronUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS adagrad_rda;
+CREATE FUNCTION adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS cosine_sim;
+CREATE FUNCTION cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS jaccard;
+CREATE FUNCTION jaccard as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS wvoted_avg;
+CREATE FUNCTION wvoted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS sortByFeature;
+CREATE FUNCTION sortByFeature as 'hivemall.ftvec.SortByFeatureUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_logregr;
+CREATE FUNCTION train_logregr as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS pa1_regress;
+CREATE FUNCTION pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS pa1a_regress;
+CREATE FUNCTION pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS pa2_regress;
+CREATE FUNCTION pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS pa2a_regress;
+CREATE FUNCTION pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS arow_regress;
+CREATE FUNCTION arow_regress as 'hivemall.regression.AROWRegressionUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS arowe_regress;
+CREATE FUNCTION arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS arowe2_regress;
+CREATE FUNCTION arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS adagrad;
+CREATE FUNCTION adagrad as 'hivemall.regression.AdaGradUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_adagrad;
+CREATE FUNCTION train_adagrad as 'hivemall.regression.AdaGradUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_adadelta;
+CREATE FUNCTION train_adadelta as 'hivemall.regression.AdaDeltaUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS adadelta;
+CREATE FUNCTION adadelta as 'hivemall.regression.AdaDeltaUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS collect_all;
+CREATE FUNCTION collect_all as 'hivemall.tools.array.CollectAllUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS vm_tree_predict;
+CREATE FUNCTION vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS js_tree_predict;
+CREATE FUNCTION js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_gbt_classifier;
+CREATE FUNCTION train_gbt_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF' USING JAR '${hivemall_jar}';

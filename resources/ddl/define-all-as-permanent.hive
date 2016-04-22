@@ -16,10 +16,6 @@ CREATE FUNCTION hivemall_version as 'hivemall.HivemallVersionUDF' USING JAR '${h
 DROP FUNCTION IF EXISTS train_perceptron;
 CREATE FUNCTION train_perceptron as 'hivemall.classifier.PerceptronUDTF' USING JAR '${hivemall_jar}';
 
--- alias
-DROP FUNCTION IF EXISTS perceptron;
-CREATE FUNCTION perceptron as 'hivemall.classifier.PerceptronUDTF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_pa;
 CREATE FUNCTION train_pa as 'hivemall.classifier.PassiveAggressiveUDTF' USING JAR '${hivemall_jar}';
 
@@ -44,10 +40,6 @@ CREATE FUNCTION train_scw as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW1
 DROP FUNCTION IF EXISTS train_scw2;
 CREATE FUNCTION train_scw2 as 'hivemall.classifier.SoftConfideceWeightedUDTF$SCW2' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS adagrad_rda;
-CREATE FUNCTION adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF' USING JAR '${hivemall_jar}';
-
--- alias
 DROP FUNCTION IF EXISTS train_adagrad_rda;
 CREATE FUNCTION train_adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF' USING JAR '${hivemall_jar}';
 
@@ -86,13 +78,6 @@ CREATE FUNCTION train_multiclass_scw2 as 'hivemall.classifier.multiclass.Multicl
 DROP FUNCTION IF EXISTS cosine_similarity;
 CREATE FUNCTION cosine_similarity as 'hivemall.knn.similarity.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS cosine_sim;
-CREATE FUNCTION cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS jaccard;
-CREATE FUNCTION jaccard as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS jaccard_similarity;
 CREATE FUNCTION jaccard_similarity as 'hivemall.knn.similarity.JaccardIndexUDF' USING JAR '${hivemall_jar}';
 
@@ -109,14 +94,14 @@ CREATE FUNCTION distance2similarity as 'hivemall.knn.similarity.Distance2Similar
 -- distance functions --
 ------------------------
 
-DROP FUNCTION IF EXISTS hamming_distance;
-CREATE FUNCTION hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS popcnt;
 CREATE FUNCTION popcnt as 'hivemall.knn.distance.PopcountUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS kld;
 CREATE FUNCTION kld as 'hivemall.knn.distance.KLDivergenceUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS hamming_distance;
+CREATE FUNCTION hamming_distance as 'hivemall.knn.distance.HammingDistanceUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS euclid_distance;
 CREATE FUNCTION euclid_distance as 'hivemall.knn.distance.EuclidDistanceUDF' USING JAR '${hivemall_jar}';
@@ -158,10 +143,6 @@ CREATE FUNCTION voted_avg as 'hivemall.ensemble.bagging.VotedAvgUDAF' USING JAR 
 
 DROP FUNCTION IF EXISTS weight_voted_avg;
 CREATE FUNCTION weight_voted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF' USING JAR '${hivemall_jar}';
-
--- alias of weight_voted_avg
-DROP FUNCTION IF EXISTS wvoted_avg;
-CREATE FUNCTION wvoted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF' USING JAR '${hivemall_jar}';
 
 --------------------
 -- misc functions --
@@ -236,10 +217,6 @@ CREATE FUNCTION addBias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar
 DROP FUNCTION IF EXISTS add_bias;
 CREATE FUNCTION add_bias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar}';
 
--- for backward compatibility
-DROP FUNCTION IF EXISTS sortByFeature;
-CREATE FUNCTION sortByFeature as 'hivemall.ftvec.SortByFeatureUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS sort_by_feature;
 CREATE FUNCTION sort_by_feature as 'hivemall.ftvec.SortByFeatureUDF' USING JAR '${hivemall_jar}';
 
@@ -304,6 +281,19 @@ CREATE FUNCTION quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeatu
 DROP FUNCTION IF EXISTS binarize_label;
 CREATE FUNCTION binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF' USING JAR '${hivemall_jar}';
 
+------------------------------
+-- ranking helper functions --
+------------------------------
+
+DROP FUNCTION IF EXISTS bpr_sampling;
+CREATE FUNCTION bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS item_pairs_sampling;
+CREATE FUNCTION item_pairs_sampling as 'hivemall.ftvec.ranking.ItemPairsSamplingUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS populate_not_in;
+CREATE FUNCTION populate_not_in as 'hivemall.ftvec.ranking.PopulateNotInUDTF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- ftvec/text functions --
 --------------------------
@@ -315,83 +305,39 @@ CREATE FUNCTION tf as 'hivemall.ftvec.text.TermFrequencyUDAF' USING JAR '${hivem
 -- Regression functions --
 --------------------------
 
-DROP FUNCTION IF EXISTS train_logregr;
-CREATE FUNCTION train_logregr as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
-
 -- alias for backward compatibility
 DROP FUNCTION IF EXISTS logress;
 CREATE FUNCTION logress as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS train_logistic_regr;
+CREATE FUNCTION train_logistic_regr as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS train_pa1_regr;
 CREATE FUNCTION train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS pa1_regress;
-CREATE FUNCTION pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_pa1a_regr;
 CREATE FUNCTION train_pa1a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a' USING JAR '${hivemall_jar}';
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS pa1a_regress;
-CREATE FUNCTION pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_pa2_regr;
 CREATE FUNCTION train_pa2_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS pa2_regress;
-CREATE FUNCTION pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_pa2a_regr;
 CREATE FUNCTION train_pa2a_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a' USING JAR '${hivemall_jar}';
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS pa2a_regress;
-CREATE FUNCTION pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_arow_regr;
 CREATE FUNCTION train_arow_regr as 'hivemall.regression.AROWRegressionUDTF' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS arow_regress;
-CREATE FUNCTION arow_regress as 'hivemall.regression.AROWRegressionUDTF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_arowe_regr;
 CREATE FUNCTION train_arowe_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe' USING JAR '${hivemall_jar}';
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS arowe_regress;
-CREATE FUNCTION arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_arowe2_regr;
 CREATE FUNCTION train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS arowe2_regress;
-CREATE FUNCTION arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS train_adagrad_regr;
 CREATE FUNCTION train_adagrad_regr as 'hivemall.regression.AdaGradUDTF' USING JAR '${hivemall_jar}';
 
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS train_adagrad;
-CREATE FUNCTION train_adagrad as 'hivemall.regression.AdaGradUDTF' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS adagrad;
-CREATE FUNCTION adagrad as 'hivemall.regression.AdaGradUDTF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS train_adadelta_regr;
 CREATE FUNCTION train_adadelta_regr as 'hivemall.regression.AdaDeltaUDTF' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS train_adadelta;
-CREATE FUNCTION train_adadelta as 'hivemall.regression.AdaDeltaUDTF' USING JAR '${hivemall_jar}';
-
--- alias for backward compatibility
-DROP FUNCTION IF EXISTS adadelta;
-CREATE FUNCTION adadelta as 'hivemall.regression.AdaDeltaUDTF' USING JAR '${hivemall_jar}';
 
 ---------------------
 -- array functions --
@@ -412,11 +358,12 @@ CREATE FUNCTION subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF' US
 DROP FUNCTION IF EXISTS subarray_startwith;
 CREATE FUNCTION subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS collect_all;
-CREATE FUNCTION collect_all as 'hivemall.tools.array.CollectAllUDAF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS array_concat;
+CREATE FUNCTION array_concat as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
+-- alias for backward compatibility
 DROP FUNCTION IF EXISTS concat_array;
-CREATE FUNCTION concat_array as 'hivemall.tools.array.ConcatArrayUDF' USING JAR '${hivemall_jar}';
+CREATE FUNCTION concat_array as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS subarray;
 CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hivemall_jar}';
@@ -424,14 +371,30 @@ CREATE FUNCTION subarray as 'hivemall.tools.array.SubarrayUDF' USING JAR '${hive
 DROP FUNCTION IF EXISTS array_avg;
 CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF' USING JAR '${hivemall_jar}';
 
--- DROP FUNCTION IF EXISTS array_avg;
--- CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgUDAF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS array_sum;
 CREATE FUNCTION array_sum as 'hivemall.tools.array.ArraySumUDAF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS to_string_array;
 CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS array_intersect;
+CREATE FUNCTION array_intersect as 'hivemall.tools.array.ArrayIntersectUDF' USING JAR '${hivemall_jar}';
+
+-----------------------------
+-- bit operation functions --
+-----------------------------
+
+DROP FUNCTION IF EXISTS bits_collect;
+CREATE FUNCTION bits_collect as 'hivemall.tools.bits.BitsCollectUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS to_bits;
+CREATE FUNCTION to_bits as 'hivemall.tools.bits.ToBitsUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS unbits;
+CREATE FUNCTION unbits as 'hivemall.tools.bits.UnBitsUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS bits_or;
+CREATE FUNCTION bits_or as 'hivemall.tools.bits.BitsORUDF' USING JAR '${hivemall_jar}';
 
 ---------------------------
 -- compression functions --
@@ -465,7 +428,6 @@ CREATE FUNCTION to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap' USING JA
 
 DROP FUNCTION IF EXISTS sigmoid;
 CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidGenericUDF' USING JAR '${hivemall_jar}';
--- CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidUDF' USING JAR '${hivemall_jar}';
 
 ----------------------
 -- mapred functions --
@@ -550,6 +512,8 @@ CREATE FUNCTION rmse as 'hivemall.evaluation.RootMeanSquaredErrorUDAF' USING JAR
 DROP FUNCTION IF EXISTS r2;
 CREATE FUNCTION r2 as 'hivemall.evaluation.R2UDAF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS ndcg;
+CREATE FUNCTION ndcg as 'hivemall.evaluation.NDCGUDAF' USING JAR '${hivemall_jar}';
 
 --------------------------
 -- Matrix Factorization --
@@ -563,6 +527,12 @@ CREATE FUNCTION train_mf_sgd as 'hivemall.mf.MatrixFactorizationSGDUDTF' USING J
 
 DROP FUNCTION IF EXISTS train_mf_adagrad;
 CREATE FUNCTION train_mf_adagrad as 'hivemall.mf.MatrixFactorizationAdaGradUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_bprmf;
+CREATE FUNCTION train_bprmf as 'hivemall.mf.BPRMatrixFactorizationUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS bprmf_predict;
+CREATE FUNCTION bprmf_predict as 'hivemall.mf.BPRMFPredictionUDF' USING JAR '${hivemall_jar}';
 
 ---------------------------
 -- Factorization Machine --
@@ -589,13 +559,6 @@ CREATE FUNCTION train_randomforest_regr as 'hivemall.smile.regression.RandomFore
 
 DROP FUNCTION IF EXISTS tree_predict;
 CREATE FUNCTION tree_predict as 'hivemall.smile.tools.TreePredictUDF' USING JAR '${hivemall_jar}';
-
--- alias
-DROP FUNCTION IF EXISTS vm_tree_predict;
-CREATE FUNCTION vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF' USING JAR '${hivemall_jar}';
-
-DROP FUNCTION IF EXISTS js_tree_predict;
-CREATE FUNCTION js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS rf_ensemble;
 CREATE FUNCTION rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF' USING JAR '${hivemall_jar}';

@@ -33,6 +33,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
 @Description(name = "collect_all", value = "_FUNC_(x) - Retrurns a set of objects with duplicate elements eliminated")
+@Deprecated
 public class CollectAllUDAF extends AbstractGenericUDAFResolver {
 
     @Override

@@ -26,7 +26,7 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "jobid", value = "_FUNC_() - Returns the value of mapred.task.partition")
+@Description(name = "jobid", value = "_FUNC_() - Returns the value of mapred.job.id")
 @UDFType(deterministic = false, stateful = true)
 public class JobIdUDF extends UDF {
 

@@ -27,7 +27,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "tokenize", value = "_FUNC_(input string) - Returns words in array<string>")
+@Description(name = "tokenize", value = "_FUNC_(string englishText [, boolean toLowerCase])"
+        + " - Returns tokenized words in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class TokenizeUDF extends UDF {
     private static final String DELIM = " .,?!:;()<>[]\b\t\n\f\r\"\'\\";
@@ -39,9 +40,9 @@ public final class TokenizeUDF extends UDF {
     public List<Text> evaluate(Text input, boolean toLowerCase) {
         final List<Text> tokens = new ArrayList<Text>();
         final StringTokenizer tokenizer = new StringTokenizer(input.toString(), DELIM);
-        while(tokenizer.hasMoreElements()) {
+        while (tokenizer.hasMoreElements()) {
             String word = tokenizer.nextToken();
-            if(toLowerCase) {
+            if (toLowerCase) {
                 word = word.toLowerCase();
             }
             tokens.add(new Text(word));

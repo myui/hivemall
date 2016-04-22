@@ -18,36 +18,74 @@
  */
 package hivemall.tools.map;
 
+import hivemall.utils.hadoop.HiveUtils;
+
+import java.util.Collections;
 import java.util.TreeMap;
 
 import org.apache.hadoop.hive.ql.exec.Description;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFParameterInfo;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
 /**
  * Convert two aggregated columns into a sorted key-value map.
- * 
- * The key must be a primitive type (int, boolean, float, string, ...) and the
- * value may be a primitive or a complex type (structs, maps, arrays).
- * 
- * https://cwiki.apache.org/Hive/genericudafcasestudy.html
  */
-@Description(name = "to_ordered_map", value = "_FUNC_(key, value) - Convert two aggregated columns into an ordered key-value map")
+@Description(name = "to_ordered_map",
+        value = "_FUNC_(key, value [, const boolean reverseOrder=false]) "
+                + "- Convert two aggregated columns into an ordered key-value map")
 public class UDAFToOrderedMap extends UDAFToMap {
 
     @Override
-    public GenericUDAFEvaluator getEvaluator(TypeInfo[] parameters) throws SemanticException {
-        super.getEvaluator(parameters);
-        return new UDAFToOrderedMapEvaluator();
+    public GenericUDAFEvaluator getEvaluator(GenericUDAFParameterInfo info)
+            throws SemanticException {
+        @SuppressWarnings("deprecation")
+        TypeInfo[] typeInfo = info.getParameters();
+        if (typeInfo.length != 2 && typeInfo.length != 3) {
+            throw new UDFArgumentTypeException(typeInfo.length - 1,
+                "Expecting two or three arguments: " + typeInfo.length);
+        }
+        if (typeInfo[0].getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0,
+                "Only primitive type arguments are accepted for the key but "
+                        + typeInfo[0].getTypeName() + " was passed as parameter 1.");
+        }
+        boolean reverseOrder = false;
+        if (typeInfo.length == 3) {
+            if (HiveUtils.isBooleanTypeInfo(typeInfo[2]) == false) {
+                throw new UDFArgumentTypeException(2, "The three argument must be boolean type: "
+                        + typeInfo[2].getTypeName());
+            }
+            ObjectInspector[] argOIs = info.getParameterObjectInspectors();
+            reverseOrder = HiveUtils.getConstBoolean(argOIs[2]);
+        }
+
+        if (reverseOrder) {
+            return new ReverseOrdereMapEvaluator();
+        } else {
+            return new NaturalOrdereMapEvaluator();
+        }
     }
 
-    public static class UDAFToOrderedMapEvaluator extends UDAFToMapEvaluator {
+    public static class NaturalOrdereMapEvaluator extends UDAFToMapEvaluator {
 
         @Override
         public void reset(AggregationBuffer agg) throws HiveException {
-            ((MkMapAggregationBuffer) agg).container = new TreeMap<Object, Object>();
+            ((MapAggregationBuffer) agg).container = new TreeMap<Object, Object>();
+        }
+
+    }
+
+    public static class ReverseOrdereMapEvaluator extends UDAFToMapEvaluator {
+
+        @Override
+        public void reset(AggregationBuffer agg) throws HiveException {
+            ((MapAggregationBuffer) agg).container = new TreeMap<Object, Object>(
+                Collections.reverseOrder());
         }
 
     }

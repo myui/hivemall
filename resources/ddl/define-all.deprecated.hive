@@ -1,0 +1,65 @@
+drop temporary function perceptron;
+create temporary function perceptron as 'hivemall.classifier.PerceptronUDTF';
+
+drop temporary function adagrad_rda;
+create temporary function adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF';
+
+drop temporary function cosine_sim;
+create temporary function cosine_sim as 'hivemall.knn.similarity.CosineSimilarityUDF';
+
+drop temporary function jaccard;
+create temporary function jaccard as 'hivemall.knn.similarity.JaccardIndexUDF';
+
+drop temporary function wvoted_avg;
+create temporary function wvoted_avg as 'hivemall.ensemble.bagging.WeightVotedAvgUDAF';
+
+drop temporary function sortByFeature;
+create temporary function sortByFeature as 'hivemall.ftvec.SortByFeatureUDF';
+
+drop temporary function train_logregr;
+create temporary function train_logregr as 'hivemall.regression.LogressUDTF';
+
+drop temporary function pa1_regress;
+create temporary function pa1_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
+
+drop temporary function pa1a_regress;
+create temporary function pa1a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a';
+
+drop temporary function pa2_regress;
+create temporary function pa2_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2';
+
+drop temporary function pa2a_regress;
+create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
+
+drop temporary function arow_regress;
+create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
+
+drop temporary function arowe_regress;
+create temporary function arowe_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe';
+
+drop temporary function arowe2_regress;
+create temporary function arowe2_regress as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
+
+drop temporary function adagrad_regr;
+create temporary function adagrad_regr as 'hivemall.regression.AdaGradUDTF';
+
+drop temporary function adagrad;
+create temporary function adagrad as 'hivemall.regression.AdaGradUDTF';
+
+drop temporary function train_adadelta;
+create temporary function train_adadelta as 'hivemall.regression.AdaDeltaUDTF';
+
+drop temporary function adadelta;
+create temporary function adadelta as 'hivemall.regression.AdaDeltaUDTF';
+
+drop temporary function collect_all;
+create temporary function collect_all as 'hivemall.tools.array.CollectAllUDAF';
+
+drop temporary function vm_tree_predict;
+create temporary function vm_tree_predict as 'hivemall.smile.tools.TreePredictByStackMachineUDF';
+
+drop temporary function js_tree_predict;
+create temporary function js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascriptUDF';
+
+drop temporary function train_gbt_classifier;
+create temporary function train_gbt_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';

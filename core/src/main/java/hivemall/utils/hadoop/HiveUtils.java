@@ -29,6 +29,7 @@ import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import static hivemall.HivemallConstants.TINYINT_TYPE_NAME;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -57,8 +58,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
@@ -198,6 +201,10 @@ public final class HiveUtils {
         }
     }
 
+    public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
+        return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
+    }
+
     public static boolean isNumberTypeInfo(@Nonnull TypeInfo typeInfo) {
         if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
             return false;
@@ -213,6 +220,41 @@ public final class HiveUtils {
             default:
                 return false;
         }
+    }
+
+    public static boolean isBooleanTypeInfo(@Nonnull TypeInfo typeInfo) {
+        if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            return false;
+        }
+        switch (((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory()) {
+            case BOOLEAN:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isIntegerTypeInfo(@Nonnull TypeInfo typeInfo) {
+        if (typeInfo.getCategory() != ObjectInspector.Category.PRIMITIVE) {
+            return false;
+        }
+        switch (((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory()) {
+            case BYTE:
+            case SHORT:
+            case INT:
+            case LONG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static ListTypeInfo asListTypeInfo(@Nonnull TypeInfo typeInfo)
+            throws UDFArgumentException {
+        if (!typeInfo.getCategory().equals(Category.LIST)) {
+            throw new UDFArgumentException("Expected list type: " + typeInfo);
+        }
+        return (ListTypeInfo) typeInfo;
     }
 
     @SuppressWarnings("unchecked")
@@ -333,6 +375,32 @@ public final class HiveUtils {
                 + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
     }
 
+    public static float getAsConstFloat(@Nonnull final ObjectInspector numberOI)
+            throws UDFArgumentException {
+        final String typeName = numberOI.getTypeName();
+        if (FLOAT_TYPE_NAME.equals(typeName)) {
+            FloatWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if (DOUBLE_TYPE_NAME.equals(typeName)) {
+            DoubleWritable v = getConstValue(numberOI);
+            return (float) v.get();
+        } else if (INT_TYPE_NAME.equals(typeName)) {
+            IntWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if (BIGINT_TYPE_NAME.equals(typeName)) {
+            LongWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if (SMALLINT_TYPE_NAME.equals(typeName)) {
+            ShortWritable v = getConstValue(numberOI);
+            return v.get();
+        } else if (TINYINT_TYPE_NAME.equals(typeName)) {
+            ByteWritable v = getConstValue(numberOI);
+            return v.get();
+        }
+        throw new UDFArgumentException("Unexpected argument type to cast as double: "
+                + TypeInfoUtils.getTypeInfoFromObjectInspector(numberOI));
+    }
+
     public static double getAsConstDouble(@Nonnull final ObjectInspector numberOI)
             throws UDFArgumentException {
         final String typeName = numberOI.getTypeName();
@@ -360,8 +428,45 @@ public final class HiveUtils {
     }
 
     @Nonnull
-    public static double[] asDoubleArray(@Nullable Object argObj,
-            @Nonnull ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI) {
+    public static long[] asLongArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI, @Nonnull PrimitiveObjectInspector elemOI) {
+        if (argObj == null) {
+            return null;
+        }
+        final int length = listOI.getListLength(argObj);
+        final long[] ary = new long[length];
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                continue;
+            }
+            ary[i] = PrimitiveObjectInspectorUtils.getLong(o, elemOI);
+        }
+        return ary;
+    }
+
+    @Nonnull
+    public static long[] asLongArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI, @Nonnull LongObjectInspector elemOI) {
+        if (argObj == null) {
+            return null;
+        }
+        final int length = listOI.getListLength(argObj);
+        final long[] ary = new long[length];
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                continue;
+            }
+            ary[i] = elemOI.get(o);
+        }
+        return ary;
+    }
+
+    @Nonnull
+    public static double[] asDoubleArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI,
+            @Nonnull final PrimitiveObjectInspector elemOI) {
         if (argObj == null) {
             return null;
         }
@@ -376,6 +481,34 @@ public final class HiveUtils {
             ary[i] = d;
         }
         return ary;
+    }
+
+    /**
+     * @return the number of true bits
+     */
+    @Nonnull
+    public static int setBits(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI,
+            @Nonnull final PrimitiveObjectInspector elemOI, @Nonnull final BitSet bitset)
+            throws UDFArgumentException {
+        if (argObj == null) {
+            return 0;
+        }
+        int count = 0;
+        final int length = listOI.getListLength(argObj);
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                continue;
+            }
+            int index = PrimitiveObjectInspectorUtils.getInt(o, elemOI);
+            if (index < 0) {
+                throw new UDFArgumentException("Negative index is not allowed: " + index);
+            }
+            bitset.set(index);
+            count++;
+        }
+        return count;
     }
 
     @Nonnull
@@ -429,6 +562,14 @@ public final class HiveUtils {
         return (IntObjectInspector) argOI;
     }
 
+    public static LongObjectInspector asLongOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!BIGINT_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be BIGINT: " + argOI.getTypeName());
+        }
+        return (LongObjectInspector) argOI;
+    }
+
     public static PrimitiveObjectInspector asIntCompatibleOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentTypeException {
         if (argOI.getCategory() != Category.PRIMITIVE) {
@@ -453,6 +594,53 @@ public final class HiveUtils {
         }
         return oi;
     }
+
+    public static PrimitiveObjectInspector asLongCompatibleOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if (argOI.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
+                    + argOI.getTypeName() + " is passed.");
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case LONG:
+            case INT:
+            case SHORT:
+            case BYTE:
+            case BOOLEAN:
+            case FLOAT:
+            case DOUBLE:
+            case STRING:
+            case TIMESTAMP:
+            case DECIMAL:
+                break;
+            default:
+                throw new UDFArgumentTypeException(0, "Unxpected type '" + argOI.getTypeName()
+                        + "' is passed.");
+        }
+        return oi;
+    }
+
+    public static PrimitiveObjectInspector asIntegerOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentTypeException {
+        if (argOI.getCategory() != Category.PRIMITIVE) {
+            throw new UDFArgumentTypeException(0, "Only primitive type arguments are accepted but "
+                    + argOI.getTypeName() + " is passed.");
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case BYTE:
+                break;
+            default:
+                throw new UDFArgumentTypeException(0, "Unxpected type '" + argOI.getTypeName()
+                        + "' is passed.");
+        }
+        return oi;
+    }
+
 
     public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentTypeException {
