@@ -130,7 +130,8 @@ create temporary function sort_and_uniq_array as 'hivemall.tools.array.SortAndUn
 create temporary function subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF';
 create temporary function subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF';
 create temporary function collect_all as 'hivemall.tools.array.CollectAllUDAF';
-create temporary function concat_array as 'hivemall.tools.array.ConcatArrayUDF';
+create temporary function concat_array as 'hivemall.tools.array.ArrayConcatUDF';
+create temporary function array_concat as 'hivemall.tools.array.ArrayConcatUDF';
 create temporary function subarray as 'hivemall.tools.array.SubarrayUDF';
 create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF';
 create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
