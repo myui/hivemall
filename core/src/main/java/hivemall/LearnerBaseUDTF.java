@@ -19,13 +19,17 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
-import hivemall.io.DenseModel;
-import hivemall.io.PredictionModel;
-import hivemall.io.SpaceEfficientDenseModel;
-import hivemall.io.SparseModel;
-import hivemall.io.SynchronizedModelWrapper;
-import hivemall.io.WeightValue;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+
+import hivemall.model.Solver.SolverType;
+import hivemall.model.dense.DenseModel;
+import hivemall.model.PredictionModel;
+import hivemall.model.dense.NewDenseModel;
+import hivemall.model.dense.SpaceEfficientDenseModel;
+import hivemall.model.sparse.NewSparseModel;
+import hivemall.model.sparse.SparseModel;
+import hivemall.model.SynchronizedModelWrapper;
+import hivemall.model.WeightValue;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
 import hivemall.utils.datetime.StopWatch;
@@ -37,7 +41,9 @@ import hivemall.utils.lang.Primitives;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,6 +69,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
     protected String preloadedModelFile;
     protected boolean dense_model;
+    protected boolean new_model;
     protected int model_dims;
     protected boolean disable_halffloat;
     protected boolean is_mini_batch;
@@ -73,9 +80,14 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
     protected boolean mixCancel;
     protected boolean ssl;
 
+    // Used to initialize a solver implemented in a model
+    protected Map<String, String> solverOptions;
+
     protected MixClient mixClient;
 
-    public LearnerBaseUDTF() {}
+    public LearnerBaseUDTF() {
+        solverOptions = new HashMap<String, String>();
+    }
 
     protected boolean useCovariance() {
         return false;
@@ -86,6 +98,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         Options opts = new Options();
         opts.addOption("loadmodel", true, "Model file name in the distributed cache");
         opts.addOption("dense", "densemodel", false, "Use dense model or not");
+        opts.addOption("new", "newmodel", false, "Use newer model or not");
         opts.addOption("dims", "feature_dimensions", true,
             "The dimension of model [default: 16777216 (2^24)]");
         opts.addOption("disable_halffloat", false,
@@ -108,6 +121,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             throws UDFArgumentException {
         String modelfile = null;
         boolean denseModel = false;
+        boolean newModel = false;
         int modelDims = -1;
         boolean disableHalfFloat = false;
         int miniBatchSize = 1;
@@ -128,6 +142,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             if (denseModel) {
                 modelDims = Primitives.parseInt(cl.getOptionValue("dims"), 16777216);
             }
+            newModel = cl.hasOption("new");
             disableHalfFloat = cl.hasOption("disable_halffloat");
 
             miniBatchSize = Primitives.parseInt(cl.getOptionValue("mini_batch_size"), miniBatchSize);
@@ -149,6 +164,7 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
 
         this.preloadedModelFile = modelfile;
         this.dense_model = denseModel;
+        this.new_model = newModel;
         this.model_dims = modelDims;
         this.disable_halffloat = disableHalfFloat;
         this.is_mini_batch = miniBatchSize > 1;
@@ -159,6 +175,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         this.mixCancel = mixCancel;
         this.ssl = ssl;
         return cl;
+    }
+
+    protected SolverType getSolverType() {
+        return SolverType.Default;
     }
 
     protected PredictionModel createModel() {
@@ -173,6 +193,10 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
                 logger.info("Build a space efficient dense model with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
                 model = new SpaceEfficientDenseModel(model_dims, useCovar);
+            } else if (new_model && !useCovar) { // useCovar not supported yet
+                logger.info("Build a newer dense model with initial with " + model_dims
+                        + " initial dimensions");
+                model = new NewDenseModel(model_dims, false, getSolverType(), solverOptions);
             } else {
                 logger.info("Build a dense model with initial with " + model_dims
                         + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
@@ -180,9 +204,15 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             }
         } else {
             int initModelSize = getInitialModelSize();
-            logger.info("Build a sparse model with initial with " + initModelSize
-                    + " initial dimensions");
-            model = new SparseModel(initModelSize, useCovar);
+            if (new_model && !useCovar) { // useCovar not supported yet
+                logger.info("Build a sparse model with initial with " + initModelSize
+                        + " initial dimensions");
+                model = new NewSparseModel(initModelSize, false, getSolverType(), solverOptions);
+            } else {
+                logger.info("Build a sparse model with initial with " + initModelSize
+                        + " initial dimensions");
+                model = new SparseModel(initModelSize, useCovar);
+            }
         }
         if (mixConnectInfo != null) {
             model.configureClock();

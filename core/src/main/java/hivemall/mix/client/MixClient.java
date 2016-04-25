@@ -18,7 +18,7 @@
  */
 package hivemall.mix.client;
 
-import hivemall.io.ModelUpdateHandler;
+import hivemall.model.ModelUpdateHandler;
 import hivemall.mix.MixMessage;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.MixedModel;

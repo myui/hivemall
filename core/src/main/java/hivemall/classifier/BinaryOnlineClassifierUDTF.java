@@ -22,12 +22,12 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.LearnerBaseUDTF;
-import hivemall.io.FeatureValue;
-import hivemall.io.IWeightValue;
-import hivemall.io.PredictionModel;
-import hivemall.io.PredictionResult;
-import hivemall.io.WeightValue;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.PredictionModel;
+import hivemall.model.PredictionResult;
+import hivemall.model.WeightValue;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import hivemall.mix.MixedModel;
 import hivemall.utils.collections.IMapIterator;
@@ -52,6 +52,8 @@ public interface PredictionModel extends MixedModel {
     <T extends IWeightValue> T get(@Nonnull Object feature);
 
     <T extends IWeightValue> void set(@Nonnull Object feature, @Nonnull T value);
+
+    void updateWeight(@Nonnull FeatureValue[] features, float gradient);
 
     float getWeight(@Nonnull Object feature);
 

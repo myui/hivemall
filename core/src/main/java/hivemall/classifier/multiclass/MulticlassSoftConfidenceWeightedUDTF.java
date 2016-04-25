@@ -18,11 +18,11 @@
  */
 package hivemall.classifier.multiclass;
 
-import hivemall.io.FeatureValue;
-import hivemall.io.IWeightValue;
-import hivemall.io.Margin;
-import hivemall.io.PredictionModel;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.Margin;
+import hivemall.model.PredictionModel;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.utils.math.StatsUtils;
 
 import javax.annotation.Nonnull;

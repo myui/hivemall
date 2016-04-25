@@ -18,8 +18,8 @@
  */
 package hivemall.classifier.multiclass;
 
-import hivemall.io.FeatureValue;
-import hivemall.io.Margin;
+import hivemall.model.FeatureValue;
+import hivemall.model.Margin;
 
 import javax.annotation.Nonnull;
 

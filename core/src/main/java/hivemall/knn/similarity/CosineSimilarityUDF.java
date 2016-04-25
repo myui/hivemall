@@ -18,7 +18,7 @@
  */
 package hivemall.knn.similarity;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.Arrays;

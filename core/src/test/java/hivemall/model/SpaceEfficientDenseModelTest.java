@@ -16,8 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
+import hivemall.model.dense.DenseModel;
+import hivemall.model.dense.SpaceEfficientDenseModel;
 import hivemall.utils.collections.IMapIterator;
 
 import java.util.Random;
