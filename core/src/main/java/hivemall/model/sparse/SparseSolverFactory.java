@@ -49,9 +49,6 @@ public final class SparseSolverFactory {
     private static final class AdaGradSolver extends Solver.AdaGradSolver {
 
         private int size;
-        private int actualSize;
-
-
 
         // private final OpenHashMap<Object, Float> sum_of_squared_gradients;
         private Object[] keys;
@@ -60,23 +57,16 @@ public final class SparseSolverFactory {
         // This hashmap maps `keys` to `sum_of_squared_gradients`
         private UnsafeOpenHashMap<Object> mapper;
 
-
-
-
-
-
         // Reused to use `AdaGradSolver.computeUpdateValue`
         private WeightValue.WeightValueParamsF1 weightValueReused;
 
         public AdaGradSolver(int size, Map<String, String> solverOptions) {
             super(solverOptions);
             weightValueReused = new WeightValue.WeightValueParamsF1(0.f, 0.f);
-            this.size = size;
             this.mapper = new UnsafeOpenHashMap<Object>();
-            int requiredSize = mapper.resize(size);
-            this.actualSize = requiredSize;
-            this.keys = new Object[requiredSize];
-            this.sum_of_squared_gradients = new byte[requiredSize * 4];
+            this.size = mapper.resize(size);
+            this.keys = new Object[this.size];
+            this.sum_of_squared_gradients = new byte[this.size * 4];
             mapper.reset(this.keys);
         }
 
@@ -87,7 +77,7 @@ public final class SparseSolverFactory {
                 offset = mapper.put(feature);
                 if (offset == -1) {
                     // Make space bigger
-                    reserveInternal(size * 2);
+                    reserveInternal(this.size * 2);
                     offset = mapper.put(feature);
                 }
             }
@@ -104,7 +94,7 @@ public final class SparseSolverFactory {
             Object[] newKeys = new Object[requiredSize];
             byte[] newValues = new byte[requiredSize * 4];
             mapper.reset(newKeys);
-            for (int i = 0; i < actualSize; i++) {
+            for (int i = 0; i < this.size; i++) {
                 if (keys[i] == null) continue;
                 int newOffset = mapper.put(keys[i]);
                 float oldValue = Platform.getFloat(sum_of_squared_gradients, Platform.BYTE_ARRAY_OFFSET + i * 4);
@@ -112,8 +102,7 @@ public final class SparseSolverFactory {
             }
             this.keys = newKeys;
             this.sum_of_squared_gradients = newValues;
-            this.size = size;
-            this.actualSize = requiredSize;
+            this.size = requiredSize;
         }
     }
 

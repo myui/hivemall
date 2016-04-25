@@ -39,7 +39,6 @@ public final class NewSparseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(SparseModel.class);
 
     private int size;
-    private int actualSize;
 
     private Object[] keys;
     private byte[] model;
@@ -59,13 +58,11 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     public NewSparseModel(int size, boolean hasCovar, SolverType solverType, Map<String, String> options) {
         super();
-        this.size = size;
         // this.covars = null; // Not used supported
         this.mapper = new UnsafeOpenHashMap<Object>();
-        int requiredSize = mapper.resize(size);
-        this.actualSize = requiredSize;
-        this.keys = new Object[requiredSize];
-        this.model = new byte[requiredSize * 4];
+        this.size = mapper.resize(size);
+        this.keys = new Object[this.size];
+        this.model = new byte[this.size * 4];
         this.mapper.reset(keys);
         this.hasCovar = hasCovar;
         this.solverImpl = SparseSolverFactory.create(solverType, size, options);
@@ -116,7 +113,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
                 offset = mapper.put(feature);
                 if (offset == -1) {
                     // Make space bigger
-                    reserveInternal(size * 2);
+                    reserveInternal(this.size * 2);
                     offset = mapper.put(feature);
                 }
             }
@@ -129,11 +126,11 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
     private void reserveInternal(int size) {
         int requiredSize = mapper.resize(size);
-        assert(actualSize < requiredSize);
+        assert(this.size < requiredSize);
         Object[] newKeys = new Object[requiredSize];
         byte[] newValues = new byte[requiredSize * 4];
         mapper.reset(newKeys);
-        for (int i = 0; i < actualSize; i++) {
+        for (int i = 0; i < this.size; i++) {
             if (keys[i] == null) continue;
             int newOffset = mapper.put(keys[i]);
             float oldValue = Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + i * 4);
@@ -142,7 +139,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
         this.keys = newKeys;
         this.model = newValues;
         this.size = size;
-        this.actualSize = requiredSize;
+        this.size = requiredSize;
     }
 
     @Override
