@@ -49,6 +49,9 @@ public final class SparseSolverFactory {
     private static final class AdaGradSolver extends Solver.AdaGradSolver {
 
         private int size;
+        private int actualSize;
+
+
 
         // private final OpenHashMap<Object, Float> sum_of_squared_gradients;
         private Object[] keys;
@@ -57,14 +60,21 @@ public final class SparseSolverFactory {
         // This hashmap maps `keys` to `sum_of_squared_gradients`
         private UnsafeOpenHashMap<Object> mapper;
 
+
+
+
+
+
         // Reused to use `AdaGradSolver.computeUpdateValue`
         private WeightValue.WeightValueParamsF1 weightValueReused;
 
         public AdaGradSolver(int size, Map<String, String> solverOptions) {
             super(solverOptions);
+            weightValueReused = new WeightValue.WeightValueParamsF1(0.f, 0.f);
             this.size = size;
             this.mapper = new UnsafeOpenHashMap<Object>();
             int requiredSize = mapper.resize(size);
+            this.actualSize = requiredSize;
             this.keys = new Object[requiredSize];
             this.sum_of_squared_gradients = new byte[requiredSize * 4];
             mapper.reset(this.keys);
@@ -81,11 +91,11 @@ public final class SparseSolverFactory {
                     offset = mapper.put(feature);
                 }
             }
-            float sqg = Platform.getFloat(sum_of_squared_gradients, offset * 4);
+            float sqg = Platform.getFloat(sum_of_squared_gradients, Platform.BYTE_ARRAY_OFFSET + offset * 4);
             weightValueReused.set(weight);
             weightValueReused.setSumOfSquaredGradients(sqg);
             computeUpdateValue(weightValueReused, xi, gradient);
-            Platform.putFloat(sum_of_squared_gradients, offset * 4, weightValueReused.getSumOfSquaredGradients());
+            Platform.putFloat(sum_of_squared_gradients, Platform.BYTE_ARRAY_OFFSET + offset * 4, weightValueReused.getSumOfSquaredGradients());
             return weightValueReused.get();
         }
 
@@ -94,15 +104,16 @@ public final class SparseSolverFactory {
             Object[] newKeys = new Object[requiredSize];
             byte[] newValues = new byte[requiredSize * 4];
             mapper.reset(newKeys);
-            for (int i = 0; i < keys.length; i++) {
+            for (int i = 0; i < actualSize; i++) {
                 if (keys[i] == null) continue;
                 int newOffset = mapper.put(keys[i]);
-                float oldValue = Platform.getFloat(keys, i * 4);
-                Platform.putFloat(newValues, newOffset * 4, oldValue);
+                float oldValue = Platform.getFloat(sum_of_squared_gradients, Platform.BYTE_ARRAY_OFFSET + i * 4);
+                Platform.putFloat(newValues, Platform.BYTE_ARRAY_OFFSET + newOffset * 4, oldValue);
             }
             this.keys = newKeys;
             this.sum_of_squared_gradients = newValues;
             this.size = size;
+            this.actualSize = requiredSize;
         }
     }
 
@@ -122,6 +133,7 @@ public final class SparseSolverFactory {
 
         public AdamSolver(int size, Map<String, String> solverOptions) {
             super(solverOptions);
+            weightValueReused = new WeightValue.WeightValueParamsF1(0.f, 0.f);
             this.size = size;
             this.mapper = new UnsafeOpenHashMap<Object>();
             int requiredSize = mapper.resize(size);
@@ -140,14 +152,14 @@ public final class SparseSolverFactory {
                     offset = mapper.put(feature);
                 }
             }
-            float val_m = Platform.getFloat(values, offset * 8);
-            float val_v = Platform.getFloat(values, offset * 8 + 4);
+            float val_m = Platform.getFloat(values, Platform.BYTE_ARRAY_OFFSET + offset * 8);
+            float val_v = Platform.getFloat(values, Platform.BYTE_ARRAY_OFFSET + offset * 8 + 4);
             weightValueReused.set(weight);
             weightValueReused.setV(val_m);
             weightValueReused.setV(val_v);
             computeUpdateValue(weightValueReused, xi, gradient);
-            Platform.putFloat(values, offset * 8, val_m);
-            Platform.putFloat(values, offset * 8 + 4, val_v);
+            Platform.putFloat(values, Platform.BYTE_ARRAY_OFFSET + offset * 8, val_m);
+            Platform.putFloat(values, Platform.BYTE_ARRAY_OFFSET + offset * 8 + 4, val_v);
             return weightValueReused.get();
         }
 
@@ -159,10 +171,10 @@ public final class SparseSolverFactory {
             for (int i = 0; i < keys.length; i++) {
                 if (keys[i] == null) continue;
                 int newOffset = mapper.put(keys[i]);
-                float oldValue1 = Platform.getFloat(keys, i * 8);
-                float oldValue2 = Platform.getFloat(keys, i * 8 + 4);
-                Platform.putFloat(newValues, newOffset * 8, oldValue1);
-                Platform.putFloat(newValues, newOffset * 8, oldValue2 + 4);
+                float oldValue1 = Platform.getFloat(values, Platform.BYTE_ARRAY_OFFSET + i * 8);
+                float oldValue2 = Platform.getFloat(values, Platform.BYTE_ARRAY_OFFSET + i * 8 + 4);
+                Platform.putFloat(newValues, Platform.BYTE_ARRAY_OFFSET + newOffset * 8, oldValue1);
+                Platform.putFloat(newValues, Platform.BYTE_ARRAY_OFFSET + newOffset * 8 + 4, oldValue2);
             }
             this.keys = newKeys;
             this.values = newValues;

@@ -21,6 +21,7 @@ package hivemall.model.sparse;
 
 import javax.annotation.Nonnull;
 
+import hivemall.utils.hadoop.HiveUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -38,6 +39,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
     private static final Log logger = LogFactory.getLog(SparseModel.class);
 
     private int size;
+    private int actualSize;
 
     private Object[] keys;
     private byte[] model;
@@ -61,6 +63,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
         // this.covars = null; // Not used supported
         this.mapper = new UnsafeOpenHashMap<Object>();
         int requiredSize = mapper.resize(size);
+        this.actualSize = requiredSize;
         this.keys = new Object[requiredSize];
         this.model = new byte[requiredSize * 4];
         this.mapper.reset(keys);
@@ -117,27 +120,29 @@ public final class NewSparseModel extends AbstractPredictionModel {
                     offset = mapper.put(feature);
                 }
             }
-            float oldWeight = Platform.getFloat(model, offset * 4);
+            float oldWeight = Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + offset * 4);
             float newWeight = solverImpl.computeUpdatedValue(feature, oldWeight, xi, gradient);
-            Platform.putFloat(model, offset * 4, newWeight);
+            Platform.putFloat(model, Platform.BYTE_ARRAY_OFFSET + offset * 4, newWeight);
         }
         solverImpl.proceedStep();
     }
 
     private void reserveInternal(int size) {
         int requiredSize = mapper.resize(size);
+        assert(actualSize < requiredSize);
         Object[] newKeys = new Object[requiredSize];
         byte[] newValues = new byte[requiredSize * 4];
         mapper.reset(newKeys);
-        for (int i = 0; i < keys.length; i++) {
+        for (int i = 0; i < actualSize; i++) {
             if (keys[i] == null) continue;
             int newOffset = mapper.put(keys[i]);
-            float oldValue = Platform.getFloat(keys, i * 4);
-            Platform.putFloat(newValues, newOffset * 4, oldValue);
+            float oldValue = Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + i * 4);
+            Platform.putFloat(newValues, Platform.BYTE_ARRAY_OFFSET + newOffset * 4, oldValue);
         }
         this.keys = newKeys;
         this.model = newValues;
         this.size = size;
+        this.actualSize = requiredSize;
     }
 
     @Override
@@ -173,7 +178,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
     @Override
     public float getWeight(final Object feature) {
         int offset = mapper.get(feature);
-        return offset == -1? 0.f : Platform.getFloat(model, offset * 4);
+        return offset == -1? 0.f : Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + offset * 4);
     }
 
     @Override
@@ -226,20 +231,24 @@ public final class NewSparseModel extends AbstractPredictionModel {
 
         @Override
         public int next() {
-            curKey = keyIter.next();
+            try {
+                curKey = keyIter.next();
+            } catch(Exception e) {
+                return -1;
+            }
             curOffset = mapper.get(curKey);
             return curOffset;
         }
 
         @Override
         public Integer getKey() {
-            return (Integer) curKey;
+            return HiveUtils.parseInt(curKey);
         }
 
         @Override
         public IWeightValue getValue() {
             assert(!hasCovar);
-            float w = Platform.getFloat(model, curOffset * 4);
+            float w = Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + curOffset * 4);
             WeightValue v = new WeightValue(w);
             v.setTouched(w != 0f);
             return v;
@@ -248,7 +257,7 @@ public final class NewSparseModel extends AbstractPredictionModel {
         @Override
         public <T extends Copyable<IWeightValue>> void getValue(T probe) {
             assert(!hasCovar);
-            float w = Platform.getFloat(model, curOffset * 4);
+            float w = Platform.getFloat(model, Platform.BYTE_ARRAY_OFFSET + curOffset * 4);
             tmpWeight.set(w);
             tmpWeight.setTouched(w != 0.f);
             probe.copyFrom(tmpWeight);
