@@ -24,7 +24,7 @@ import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
-public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
+public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 4096;
 
     // LEARNING PARAMS
@@ -90,7 +90,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
      */
     @Override
     public float getV(@Nonnull Feature x, @Nonnull String yField, int f) {
-        String j = getFeatureOfField(x, yField);
+        String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -107,7 +107,7 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
     @Override
     protected void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif) {
-        String j = getFeatureOfField(x, yField);
+        String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -124,13 +124,8 @@ public class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineMode
 
     @Override
     protected Entry getEntry(@Nonnull Feature x, @Nonnull String yField) {
-        String j = getFeatureOfField(x, yField);
+        String j = StringFeature.getFeatureOfField(x, yField);
         return _map.get(j);
-    }
-
-    @Nonnull
-    private static String getFeatureOfField(@Nonnull Feature x, @Nonnull String yField) {
-        return x.getFeature() + ':' + yField;
     }
 
 }

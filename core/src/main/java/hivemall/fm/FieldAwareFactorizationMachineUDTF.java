@@ -18,38 +18,37 @@
  */
 package hivemall.fm;
 
+import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.lang.Primitives;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+/**
+ * Field-aware Factorization Machines.
+ * 
+ * @link https://www.csie.ntu.edu.tw/~cjlin/libffm/
+ */
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
 
     private boolean globalBias;
     private boolean linearCoeff;
 
-    // adagrad
-    private boolean useAdaGrad;
-    private float eta0_V;
-    private float eps;
-    private float scaling;
-
     private FieldAwareFactorizationMachineModel model;
-
-    @Nonnull
-    private final List<String> fieldList;
+    private List<String> fieldList;
 
     public FieldAwareFactorizationMachineUDTF() {
         super();
-        this.fieldList = new ArrayList<String>();
     }
 
     @Override
@@ -82,17 +81,50 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         }
         this.globalBias = cl.hasOption("global_bias");
         this.linearCoeff = cl.hasOption("linear_coeff");
-        this.useAdaGrad = cl.hasOption("adagrad");
-        this.eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), 1.f);
-        this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
-        this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
         return cl;
     }
 
     @Override
-    protected FieldAwareFactorizationMachineModel initModel() {
+    public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+        StructObjectInspector oi = super.initialize(argOIs);
+        this.fieldList = new ArrayList<String>();
+        return oi;
+    }
+
+    @Override
+    protected FieldAwareFactorizationMachineModel initModel(@Nullable CommandLine cl) {
+        float lambda0 = 0.01f;
+        double sigma = 0.1d;
+        double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
+        String vInitOpt = null;
+        float maxInitValue = 1.f;
+        double initStdDev = 0.1d;
+        if (cl != null) {
+            // FFM hyperparameters
+            lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
+            sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
+            // Hyperparameter for regression
+            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), min_target);
+            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
+            // V initialization
+            vInitOpt = cl.getOptionValue("init_v");
+            maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
+            initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
+        }
+        VInitScheme vInit = VInitScheme.resolve(vInitOpt);
+        vInit.setMaxInitValue(maxInitValue);
+        initStdDev = Math.max(initStdDev, 1.0d / _factor);
+        vInit.setInitStdDev(initStdDev);
+        vInit.initRandom(_factor, _seed);
+
+        // adagrad
+        boolean useAdaGrad = cl.hasOption("adagrad");
+        float eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), 1.f);
+        float eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
+        float scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
+
         FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(_classification, _factor,
-            _lambda0, _sigma, _seed, _min_target, _max_target, _etaEstimator, _vInit, useAdaGrad,
+            lambda0, sigma, _seed, min_target, max_target, _etaEstimator, vInit, useAdaGrad,
             eta0_V, eps, scaling);
         this.model = model;
         return model;

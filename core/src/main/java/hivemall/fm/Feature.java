@@ -18,6 +18,8 @@
  */
 package hivemall.fm;
 
+import hivemall.fm.StringFeature.StringFeatureWithField;
+
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
@@ -36,7 +38,7 @@ public abstract class Feature {
         this.value = value;
     }
 
-    public void setFeature(String f) {
+    public void setFeature(@Nonnull String f) {
         throw new UnsupportedOperationException();
     }
 
@@ -53,7 +55,7 @@ public abstract class Feature {
         throw new UnsupportedOperationException();
     }
 
-    public void setField(String f) {
+    public void setField(@Nonnull String f) {
         throw new UnsupportedOperationException();
     }
 
@@ -125,8 +127,8 @@ public abstract class Feature {
     @Nonnull
     private static Feature parse(@Nonnull final String s, final boolean asIntFeature)
             throws HiveException {
-        final int pos = s.indexOf(':');
-        if (pos == -1) {
+        final int pos1 = s.indexOf(':');
+        if (pos1 == -1) {
             if (asIntFeature) {
                 int index = Integer.parseInt(s);
                 if (index < 0) {
@@ -137,29 +139,30 @@ public abstract class Feature {
                 return new StringFeature(s, 1.d);
             }
         } else {
-            String s1 = s.substring(0, pos);
-            String s2 = s.substring(pos + 1);
-            int pos2 = s2.indexOf(':');
+            String feature = s.substring(0, pos1);
+            String rest = s.substring(pos1 + 1);
+            int pos2 = rest.indexOf(':');
             if (pos2 == -1) {
                 if (asIntFeature) {
-                    int index = Integer.parseInt(s1);
+                    int index = Integer.parseInt(feature);
                     if (index < 0) {
                         throw new HiveException("Feature index MUST be greater than 0: " + s);
                     }
-                    double value = Double.parseDouble(s2);
+                    double value = Double.parseDouble(rest);
                     return new IntFeature(index, value);
                 } else {
-                    double value = Double.parseDouble(s2);
-                    return new StringFeature(s1, value);
+                    double value = Double.parseDouble(rest);
+                    return new StringFeature(feature, value);
                 }
             } else {
-                String s3 = s2.substring(0, pos2);
-                String s4 = s2.substring(pos2 + 1);
+                String field = rest.substring(0, pos2);
+                String valueStr = rest.substring(pos2 + 1);
                 if (asIntFeature) {
-                    throw new HiveException("Fields currently unsupported with IntFeatures: " + s);
+                    throw new HiveException("Fields are currently unsupported with IntFeatures: "
+                            + s);
                 } else {
-                    double value = Double.parseDouble(s4);
-                    return new StringFeature(s3, s1, value);
+                    double value = Double.parseDouble(valueStr);
+                    return new StringFeatureWithField(feature, field, value);
                 }
             }
         }
@@ -167,8 +170,8 @@ public abstract class Feature {
 
     private static void parse(@Nonnull final String s, @Nonnull final Feature probe,
             final boolean asIntFeature) throws HiveException {
-        final int pos = s.indexOf(":");
-        if (pos == -1) {
+        final int pos1 = s.indexOf(":");
+        if (pos1 == -1) {
             if (asIntFeature) {
                 int index = Integer.parseInt(s);
                 if (index < 0) {
@@ -180,31 +183,32 @@ public abstract class Feature {
             }
             probe.value = 1.d;
         } else {
-            String s1 = s.substring(0, pos);
-            String s2 = s.substring(pos + 1);
-            int pos2 = s2.indexOf(':');
+            String feature = s.substring(0, pos1);
+            String rest = s.substring(pos1 + 1);
+            int pos2 = rest.indexOf(':');
             if (pos2 == -1) {
                 if (asIntFeature) {
-                    int index = Integer.parseInt(s1);
+                    int index = Integer.parseInt(feature);
                     if (index < 0) {
                         throw new HiveException("Feature index MUST be greater than 0: " + s);
                     }
-                    double value = Double.parseDouble(s2);
+                    double value = Double.parseDouble(rest);
                     probe.setFeatureIndex(index);
                     probe.value = value;
                 } else {
-                    probe.setFeature(s1);
-                    probe.value = Double.parseDouble(s2);
+                    probe.setFeature(feature);
+                    probe.value = Double.parseDouble(rest);
                 }
             } else {
-                String s3 = s2.substring(0, pos2);
-                String s4 = s2.substring(pos2 + 1);
+                String field = rest.substring(0, pos2);
+                String valueStr = rest.substring(pos2 + 1);
                 if (asIntFeature) {
-                    throw new HiveException("Fields currently unsupported with IntFeatures: " + s);
+                    throw new HiveException("Fields are currently unsupported with IntFeatures: "
+                            + s);
                 } else {
-                    probe.setField(s3);
-                    probe.setFeature(s1);
-                    probe.value = Double.parseDouble(s4);
+                    probe.setField(field);
+                    probe.setFeature(feature);
+                    probe.value = Double.parseDouble(valueStr);
                 }
             }
         }

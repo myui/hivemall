@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.io.Text;
 
 @Description(
         name = "ffm_predict",
@@ -73,8 +74,8 @@ public final class FFMPredictUDF extends GenericUDF {
         List<Feature> xList = (List<Feature>) xOI.getList(args[0]);
         Feature[] x = (Feature[]) xList.toArray();
 
-        String serModel = modelOI.getPrimitiveWritableObject(args[1]);//FIXME
-        model = new FFMPredictionModel(serModel);//FIXME
+        Text serModel = modelOI.getPrimitiveWritableObject(args[1]);
+        model = new FFMPredictionModel(serModel.toString());//FIXME
 
         double result = predict(x, model);
         return new DoubleWritable(result);

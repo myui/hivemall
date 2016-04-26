@@ -76,19 +76,13 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     // Learning hyper-parameters/options    
     protected boolean _classification;
     protected long _seed;
-    private int _iterations;
+    protected int _iterations;
     protected int _factor;
-    protected float _lambda0;
-    protected double _sigma;
-
-    // Hyperparameter for regression
-    protected double _min_target;
-    protected double _max_target;
 
     // adaptive regularization
     @Nullable
     protected Random _va_rand;
-    private float _validationRatio;
+    protected float _validationRatio;
     protected int _validationThreshold;
 
     protected LossFunction _lossFunction;
@@ -97,11 +91,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     /**
      * The size of x
      */
-    private int _p;
-
-    private FactorizationMachineModel _model;
-
-    protected VInitScheme _vInit;
+    protected int _p;
+    protected FactorizationMachineModel _model;
 
     /**
      * Probe for the input X
@@ -179,17 +170,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         int iters = 1;
         int p = -1;
         int factor = 10;
-        float lambda0 = 0.01f;
-        double sigma = 0.1d;
-        double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
         boolean adaptiveReglarization = false;
         float validationRatio = 0.05f;
         int validationThreshold = 1000;
-        String vInitOpt = null;
-        float maxInitValue = 1.f;
-        double initStdDev = 0.1d;
         boolean parseFeatureAsInt = false;
 
         CommandLine cl = null;
@@ -201,10 +186,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
             iters = Primitives.parseInt(cl.getOptionValue("iterations"), iters);
             p = Primitives.parseInt(cl.getOptionValue("size_x"), p);
             factor = Primitives.parseInt(cl.getOptionValue("factor"), factor);
-            lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
-            sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
-            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), min_target);
-            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
             conversionCheck = !cl.hasOption("disable_cvtest");
             convergenceRate = Primitives.parseDouble(cl.getOptionValue("cv_rate"), convergenceRate);
             adaptiveReglarization = cl.hasOption("adaptive_regularizaion");
@@ -212,9 +193,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                 validationRatio);
             validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"),
                 validationThreshold);
-            vInitOpt = cl.getOptionValue("init_v");
-            maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
-            initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
             if (p == -1) {
                 parseFeatureAsInt = cl.hasOption("feature_as_integer");
             } else {
@@ -227,10 +205,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         this._iterations = iters;
         this._p = p;
         this._factor = factor;
-        this._lambda0 = lambda0;
-        this._sigma = sigma;
-        this._min_target = min_target;
-        this._max_target = max_target;
         if (adaptiveReglarization) {
             this._va_rand = new Random(seed + 31L);
         }
@@ -244,11 +218,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
         this._etaEstimator = EtaEstimator.get(cl);
         this._cvState = new ConversionState(conversionCheck, convergenceRate);
-        this._vInit = VInitScheme.resolve(vInitOpt);
-        _vInit.setMaxInitValue(maxInitValue);
-        initStdDev = Math.max(initStdDev, 1.0d / factor);
-        _vInit.setInitStdDev(initStdDev);
-        _vInit.initRandom(factor, seed);
         this._parseFeatureAsInt = parseFeatureAsInt;
 
         return cl;
@@ -273,9 +242,9 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         }
         this._yOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
 
-        processOptions(argOIs);
+        CommandLine cl = processOptions(argOIs);
 
-        this._model = initModel();
+        this._model = initModel(cl);
         this._t = 0L;
 
         ArrayList<String> fieldNames = new ArrayList<String>();
@@ -294,18 +263,41 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
-    protected FactorizationMachineModel initModel() {
+    protected FactorizationMachineModel initModel(@Nullable CommandLine cl) {
+        float lambda0 = 0.01f;
+        double sigma = 0.1d;
+        double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
+        String vInitOpt = null;
+        float maxInitValue = 1.f;
+        double initStdDev = 0.1d;
+        if (cl != null) {
+            lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
+            sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
+            // Hyperparameter for regression
+            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), min_target);
+            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
+            // V initialization
+            vInitOpt = cl.getOptionValue("init_v");
+            maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
+            initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
+        }
+        VInitScheme vInit = VInitScheme.resolve(vInitOpt);
+        vInit.setMaxInitValue(maxInitValue);
+        initStdDev = Math.max(initStdDev, 1.0d / _factor);
+        vInit.setInitStdDev(initStdDev);
+        vInit.initRandom(_factor, _seed);
+
         if (_parseFeatureAsInt) {
             if (_p == -1) {
-                return new FMIntFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
-                    _min_target, _max_target, _etaEstimator, _vInit);
+                return new FMIntFeatureMapModel(_classification, _factor, lambda0, sigma, _seed,
+                    min_target, max_target, _etaEstimator, vInit);
             } else {
-                return new FMArrayModel(_classification, _factor, _lambda0, _sigma, _p, _seed,
-                    _min_target, _max_target, _etaEstimator, _vInit);
+                return new FMArrayModel(_classification, _factor, lambda0, sigma, _p, _seed,
+                    min_target, max_target, _etaEstimator, vInit);
             }
         } else {
-            return new FMStringFeatureMapModel(_classification, _factor, _lambda0, _sigma, _seed,
-                _min_target, _max_target, _etaEstimator, _vInit);
+            return new FMStringFeatureMapModel(_classification, _factor, lambda0, sigma, _seed,
+                min_target, max_target, _etaEstimator, vInit);
         }
     }
 

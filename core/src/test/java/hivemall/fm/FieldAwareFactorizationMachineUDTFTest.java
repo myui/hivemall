@@ -34,12 +34,13 @@ import org.junit.Test;
 
 public class FieldAwareFactorizationMachineUDTFTest {
 
-    private static final int ITERATIONS = 100;
+    private static final boolean DEBUG = false;
+    private static final int ITERATIONS = 50;
     private static final int MAX_LINES = 200;
 
     @Test
     public void testSGD() throws HiveException, IOException {
-        System.out.println("SGD test");
+        println("SGD test");
         FieldAwareFactorizationMachineUDTF udtf = new FieldAwareFactorizationMachineUDTF();
         ObjectInspector[] argOIs = new ObjectInspector[] {
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
@@ -53,12 +54,12 @@ public class FieldAwareFactorizationMachineUDTFTest {
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FFMStringFeatureMapModel);
 
-
+        double loss = 0.d;
         double cumul = 0.d;
         for (int trainingIteration = 1; trainingIteration <= ITERATIONS; ++trainingIteration) {
             BufferedReader data = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("bigdata.tr.txt")));
-            double loss = udtf._cvState.getCumulativeLoss();
+            loss = udtf._cvState.getCumulativeLoss();
             int lines = 0;
             for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber, ++lines) {
                 //gather features in current line
@@ -101,15 +102,15 @@ public class FieldAwareFactorizationMachineUDTFTest {
                     / (trainingIteration * lines));                     
             */
             // output for plotting
-            System.out.println(trainingIteration + " " + loss + " " + cumul
-                    / (trainingIteration * lines));
+            println(trainingIteration + " " + loss + " " + cumul / (trainingIteration * lines));
             data.close();
         }
+        Assert.assertTrue("Last loss was greater than expected: " + loss, loss < 0.60d);
     }
 
     @Test
     public void testAdaGrad() throws HiveException, IOException {
-        System.out.println("AdaGrad test");
+        println("AdaGrad test");
         FieldAwareFactorizationMachineUDTF udtf = new FieldAwareFactorizationMachineUDTF();
         ObjectInspector[] argOIs = new ObjectInspector[] {
                 ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
@@ -123,12 +124,12 @@ public class FieldAwareFactorizationMachineUDTFTest {
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FFMStringFeatureMapModel);
 
-
+        double loss = 0.d;
         double cumul = 0.d;
         for (int trainingIteration = 1; trainingIteration <= ITERATIONS; ++trainingIteration) {
             BufferedReader data = new BufferedReader(new InputStreamReader(
                 getClass().getResourceAsStream("bigdata.tr.txt")));
-            double loss = udtf._cvState.getCumulativeLoss();
+            loss = udtf._cvState.getCumulativeLoss();
             int lines = 0;
             for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber, ++lines) {
                 //gather features in current line
@@ -171,10 +172,10 @@ public class FieldAwareFactorizationMachineUDTFTest {
                     / (trainingIteration * lines));                     
             */
             // output for plotting
-            System.out.println(trainingIteration + " " + loss + " " + cumul
-                    / (trainingIteration * lines));
+            println(trainingIteration + " " + loss + " " + cumul / (trainingIteration * lines));
             data.close();
         }
+        Assert.assertTrue("Last loss was greater than expected: " + loss, loss < 0.30d);
     }
 
     private static String[] toStringArray(ArrayList<StringFeature> x) {
@@ -184,6 +185,12 @@ public class FieldAwareFactorizationMachineUDTFTest {
             ret[i] = x.get(i).toString();
         }
         return ret;
+    }
+
+    private static void println(String line) {
+        if (DEBUG) {
+            System.out.println(line);
+        }
     }
 
 }
