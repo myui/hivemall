@@ -96,6 +96,13 @@
 			<version>1.5</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>ml.dmlc</groupId>
+			<artifactId>xgboost4j</artifactId>
+			<version>0.5</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/xgboost4j-0.5-jar-with-dependencies.jar</systemPath>
+		</dependency>
 
 		<!-- test scope -->
 		<dependency>
