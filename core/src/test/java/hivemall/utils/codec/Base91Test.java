@@ -15,8 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.utils.compress;
+package hivemall.utils.codec;
 
+import hivemall.utils.codec.Base91;
 import hivemall.utils.io.IOUtils;
 
 import java.io.IOException;
