@@ -167,7 +167,7 @@ public final class XGBoostUDTF extends UDTFWithOptions {
             throw new HiveException("`features` was null");
         }
         final List<String> features = (List<String>) featureListOI.getList(args[0]);
-        float target = HiveUtils.asFloat(PrimitiveObjectInspectorUtils.getDouble(args[1], this.targetOI));
+        float target = (float) PrimitiveObjectInspectorUtils.getDouble(args[1], this.targetOI);
         final LabeledPoint point = parseFeatures(target, features);
         if(point != null) {
             this.featuresList.add(point);
