@@ -18,11 +18,10 @@
  */
 package hivemall.xgboost.regression;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.*;
 
+import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.xgboost.NativeLibLoader;
 import ml.dmlc.xgboost4j.LabeledPoint;
 import ml.dmlc.xgboost4j.java.Booster;
@@ -188,11 +187,10 @@ public final class XGBoostUDTF extends UDTFWithOptions {
         }
     }
 
-    private String generateUniqueIdentifier() {
-        /**
-         * TODO: Fix this to generate an unique id over all running tasks in workers.
-         */
-        return Thread.currentThread().getId() + "-" + UUID.randomUUID();
+    // Need to override this for a Spark wrapper because `MapredContext`
+    // does not work in there.
+    protected String generateUniqueModelId() {
+        return String.valueOf(HadoopUtils.getTaskId());
     }
 
     @Override
@@ -208,7 +206,7 @@ public final class XGBoostUDTF extends UDTFWithOptions {
             }
 
             // Output the built model
-            final String modelId = generateUniqueIdentifier();
+            final String modelId = generateUniqueModelId();
             final byte[] predModel = booster.toByteArray();
             logger.info("model_id:" + modelId.toString() + " size:" + predModel.length);
             forward(new Object[]{modelId, predModel});
