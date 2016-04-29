@@ -18,9 +18,12 @@
  */
 package hivemall.xgboost.regression;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.*;
 
+import hivemall.xgboost.NativeLibLoader;
 import ml.dmlc.xgboost4j.LabeledPoint;
 import ml.dmlc.xgboost4j.java.Booster;
 import ml.dmlc.xgboost4j.java.DMatrix;
@@ -57,6 +60,10 @@ public final class XGBoostUDTF extends UDTFWithOptions {
     private List<LabeledPoint> featuresList;
 
     public XGBoostUDTF() {}
+
+    static {
+        NativeLibLoader.initXGBoost();
+    }
 
     @Override
     protected Options getOptions() {
