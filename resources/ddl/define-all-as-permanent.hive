@@ -575,3 +575,12 @@ CREATE FUNCTION rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF' U
 DROP FUNCTION IF EXISTS guess_attribute_types;
 CREATE FUNCTION guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUDF' USING JAR '${hivemall_jar}';
 
+------------------------------
+-- XGBoost related features --
+------------------------------
+
+drop temporary function train_xgboost_regr;
+create temporary function train_xgboost_regr as 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
+
+drop temporary function xgboost_predict;
+create temporary function xgboost_predict as 'hivemall.xgboost.tools.XGBoostPredictUDTF';

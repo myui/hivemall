@@ -42,11 +42,11 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Primitives;
 
 @Description(
-    name = "train_xgboost",
+    name = "train_xgboost_regr",
     value = "_FUNC_(string[] features, double target [, string options]) - Returns a relation consisting of <string model_id, array<byte> pred_model>"
 )
-public final class XGBoostUDTF extends UDTFWithOptions {
-    private static final Log logger = LogFactory.getLog(XGBoostUDTF.class);
+public final class XGBoostRegressionUDTF extends UDTFWithOptions {
+    private static final Log logger = LogFactory.getLog(XGBoostRegressionUDTF.class);
 
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
@@ -58,7 +58,7 @@ public final class XGBoostUDTF extends UDTFWithOptions {
 
     private List<LabeledPoint> featuresList;
 
-    public XGBoostUDTF() {}
+    public XGBoostRegressionUDTF() {}
 
     static {
         NativeLibLoader.initXGBoost();
