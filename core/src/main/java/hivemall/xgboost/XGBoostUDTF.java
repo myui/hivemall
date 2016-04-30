@@ -286,7 +286,8 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
      * does not work in there.
      */
     protected String generateUniqueModelId() {
-        return String.valueOf(HadoopUtils.getTaskId());
+        // return String.valueOf(HadoopUtils.getTaskId());
+        return UUID.randomUUID().toString();
     }
 
     private static Booster createXGBooster(

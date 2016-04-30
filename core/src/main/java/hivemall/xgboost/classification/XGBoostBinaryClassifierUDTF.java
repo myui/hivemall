@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.xgboost.regression;
+package hivemall.xgboost.classification;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -24,27 +24,27 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import hivemall.xgboost.XGBoostUDTF;
 
 /**
- * A XGBoost regression and the document is as follows;
- *  - https://github.com/dmlc/xgboost/tree/master/demo/regression
+ * A XGBoost binary classification and the document is as follows;
+ *  - https://github.com/dmlc/xgboost/tree/master/demo/binary_classification
  */
 @Description(
-    name = "train_xgboost_regr",
+    name = "train_xgboost_classifier",
     value = "_FUNC_(string[] features, double target [, string options]) - Returns a relation consisting of <string model_id, array<byte> pred_model>"
 )
-public final class XGBoostRegressionUDTF extends XGBoostUDTF {
+public final class XGBoostBinaryClassifierUDTF extends XGBoostUDTF {
 
-    public XGBoostRegressionUDTF() {}
+    public XGBoostBinaryClassifierUDTF() {}
 
     {
-        // Settings for logistic regression
-        params.put("objective", "reg:logistic");
-        params.put("eval_metric", "rmse");
+        // Settings for binary classification
+        params.put("objective", "binary:logistic");
+        params.put("eval_metric", "error");
     }
 
     @Override
     public void checkTargetValue(double target) throws HiveException {
-        if(target < 0.0 || target > 1.0) {
-            throw new HiveException("target must be in range 0 to 1: " + target);
+        if(Double.compare(target, 0.0) == 0|| Double.compare(target, 1.0) == 0) {
+            throw new HiveException("target must be 0.0 or 1.0: " + target);
         }
     }
 

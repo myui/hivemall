@@ -578,6 +578,9 @@ create temporary function guess_attribute_types as 'hivemall.smile.tools.GuessAt
 drop temporary function train_xgboost_regr;
 create temporary function train_xgboost_regr as 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
 
+drop temporary function train_xgboost_classifier;
+create temporary function train_xgboost_classifier as 'hivemall.xgboost.regression.XGBoostClassifierUDTF';
+
 drop temporary function xgboost_predict;
 create temporary function xgboost_predict as 'hivemall.xgboost.tools.XGBoostPredictUDTF';
 
