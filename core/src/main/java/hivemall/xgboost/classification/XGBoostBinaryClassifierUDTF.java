@@ -43,7 +43,7 @@ public final class XGBoostBinaryClassifierUDTF extends XGBoostUDTF {
 
     @Override
     public void checkTargetValue(double target) throws HiveException {
-        if(Double.compare(target, 0.0) == 0|| Double.compare(target, 1.0) == 0) {
+        if(!(Double.compare(target, 0.0) == 0|| Double.compare(target, 1.0) == 0)) {
             throw new HiveException("target must be 0.0 or 1.0: " + target);
         }
     }

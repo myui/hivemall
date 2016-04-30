@@ -29,13 +29,22 @@ import org.apache.commons.logging.LogFactory;
 public final class NativeLibLoader {
     private static final Log logger = LogFactory.getLog(NativeLibLoader.class);
 
-    private static boolean initialized = false;
+    private static final String keyUserDefinedLib = "hivemall.xgboost.lib";
     private static final String libPath = "/lib/";
+
+    private static boolean initialized = false;
 
     // Try to load a native library if it exists
     public static synchronized void initXGBoost() {
         if(!initialized) {
-            tryLoadNativeLib("xgboost4j");
+            // Since a user-defined native library has a top priority,
+            // we first check if it is defined or not.
+            final String userDefinedLib = System.getProperty(keyUserDefinedLib);
+            if(userDefinedLib == null) {
+                tryLoadNativeLibFromResource("xgboost4j");
+            } else {
+                tryLoadNativeLib(userDefinedLib);
+            }
             initialized = true;
         }
     }
@@ -48,7 +57,7 @@ public final class NativeLibLoader {
         return System.getProperty("os.name");
     }
 
-    private static void tryLoadNativeLib(final String libName) {
+    private static void tryLoadNativeLibFromResource(final String libName) {
         // Resolve the library file name with a suffix (e.g., dll, .so, etc.)
         String resolvedLibName = System.mapLibraryName(libName);
 
@@ -63,14 +72,33 @@ public final class NativeLibLoader {
                 return;
             }
         }
-
         try {
-            final File tempFile = createTempFileFromResource(libPath, resolvedLibName);
+            final File tempFile = createTempFileFromResource(
+                    resolvedLibName, NativeLibLoader.class.getResourceAsStream(libPath + resolvedLibName));
             logger.info("Copyed the native library in JAR as " + tempFile.getAbsolutePath());
             addLibraryPath(tempFile.getParent());
         } catch (Exception e) {
             // Simply ignore it here
-            logger.debug(e.getMessage());
+            logger.info(e.getMessage());
+        }
+    }
+
+    private static void tryLoadNativeLib(final String userDefinedLib) {
+        final File userDefinedLibFile = new File(userDefinedLib);
+        if(!userDefinedLibFile.exists()) {
+            logger.warn(userDefinedLib + " not found");
+        } else {
+            try {
+                final File tempFile = createTempFileFromResource(
+                        userDefinedLibFile.getName(),
+                        new FileInputStream(userDefinedLibFile.getAbsolutePath())
+                );
+                logger.info("Copyed the user-defined native library as " + tempFile.getAbsolutePath());
+                addLibraryPath(tempFile.getParent());
+            } catch (Exception e) {
+                // Simply ignore it here
+                logger.warn(e.getMessage());
+            }
         }
     }
 
@@ -85,20 +113,19 @@ public final class NativeLibLoader {
     /**
      * Create a temp file that copies the resource from current JAR archive.
      *
-     * @param path Path to the resources in the jar
+     * @param libName Library name with a suffix
+     * @param is Input stream to the native library
      * @return The created temp file
      * @throws IOException
      * @throws IllegalArgumentException
      */
-    static File createTempFileFromResource(String path, String fileName)
+    static File createTempFileFromResource(String libName, InputStream is)
             throws IOException, IllegalArgumentException {
-        assert(path.startsWith("/"));
-
         // Create a temporary folder with a random number for the native lib
         final String uuid = UUID.randomUUID().toString();
         final File tempFolder = new File(
                 System.getProperty("java.io.tmpdir"),
-                String.format("%s-%s", getPreffix(fileName), uuid)
+                String.format("%s-%s", getPreffix(libName), uuid)
             );
         if(!tempFolder.exists()) {
             boolean created = tempFolder.mkdirs();
@@ -111,14 +138,8 @@ public final class NativeLibLoader {
         byte[] buffer = new byte[8192];
         int readBytes;
 
-        // Open and check input stream
-        final InputStream is = NativeLibLoader.class.getResourceAsStream(path + fileName);
-        if(is == null) {
-            throw new FileNotFoundException("File " + fileName + " was not found inside JAR.");
-        }
-
-        // Open output stream and copy data between source file in JAR and the temporary file
-        File extractedLibFile = new File(tempFolder.getAbsolutePath(), fileName);
+        // Open output stream and copy the native library into the temporary one
+        File extractedLibFile = new File(tempFolder.getAbsolutePath(), libName);
         final OutputStream os = new FileOutputStream(extractedLibFile);
         try {
             while((readBytes = is.read(buffer)) != -1) {
