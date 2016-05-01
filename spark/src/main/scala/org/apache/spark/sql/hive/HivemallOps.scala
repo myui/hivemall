@@ -594,6 +594,34 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * @see hivemall.ftvec.trans.BinarizeLabelUDTF
+   * @group ftvec.trans
+   */
+  @scala.annotation.varargs
+  def binarize_label(exprs: Column*): DataFrame = {
+    Generate(HiveGenericUDTF(
+        new HiveFunctionWrapper("hivemall.ftvec.trans.BinarizeLabelUDTF"),
+        exprs.map(_.expr)),
+      join = false, outer = false, None,
+      (0 until exprs.size - 1).map(i => s"c$i").map(UnresolvedAttribute(_)),
+      df.logicalPlan)
+  }
+
+  /**
+   * @see hivemall.ftvec.trans.QuantifiedFeaturesUDTF
+   * @group ftvec.trans
+   */
+  @scala.annotation.varargs
+  def quantified_features(exprs: Column*): DataFrame = {
+    Generate(HiveGenericUDTF(
+        new HiveFunctionWrapper("hivemall.ftvec.trans.QuantifiedFeaturesUDTF"),
+        exprs.map(_.expr)),
+      join = false, outer = false, None,
+      Seq("features").map(UnresolvedAttribute(_)),
+      df.logicalPlan)
+  }
+
+  /**
    * Splits Seq[String] into pieces.
    * @group ftvec
    */
@@ -740,7 +768,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.knn.similarity.Distance2SimilarityUDF
    * @group knn.similarity
    */
@@ -1003,7 +1030,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.trans.VectorizeFeaturesUDF
    * @group ftvec.trans
    */
@@ -1014,7 +1040,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.trans.CategoricalFeaturesUDF
    * @group ftvec.trans
    */
@@ -1025,7 +1050,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.trans.IndexedFeatures
    * @group ftvec.trans
    */
@@ -1036,18 +1060,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
-   * @see hivemall.ftvec.trans.QuantifiedFeaturesUDTF
-   * @group ftvec.trans
-   */
-  @scala.annotation.varargs
-  def quantified_features(exprs: Column*): Column = {
-    HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.trans.QuantifiedFeaturesUDTF"), exprs.map(_.expr))
-  }
-
-  /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.trans.QuantitativeFeaturesUDF
    * @group ftvec.trans
    */
@@ -1055,17 +1067,6 @@ object HivemallOps {
   def quantitative_features(exprs: Column*): Column = {
     HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.trans.QuantitativeFeaturesUDF"), exprs.map(_.expr))
-  }
-
-  /**
-   * TODO: Need to test this
-   * @see hivemall.ftvec.trans.BinarizeLabelUDTF
-   * @group ftvec.trans
-   */
-  @scala.annotation.varargs
-  def binarize_label(exprs: Column*): Column = {
-    HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.trans.BinarizeLabelUDTF"), exprs.map(_.expr))
   }
 
   /**

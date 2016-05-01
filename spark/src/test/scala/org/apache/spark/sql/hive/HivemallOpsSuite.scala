@@ -204,6 +204,33 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     assert(TinyTrainData.part_amplify(3).count() == 9)
   }
 
+  test("ftvec.trans") {
+    import hiveContext.implicits._
+
+    val df1 = Seq((1, -3, 1), (2, -2, 1)).toDF("a", "b", "c")
+    assert(df1.binarize_label($"a", $"b", $"c").collect.toSet === Set(Row(1, 0)))
+
+    val df2 = Seq((0.1f, 0.2f), (0.5f, 0.3f)).toDF("a", "b")
+    assert(df2.select(vectorize_features(Seq("a", "b"), df2("a"), df2("b"))).collect.toSet
+      === Set(Row(Seq("a:0.1", "b:0.2")), Row(Seq("a:0.5", "b:0.3"))))
+
+    val df3 = Seq(("c11", "c12"), ("c21", "c22")).toDF("a", "b")
+    assert(df3.select(categorical_features(Seq("a", "b"), df3("a"), df3("b"))).collect.toSet
+      === Set(Row(Seq("a#c11", "b#c12")), Row(Seq("a#c21", "b#c22"))))
+
+    val df4 = Seq((0.1, 0.2, 0.3), (0.2, 0.5, 0.4)).toDF("a", "b", "c")
+    assert(df4.select(indexed_features(df4("a"), df4("b"), df4("c"))).collect.toSet
+      === Set(Row(Seq("1:0.1", "2:0.2", "3:0.3")), Row(Seq("1:0.2", "2:0.5", "3:0.4"))))
+
+    val df5 = Seq(("xxx", "yyy", 0), ("zzz", "yyy", 1)).toDF("a", "b", "c")
+    assert(df5.coalesce(1).quantified_features(true, df5("a"), df5("b"), df5("c")).collect.toSet
+      === Set(Row(Seq(0.0, 0.0, 0.0)), Row(Seq(1.0, 0.0, 1.0))))
+
+    val df6 = Seq((0.1, 0.2), (0.5, 0.3)).toDF("a", "b")
+    assert(df6.select(quantitative_features(Seq("a", "b"), df6("a"), df6("b"))).collect.toSet
+      === Set(Row(Seq("a:0.1", "b:0.2")), Row(Seq("a:0.5", "b:0.3"))))
+  }
+
   test("misc - hivemall_version") {
     assert(DummyInputData.select(hivemall_version()).collect.toSet === Set(Row("0.4.1-alpha.6")))
     /**
