@@ -740,6 +740,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.knn.similarity.Distance2SimilarityUDF
    * @group knn.similarity
    */
@@ -927,6 +928,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.hashing.ArrayHashValuesUDF
    * @group ftvec.hashing
    */
@@ -938,6 +940,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF
    * @group ftvec.hashing
    */
@@ -978,6 +981,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.conv.ToDenseFeaturesUDF
    * @group ftvec.conv
    */
@@ -988,6 +992,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.conv.ToSparseFeaturesUDF
    * @group ftvec.conv
    */
@@ -998,6 +1003,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.VectorizeFeaturesUDF
    * @group ftvec.trans
    */
@@ -1008,6 +1014,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.CategoricalFeaturesUDF
    * @group ftvec.trans
    */
@@ -1018,6 +1025,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.IndexedFeatures
    * @group ftvec.trans
    */
@@ -1028,6 +1036,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.QuantifiedFeaturesUDTF
    * @group ftvec.trans
    */
@@ -1038,6 +1047,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.QuantitativeFeaturesUDF
    * @group ftvec.trans
    */
@@ -1048,6 +1058,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.ftvec.trans.BinarizeLabelUDTF
    * @group ftvec.trans
    */
@@ -1058,6 +1069,7 @@ object HivemallOps {
   }
 
   /**
+   * TODO: Need to test this
    * @see hivemall.smile.tools.TreePredictUDF
    * @group misc
    */
