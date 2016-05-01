@@ -955,7 +955,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.hashing.ArrayHashValuesUDF
    * @group ftvec.hashing
    */
@@ -967,7 +966,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF
    * @group ftvec.hashing
    */
@@ -1008,25 +1006,25 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.conv.ToDenseFeaturesUDF
    * @group ftvec.conv
    */
-  def to_dense_features(expr: Column): Column = {
+  @scala.annotation.varargs
+  def to_dense_features(exprs: Column*): Column = {
     // TODO: Need a wrapper class because of using unsupported types
     HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.conv.ToDenseFeaturesUDF"), Seq(expr.expr))
+      "hivemall.ftvec.conv.ToDenseFeaturesUDF"), exprs.map(_.expr))
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.ftvec.conv.ToSparseFeaturesUDF
    * @group ftvec.conv
    */
-  def to_sparse_features(expr: Column): Column = {
+  @scala.annotation.varargs
+  def to_sparse_features(exprs: Column*): Column = {
     // TODO: Need a wrapper class because of using unsupported types
     HiveGenericUDF(new HiveFunctionWrapper(
-      "hivemall.ftvec.conv.ToSparseFeaturesUDF"), Seq(expr.expr))
+      "hivemall.ftvec.conv.ToSparseFeaturesUDF"), exprs.map(_.expr))
   }
 
   /**

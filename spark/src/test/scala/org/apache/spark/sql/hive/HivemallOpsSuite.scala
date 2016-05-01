@@ -204,6 +204,18 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     assert(TinyTrainData.part_amplify(3).count() == 9)
   }
 
+  ignore("ftvec.conv") {
+    import hiveContext.implicits._
+
+    val df1 = Seq((0.0, "1:0.1" :: "3:0.3" :: Nil), (1,0, "2:0.2" :: Nil)).toDF("a", "b")
+    assert(df1.select(to_dense_features(df1("b"), 3)).collect.toSet
+      === Set(Row(Array(0.1f, 0.0f, 0.3f)), Array(0.0f, 0.2f, 0.0f)))
+
+    val df2 = Seq((0.1, 0.2, 0.3), (0.2, 0.5, 0.4)).toDF("a", "b", "c")
+    assert(df2.select(to_sparse_features(df2("a"), df2("b"), df2("c"))).collect.toSet
+      === Set(Row(Seq("1:0.1", "2:0.2", "3:0.3")), Row(Seq("1:0.2", "2:0.5", "3:0.4"))))
+  }
+
   test("ftvec.trans") {
     import hiveContext.implicits._
 
