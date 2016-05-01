@@ -579,10 +579,16 @@ drop temporary function train_xgboost_regr;
 create temporary function train_xgboost_regr as 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
 
 drop temporary function train_xgboost_classifier;
-create temporary function train_xgboost_classifier as 'hivemall.xgboost.regression.XGBoostClassifierUDTF';
+create temporary function train_xgboost_classifier as 'hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF';
+
+drop temporary function train_multiclass_xgboost_classifier;
+create temporary function train_multiclass_xgboost_classifier as 'hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF';
 
 drop temporary function xgboost_predict;
 create temporary function xgboost_predict as 'hivemall.xgboost.tools.XGBoostPredictUDTF';
+
+drop temporary function xgboost_multiclass_predict;
+create temporary function xgboost_multiclass_predict as 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF';
 
 --------------------------------------------------------------------------------------------------
 -- macros available from hive 0.12.0

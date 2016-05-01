@@ -28,22 +28,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Description(
-    name = "xgboost_predict",
+    name = "xgboost_multiclass_predict",
     value = "_FUNC_(string rowid, string[] features, string model_id, array<byte> pred_model [, string options]) "
-                + "- Returns a prediction result as (string rowid, float predicted)"
+                + "- Returns a prediction result as (string rowid, int label, float probability)"
 )
-public final class XGBoostPredictUDTF extends hivemall.xgboost.XGBoostPredictUDTF {
+public final class XGBoostMulticlassPredictUDTF extends hivemall.xgboost.XGBoostPredictUDTF {
 
-    public XGBoostPredictUDTF() {}
+    public XGBoostMulticlassPredictUDTF() {}
 
-    /** Return (string rowid, float predicted) as a result */
+    /** Return (string rowid, int label, float probability) as a result */
     @Override
     public StructObjectInspector getReturnOI() {
-        final ArrayList fieldNames = new ArrayList(2);
-        final ArrayList fieldOIs = new ArrayList(2);
+        final ArrayList fieldNames = new ArrayList(3);
+        final ArrayList fieldOIs = new ArrayList(3);
         fieldNames.add("rowid");
         fieldOIs.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
-        fieldNames.add("predicted");
+        fieldNames.add("label");
+        fieldOIs.add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+        fieldNames.add("probability");
         fieldOIs.add(PrimitiveObjectInspectorFactory.javaFloatObjectInspector);
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
@@ -54,10 +56,12 @@ public final class XGBoostPredictUDTF extends hivemall.xgboost.XGBoostPredictUDT
             final float[][] predicted) throws HiveException {
         assert(predicted.length == testData.size());
         for(int i = 0; i < testData.size(); i++) {
-            assert(predicted[i].length == 1);
+            assert(predicted[i].length > 1);
             final String rowId = testData.get(i).rowId;
-            float p = predicted[i][0];
-            forward(new Object[]{rowId, p});
+            for(int j = 0; j < predicted[i].length; j++) {
+                float prob = predicted[i][j];
+                forward(new Object[]{rowId, j, prob});
+            }
         }
     }
 

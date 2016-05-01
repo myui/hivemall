@@ -37,7 +37,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
 import hivemall.UDTFWithOptions;
-import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 
 /**
@@ -58,6 +57,7 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
     private PrimitiveObjectInspector featureElemOI;
     private PrimitiveObjectInspector targetOI;
 
+    // Settings for the XGBoost native library
     static {
         NativeLibLoader.initXGBoost();
     }
@@ -245,36 +245,15 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
     /** It `target` has valid input range, it overrides this */
     public void checkTargetValue(double target) throws HiveException {}
 
-    /** Transform List<String> inputs into a XGBoost input format */
-    private LabeledPoint parseFeatures(double target, List<String> features) throws HiveException {
-        checkTargetValue(target);
-        final int size = features.size();
-        if(size == 0) {
-            return null;
-        }
-        final int[] indices = new int[size];
-        final float[] values = new float[size];
-        for(int i = 0; i < size; i++) {
-            if(features.get(i) == null) {
-                continue;
-            }
-            final String str = features.get(i);
-            final int pos = str.indexOf(':');
-            if(pos >= 1) {
-                indices[i] = Integer.parseInt(str.substring(0, pos));
-                values[i] = Float.parseFloat(str.substring(pos + 1));
-            }
-        }
-        // TODO: Need to support dense inputs
-        return LabeledPoint.fromSparseVector((float) target, indices, values);
-    }
 
     @Override
     public void process(Object[] args) throws HiveException {
         if(args[0] != null) {
+            // TODO: Need to support dense inputs
             final List<String> features = (List<String>) featureListOI.getList(args[0]);
             double target = PrimitiveObjectInspectorUtils.getDouble(args[1], this.targetOI);
-            final LabeledPoint point = parseFeatures(target, features);
+            checkTargetValue(target);
+            final LabeledPoint point = XGBoostUtils.parseFeatures(target, features);
             if(point != null) {
                 this.featuresList.add(point);
             }

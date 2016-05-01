@@ -579,8 +579,17 @@ CREATE FUNCTION guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUD
 -- XGBoost related features --
 ------------------------------
 
-drop temporary function train_xgboost_regr;
-create temporary function train_xgboost_regr as 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
+DROP TEMPORARY FUNCTION train_xgboost_regr;
+CREATE TEMPORARY FUNCTION train_xgboost_regr AS 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
 
-drop temporary function xgboost_predict;
-create temporary function xgboost_predict as 'hivemall.xgboost.tools.XGBoostPredictUDTF';
+DROP TEMPORARY FUNCTION train_xgboost_classifier;
+CREATE TEMPORARY FUNCTION train_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF';
+
+DROP TEMPORARY FUNCTION train_multiclass_xgboost_classifier;
+CREATE TEMPORARY FUNCTION train_multiclass_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF';
+
+DROP TEMPORARY FUNCTION xgboost_predict;
+CREATE TEMPORARY FUNCTION xgboost_predict AS 'hivemall.xgboost.tools.XGBoostPredictUDTF';
+
+DROP TEMPORARY FUNCTION xgboost_multiclass_predict;
+CREATE TEMPORARY FUNCTION xgboost_multiclass_predict AS 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF';
