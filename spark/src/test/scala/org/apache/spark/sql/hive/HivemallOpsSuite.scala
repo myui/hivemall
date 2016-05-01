@@ -32,12 +32,16 @@ final class HivemallOpsSuite extends HivemallQueryTest {
   test("knn.similarity") {
     val row1 = DummyInputData.select(cosine_sim(Seq(1, 2, 3, 4), Seq(3, 4, 5, 6))).collect
     assert(row1(0).getFloat(0) ~== 0.500f)
+
     val row2 = DummyInputData.select(jaccard(5, 6)).collect
     assert(row2(0).getFloat(0) ~== 0.96875f)
+
     val row3 = DummyInputData.select(angular_similarity(Seq(1, 2, 3), Seq(4, 5, 6))).collect
     assert(row3(0).getFloat(0) ~== 0.500f)
+
     val row4 = DummyInputData.select(euclid_similarity(Seq(5, 3, 1), Seq(2, 8, 3))).collect
     assert(row4(0).getFloat(0) ~== 0.33333334f)
+
     // TODO: $"c0" throws AnalysisException, why?
     // val row5 = DummyInputData.select(distance2similarity(DummyInputData("c0"))).collect
     // assert(row5(0).getFloat(0) ~== 0.1f)
@@ -46,22 +50,29 @@ final class HivemallOpsSuite extends HivemallQueryTest {
   test("knn.distance") {
     val row1 = DummyInputData.select(hamming_distance(1, 3)).collect
     assert(row1(0).getInt(0) == 1)
+
     val row2 = DummyInputData.select(popcnt(1)).collect
     assert(row2(0).getInt(0) == 1)
+
     val row3 = DummyInputData.select(kld(0.1, 0.5, 0.2, 0.5)).collect
     assert(row3(0).getDouble(0) ~== 0.01)
+
     val row4 = DummyInputData.select(
       euclid_distance(Seq("0.1", "0.5"), Seq("0.2", "0.5"))).collect
     assert(row4(0).getFloat(0) ~== 1.4142135f)
+
     val row5 = DummyInputData.select(
       cosine_distance(Seq("0.8", "0.3"), Seq("0.4", "0.6"))).collect
     assert(row5(0).getFloat(0) ~== 1.0f)
+
     val row6 = DummyInputData.select(
       angular_distance(Seq("0.1", "0.1"), Seq("0.3", "0.8"))).collect
     assert(row6(0).getFloat(0) ~== 0.50f)
+
     val row7 = DummyInputData.select(
       manhattan_distance(Seq("0.7", "0.8"), Seq("0.5", "0.6"))).collect
     assert(row7(0).getFloat(0) ~== 4.0f)
+
     val row8 = DummyInputData.select(
       minkowski_distance(Seq("0.1", "0.2"), Seq("0.2", "0.2"), 1.0)).collect
     assert(row8(0).getFloat(0) ~== 2.0f)
@@ -386,41 +397,70 @@ final class HivemallOpsSuite extends HivemallQueryTest {
 
   test("user-defined aggregators for ensembles") {
     import hiveContext.implicits._
-    Seq("voted_avg", "weight_voted_avg")
-      .map { udaf =>
-        Seq((0, 1), (0, 1), (0, 1)).toDF("c0", "c1")
-          .groupby("c0").agg("c1"->udaf)
-          .foreach(_ => {})
-      }
-    Seq("rf_ensemble")
-      .map { udaf =>
-         Seq((1, 1), (1, 0), (0, 0)).toDF.as("c0", "c1")
-           .groupby($"c0").agg("c1"->udaf)
-           .foreach(_ => {})
-      }
+
+    val df1 = Seq((1, 0.1f), (1, 0.2f), (2, 0.1f)).toDF.as("c0", "c1")
+    val row1 = df1.groupby($"c0").voted_avg("c1").collect
+    assert(row1(0).getDouble(1) ~== 0.15)
+    assert(row1(1).getDouble(1) ~== 0.10)
+
+    val df2 = Seq((1, 0.6f), (2, 0.2f), (1, 0.2f)).toDF.as("c0", "c1")
+    val row2 = df2.groupby($"c0").agg("c1"->"voted_avg").collect
+    assert(row2(0).getDouble(1) ~== 0.40)
+    assert(row2(1).getDouble(1) ~== 0.20)
+
+    val df3 = Seq((1, 0.2f), (1, 0.8f), (2, 0.3f)).toDF.as("c0", "c1")
+    val row3 = df3.groupby($"c0").weight_voted_avg("c1").collect
+    assert(row3(0).getDouble(1) ~== 0.50)
+    assert(row3(1).getDouble(1) ~== 0.30)
+
+    val df4 = Seq((1, 0.1f), (2, 0.9f), (1, 0.1f)).toDF.as("c0", "c1")
+    val row4 = df4.groupby($"c0").agg("c1"->"weight_voted_avg").collect
+    assert(row4(0).getDouble(1) ~== 0.10)
+    assert(row4(1).getDouble(1) ~== 0.90)
+
+    val df5 = Seq((1, 0.2f, 0.1f), (1, 0.4f, 0.2f), (2, 0.8f, 0.9f)).toDF.as("c0", "c1", "c2")
+    val row5 = df5.groupby($"c0").argmin_kld("c1", "c2").collect
+    assert(row5(0).getFloat(1) ~== 0.266666666)
+    assert(row5(1).getFloat(1) ~== 0.80)
+
+    val df6 = Seq((1, "id-0", 0.2f), (1, "id-1", 0.4f), (1, "id-2", 0.1f)).toDF.as("c0", "c1", "c2")
+    val row6 = df6.groupby($"c0").max_label("c2", "c1").collect
+    assert(row6(0).getString(1) == "id-1")
+
+    val df7 = Seq((1, "id-0", 0.5f), (1, "id-1", 0.1f), (1, "id-2", 0.2f)).toDF.as("c0", "c1", "c2")
+    val row7 = df7.groupby($"c0").maxrow("c2", "c1").as("c0", "c1").select($"c1.col1").collect
+    assert(row7(0).getString(0) == "id-0")
+
+    val df8 = Seq((1, 1), (1, 2), (2, 1), (1, 5)).toDF.as("c0", "c1")
+    val row8 = df8.groupby($"c0").rf_ensemble("c1").as("c0", "c1").select("c1.probability").collect
+    assert(row8(0).getDouble(0) ~== 0.3333333333)
+    assert(row8(1).getDouble(0) ~== 1.0)
+
+    val df9 = Seq((1, 3), (1, 8), (2, 9), (1, 1)).toDF.as("c0", "c1")
+    val row9 = df9.groupby($"c0").agg("c1"->"rf_ensemble").as("c0", "c1")
+      .select("c1.probability").collect
+    assert(row9(0).getDouble(0) ~== 0.3333333333)
+    assert(row9(1).getDouble(0) ~== 1.0)
   }
 
-  ignore("user-defined aggregators for evaluation") {
-    /**
-     * TODO: These tests throw an exception below:
-     *
-     * [info] - user-defined aggregators for evaluation *** FAILED ***
-     * [info]   java.lang.AssertionError: assertion failed: Invoking mae failed because: null
-     * [info]   at scala.Predef$.assert(Predef.scala:179)
-     * [info]   at org.apache.spark.test.TestUtils$.invokeFunc(TestUtils.scala:46)
-     * [info]   at org.apache.spark.sql.hive.HivemallOpsSuite$$anonfun$30$$anonfun$apply$mcV$sp$8
-     *    .apply(HivemallOpsSuite.scala:363)
-     * [info]   at org.apache.spark.sql.hive.HivemallOpsSuite$$anonfun$30$$anonfun$apply$mcV$sp$8
-     *    .apply(HivemallOpsSuite.scala:362)
-     * ...
-     */
-    Seq("mae", "mse", "rmse")
-      .map { udaf =>
-        invokeFunc(Float2Data.groupby(), udaf, "predict", "target")
-      }
-    Seq("f1score")
-      .map { udaf =>
-      invokeFunc(IntList2Data.groupby(), udaf, "predict", "target")
-    }
+  test("user-defined aggregators for evaluation") {
+    import hiveContext.implicits._
+
+    val df1 = Seq((1, 1.0f, 0.5f), (1, 0.3f, 0.5f), (1, 0.1f, 0.2f)).toDF.as("c0", "c1", "c2")
+    val row1 = df1.groupby($"c0").mae("c1", "c2").collect
+    assert(row1(0).getDouble(1) ~== 0.26666666)
+
+    val df2 = Seq((1, 0.3f, 0.8f), (1, 1.2f, 2.0f), (1, 0.2f, 0.3f)).toDF.as("c0", "c1", "c2")
+    val row2 = df2.groupby($"c0").mse("c1", "c2").collect
+    assert(row2(0).getDouble(1) ~== 0.29999999)
+
+    val df3 = Seq((1, 0.3f, 0.8f), (1, 1.2f, 2.0f), (1, 0.2f, 0.3f)).toDF.as("c0", "c1", "c2")
+    val row3 = df3.groupby($"c0").rmse("c1", "c2").collect
+    assert(row3(0).getDouble(1) ~== 0.54772253)
+
+    val df4 = Seq((1, Array(1, 2), Array(2, 3)), (1, Array(3, 8), Array(5, 4))).toDF
+      .as("c0", "c1", "c2")
+    val row4 = df4.groupby($"c0").f1score("c1", "c2").collect
+    assert(row4(0).getDouble(1) ~== 0.25)
   }
 }
