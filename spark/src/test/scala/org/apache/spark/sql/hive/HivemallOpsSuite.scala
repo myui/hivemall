@@ -267,6 +267,40 @@ final class HivemallOpsSuite extends HivemallQueryTest {
       Set(Row("3"), Row("4"), Row("6")))
   }
 
+  /**
+   * This test fails because;
+   *
+   * Cause: java.lang.OutOfMemoryError: Java heap space
+   * at hivemall.smile.tools.RandomForestEnsembleUDAF$Result.<init>(RandomForestEnsembleUDAF.java:128)
+   * at hivemall.smile.tools.RandomForestEnsembleUDAF$RandomForestPredictUDAFEvaluator.terminate(RandomForestEnsembleUDAF.java:91)
+   * at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+   */
+  ignore("misc - tree_predict") {
+    import hiveContext.implicits._
+
+    val model = Seq((0.0, 0.1 :: 0.1 :: Nil), (1.0, 0.2 :: 0.3 :: 0.2 :: Nil))
+      .toDF("label", "features")
+      .train_randomforest_regr($"features", $"label", "-trees 2")
+
+    val testData = Seq((0.0, 0.1 :: 0.0 :: Nil), (1.0, 0.3 :: 0.5 :: 0.4 :: Nil))
+      .toDF("label", "features")
+      .select(rowid(), $"label", $"features")
+
+    val predicted = model
+      .join(testData).coalesce(1)
+      .select(
+        $"rowid",
+        tree_predict(
+          model("model_id"), model("model_type"), model("pred_model"), testData("features"), true)
+            .as("predicted")
+      )
+      .groupby($"rowid")
+      .rf_ensemble("predicted").as("rowid", "predicted")
+      .select($"predicted.label")
+
+    checkAnswer(predicted, Seq(Row(0), Row(1)))
+  }
+
   test("misc - sigmoid") {
     import hiveContext.implicits._
     /**

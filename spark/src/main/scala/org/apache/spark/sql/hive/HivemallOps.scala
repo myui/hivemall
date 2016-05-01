@@ -1069,7 +1069,6 @@ object HivemallOps {
   }
 
   /**
-   * TODO: Need to test this
    * @see hivemall.smile.tools.TreePredictUDF
    * @group misc
    */

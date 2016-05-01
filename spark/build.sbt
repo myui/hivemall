@@ -2,6 +2,8 @@ scalaVersion := "2.11.8"
 
 licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
 
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 parallelExecution in Test := false
