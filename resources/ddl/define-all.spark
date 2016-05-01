@@ -1,0 +1,481 @@
+/**
+ * Hivemall: Hive scalable Machine Learning Library
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS hivemall_version")
+sqlContext.sql("CREATE TEMPORARY FUNCTION hivemall_version AS 'hivemall.HivemallVersionUDF'")
+
+/**
+ * binary classification
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_perceptron")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_perceptron AS 'hivemall.classifier.PerceptronUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa AS 'hivemall.classifier.PassiveAggressiveUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa1")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa1 AS 'hivemall.classifier.PassiveAggressiveUDTF$PA1'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa2")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa2 AS 'hivemall.classifier.PassiveAggressiveUDTF$PA2'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_cw")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_cw AS 'hivemall.classifier.ConfidenceWeightedUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_arow")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arow AS 'hivemall.classifier.AROWClassifierUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_arowh")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arowh AS 'hivemall.classifier.AROWClassifierUDTF$AROWh'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_adagrad_rda")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arowh AS 'hivemall.classifier.AdaGradRDAUDTF'")
+
+/**
+ * Multiclass classification
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_perceptron")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_perceptron AS 'hivemall.classifier.multiclass.MulticlassPerceptronUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_pa")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_pa AS 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_pa1")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_pa1 AS 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA1'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_pa2")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_pa2 AS 'hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_cw")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_cw AS 'hivemall.classifier.multiclass.MulticlassConfidenceWeightedUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_scw")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_scw AS 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_multiclass_scw2")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_multiclass_scw2 AS 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2'")
+
+/**
+ * similarity functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS cosine_sim")
+sqlContext.sql("CREATE TEMPORARY FUNCTION cosine_similarity AS 'hivemall.knn.similarity.CosineSimilarityUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS jaccard")
+sqlContext.sql("CREATE TEMPORARY FUNCTION jaccard_similarity AS 'hivemall.knn.similarity.JaccardIndexUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS angular_similarity")
+sqlContext.sql("CREATE TEMPORARY FUNCTION angular_similarity AS 'hivemall.knn.similarity.AngularSimilarityUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS euclid_similarity")
+sqlContext.sql("CREATE TEMPORARY FUNCTION euclid_similarity AS 'hivemall.knn.similarity.EuclidSimilarity'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS distance2similarity")
+sqlContext.sql("CREATE TEMPORARY FUNCTION distance2similarity AS 'hivemall.knn.similarity.Distance2SimilarityUDF'")
+
+/**
+ * distance functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS homming_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION hamming_distance AS 'hivemall.knn.distance.HammingDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS popcnt")
+sqlContext.sql("CREATE TEMPORARY FUNCTION popcnt AS 'hivemall.knn.distance.PopcountUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS kld")
+sqlContext.sql("CREATE TEMPORARY FUNCTION kld AS 'hivemall.knn.distance.KLDivergenceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS euclid_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION euclid_distance AS 'hivemall.knn.distance.EuclidDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS cosine_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION cosine_distance AS 'hivemall.knn.distance.CosineDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS angular_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION angular_distance AS 'hivemall.knn.distance.AngularDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS jaccard_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION jaccard_distance AS 'hivemall.knn.distance.JaccardDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS manhattan_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION manhattan_distance AS 'hivemall.knn.distance.ManhattanDistanceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS minkowski_distance")
+sqlContext.sql("CREATE TEMPORARY FUNCTION minkowski_distance AS 'hivemall.knn.distance.MinkowskiDistanceUDF'")
+
+/**
+ * LSH functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS minhashes")
+sqlContext.sql("CREATE TEMPORARY FUNCTION minhashes AS 'hivemall.knn.lsh.MinHashesUDFWrapper'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS minhash")
+sqlContext.sql("CREATE TEMPORARY FUNCTION minhash AS 'hivemall.knn.lsh.MinHashUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS bbit_minhash")
+sqlContext.sql("CREATE TEMPORARY FUNCTION bbit_minhash AS 'hivemall.knn.lsh.bBitMinHashUDF'")
+
+/**
+ * voting functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS voted_avg")
+sqlContext.sql("CREATE TEMPORARY FUNCTION voted_avg AS 'hivemall.ensemble.bagging.VotedAvgUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS weight_voted_avg")
+sqlContext.sql("CREATE TEMPORARY FUNCTION weight_voted_avg AS 'hivemall.ensemble.bagging.WeightVotedAvgUDAF'")
+
+/**
+ * misc functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS max_label")
+sqlContext.sql("CREATE TEMPORARY FUNCTION max_label AS 'hivemall.ensemble.MaxValueLabelUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS maxrow")
+sqlContext.sql("CREATE TEMPORARY FUNCTION maxrow AS 'hivemall.ensemble.MaxRowUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS argmin_kld")
+sqlContext.sql("CREATE TEMPORARY FUNCTION argmin_kld AS 'hivemall.ensemble.ArgminKLDistanceUDAF'")
+
+/**
+ * hashing functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS mhash")
+sqlContext.sql("CREATE TEMPORARY FUNCTION mhash AS 'hivemall.ftvec.hashing.MurmurHash3UDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS sha1")
+sqlContext.sql("CREATE TEMPORARY FUNCTION sha1 AS 'hivemall.ftvec.hashing.Sha1UDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_hash_values")
+sqlContext.sql("CREATE TEMPORARY FUNCTION array_hash_values AS 'hivemall.ftvec.hashing.ArrayHashValuesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS prefixed_hash_values")
+sqlContext.sql("CREATE TEMPORARY FUNCTION prefixed_hash_values AS 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF'")
+
+/**
+ * pairing functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS polynomial_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION polynominal_features AS 'hivemall.ftvec.pairing.PolynomialFeaturesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS powered_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION powered_features AS 'hivemall.ftvec.pairing.PoweredFeaturesUDF'")
+
+/**
+ * scaling functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS rescale")
+sqlContext.sql("CREATE TEMPORARY FUNCTION rescale AS 'hivemall.ftvec.scaling.RescaleUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS zscore")
+sqlContext.sql("CREATE TEMPORARY FUNCTION zscore AS 'hivemall.ftvec.scaling.ZScoreUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS normalize")
+sqlContext.sql("CREATE TEMPORARY FUNCTION normalize AS 'hivemall.ftvec.scaling.L2NormalizationUDF'")
+
+/**
+ * misc functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS amplify")
+sqlContext.sql("CREATE TEMPORARY FUNCTION amplify AS 'hivemall.ftvec.amplify.AmplifierUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS rand_amplify")
+sqlContext.sql("CREATE TEMPORARY FUNCTION rand_amplify AS 'hivemall.ftvec.amplify.RandomAmplifierUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS add_bias")
+sqlContext.sql("CREATE TEMPORARY FUNCTION add_bias AS 'hivemall.ftvec.AddBiasUDFWrapper'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS sort_by_feature")
+sqlContext.sql("CREATE TEMPORARY FUNCTION sort_by_feature AS 'hivemall.ftvec.SortByFeatureUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS extract_feature")
+sqlContext.sql("CREATE TEMPORARY FUNCTION extract_feature AS 'hivemall.ftvec.ExtractFeatureUDFWrapper'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS extract_weight")
+sqlContext.sql("CREATE TEMPORARY FUNCTION extract_weight AS 'hivemall.ftvec.ExtractWeightUDFWrapper'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS add_feature_index")
+sqlContext.sql("CREATE TEMPORARY FUNCTION add_feature_index AS 'hivemall.ftvec.AddFeatureIndexUDFWrapper'")
+
+/**
+ * feature converting functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS conv2dense")
+sqlContext.sql("CREATE TEMPORARY FUNCTION conv2dense AS 'hivemall.ftvec.conv.ConvertToDenseModelUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS to_dense_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION to_dense_features AS 'hivemall.ftvec.conv.ToDenseFeaturesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS to_sparse_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION to_sparse_features AS 'hivemall.ftvec.conv.ToSparseFeaturesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS quantify")
+sqlContext.sql("CREATE TEMPORARY FUNCTION quantify AS 'hivemall.ftvec.conv.QuantifyColumnsUDTF'")
+
+/**
+ * feature transformers
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS vectorize_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION vectorize_features AS 'hivemall.ftvec.trans.VectorizeFeaturesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS categorical_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION categorical_features AS 'hivemall.ftvec.trans.CategoricalFeaturesUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS indexed_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION indexed_features AS 'hivemall.ftvec.trans.IndexedFeatures'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS quantified_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION quantified_features AS 'hivemall.ftvec.trans.QuantifiedFeaturesUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS quantitative_features")
+sqlContext.sql("CREATE TEMPORARY FUNCTION quantitative_features AS 'hivemall.ftvec.trans.QuantitativeFeaturesUDF'")
+
+/**
+ * ftvec/text functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS tf")
+sqlContext.sql("CREATE TEMPORARY FUNCTION tf AS 'hivemall.ftvec.text.TermFrequencyUDAF'")
+
+/**
+ * fegression functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_logregr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_logregr AS 'hivemall.regression.LogressUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa1_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa1_regr AS 'hivemall.regression.PassiveAggressiveRegressionUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa1a_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa1a_regr AS 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA1a'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa2_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa2_regr AS 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_pa2a_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_pa2a_regr AS 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_adadelta")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_adadelta AS 'hivemall.regression.AdaDeltaUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_adagrad")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_adagrad AS 'hivemall.regression.AdaGradUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_arow_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arow_regr AS 'hivemall.regression.AROWRegressionUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_arowe_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arow_regr AS 'hivemall.regression.AROWRegressionUDTF$AROWe'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_arowe2_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_arow_regr AS 'hivemall.regression.AROWRegressionUDTF$AROWe2'")
+
+/**
+ * array functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS float_array")
+sqlContext.sql("CREATE TEMPORARY FUNCTION float_array AS 'hivemall.tools.array.AllocFloatArrayUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_remove")
+sqlContext.sql("CREATE TEMPORARY FUNCTION array_remove AS 'hivemall.tools.array.ArrayRemoveUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS sort_and_uniq_array")
+sqlContext.sql("CREATE TEMPORARY FUNCTION sort_and_uniq_array AS 'hivemall.tools.array.SortAndUniqArrayUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS subarray_endwith")
+sqlContext.sql("CREATE TEMPORARY FUNCTION subarray_endwith AS 'hivemall.tools.array.SubarrayEndWithUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS subarray_startwith")
+sqlContext.sql("CREATE TEMPORARY FUNCTION subarray_startwith AS 'hivemall.tools.array.SubarrayStartWithUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS collect_all")
+sqlContext.sql("CREATE TEMPORARY FUNCTION collect_all AS 'hivemall.tools.array.CollectAllUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS concat_array")
+sqlContext.sql("CREATE TEMPORARY FUNCTION concat_array AS 'hivemall.tools.array.ConcatArrayUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS subarray")
+sqlContext.sql("CREATE TEMPORARY FUNCTION subarray AS 'hivemall.tools.array.SubarrayUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_avg")
+sqlContext.sql("CREATE TEMPORARY FUNCTION array_avg AS 'hivemall.tools.array.ArrayAvgGenericUDAF'")
+
+/**
+ * compression functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS inflate")
+sqlContext.sql("CREATE TEMPORARY FUNCTION inflate AS 'hivemall.tools.compress.InflateUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS deflate")
+sqlContext.sql("CREATE TEMPORARY FUNCTION deflate AS 'hivemall.tools.compress.DeflateUDF'")
+
+/**
+ * map functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS map_get_sum")
+sqlContext.sql("CREATE TEMPORARY FUNCTION map_get_sum AS 'hivemall.tools.map.MapGetSumUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS map_tail_n")
+sqlContext.sql("CREATE TEMPORARY FUNCTION map_tail_n AS 'hivemall.tools.map.MapTailNUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS to_map")
+sqlContext.sql("CREATE TEMPORARY FUNCTION to_map AS 'hivemall.tools.map.UDAFToMap'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS to_ordered_map")
+sqlContext.sql("CREATE TEMPORARY FUNCTION to_ordered_map AS 'hivemall.tools.map.UDAFToOrderedMap'")
+
+/**
+ * Math functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS sigmoid")
+sqlContext.sql("CREATE TEMPORARY FUNCTION sigmoid AS 'hivemall.tools.math.SigmoidGenericUDF'")
+
+/**
+ * mapred functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS rowid")
+sqlContext.sql("CREATE TEMPORARY FUNCTION rowid AS 'hivemall.tools.mapred.RowIdUDFWrapper'")
+
+/**
+ * misc functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS generate_series")
+sqlContext.sql("CREATE TEMPORARY FUNCTION generate_series AS 'hivemall.tools.GenerateSeriesUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS convert_label")
+sqlContext.sql("CREATE TEMPORARY FUNCTION convert_label AS 'hivemall.tools.ConvertLabelUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS x_rank")
+sqlContext.sql("CREATE TEMPORARY FUNCTION x_rank AS 'hivemall.tools.RankSequenceUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS each_top_k")
+sqlContext.sql("CREATE TEMPORARY FUNCTION each_top_k AS 'hivemall.tools.EachTopKUDTF'")
+
+/**
+ * Text processing functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS tokenize")
+sqlContext.sql("CREATE TEMPORARY FUNCTION tokenize AS 'hivemall.tools.text.TokenizeUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS is_stopword")
+sqlContext.sql("CREATE TEMPORARY FUNCTION is_stopword AS 'hivemall.tools.text.StopwordUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS split_words")
+sqlContext.sql("CREATE TEMPORARY FUNCTION split_words AS 'hivemall.tools.text.SplitWordsUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS normalize_unicode")
+sqlContext.sql("CREATE TEMPORARY FUNCTION normalize_unicode AS 'hivemall.tools.text.NormalizeUnicodeUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS base91")
+sqlContext.sql("CREATE TEMPORARY FUNCTION base91 AS 'hivemall.tools.text.Base91UDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS unbase91")
+sqlContext.sql("CREATE TEMPORARY FUNCTION unbase91 AS 'hivemall.tools.text.Unbase91UDF'")
+
+/**
+ * Dataset generator functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS lr_datagen")
+sqlContext.sql("CREATE TEMPORARY FUNCTION lr_datagen AS 'hivemall.dataset.LogisticRegressionDataGeneratorUDTFWrapper'")
+
+/**
+ * Evaluating functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS f1score")
+sqlContext.sql("CREATE TEMPORARY FUNCTION f1score AS 'hivemall.evaluation.FMeasureUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS mae")
+sqlContext.sql("CREATE TEMPORARY FUNCTION mae AS 'hivemall.evaluation.MeanAbsoluteErrorUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS mse")
+sqlContext.sql("CREATE TEMPORARY FUNCTION mse AS 'hivemall.evaluation.MeanSquaredErrorUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS rmse")
+sqlContext.sql("CREATE TEMPORARY FUNCTION rmse AS 'hivemall.evaluation.RootMeanSquaredErrorUDAF'")
+
+/**
+ * Matrix Factorization
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS mf_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION mf_predict AS 'hivemall.mf.MFPredictionUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_mf_sgd")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_mf_sgd AS 'hivemall.mf.MatrixFactorizationSGDUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_mf_adagrad")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_mf_adagrad AS 'hivemall.mf.MatrixFactorizationAdaGradUDTF'")
+
+/**
+ * Matrix factorization functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS mf_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION mf_predict AS 'hivemall.mf.MFPredictionUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_mf_sgd")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_mf_sgd AS 'hivemall.mf.MatrixFactorizationSGDUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_mf_adagrad")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_mf_adagrad AS 'hivemall.mf.MatrixFactorizationAdaGradUDTF'")
+
+/**
+ * Factorization Machine
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS fm_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION fm_predict AS 'hivemall.fm.FMPredictGenericUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_fm")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_fm AS 'hivemall.fm.FactorizationMachineUDTF'")
+
+/**
+ * Smile related features
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_randomforest_classifier")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_randomforest_classifier AS 'hivemall.smile.classification.RandomForestClassifierUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_randomforest_regr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_randomforest_regr AS 'hivemall.smile.regression.RandomForestRegressionUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS tree_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION tree_predict AS 'hivemall.smile.tools.TreePredictUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS vm_tree_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION vm_tree_predict AS 'hivemall.smile.tools.TreePredictByStackMachineUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS js_tree_predict")
+sqlContext.sql("CREATE TEMPORARY FUNCTION js_tree_predict AS 'hivemall.smile.tools.TreePredictByJavascriptUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS rf_ensemble")
+sqlContext.sql("CREATE TEMPORARY FUNCTION rf_ensemble AS 'hivemall.smile.tools.RandomForestEnsembleUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_gradient_tree_boosting_classifier")
+sqlContext.sql("CREATE TEMPORARY FUNCTION train_gradient_tree_boosting_classifier AS 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS guess_attribute_types")
+sqlContext.sql("CREATE TEMPORARY FUNCTION guess_attribute_types AS 'hivemall.smile.tools.GuessAttributesUDF'")
