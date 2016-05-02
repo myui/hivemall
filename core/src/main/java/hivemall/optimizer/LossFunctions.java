@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.common;
+package hivemall.optimizer;
 
 import hivemall.utils.math.MathUtils;
 
@@ -69,7 +69,7 @@ public final class LossFunctions {
 
         /**
          * Evaluate the loss function.
-         * 
+         *
          * @param p The prediction, p = w^T x
          * @param y The true value (aka target)
          * @return The loss evaluated at `p` and `y`.
@@ -80,7 +80,7 @@ public final class LossFunctions {
 
         /**
          * Evaluate the derivative of the loss function with respect to the prediction `p`.
-         * 
+         *
          * @param p The prediction, p = w^T x
          * @param y The true value (aka target)
          * @return The derivative of the loss function w.r.t. `p`.
@@ -134,7 +134,7 @@ public final class LossFunctions {
 
     /**
      * Squared loss for regression problems.
-     * 
+     *
      * If you're trying to minimize the mean error, use squared-loss.
      */
     public static final class SquaredLoss extends RegressionLoss {
@@ -278,7 +278,7 @@ public final class LossFunctions {
     /**
      * Quantile loss is useful to predict rank/order and you do not mind the mean error to increase
      * as long as you get the relative order correct.
-     * 
+     *
      * @link http://en.wikipedia.org/wiki/Quantile_regression
      */
     public static final class QuantileLoss extends RegressionLoss {

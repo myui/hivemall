@@ -34,9 +34,6 @@ public interface PredictionModel extends MixedModel {
 
     boolean hasCovariance();
 
-    void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x,
-            boolean sum_of_gradients);
-
     void configureClock();
 
     boolean hasClock();
@@ -55,6 +52,8 @@ public interface PredictionModel extends MixedModel {
     <T extends IWeightValue> void set(@Nonnull Object feature, @Nonnull T value);
 
     float getWeight(@Nonnull Object feature);
+
+    void setWeight(@Nonnull Object feature, float value);
 
     float getCovariance(@Nonnull Object feature);
 

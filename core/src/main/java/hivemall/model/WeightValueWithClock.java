@@ -79,13 +79,48 @@ public class WeightValueWithClock implements IWeightValue {
     }
 
     @Override
+    public void setSumOfSquaredGradients(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public float getSumOfSquaredDeltaX() {
         return 0.f;
     }
 
     @Override
+    public void setSumOfSquaredDeltaX(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public float getSumOfGradients() {
         return 0.f;
+    }
+
+    @Override
+    public void setSumOfGradients(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getM() {
+        return 0.f;
+    }
+
+    @Override
+    public void setM(float value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public float getV() {
+        return 0.f;
+    }
+
+    @Override
+    public void setV(float value) {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -144,7 +179,7 @@ public class WeightValueWithClock implements IWeightValue {
      * WeightValue with Sum of Squared Gradients
      */
     public static final class WeightValueParamsF1Clock extends WeightValueWithClock {
-        private final float f1;
+        private float f1;
 
         public WeightValueParamsF1Clock(float value, float f1) {
             super(value);
@@ -174,11 +209,16 @@ public class WeightValueWithClock implements IWeightValue {
             return f1;
         }
 
+        @Override
+        public void setSumOfSquaredGradients(float value) {
+            this.f1 = value;
+        }
+
     }
 
     public static final class WeightValueParamsF2Clock extends WeightValueWithClock {
-        private final float f1;
-        private final float f2;
+        private float f1;
+        private float f2;
 
         public WeightValueParamsF2Clock(float value, float f1, float f2) {
             super(value);
@@ -213,13 +253,134 @@ public class WeightValueWithClock implements IWeightValue {
         }
 
         @Override
+        public void setSumOfSquaredGradients(float value) {
+            this.f1 = value;
+        }
+
+        @Override
         public float getSumOfSquaredDeltaX() {
             return f2;
         }
 
         @Override
+        public void setSumOfSquaredDeltaX(float value) {
+            this.f2 = value;
+        }
+
+        @Override
         public float getSumOfGradients() {
             return f2;
+        }
+
+        @Override
+        public void setSumOfGradients(float value) {
+            this.f2 = value;
+        }
+        @Override
+        public float getM() {
+            return f1;
+        }
+
+        @Override
+        public void setM(float value) {
+            this.f1 = value;
+        }
+
+        @Override
+        public float getV() {
+            return f2;
+        }
+
+        @Override
+        public void setV(float value) {
+            this.f2 = value;
+        }
+
+    }
+
+    public static final class WeightValueParamsF3Clock extends WeightValueWithClock {
+        private float f1;
+        private float f2;
+        private float f3;
+
+        public WeightValueParamsF3Clock(float value, float f1, float f2, float f3) {
+            super(value);
+            this.f1 = f1;
+            this.f2 = f2;
+            this.f3 = f3;
+        }
+
+        public WeightValueParamsF3Clock(IWeightValue src) {
+            super(src);
+            this.f1 = src.getFloatParams(1);
+            this.f2 = src.getFloatParams(2);
+            this.f3 = src.getFloatParams(3);
+        }
+
+        @Override
+        public WeightValueType getType() {
+            return WeightValueType.ParamsF3;
+        }
+
+        @Override
+        public float getFloatParams(@Nonnegative final int i) {
+            if(i == 1) {
+                return f1;
+            } else if(i == 2) {
+                return f2;
+            } else if(i == 3) {
+                return f3;
+            }
+            throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");
+        }
+
+        @Override
+        public float getSumOfSquaredGradients() {
+            return f1;
+        }
+
+        @Override
+        public void setSumOfSquaredGradients(float value) {
+            this.f1 = value;
+        }
+
+        @Override
+        public float getSumOfSquaredDeltaX() {
+            return f2;
+        }
+
+        @Override
+        public void setSumOfSquaredDeltaX(float value) {
+            this.f2 = value;
+        }
+
+        @Override
+        public float getSumOfGradients() {
+            return f3;
+        }
+
+        @Override
+        public void setSumOfGradients(float value) {
+            this.f3 = value;
+        }
+        @Override
+        public float getM() {
+            return f1;
+        }
+
+        @Override
+        public void setM(float value) {
+            this.f1 = value;
+        }
+
+        @Override
+        public float getV() {
+            return f2;
+        }
+
+        @Override
+        public void setV(float value) {
+            this.f2 = value;
         }
 
     }

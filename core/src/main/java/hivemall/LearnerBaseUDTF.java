@@ -28,6 +28,9 @@ import hivemall.model.SparseModel;
 import hivemall.model.SynchronizedModelWrapper;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
+import hivemall.optimizer.DenseOptimizerFactory;
+import hivemall.optimizer.Optimizer;
+import hivemall.optimizer.SparseOptimizerFactory;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
@@ -38,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -193,6 +197,24 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
         }
         assert (model != null);
         return model;
+    }
+
+    // If a model implements a optimizer, it must override this
+    protected Map<String, String> getOptimzierOptions() {
+        return null;
+    }
+
+    protected Optimizer createOptimizer() {
+        assert(!useCovariance());
+        final Map<String, String> options = getOptimzierOptions();
+        if(options != null) {
+            if (dense_model) {
+                return DenseOptimizerFactory.create(model_dims, options);
+            } else {
+                return SparseOptimizerFactory.create(model_dims, options);
+            }
+        }
+        return null;
     }
 
     protected MixClient configureMixClient(String connectURIs, String label, PredictionModel model) {

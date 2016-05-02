@@ -36,6 +36,10 @@ public final class SparseModel extends AbstractPredictionModel {
     private final boolean hasCovar;
     private boolean clockEnabled;
 
+    public SparseModel(int size) {
+        this(size, false);
+    }
+
     public SparseModel(int size, boolean hasCovar) {
         super();
         this.weights = new OpenHashMap<Object, IWeightValue>(size);
@@ -52,10 +56,6 @@ public final class SparseModel extends AbstractPredictionModel {
     public boolean hasCovariance() {
         return hasCovar;
     }
-
-    @Override
-    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x,
-            boolean sum_of_gradients) {}
 
     @Override
     public void configureClock() {
@@ -128,6 +128,18 @@ public final class SparseModel extends AbstractPredictionModel {
     public float getWeight(final Object feature) {
         IWeightValue v = weights.get(feature);
         return v == null ? 0.f : v.get();
+    }
+
+    @Override
+    public void setWeight(Object feature, float value) {
+        if(weights.containsKey(feature)) {
+            IWeightValue weight = weights.get(feature);
+            weight.set(value);
+        } else {
+            IWeightValue weight = new WeightValue(value);
+            weight.set(value);
+            weights.put(feature, weight);
+        }
     }
 
     @Override

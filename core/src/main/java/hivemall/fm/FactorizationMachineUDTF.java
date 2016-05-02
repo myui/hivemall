@@ -20,10 +20,10 @@ package hivemall.fm;
 
 import hivemall.UDTFWithOptions;
 import hivemall.common.ConversionState;
-import hivemall.common.EtaEstimator;
-import hivemall.common.LossFunctions;
-import hivemall.common.LossFunctions.LossFunction;
-import hivemall.common.LossFunctions.LossType;
+import hivemall.optimizer.EtaEstimator;
+import hivemall.optimizer.LossFunctions;
+import hivemall.optimizer.LossFunctions.LossFunction;
+import hivemall.optimizer.LossFunctions.LossType;
 import hivemall.fm.FMStringFeatureMapModel.Entry;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;

@@ -13,6 +13,9 @@ CREATE FUNCTION hivemall_version as 'hivemall.HivemallVersionUDF' USING JAR '${h
 -- binary classification --
 ---------------------------
 
+DROP FUNCTION IF EXISTS train_classifier;
+CREATE FUNCTION train_classifier as 'hivemall.classifier.GeneralClassifierUDTF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS train_perceptron;
 CREATE FUNCTION train_perceptron as 'hivemall.classifier.PerceptronUDTF' USING JAR '${hivemall_jar}';
 
@@ -45,7 +48,7 @@ CREATE FUNCTION train_adagrad_rda as 'hivemall.classifier.AdaGradRDAUDTF' USING 
 
 --------------------------------
 --  Multiclass classification --
--------------------------------- 
+--------------------------------
 
 DROP FUNCTION IF EXISTS train_multiclass_perceptron;
 CREATE FUNCTION train_multiclass_perceptron as 'hivemall.classifier.multiclass.MulticlassPerceptronUDTF' USING JAR '${hivemall_jar}';
@@ -312,6 +315,13 @@ CREATE FUNCTION tf as 'hivemall.ftvec.text.TermFrequencyUDAF' USING JAR '${hivem
 -- Regression functions --
 --------------------------
 
+DROP FUNCTION IF EXISTS train_regression;
+CREATE FUNCTION train_regression as 'hivemall.classifier.GeneralRegressionUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_logregr;
+CREATE FUNCTION train_logregr as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
+
+-- alias for backward compatibility
 DROP FUNCTION IF EXISTS logress;
 CREATE FUNCTION logress as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
 
@@ -599,3 +609,4 @@ CREATE FUNCTION xgboost_predict AS 'hivemall.xgboost.tools.XGBoostPredictUDTF' U
 
 DROP FUNCTION xgboost_multiclass_predict;
 CREATE FUNCTION xgboost_multiclass_predict AS 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF' USING JAR '${hivemall_jar}';
+=======

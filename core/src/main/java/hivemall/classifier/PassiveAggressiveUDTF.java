@@ -18,7 +18,7 @@
  */
 package hivemall.classifier;
 
-import hivemall.common.LossFunctions;
+import hivemall.optimizer.LossFunctions;
 import hivemall.model.FeatureValue;
 import hivemall.model.PredictionResult;
 

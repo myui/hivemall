@@ -18,7 +18,7 @@
  */
 package hivemall.regression;
 
-import hivemall.common.LossFunctions;
+import hivemall.optimizer.LossFunctions;
 import hivemall.common.OnlineVariance;
 import hivemall.model.FeatureValue;
 import hivemall.model.IWeightValue;

@@ -25,6 +25,7 @@ import hivemall.model.PredictionModel;
 import hivemall.model.PredictionResult;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
+import hivemall.optimizer.Optimizer;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -56,6 +57,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     private boolean parseFeature;
 
     protected PredictionModel model;
+    protected Optimizer optimizerImpl;
     protected int count;
 
     @Override
@@ -76,6 +78,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
+        this.optimizerImpl = createOptimizer();
 
         this.count = 0;
         return getReturnOI(featureOutputOI);

@@ -16,11 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.common;
+package hivemall.optimizer;
 
 import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
+import java.util.Map;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -155,6 +156,36 @@ public abstract class EtaEstimator {
 
         double power_t = Primitives.parseDouble(cl.getOptionValue("power_t"), 0.1d);
         return new InvscalingEtaEstimator(eta0, power_t);
+    }
+
+    @Nonnull
+    public static EtaEstimator get(@Nonnull final Map<String, String> options)
+            throws IllegalArgumentException {
+        final String etaName = options.get("eta");
+        if(etaName == null) {
+            return new FixedEtaEstimator(1.f);
+        }
+        float eta0 = 0.1f;
+        if(options.containsKey("eta0")) {
+            eta0 = Float.parseFloat(options.get("eta0"));
+        }
+        if(etaName.toLowerCase().equals("fixed")) {
+            return new FixedEtaEstimator(eta0);
+        } else if(etaName.toLowerCase().equals("simple")) {
+            long t = 10000;
+            if(options.containsKey("t")) {
+                t = Long.parseLong(options.get("t"));
+            }
+            return new SimpleEtaEstimator(eta0, t);
+        } else if(etaName.toLowerCase().equals("inverse")) {
+            double power_t = 0.1;
+            if(options.containsKey("power_t")) {
+                power_t = Double.parseDouble(options.get("power_t"));
+            }
+            return new InvscalingEtaEstimator(eta0, power_t);
+        } else {
+            throw new IllegalArgumentException("Unsupported ETA name: " + etaName);
+        }
     }
 
 }

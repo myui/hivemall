@@ -25,6 +25,7 @@ import hivemall.model.PredictionModel;
 import hivemall.model.PredictionResult;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
+import hivemall.optimizer.Optimizer;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.FloatAccumulator;
@@ -64,6 +65,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     private boolean parseFeature;
 
     protected PredictionModel model;
+    protected Optimizer optimizerImpl;
     protected int count;
 
     // The accumulated delta of each weight values.
@@ -87,6 +89,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
+        this.optimizerImpl = createOptimizer();
 
         this.count = 0;
         this.sampled = 0;
@@ -235,7 +238,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
     protected void update(@Nonnull final FeatureValue[] features, final float target,
             final float predicted) {
-        final float grad = computeUpdate(target, predicted);
+        final float grad = computeGradient(target, predicted);
 
         if (is_mini_batch) {
             accumulateUpdate(features, grad);
@@ -247,12 +250,9 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
         }
     }
 
-    protected float computeUpdate(float target, float predicted) {
-        throw new IllegalStateException();
-    }
-
-    protected IWeightValue getNewWeight(IWeightValue old_w, float delta) {
-        throw new IllegalStateException();
+    // Compute a gradient by using a loss function in derived classes
+    protected float computeGradient(float target, float predicted) {
+        throw new UnsupportedOperationException();
     }
 
     protected final void accumulateUpdate(@Nonnull final FeatureValue[] features, final float coeff) {
