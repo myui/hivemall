@@ -22,113 +22,84 @@ import scala.collection.mutable.Seq
 import org.apache.spark.sql.hive.HivemallOps
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.test.TestHiveSingleton
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{QueryTest, functions, Row, SQLContext}
+import org.apache.spark.sql.{QueryTest, Row, functions}
 import org.apache.spark.test.TestUtils._
 
 import hivemall.tools.RegressionDatagen
 
 /**
- * Create a new [[SQLContext]] running in local-cluster mode.
+ * Base class for a shared SparkContext in test uses
  */
-class HivemallQueryTest extends QueryTest with TestHiveSingleton {
+abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
 
   import hiveContext.implicits._
 
-  protected val DummyInputData = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        (0 until 4).map(Row(_))
-      )
-    val df = hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("data", IntegerType, true) ::
-        Nil)
-      )
-    df
-  }
+  protected val DummyInputData =
+    Seq(
+      (0, 0), (1, 1), (2, 2), (3, 3)
+    ).toDF("c0", "c1")
 
-  protected val IntList2Data = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        Row(8 :: 5 :: Nil, 6 :: 4 :: Nil) ::
-        Row(3 :: 1 :: Nil, 3 :: 2 :: Nil) ::
-        Row(2 :: Nil, 3 :: Nil) ::
-        Nil
-      )
-    hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("target", ArrayType(IntegerType), true) ::
-        StructField("predict", ArrayType(IntegerType), true) ::
-        Nil)
-      )
-  }
+  protected val IntList2Data =
+    Seq(
+      (8 :: 5 :: Nil, 6 :: 4 :: Nil),
+      (3 :: 1 :: Nil, 3 :: 2 :: Nil),
+      (2 :: Nil, 3 :: Nil)
+    ).toDF("target", "predict")
 
-  protected val Float2Data = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        Row(0.8f, 0.3f) ::
-        Row(0.3f, 0.9f) ::
-        Row(0.2f, 0.4f) ::
-        Nil
-      )
-    hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("predict", DoubleType, true) ::
-        StructField("target", DoubleType, true) ::
-        Nil)
-      )
-  }
+  protected val Float2Data =
+    Seq(
+      (0.8f, 0.3f), (0.3f, 0.9f), (0.2f, 0.4f)
+    ).toDF("target", "predict")
 
-  protected val TinyTrainData = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        Row(0.0, "1:0.8" :: "2:0.2" :: Nil) ::
-        Row(1.0, "2:0.7" :: Nil) ::
-        Row(0.0, "1:0.9" :: Nil) ::
-        Nil
-      )
-    val df = hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("label", DoubleType, true) ::
-        StructField("features", ArrayType(StringType), true) ::
-        Nil)
-      )
-    df
-  }
+  protected val TinyTrainData =
+    Seq(
+      (0.0, "1:0.8" :: "2:0.2" :: Nil),
+      (1.0, "2:0.7" :: Nil),
+      (0.0, "1:0.9" :: Nil)
+    ).toDF("label", "features")
 
-  protected val TinyTestData = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        Row(0.0, "1:0.6" :: "2:0.1" :: Nil) ::
-        Row(1.0, "2:0.9" :: Nil) ::
-        Row(0.0, "1:0.2" :: Nil) ::
-        Row(0.0, "2:0.1" :: Nil) ::
-        Row(0.0, "0:0.6" :: "2:0.4" :: Nil) ::
-        Nil
-      )
-    val df = hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("label", DoubleType, true) ::
-        StructField("features", ArrayType(StringType), true) ::
-        Nil)
-      )
-    df
-  }
+  protected val TinyTestData =
+    Seq(
+      (0.0, "1:0.6" :: "2:0.1" :: Nil),
+      (1.0, "2:0.9" :: Nil),
+      (0.0, "1:0.2" :: Nil),
+      (0.0, "2:0.1" :: Nil),
+      (0.0, "0:0.6" :: "2:0.4" :: Nil)
+    ).toDF("label", "features")
 
-  protected val TinyScoreData = {
-    val rowRdd = hiveContext.sparkContext.parallelize(
-        Row(0.8f) :: Row(-0.3f) :: Row(0.2f) ::
-        Nil
-      )
-    val df = hiveContext.createDataFrame(
-      rowRdd,
-      StructType(
-        StructField("score", FloatType, true) ::
-        Nil)
-      )
-    df
-  }
+  protected val LargeRegrTrainData = RegressionDatagen.exec(
+      hiveContext,
+      n_partitions = 2,
+      min_examples = 100000,
+      seed = 3,
+      prob_one = 0.8f
+    ).cache
+
+  protected val LargeRegrTestData = RegressionDatagen.exec(
+      hiveContext,
+      n_partitions = 2,
+      min_examples = 100,
+      seed = 3,
+      prob_one = 0.5f
+    ).cache
+
+  protected val LargeClassifierTrainData = RegressionDatagen.exec(
+      hiveContext,
+      n_partitions = 2,
+      min_examples = 100000,
+      seed = 5,
+      prob_one = 0.8f,
+      cl = true
+    ).cache
+
+  protected val LargeClassifierTestData = RegressionDatagen.exec(
+      hiveContext,
+      n_partitions = 2,
+      min_examples = 100,
+      seed = 5,
+      prob_one = 0.5f,
+      cl = true
+    ).cache
 
   protected def checkRegrPrecision(func: String): Unit = {
     // Build a model
@@ -220,19 +191,4 @@ class HivemallQueryTest extends QueryTest with TestHiveSingleton {
     TestUtils.expectResult(precision < 0.70,
       s"Low precision -> func:${func} value:${precision}")
   }
-
-  // Only used in this local scope
-  protected val LargeRegrTrainData = RegressionDatagen.exec(
-    hiveContext, n_partitions = 2, min_examples = 100000, seed = 3, prob_one = 0.8f).cache
-
-  protected val LargeRegrTestData = RegressionDatagen.exec(
-    hiveContext, n_partitions = 2, min_examples = 100, seed = 3, prob_one = 0.5f).cache
-
-  protected val LargeClassifierTrainData = RegressionDatagen.exec(
-    hiveContext, n_partitions = 2, min_examples = 100000, seed = 5, prob_one = 0.8f, cl = true)
-    .cache
-
-  protected val LargeClassifierTestData = RegressionDatagen.exec(
-    hiveContext, n_partitions = 2, min_examples = 100, seed = 5, prob_one = 0.5f, cl = true)
-    .cache
 }

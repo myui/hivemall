@@ -20,34 +20,53 @@ package org.apache.spark.sql.hive
 import org.apache.spark.sql.Row
 import org.apache.spark.test.HivemallQueryTest
 
-class HiveUdfSuite extends HivemallQueryTest {
+final class HiveUdfSuite extends HivemallQueryTest {
 
   import hiveContext.implicits._
+  import hiveContext._
 
   test("hivemall_version") {
-    hiveContext.sql(s"CREATE TEMPORARY FUNCTION hivemall_version " +
-      s"AS '${classOf[hivemall.HivemallVersionUDF].getName}'")
+    sql(s"""
+         | CREATE TEMPORARY FUNCTION hivemall_version
+         |   AS '${classOf[hivemall.HivemallVersionUDF].getName}'
+       """.stripMargin)
+
     checkAnswer(
-      hiveContext.sql(s"SELECT DISTINCT hivemall_version()"),
+      sql(s"SELECT DISTINCT hivemall_version()"),
       Row("0.4.1-alpha.6")
     )
-    // hiveContext.sql("DROP TEMPORARY FUNCTION IF EXISTS hivemall_version")
-    // hiveContext.reset()
+
+    // sql("DROP TEMPORARY FUNCTION IF EXISTS hivemall_version")
+    // reset()
   }
 
   test("train_logregr") {
     TinyTrainData.registerTempTable("TinyTrainData")
-    hiveContext.sql(s"CREATE TEMPORARY FUNCTION train_logregr " +
-      s"AS '${classOf[hivemall.regression.LogressUDTF].getName}'")
-    hiveContext.sql(s"CREATE TEMPORARY FUNCTION add_bias " +
-      s"AS '${classOf[hivemall.ftvec.AddBiasUDFWrapper].getName}'")
-    val model = hiveContext.sql(
-      "SELECT feature, AVG(weight) AS weight " +
-        "FROM (SELECT train_logregr(add_bias(features), label) AS (feature, weight)" +
-        "  FROM TinyTrainData) t " +
-        "GROUP BY feature")
-    checkAnswer(model.select($"feature"), Seq(Row("0"), Row("1"), Row("2")))
-    // Why 'train_logregr' is not registered in HiveMetaStore
+    sql(s"""
+         | CREATE TEMPORARY FUNCTION train_logregr
+         |   AS '${classOf[hivemall.regression.LogressUDTF].getName}'
+       """.stripMargin)
+    sql(s"""
+         | CREATE TEMPORARY FUNCTION add_bias
+         |   AS '${classOf[hivemall.ftvec.AddBiasUDFWrapper].getName}'
+       """.stripMargin)
+
+    val model = sql(
+      s"""
+         | SELECT feature, AVG(weight) AS weight
+         |   FROM (
+         |       SELECT train_logregr(add_bias(features), label) AS (feature, weight)
+         |         FROM TinyTrainData
+         |     ) t
+         |   GROUP BY feature
+       """.stripMargin)
+
+    checkAnswer(
+      model.select($"feature"),
+      Seq(Row("0"), Row("1"), Row("2"))
+    )
+
+    // TODO: Why 'train_logregr' is not registered in HiveMetaStore?
     // ERROR RetryingHMSHandler: MetaException(message:NoSuchObjectException
     //   (message:Function default.train_logregr does not exist))
     //
@@ -55,4 +74,3 @@ class HiveUdfSuite extends HivemallQueryTest {
     // hiveContext.reset()
   }
 }
-

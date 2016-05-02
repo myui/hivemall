@@ -191,7 +191,7 @@ final class GroupedDataEx protected[sql](
     val udaf = HiveUDAFFunction(
         new HiveFunctionWrapper("hivemall.ensemble.MaxRowUDAF"),
         Seq(score, label).map(df.col(_).expr),
-        isUDAFBridgeRequired = true)
+        isUDAFBridgeRequired = false)
       .toAggregateExpression()
     toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
   }
@@ -210,28 +210,16 @@ final class GroupedDataEx protected[sql](
   }
 
   /**
-   * @see hivemall.evaluation.FMeasureUDAF
-   */
-  def f1score(predict: String, target: String): DataFrame = {
-    checkType(target, ArrayType(IntegerType))
-    checkType(predict, ArrayType(IntegerType))
-    val udaf = HiveUDAFFunction(
-        new HiveFunctionWrapper("hivemall.evaluation.FMeasureUDAF"),
-        Seq(predict, target).map(df.col(_).expr),
-        isUDAFBridgeRequired = true)
-      .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
-  }
-
-  /**
    * @see hivemall.evaluation.MeanAbsoluteErrorUDAF
    */
   def mae(predict: String, target: String): DataFrame = {
     checkType(predict, FloatType)
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
-      new HiveFunctionWrapper("hivemall.evaluation.MeanAbsoluteErrorUDAF"),
-      Seq(predict, target).map(df.resolve))
+        new HiveFunctionWrapper("hivemall.evaluation.MeanAbsoluteErrorUDAF"),
+        Seq(predict, target).map(df.col(_).expr),
+        isUDAFBridgeRequired = true)
+      .toAggregateExpression()
     toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
   }
 
@@ -242,8 +230,10 @@ final class GroupedDataEx protected[sql](
     checkType(predict, FloatType)
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
-      new HiveFunctionWrapper("hivemall.evaluation.MeanSquaredErrorUDAF"),
-      Seq(predict, target).map(df.resolve))
+        new HiveFunctionWrapper("hivemall.evaluation.MeanSquaredErrorUDAF"),
+        Seq(predict, target).map(df.col(_).expr),
+        isUDAFBridgeRequired = true)
+      .toAggregateExpression()
     toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
   }
 
@@ -255,7 +245,23 @@ final class GroupedDataEx protected[sql](
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
       new HiveFunctionWrapper("hivemall.evaluation.RootMeanSquaredErrorUDAF"),
-      Seq(predict, target).map(df.resolve))
+        Seq(predict, target).map(df.col(_).expr),
+        isUDAFBridgeRequired = true)
+      .toAggregateExpression()
+    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+  }
+
+  /**
+   * @see hivemall.evaluation.FMeasureUDAF
+   */
+  def f1score(predict: String, target: String): DataFrame = {
+    // checkType(target, ArrayType(IntegerType))
+    // checkType(predict, ArrayType(IntegerType))
+    val udaf = HiveUDAFFunction(
+        new HiveFunctionWrapper("hivemall.evaluation.FMeasureUDAF"),
+        Seq(predict, target).map(df.col(_).expr),
+        isUDAFBridgeRequired = true)
+      .toAggregateExpression()
     toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
   }
 }

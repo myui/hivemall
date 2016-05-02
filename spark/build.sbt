@@ -1,5 +1,12 @@
-// Copied to handle compatibility stuffs for Hive UDFs
-unmanagedSourceDirectories in Compile += baseDirectory.value / "extra-src/hive"
+scalaVersion := "2.11.8"
+
+licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
+
+javaOptions ++= Seq("-Xms256m", "-Xmx1024m", "-XX:MaxPermSize=1024m", "-XX:+CMSClassUnloadingEnabled")
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+
+parallelExecution in Test := false
 
 // To avoid compiler errors in sbt-doc
 // sources in doc in Compile := List()
@@ -7,20 +14,17 @@ unmanagedSourceDirectories in Compile += baseDirectory.value / "extra-src/hive"
 // To skip unit tests in assembly
 test in assembly := {}
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
-
 // spark-package settings
 spName := "maropu/hivemall-spark"
-
-scalaVersion := "2.11.8"
 
 sparkVersion := "1.6.1"
 
 sparkComponents ++= Seq("sql", "mllib", "hive")
 
-licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
+// Copied to handle compatibility stuffs for Hive UDFs
+unmanagedSourceDirectories in Compile += baseDirectory.value / "extra-src/hive"
 
-credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials")
+// credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials")
 
 // resolvers += Resolver.sonatypeRepo("releases")
 // addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)

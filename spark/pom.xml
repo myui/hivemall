@@ -16,6 +16,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<spark.version>1.6.1</spark.version>
 		<scala.version>2.11.8</scala.version>
 	</properties>
 
@@ -86,6 +87,7 @@
 			<version>1.8</version>
 			<scope>compile</scope>
 		</dependency>
+		<!-- test dependencies -->
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>xerial-core</artifactId>
@@ -192,6 +194,7 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
+                                        <argLine>-Xms256m -Xmx1024m -XX:MaxPermSize=1024m -XX:+CMSClassUnloadingEnabled</argLine>
 				</configuration>
 				<executions>
 					<execution>
