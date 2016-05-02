@@ -18,7 +18,7 @@
  */
 package hivemall;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.lang.CommandLineUtils;
 

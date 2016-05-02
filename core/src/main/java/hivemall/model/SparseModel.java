@@ -16,11 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
-import hivemall.io.WeightValueWithClock.WeightValueParamsF1Clock;
-import hivemall.io.WeightValueWithClock.WeightValueParamsF2Clock;
-import hivemall.io.WeightValueWithClock.WeightValueWithCovarClock;
+import hivemall.model.WeightValueWithClock.WeightValueParamsF1Clock;
+import hivemall.model.WeightValueWithClock.WeightValueParamsF2Clock;
+import hivemall.model.WeightValueWithClock.WeightValueWithCovarClock;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashMap;
 

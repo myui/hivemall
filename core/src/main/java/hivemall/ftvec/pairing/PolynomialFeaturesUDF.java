@@ -18,7 +18,7 @@
  */
 package hivemall.ftvec.pairing;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 import hivemall.utils.HivemallUtils;
 
 import java.util.ArrayList;

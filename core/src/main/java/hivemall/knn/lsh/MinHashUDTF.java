@@ -22,7 +22,7 @@ import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
 import static hivemall.HivemallConstants.INT_TYPE_NAME;
 import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.UDTFWithOptions;
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hashing.HashFunction;
 import hivemall.utils.hashing.HashFunctionFactory;

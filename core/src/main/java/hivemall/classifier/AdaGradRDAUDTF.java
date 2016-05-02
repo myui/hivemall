@@ -19,9 +19,9 @@
 package hivemall.classifier;
 
 import hivemall.common.LossFunctions;
-import hivemall.io.FeatureValue;
-import hivemall.io.IWeightValue;
-import hivemall.io.WeightValue.WeightValueParamsF2;
+import hivemall.model.FeatureValue;
+import hivemall.model.IWeightValue;
+import hivemall.model.WeightValue.WeightValueParamsF2;
 import hivemall.utils.lang.Primitives;
 
 import javax.annotation.Nonnull;

@@ -19,13 +19,13 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
-import hivemall.io.DenseModel;
-import hivemall.io.PredictionModel;
-import hivemall.io.SpaceEfficientDenseModel;
-import hivemall.io.SparseModel;
-import hivemall.io.SynchronizedModelWrapper;
-import hivemall.io.WeightValue;
-import hivemall.io.WeightValue.WeightValueWithCovar;
+import hivemall.model.DenseModel;
+import hivemall.model.PredictionModel;
+import hivemall.model.SpaceEfficientDenseModel;
+import hivemall.model.SparseModel;
+import hivemall.model.SynchronizedModelWrapper;
+import hivemall.model.WeightValue;
+import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
 import hivemall.utils.datetime.StopWatch;

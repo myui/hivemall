@@ -18,10 +18,10 @@
  */
 package hivemall.mix.server;
 
-import hivemall.io.DenseModel;
-import hivemall.io.PredictionModel;
-import hivemall.io.SparseModel;
-import hivemall.io.WeightValue;
+import hivemall.model.DenseModel;
+import hivemall.model.PredictionModel;
+import hivemall.model.SparseModel;
+import hivemall.model.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
 import hivemall.mix.server.MixServer.ServerState;

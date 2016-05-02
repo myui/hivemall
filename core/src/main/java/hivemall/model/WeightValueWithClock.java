@@ -16,24 +16,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import javax.annotation.Nonnegative;
 
-public class WeightValue implements IWeightValue {
+public class WeightValueWithClock implements IWeightValue {
 
     protected float value;
-    protected boolean touched;
+    protected short clock;
+    protected byte deltaUpdates;
 
-    public WeightValue() {}
-
-    public WeightValue(float weight) {
-        this(weight, true);
+    public WeightValueWithClock(float value) {
+        this.value = value;
+        this.clock = 0;
+        this.deltaUpdates = 0;
     }
 
-    public WeightValue(float weight, boolean touched) {
-        this.value = weight;
-        this.touched = touched;
+    public WeightValueWithClock(IWeightValue src) {
+        this.value = src.get();
+        if(src.isTouched()) {
+            this.clock = 1;
+            this.deltaUpdates = 1;
+        } else {
+            this.clock = 0;
+            this.deltaUpdates = 0;
+        }
     }
 
     @Override
@@ -46,27 +53,22 @@ public class WeightValue implements IWeightValue {
         throw new UnsupportedOperationException("getFloatParams(int) should not be called");
     }
 
-    @Override
     public final float get() {
         return value;
     }
 
-    @Override
     public final void set(float weight) {
         this.value = weight;
     }
 
-    @Override
     public boolean hasCovariance() {
         return false;
     }
 
-    @Override
     public float getCovariance() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void setCovariance(float cov) {
         throw new UnsupportedOperationException();
     }
@@ -89,59 +91,68 @@ public class WeightValue implements IWeightValue {
     /** 
      * @return whether touched in training or not
      */
-    @Override
     public final boolean isTouched() {
-        return touched;
+        return deltaUpdates > 0;
     }
 
     @Override
-    public final void setTouched(boolean touched) {
-        this.touched = touched;
+    public void setTouched(boolean touched) {
+        throw new UnsupportedOperationException("WeightValueWithClock#setTouched should not be called");
     }
 
-    @Override
     public final short getClock() {
-        throw new UnsupportedOperationException();
+        return clock;
     }
 
-    @Override
     public final void setClock(short clock) {
-        throw new UnsupportedOperationException();
+        this.clock = clock;
     }
 
-    @Override
     public final byte getDeltaUpdates() {
-        throw new UnsupportedOperationException();
+        return deltaUpdates;
     }
 
-    @Override
     public final void setDeltaUpdates(byte deltaUpdates) {
-        throw new UnsupportedOperationException();
+        if(deltaUpdates < 0) {
+            throw new IllegalArgumentException("deltaUpdates is less than 0: " + deltaUpdates);
+        }
+        this.deltaUpdates = deltaUpdates;
     }
 
     @Override
     public void copyTo(IWeightValue another) {
         another.set(value);
-        another.setTouched(touched);
+        another.setClock(clock);
+        another.setDeltaUpdates(deltaUpdates);
     }
 
     @Override
     public void copyFrom(IWeightValue another) {
         this.value = another.get();
-        this.touched = another.isTouched();
+        this.clock = another.getClock();
+        this.deltaUpdates = another.getDeltaUpdates();
     }
 
     @Override
     public String toString() {
-        return "WeightValue [value=" + value + "]";
+        return "WeightValueWithClock [value=" + value + ", clock=" + clock + ", deltaUpdates="
+                + deltaUpdates + "]";
     }
 
-    public static final class WeightValueParamsF1 extends WeightValue {
+    /**
+     * WeightValue with Sum of Squared Gradients
+     */
+    public static final class WeightValueParamsF1Clock extends WeightValueWithClock {
         private final float f1;
 
-        public WeightValueParamsF1(float weight, float f1) {
-            super(weight);
+        public WeightValueParamsF1Clock(float value, float f1) {
+            super(value);
             this.f1 = f1;
+        }
+
+        public WeightValueParamsF1Clock(IWeightValue src) {
+            super(src);
+            this.f1 = src.getFloatParams(1);
         }
 
         @Override
@@ -158,23 +169,26 @@ public class WeightValue implements IWeightValue {
         }
 
         @Override
-        public final float getSumOfSquaredGradients() {
+        public float getSumOfSquaredGradients() {
             return f1;
         }
 
     }
 
-    /**
-     * WeightValue with Sum of Squared Gradients
-     */
-    public static final class WeightValueParamsF2 extends WeightValue {
+    public static final class WeightValueParamsF2Clock extends WeightValueWithClock {
         private final float f1;
         private final float f2;
 
-        public WeightValueParamsF2(float weight, float f1, float f2) {
-            super(weight);
+        public WeightValueParamsF2Clock(float value, float f1, float f2) {
+            super(value);
             this.f1 = f1;
             this.f2 = f2;
+        }
+
+        public WeightValueParamsF2Clock(IWeightValue src) {
+            super(src);
+            this.f1 = src.getFloatParams(1);
+            this.f2 = src.getFloatParams(2);
         }
 
         @Override
@@ -193,12 +207,12 @@ public class WeightValue implements IWeightValue {
         }
 
         @Override
-        public final float getSumOfSquaredGradients() {
+        public float getSumOfSquaredGradients() {
             return f1;
         }
 
         @Override
-        public final float getSumOfSquaredDeltaX() {
+        public float getSumOfSquaredDeltaX() {
             return f2;
         }
 
@@ -209,22 +223,19 @@ public class WeightValue implements IWeightValue {
 
     }
 
-    public static final class WeightValueWithCovar extends WeightValue {
+    public static final class WeightValueWithCovarClock extends WeightValueWithClock {
         public static final float DEFAULT_COVAR = 1.f;
 
         private float covariance;
 
-        public WeightValueWithCovar() {
-            super();
+        public WeightValueWithCovarClock(float value, float covar) {
+            super(value);
+            this.covariance = covar;
         }
 
-        public WeightValueWithCovar(float weight, float covariance) {
-            this(weight, covariance, true);
-        }
-
-        public WeightValueWithCovar(float weight, float covariance, boolean touched) {
-            super(weight, touched);
-            this.covariance = covariance;
+        public WeightValueWithCovarClock(IWeightValue src) {
+            super(src);
+            this.covariance = src.getCovariance();
         }
 
         @Override
@@ -261,8 +272,10 @@ public class WeightValue implements IWeightValue {
 
         @Override
         public String toString() {
-            return "WeightValueWithCovar [value=" + value + ", covariance=" + covariance + "]";
+            return "WeightValueWithCovar [value=" + value + ", clock=" + clock + ", deltaUpdates="
+                    + deltaUpdates + ", covariance=" + covariance + "]";
         }
+
     }
 
 }

@@ -18,7 +18,7 @@
  */
 package hivemall.classifier;
 
-import hivemall.io.FeatureValue;
+import hivemall.model.FeatureValue;
 
 import javax.annotation.Nonnull;
 
