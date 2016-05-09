@@ -18,7 +18,7 @@
  */
 package hivemall.tools.compress;
 
-import hivemall.utils.compress.DeflateCodec;
+import hivemall.utils.codec.DeflateCodec;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.IOUtils;
 
