@@ -544,6 +544,12 @@ CREATE FUNCTION fm_predict as 'hivemall.fm.FMPredictGenericUDAF' USING JAR '${hi
 DROP FUNCTION IF EXISTS train_fm;
 CREATE FUNCTION train_fm as 'hivemall.fm.FactorizationMachineUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS train_ffm;
+CREATE FUNCTION train_ffm as 'hivemall.fm.FieldAwareFactorizationMachineUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS ffm_predict;
+CREATE FUNCTION ffm_predict as 'hivemall.fm.FFMPredictUDF' USING JAR '${hivemall_jar}';
+
 ----------------------------
 -- Smile related features --
 ----------------------------
