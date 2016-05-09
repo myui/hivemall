@@ -23,6 +23,7 @@ import hivemall.utils.io.FastByteArrayOutputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
 import hivemall.utils.io.IOUtils;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -43,11 +44,28 @@ public final class ObjectUtils {
         return bos.toByteArray();
     }
 
-    public static byte[] toCompressedBytes(final Object obj) throws IOException {
+    public static byte[] toBytes(@Nonnull final Externalizable obj) throws IOException {
+        FastByteArrayOutputStream bos = new FastByteArrayOutputStream();
+        toStream(obj, bos);
+        return bos.toByteArray();
+    }
+
+    public static byte[] toCompressedBytes(@Nonnull final Object obj) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
-            toStream(obj, dos);            
+            toStream(obj, dos);
+        } finally {
+            IOUtils.closeQuietly(dos);
+        }
+        return bos.toByteArray_clear();
+    }
+
+    public static byte[] toCompressedBytes(@Nonnull final Externalizable obj) throws IOException {
+        FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
+        final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
+        try {
+            toStream(obj, dos);
         } finally {
             IOUtils.closeQuietly(dos);
         }
@@ -62,22 +80,66 @@ public final class ObjectUtils {
         oos.close();
     }
 
-    public static <T> T readObject(final byte[] obj) throws IOException, ClassNotFoundException {
+    public static void toStream(@Nonnull final Externalizable obj, @Nonnull final OutputStream out)
+            throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(out);
+        obj.writeExternal(oos);
+        oos.flush();
+        oos.close();
+    }
+
+    public static <T> T readObject(@Nonnull final byte[] obj) throws IOException,
+            ClassNotFoundException {
         return readObject(new FastByteArrayInputStream(obj));
     }
 
+    public static void readObject(@Nonnull final byte[] src, @Nonnull final Externalizable dst)
+            throws IOException, ClassNotFoundException {
+        readObject(new FastByteArrayInputStream(src), dst);
+    }
+
     @SuppressWarnings("unchecked")
-    public static <T> T readObject(final InputStream is) throws IOException, ClassNotFoundException {
+    public static <T> T readObject(@Nonnull final InputStream is) throws IOException,
+            ClassNotFoundException {
         ObjectInputStream ois = new ObjectInputStream(is);
         return (T) ois.readObject();
     }
 
-    public static <T> T readCompressedObject(final byte[] obj) throws IOException,
+    public static void readObject(@Nonnull final InputStream is, @Nonnull final Externalizable dst)
+            throws IOException, ClassNotFoundException {
+        ObjectInputStream ois = new ObjectInputStream(is);
+        dst.readExternal(ois);
+    }
+
+    public static <T> T readCompressedObject(@Nonnull final byte[] obj) throws IOException,
             ClassNotFoundException {
         FastByteArrayInputStream bis = new FastByteArrayInputStream(obj);
         final InflaterInputStream iis = new InflaterInputStream(bis);
         try {
             return readObject(iis);
+        } finally {
+            IOUtils.closeQuietly(iis);
+        }
+    }
+
+    public static void readCompressedObject(@Nonnull final byte[] src,
+            @Nonnull final Externalizable dst) throws IOException, ClassNotFoundException {
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(src);
+        final InflaterInputStream iis = new InflaterInputStream(bis);
+        try {
+            readObject(iis, dst);
+        } finally {
+            IOUtils.closeQuietly(iis);
+        }
+    }
+
+    public static void readCompressedObject(@Nonnull final byte[] src, final int offset,
+            final int length, @Nonnull final Externalizable dst) throws IOException,
+            ClassNotFoundException {
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(src, offset, length);
+        final InflaterInputStream iis = new InflaterInputStream(bis);
+        try {
+            readObject(iis, dst);
         } finally {
             IOUtils.closeQuietly(iis);
         }

@@ -86,6 +86,11 @@ public class StringFeature extends Feature {
             this.field = field;
         }
 
+        public StringFeatureWithField(@Nonnull ByteBuffer src) {
+            super(src);
+            this.field = NIOUtils.getString(src);
+        }
+
         @Override
         public void setField(@Nonnull String f) {
             this.field = f;

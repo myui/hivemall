@@ -39,6 +39,11 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
 
+    @Nonnull
+    FFMPredictionModel toPredictionModel() {
+        return new FFMPredictionModel(_map, _w0, _factor);
+    }
+
     @Override
     public int getSize() {
         return _map.size();

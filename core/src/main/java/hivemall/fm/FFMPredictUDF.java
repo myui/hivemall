@@ -18,13 +18,15 @@
  */
 package hivemall.fm;
 
+import hivemall.utils.codec.Base91;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.NumberUtils;
 
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -34,81 +36,113 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 import org.apache.hadoop.io.Text;
 
-@Description(
-        name = "ffm_predict",
-        value = "_FUNC_(array[string] X, string model) returns a prediction result from a Field-aware Factorization Machine")
+@Description(name = "ffm_predict",
+        value = "_FUNC_(string modelId, string model, array<string> features)"
+                + " returns a prediction result in double from a Field-aware Factorization Machine")
 @UDFType(deterministic = true, stateful = false)
 public final class FFMPredictUDF extends GenericUDF {
 
-    private ListObjectInspector xOI;
-    private StringObjectInspector modelOI;
+    private StringObjectInspector _modelIdOI;
+    private StringObjectInspector _modelOI;
+    private ListObjectInspector _featureListOI;
 
-    private FFMPredictionModel model;
+    private DoubleWritable _result;
+    @Nullable
+    private String _cachedModeId;
+    @Nullable
+    private FFMPredictionModel _cachedModel;
+    @Nullable
+    private Feature[] _probes;
 
     public FFMPredictUDF() {}
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if (argOIs.length != 2) {
-            throw new UDFArgumentException("_FUNC_ takes 2 arguments");
+        if (argOIs.length != 3) {
+            throw new UDFArgumentException("_FUNC_ takes 3 arguments");
         }
+        this._modelIdOI = HiveUtils.asStringOI(argOIs[0]);
+        this._modelOI = HiveUtils.asStringOI(argOIs[1]);
+        this._featureListOI = HiveUtils.asListOI(argOIs[2]);
 
-        xOI = HiveUtils.asListOI(argOIs[0]);
-        if (!(xOI.getListElementObjectInspector() instanceof FloatObjectInspector)) {
-            throw new UDFArgumentException("Elements of first argument must be float");
-        }
-
-        modelOI = HiveUtils.asStringOI(argOIs[1]);
-
+        this._result = new DoubleWritable();
         return PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
     }
 
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
-        @SuppressWarnings("unchecked")
-        List<Feature> xList = (List<Feature>) xOI.getList(args[0]);
-        Feature[] x = (Feature[]) xList.toArray();
+        Feature[] x = Feature.parseFeatures(args[2], _featureListOI, _probes, false);
+        if (x == null) {
+            return null; // return NULL if there are no features
+        }
+        this._probes = x;
 
-        Text serModel = modelOI.getPrimitiveWritableObject(args[1]);
-        model = new FFMPredictionModel(serModel.toString());//FIXME
+        String modelId = _modelIdOI.getPrimitiveJavaObject(args[0]);
+        if (modelId == null) {
+            throw new HiveException("modelId is not set");
+        }
 
-        double result = predict(x, model);
-        return new DoubleWritable(result);
+        final FFMPredictionModel model;
+        if (modelId.equals(_cachedModeId)) {
+            model = this._cachedModel;
+        } else {
+            Text serModel = _modelOI.getPrimitiveWritableObject(args[1]);
+            if (serModel == null) {
+                throw new HiveException("Model is null for model ID: " + modelId);
+            }
+            byte[] b = serModel.getBytes();
+            int length = serModel.getLength();
+            b = Base91.decode(b, 0, length);
+            try {
+                model = FFMPredictionModel.deserialize(b);
+            } catch (ClassNotFoundException e) {
+                throw new HiveException(e);
+            } catch (IOException e) {
+                throw new HiveException(e);
+            }
+            this._cachedModeId = modelId;
+            this._cachedModel = model;
+        }
+
+        double predicted = predict(x, model);
+        _result.set(predicted);
+        return _result;
     }
 
-    @Override
-    public String getDisplayString(String[] args) {
-        return "ffm_predict(" + Arrays.toString(args) + ")";
-    }
-
-    private static double predict(@Nonnull Feature[] x, @Nonnull FFMPredictionModel model)
-            throws HiveException {
+    private static double predict(@Nonnull final Feature[] x,
+            @Nonnull final FFMPredictionModel model) throws HiveException {
         // w0
         double ret = model.getW0();
         // W
         for (Feature e : x) {
-            double xj = e.getValue();
-            float w = model.getW1(e);
-            double wx = w * xj;
+            double xi = e.getValue();
+            float wi = model.getW1(e);
+            double wx = wi * xi;
             ret += wx;
         }
         // V
+        final int factors = model.getNumFactors();
         for (int i = 0; i < x.length; ++i) {
-            for (int f = 0, k = model.getNumFactors(); f < k; f++) {
-                Feature ei = x[i];
-                double xi = ei.getValue();
-                for (int j = i + 1; j < x.length; ++j) {
-                    Feature ej = x[j];
-                    double xj = ej.getValue();
-                    float vijf = model.getV(ei, ej.getField(), f);
-                    float vjif = model.getV(ej, ei.getField(), f);
+            final Feature ei = x[i];
+            final double xi = ei.getValue();
+            final String iField = ei.getField();
+            for (int j = i + 1; j < x.length; ++j) {
+                final Feature ej = x[j];
+                final double xj = ej.getValue();
+                final String jField = ej.getField();
+                final float[] vij = model.getV(ei, jField);
+                final float[] vji = model.getV(ej, iField);
+                if (vij == null || vji == null) {
+                    continue;
+                }
+                for (int f = 0; f < factors; f++) {
+                    float vijf = vij[f];
+                    float vjif = vji[f];
                     ret += vijf * vjif * xi * xj;
-                    assert (!Double.isNaN(ret));
                 }
             }
         }
@@ -116,6 +150,19 @@ public final class FFMPredictUDF extends GenericUDF {
             throw new HiveException("Detected " + ret + " in ffm_predict");
         }
         return ret;
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        // clean up to help GC
+        this._cachedModel = null;
+        this._probes = null;
+    }
+
+    @Override
+    public String getDisplayString(String[] args) {
+        return "ffm_predict(" + Arrays.toString(args) + ")";
     }
 
 }

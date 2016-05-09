@@ -20,12 +20,19 @@ package hivemall.utils.io;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class IOUtils {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
@@ -73,6 +80,13 @@ public final class IOUtils {
         return output.toString();
     }
 
+    @Nonnull
+    public static byte[] toByteArray(@Nonnull final InputStream input) throws IOException {
+        FastByteArrayOutputStream output = new FastByteArrayOutputStream();
+        copy(input, output);
+        return output.toByteArray();
+    }
+
     /**
      * InputStream -> OutputStream
      */
@@ -92,6 +106,148 @@ public final class IOUtils {
     public static BufferedReader bufferedReader(@Nonnull InputStream is) {
         InputStreamReader in = new InputStreamReader(is);
         return new BufferedReader(in);
+    }
+
+    public static void writeInt(final int v, final OutputStream out) throws IOException {
+        out.write((v >>> 24) & 0xFF);
+        out.write((v >>> 16) & 0xFF);
+        out.write((v >>> 8) & 0xFF);
+        out.write((v >>> 0) & 0xFF);
+    }
+
+    /**
+     * @return may be negative value when EOF is detected.
+     */
+    public static int readInt(final InputStream in) throws IOException {
+        final int ch1 = in.read();
+        final int ch2 = in.read();
+        final int ch3 = in.read();
+        final int ch4 = in.read();
+        return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+    }
+
+    public static void writeChar(final char v, final OutputStream out) throws IOException {
+        out.write(0xff & (v >> 8));
+        out.write(0xff & v);
+    }
+
+    public static void writeChar(final char v, final FastByteArrayOutputStream out) {
+        out.write(0xff & (v >> 8));
+        out.write(0xff & v);
+    }
+
+    public static char readChar(final InputStream in) throws IOException {
+        final int a = in.read();
+        final int b = in.read();
+        return (char) ((a << 8) | (b & 0xff));
+    }
+
+
+    public static void writeBytes(@Nonnull final byte[] src, @Nonnull final OutputStream dst)
+            throws IOException {
+        if (src != null) {
+            dst.write(src);
+        }
+    }
+
+    public static void writeBytes(@Nonnull final byte[] src, final int off, final int len,
+            @Nonnull final OutputStream dst) throws IOException {
+        if (src != null) {
+            dst.write(src, off, len);
+        }
+    }
+
+    public static void writeString(@Nullable final String s, final ObjectOutputStream out)
+            throws IOException {
+        writeString(s, (DataOutput) out);
+    }
+
+    public static void writeString(@Nullable final String s, final DataOutputStream out)
+            throws IOException {
+        writeString(s, (DataOutput) out);
+    }
+
+    public static void writeString(@Nullable final String s, final DataOutput out)
+            throws IOException {
+        if (s == null) {
+            out.writeInt(-1);
+            return;
+        }
+        final int len = s.length();
+        out.writeInt(len);
+        for (int i = 0; i < len; i++) {
+            int v = s.charAt(i);
+            out.writeChar(v);
+        }
+    }
+
+    public static void writeString(@Nullable final String s, final OutputStream out)
+            throws IOException {
+        if (s == null) {
+            writeInt(-1, out);
+            return;
+        }
+        final int len = s.length();
+        writeInt(len, out);
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            writeChar(c, out);
+        }
+    }
+
+    @Nullable
+    public static String readString(@Nonnull final ObjectInputStream in) throws IOException {
+        return readString((DataInput) in);
+    }
+
+    @Nullable
+    public static String readString(@Nonnull final DataInputStream in) throws IOException {
+        return readString((DataInput) in);
+    }
+
+    @Nullable
+    public static String readString(@Nonnull final DataInput in) throws IOException {
+        final int len = in.readInt();
+        if (len == -1) {
+            return null;
+        }
+        final char[] ch = new char[len];
+        for (int i = 0; i < len; i++) {
+            ch[i] = in.readChar();
+        }
+        return new String(ch);
+    }
+
+    @Nullable
+    public static String readString(@Nonnull final InputStream in) throws IOException {
+        final int len = readInt(in);
+        if (len == -1) {
+            return null;
+        }
+        final char[] ch = new char[len];
+        for (int i = 0; i < len; i++) {
+            ch[i] = readChar(in);
+        }
+        return new String(ch);
+    }
+
+    public static void writeFloats(@Nonnull final float[] floats, @Nonnull final DataOutput out)
+            throws IOException {
+        final int size = floats.length;
+        out.writeInt(size);
+        for (int i = 0; i < size; i++) {
+            out.writeFloat(floats[i]);
+        }
+    }
+
+    @Nonnull
+    public static float[] readFloats(@Nonnull final DataInput in) throws IOException {
+        final int size = in.readInt();
+        final float[] floats = new float[size];
+        for (int i = 0; i < size; i++) {
+            floats[i] = in.readFloat();
+        }
+        return floats;
     }
 
 }

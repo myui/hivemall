@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,7 +64,7 @@ public final class HadoopUtils {
         CompressionCodecFactory ccf = new CompressionCodecFactory(conf);
         CompressionCodec codec = ccf.getCodec(path);
 
-        if(codec == null) {
+        if (codec == null) {
             return new BufferedReader(new FileReader(file));
         } else {
             Decompressor decompressor = CodecPool.getDecompressor(codec);
@@ -86,7 +87,7 @@ public final class HadoopUtils {
         @Override
         public void close() throws IOException {
             super.close();
-            if(decompressor != null) {
+            if (decompressor != null) {
                 CodecPool.returnDecompressor(decompressor);
                 this.decompressor = null;
             }
@@ -97,23 +98,23 @@ public final class HadoopUtils {
     @Nonnull
     public static String getJobId() {
         MapredContext ctx = MapredContextAccessor.get();
-        if(ctx == null) {
+        if (ctx == null) {
             throw new IllegalStateException("MapredContext is not set");
         }
         JobConf conf = ctx.getJobConf();
-        if(conf == null) {
+        if (conf == null) {
             throw new IllegalStateException("JobConf is not set");
         }
         String jobId = conf.get("mapred.job.id");
-        if(jobId == null) {
+        if (jobId == null) {
             jobId = conf.get("mapreduce.job.id");
-            if(jobId == null) {
+            if (jobId == null) {
                 String queryId = conf.get("hive.query.id");
-                if(queryId != null) {
+                if (queryId != null) {
                     return queryId;
                 }
                 String taskidStr = conf.get("mapred.task.id");
-                if(taskidStr == null) {
+                if (taskidStr == null) {
                     throw new IllegalStateException("Cannot resolve jobId: " + toString(conf));
                 }
                 jobId = getJobIdFromTaskId(taskidStr);
@@ -124,7 +125,7 @@ public final class HadoopUtils {
 
     @Nonnull
     public static String getJobIdFromTaskId(@Nonnull String taskidStr) {
-        if(!taskidStr.startsWith("task_")) {// workaround for Tez
+        if (!taskidStr.startsWith("task_")) {// workaround for Tez
             taskidStr = taskidStr.replace("task", "task_");
             taskidStr = taskidStr.substring(0, taskidStr.lastIndexOf('_'));
         }
@@ -135,22 +136,44 @@ public final class HadoopUtils {
 
     public static int getTaskId() {
         MapredContext ctx = MapredContextAccessor.get();
-        if(ctx == null) {
+        if (ctx == null) {
             throw new IllegalStateException("MapredContext is not set");
         }
         JobConf jobconf = ctx.getJobConf();
-        if(jobconf == null) {
+        if (jobconf == null) {
             throw new IllegalStateException("JobConf is not set");
         }
         int taskid = jobconf.getInt("mapred.task.partition", -1);
-        if(taskid == -1) {
+        if (taskid == -1) {
             taskid = jobconf.getInt("mapreduce.task.partition", -1);
-            if(taskid == -1) {
-                throw new IllegalStateException("Both mapred.task.partition and mapreduce.task.partition are not set: "
-                        + toString(jobconf));
+            if (taskid == -1) {
+                throw new IllegalStateException(
+                    "Both mapred.task.partition and mapreduce.task.partition are not set: "
+                            + toString(jobconf));
             }
         }
         return taskid;
+    }
+
+    public static String getUniqueTaskIdString() {
+        MapredContext ctx = MapredContextAccessor.get();
+        if (ctx != null) {
+            JobConf jobconf = ctx.getJobConf();
+            if (jobconf != null) {
+                int taskid = jobconf.getInt("mapred.task.partition", -1);
+                if (taskid == -1) {
+                    taskid = jobconf.getInt("mapreduce.task.partition", -1);
+                }
+                if (taskid != -1) {
+                    return String.valueOf(taskid);
+                }
+            }
+        }
+        return getUUID();
+    }
+
+    public synchronized static String getUUID() {
+        return UUID.randomUUID().toString();
     }
 
     @Nonnull
@@ -162,7 +185,7 @@ public final class HadoopUtils {
     public static String toString(@Nonnull JobConf jobconf, @Nullable String regexKey) {
         final Iterator<Entry<String, String>> itor = jobconf.iterator();
         boolean hasNext = itor.hasNext();
-        if(!hasNext) {
+        if (!hasNext) {
             return "";
         }
         final StringBuilder buf = new StringBuilder(1024);
@@ -170,17 +193,17 @@ public final class HadoopUtils {
             Entry<String, String> e = itor.next();
             hasNext = itor.hasNext();
             String k = e.getKey();
-            if(k == null) {
+            if (k == null) {
                 continue;
             }
-            if(regexKey == null || k.matches(regexKey)) {
+            if (regexKey == null || k.matches(regexKey)) {
                 String v = e.getValue();
                 buf.append(k).append('=').append(v);
-                if(hasNext) {
+                if (hasNext) {
                     buf.append(',');
                 }
             }
-        } while(hasNext);
+        } while (hasNext);
         return buf.toString();
     }
 }

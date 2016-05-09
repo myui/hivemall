@@ -58,26 +58,28 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     @Override
-    protected double predict(Feature[] x) {
+    protected double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW0();
         // W
         for (Feature e : x) {
-            double xj = e.getValue();
-            float w = getW(e);
-            double wx = w * xj;
+            double xi = e.getValue();
+            float wi = getW(e);
+            double wx = wi * xi;
             ret += wx;
         }
         // V
-        for (int f = 0, k = _factor; f < k; f++) {
-            for (int i = 0; i < x.length; ++i) {
-                for (int j = i + 1; j < x.length; ++j) {
-                    Feature ei = x[i];
-                    Feature ej = x[j];
-                    double xi = ei.getValue();
-                    double xj = ej.getValue();
-                    float vijf = getV(ei, ej.getField(), f);
-                    float vjif = getV(ej, ei.getField(), f);
+        for (int i = 0; i < x.length; i++) {
+            final Feature ei = x[i];
+            final double xi = ei.getValue();
+            final String iField = ei.getField();
+            for (int j = i + 1; j < x.length; j++) {
+                final Feature ej = x[j];
+                final double xj = ej.getValue();
+                final String jField = ej.getField();
+                for (int f = 0, k = _factor; f < k; f++) {
+                    float vijf = getV(ei, jField, f);
+                    float vjif = getV(ej, iField, f);
                     ret += vijf * vjif * xi * xj;
                     assert (!Double.isNaN(ret));
                 }
@@ -86,7 +88,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         if (!NumberUtils.isFinite(ret)) {
             throw new IllegalStateException("Detected " + ret
                     + " in predict. We recommend to normalize training examples.\n"
-                    + "Dumping variables ...\n" + super.varDump(x));
+                    + "Dumping variables ...\n" + varDump(x));
         }
         return ret;
     }
@@ -129,10 +131,11 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         final int fieldSize = fieldList.size();
         final int xSize = x.length;
         final double[][][] ret = new double[xSize][fieldSize][factors];
-        for (int i = 0; i < xSize; ++i) {
-            for (int fieldIndex = 0; fieldIndex < fieldSize; ++fieldIndex) {
+        for (int i = 0; i < xSize; i++) {
+            for (int fieldIndex = 0; fieldIndex < fieldSize; fieldIndex++) {
                 for (int f = 0; f < factors; f++) {
-                    ret[i][fieldIndex][f] = sumVfX(x, i, fieldList.get(fieldIndex), f);
+                    String field = fieldList.get(fieldIndex);
+                    ret[i][fieldIndex][f] = sumVfX(x, i, field, f);
                 }
             }
         }
@@ -204,7 +207,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
         @Override
         public void addGradient(float grad, float scaling) {
-            sumOfSqGradients += grad * grad / scaling;
+            this.sumOfSqGradients += grad * grad / scaling;
         }
 
     }
