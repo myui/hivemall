@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
@@ -75,13 +76,20 @@ public final class FFMPredictUDF extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
-        Feature[] x = Feature.parseFeatures(args[2], _featureListOI, _probes, false);
-        if (x == null) {
+        Object arg2 = args[2].get();
+        // [workaround]
+        // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
+        // cannot be cast to [Ljava.lang.Object;
+        if (arg2 instanceof LazyBinaryArray) {
+            arg2 = ((LazyBinaryArray) arg2).getList();
+        }
+        Feature[] x = Feature.parseFeatures(arg2, _featureListOI, _probes, false);
+        if (x == null || x.length == 0) {
             return null; // return NULL if there are no features
         }
         this._probes = x;
 
-        String modelId = _modelIdOI.getPrimitiveJavaObject(args[0]);
+        String modelId = _modelIdOI.getPrimitiveJavaObject(args[0].get());
         if (modelId == null) {
             throw new HiveException("modelId is not set");
         }
@@ -90,7 +98,7 @@ public final class FFMPredictUDF extends GenericUDF {
         if (modelId.equals(_cachedModeId)) {
             model = this._cachedModel;
         } else {
-            Text serModel = _modelOI.getPrimitiveWritableObject(args[1]);
+            Text serModel = _modelOI.getPrimitiveWritableObject(args[1].get());
             if (serModel == null) {
                 throw new HiveException("Model is null for model ID: " + modelId);
             }

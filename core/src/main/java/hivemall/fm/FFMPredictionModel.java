@@ -79,13 +79,13 @@ public final class FFMPredictionModel implements Externalizable {
 
         int used = _map.size();
         out.writeInt(used);
-        final String[] keys = _map.getKeys();
-        final Entry[] values = _map.getValues();
+        final Object[] keys = _map.getKeys();
+        final Object[] values = _map.getValues();
         final byte[] status = _map.getStates();
         final int size = keys.length;
         out.writeInt(size);
         for (int i = 0; i < size; i++) {
-            String key = keys[i];
+            String key = (String) keys[i];
             if (key == null) {
                 out.writeBoolean(true); // is null
                 continue;
@@ -93,7 +93,7 @@ public final class FFMPredictionModel implements Externalizable {
                 out.writeBoolean(false); // is null      
             }
             IOUtils.writeString(key, out);
-            Entry v = values[i];
+            Entry v = (Entry) values[i];
             out.writeFloat(v.W);
             IOUtils.writeFloats(v.Vf, out);
             out.writeByte(status[i]);
