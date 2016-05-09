@@ -71,8 +71,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         opts.addOption("w_i", "linear_coeff", false,
             "Whether to include linear term [default: OFF]");
         // adagrad
-        opts.addOption("adagrad", false,
-            "Whether to use AdaGrad for tuning learning rate [default: OFF]");
+        opts.addOption("diasble_adagrad", false,
+            "Whether to use AdaGrad for tuning learning rate [default: ON]");
         opts.addOption("eta0_V", true, "The initial learning rate for V [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true,
@@ -144,7 +144,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         vInit.initRandom(_factor, _seed);
 
         // adagrad
-        boolean useAdaGrad = cl.hasOption("adagrad");
+        boolean useAdaGrad = !cl.hasOption("diasble_adagrad");
         float eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), 1.f);
         float eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
         float scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
