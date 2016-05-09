@@ -47,7 +47,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-classification -factor 10")};
+                    "-classification -factor 10 -disable_adagrad")};
 
         udtf.initialize(argOIs);
         FactorizationMachineModel model = udtf.getModel();
@@ -117,7 +117,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-adagrad -classification -factor 10")};
+                    "-classification -factor 10")};
 
         udtf.initialize(argOIs);
         FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
