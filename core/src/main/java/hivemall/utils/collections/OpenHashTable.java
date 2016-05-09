@@ -21,13 +21,19 @@ package hivemall.utils.collections;
 import hivemall.utils.lang.Copyable;
 import hivemall.utils.math.Primes;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.HashMap;
+
+import javax.annotation.Nonnull;
 
 /**
  * An open-addressing hash table with double-hashing that requires less memory to {@link HashMap}.
  */
-public final class OpenHashTable<K, V> {
+public final class OpenHashTable<K, V> implements Externalizable {
 
     public static final float DEFAULT_LOAD_FACTOR = 0.7f;
     public static final float DEFAULT_GROW_FACTOR = 2.0f;
@@ -36,8 +42,8 @@ public final class OpenHashTable<K, V> {
     protected static final byte FULL = 1;
     protected static final byte REMOVED = 2;
 
-    protected final float _loadFactor;
-    protected final float _growFactor;
+    protected/* final */float _loadFactor;
+    protected/* final */float _growFactor;
 
     protected int _used = 0;
     protected int _threshold;
@@ -46,13 +52,15 @@ public final class OpenHashTable<K, V> {
     protected V[] _values;
     protected byte[] _states;
 
+    public OpenHashTable() {} // for Externalizable
+
     public OpenHashTable(int size) {
         this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR);
     }
 
     @SuppressWarnings("unchecked")
     public OpenHashTable(int size, float loadFactor, float growFactor) {
-        if(size < 1) {
+        if (size < 1) {
             throw new IllegalArgumentException();
         }
         this._loadFactor = loadFactor;
@@ -64,13 +72,33 @@ public final class OpenHashTable<K, V> {
         this._threshold = Math.round(actualSize * _loadFactor);
     }
 
+    public OpenHashTable(@Nonnull K[] keys, @Nonnull V[] values, @Nonnull byte[] states, int used) {
+        this._used = used;
+        this._threshold = keys.length;
+        this._keys = keys;
+        this._values = values;
+        this._states = states;
+    }
+
+    public K[] getKeys() {
+        return _keys;
+    }
+
+    public V[] getValues() {
+        return _values;
+    }
+
+    public byte[] getStates() {
+        return _states;
+    }
+
     public boolean containsKey(K key) {
         return findKey(key) >= 0;
     }
 
     public V get(K key) {
         final int i = findKey(key);
-        if(i < 0) {
+        if (i < 0) {
             return null;
         }
         return _values[i];
@@ -82,7 +110,7 @@ public final class OpenHashTable<K, V> {
         int keyIdx = hash % keyLength;
 
         boolean expanded = preAddEntry(keyIdx);
-        if(expanded) {
+        if (expanded) {
             keyLength = _keys.length;
             keyIdx = hash % keyLength;
         }
@@ -91,23 +119,23 @@ public final class OpenHashTable<K, V> {
         V[] values = _values;
         byte[] states = _states;
 
-        if(states[keyIdx] == FULL) {
-            if(equals(keys[keyIdx], key)) {
+        if (states[keyIdx] == FULL) {
+            if (equals(keys[keyIdx], key)) {
                 V old = values[keyIdx];
                 values[keyIdx] = value;
                 return old;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     break;
                 }
-                if(states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
+                if (states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
                     V old = values[keyIdx];
                     values[keyIdx] = value;
                     return old;
@@ -128,10 +156,10 @@ public final class OpenHashTable<K, V> {
     /** Return weather the required slot is free for new entry */
     protected boolean isFree(int index, K key) {
         byte stat = _states[index];
-        if(stat == FREE) {
+        if (stat == FREE) {
             return true;
         }
-        if(stat == REMOVED && equals(_keys[index], key)) {
+        if (stat == REMOVED && equals(_keys[index], key)) {
             return true;
         }
         return false;
@@ -139,7 +167,7 @@ public final class OpenHashTable<K, V> {
 
     /** @return expanded or not */
     protected boolean preAddEntry(int index) {
-        if((_used + 1) >= _threshold) {// filled enough
+        if ((_used + 1) >= _threshold) {// filled enough
             int newCapacity = Math.round(_keys.length * _growFactor);
             ensureCapacity(newCapacity);
             return true;
@@ -154,21 +182,21 @@ public final class OpenHashTable<K, V> {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
                 return keyIdx;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     return -1;
                 }
-                if(states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
+                if (states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
                     return keyIdx;
                 }
             }
@@ -184,8 +212,8 @@ public final class OpenHashTable<K, V> {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
                 V old = values[keyIdx];
                 states[keyIdx] = REMOVED;
                 --_used;
@@ -193,15 +221,15 @@ public final class OpenHashTable<K, V> {
             }
             //  second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(states[keyIdx] == FREE) {
+                if (states[keyIdx] == FREE) {
                     return null;
                 }
-                if(states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
+                if (states[keyIdx] == FULL && equals(keys[keyIdx], key)) {
                     V old = values[keyIdx];
                     states[keyIdx] = REMOVED;
                     --_used;
@@ -231,12 +259,12 @@ public final class OpenHashTable<K, V> {
         final StringBuilder buf = new StringBuilder(len);
         buf.append('{');
         final IMapIterator<K, V> i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             String key = i.getKey().toString();
             buf.append(key);
             buf.append('=');
             buf.append(i.getValue());
-            if(i.hasNext()) {
+            if (i.hasNext()) {
                 buf.append(',');
             }
         }
@@ -253,25 +281,25 @@ public final class OpenHashTable<K, V> {
     @SuppressWarnings("unchecked")
     private void rehash(int newCapacity) {
         int oldCapacity = _keys.length;
-        if(newCapacity <= oldCapacity) {
+        if (newCapacity <= oldCapacity) {
             throw new IllegalArgumentException("new: " + newCapacity + ", old: " + oldCapacity);
         }
         final K[] newkeys = (K[]) new Object[newCapacity];
         final V[] newValues = (V[]) new Object[newCapacity];
         final byte[] newStates = new byte[newCapacity];
         int used = 0;
-        for(int i = 0; i < oldCapacity; i++) {
-            if(_states[i] == FULL) {
+        for (int i = 0; i < oldCapacity; i++) {
+            if (_states[i] == FULL) {
                 used++;
                 K k = _keys[i];
                 V v = _values[i];
                 int hash = keyHash(k);
                 int keyIdx = hash % newCapacity;
-                if(newStates[keyIdx] == FULL) {// second hashing
+                if (newStates[keyIdx] == FULL) {// second hashing
                     int decr = 1 + (hash % (newCapacity - 2));
-                    while(newStates[keyIdx] != FREE) {
+                    while (newStates[keyIdx] != FREE) {
                         keyIdx -= decr;
-                        if(keyIdx < 0) {
+                        if (keyIdx < 0) {
                             keyIdx += newCapacity;
                         }
                     }
@@ -303,7 +331,7 @@ public final class OpenHashTable<K, V> {
 
         /** find the index of next full entry */
         int nextEntry(int index) {
-            while(index < _keys.length && _states[index] != FULL) {
+            while (index < _keys.length && _states[index] != FULL) {
                 index++;
             }
             return index;
@@ -314,7 +342,7 @@ public final class OpenHashTable<K, V> {
         }
 
         public int next() {
-            if(!hasNext()) {
+            if (!hasNext()) {
                 return -1;
             }
             int curEntry = nextEntry;
@@ -324,14 +352,14 @@ public final class OpenHashTable<K, V> {
         }
 
         public K getKey() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _keys[lastEntry];
         }
 
         public V getValue() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _values[lastEntry];
@@ -342,4 +370,43 @@ public final class OpenHashTable<K, V> {
             probe.copyFrom(getValue());
         }
     }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeFloat(_loadFactor);
+        out.writeFloat(_growFactor);
+        out.writeInt(_used);
+
+        final int size = _keys.length;
+        out.writeInt(size);
+
+        for (int i = 0; i < size; i++) {
+            out.writeObject(_keys[i]);
+            out.writeObject(_values[i]);
+            out.writeByte(_states[i]);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this._loadFactor = in.readFloat();
+        this._growFactor = in.readFloat();
+        this._used = in.readInt();
+
+        final int size = in.readInt();
+        final Object[] keys = new Object[size];
+        final Object[] values = new Object[size];
+        final byte[] states = new byte[size];
+        for (int i = 0; i < size; i++) {
+            keys[i] = in.readObject();
+            values[i] = in.readObject();
+            states[i] = in.readByte();
+        }
+        this._threshold = size;
+        this._keys = (K[]) keys;
+        this._values = (V[]) values;
+        this._states = states;
+    }
+
 }
