@@ -65,7 +65,7 @@ import org.apache.hadoop.mapred.Reporter;
 
 @Description(
         name = "train_fm",
-        value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction value")
+        value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction model")
 public class FactorizationMachineUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
