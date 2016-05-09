@@ -73,7 +73,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     protected ListObjectInspector _xOI;
     protected PrimitiveObjectInspector _yOI;
 
-    // Learning hyper-parameters/options    
+    // Learning hyper-parameters/options
     protected boolean _classification;
     protected long _seed;
     protected int _iterations;
@@ -118,7 +118,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("seed", true, "Seed value [default: -1 (random)]");
         opts.addOption("iters", "iterations", true, "The number of iterations [default: 1]");
         opts.addOption("p", "size_x", true, "The size of x");
-        opts.addOption("f", "factor", true, "The number of the latent variables [default: 10]");
+        opts.addOption("f", "factor", true, "The number of the latent variables [default: 8]");
         opts.addOption("sigma", true, "The standard deviation for initializing V [default: 0.1]");
         opts.addOption("lambda", "lambda0", true,
             "The initial lambda value for regularization [default: 0.01]");
@@ -169,7 +169,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         long seed = -1L;
         int iters = 1;
         int p = -1;
-        int factor = 10;
+        int factor = 8;
         boolean conversionCheck = true;
         double convergenceRate = 0.005d;
         boolean adaptiveReglarization = false;
