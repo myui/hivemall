@@ -80,11 +80,11 @@ public final class OpenHashTable<K, V> implements Externalizable {
         this._states = states;
     }
 
-    public K[] getKeys() {
+    public Object[] getKeys() {
         return _keys;
     }
 
-    public V[] getValues() {
+    public Object[] getValues() {
         return _values;
     }
 
