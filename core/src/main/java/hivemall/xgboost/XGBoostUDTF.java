@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
 import hivemall.UDTFWithOptions;
+import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 
 /**
@@ -265,8 +266,7 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
      * does not work in there.
      */
     protected String generateUniqueModelId() {
-        // return String.valueOf(HadoopUtils.getTaskId());
-        return UUID.randomUUID().toString();
+        return String.valueOf(HadoopUtils.getTaskId());
     }
 
     private static Booster createXGBooster(

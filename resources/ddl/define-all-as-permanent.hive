@@ -579,17 +579,17 @@ CREATE FUNCTION guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUD
 -- XGBoost related features --
 ------------------------------
 
-DROP TEMPORARY FUNCTION train_xgboost_regr;
-CREATE TEMPORARY FUNCTION train_xgboost_regr AS 'hivemall.xgboost.regression.XGBoostRegressionUDTF';
+DROP FUNCTION train_xgboost_regr;
+CREATE FUNCTION train_xgboost_regr AS 'hivemall.xgboost.regression.XGBoostRegressionUDTF' USING JAR '${hivemall_jar}';
 
-DROP TEMPORARY FUNCTION train_xgboost_classifier;
-CREATE TEMPORARY FUNCTION train_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF';
+DROP FUNCTION train_xgboost_classifier;
+CREATE FUNCTION train_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF' USING JAR '${hivemall_jar}';
 
-DROP TEMPORARY FUNCTION train_multiclass_xgboost_classifier;
-CREATE TEMPORARY FUNCTION train_multiclass_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF';
+DROP FUNCTION train_multiclass_xgboost_classifier;
+CREATE FUNCTION train_multiclass_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF' USING JAR '${hivemall_jar}';
 
-DROP TEMPORARY FUNCTION xgboost_predict;
-CREATE TEMPORARY FUNCTION xgboost_predict AS 'hivemall.xgboost.tools.XGBoostPredictUDTF';
+DROP FUNCTION xgboost_predict;
+CREATE FUNCTION xgboost_predict AS 'hivemall.xgboost.tools.XGBoostPredictUDTF' USING JAR '${hivemall_jar}';
 
-DROP TEMPORARY FUNCTION xgboost_multiclass_predict;
-CREATE TEMPORARY FUNCTION xgboost_multiclass_predict AS 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF';
+DROP FUNCTION xgboost_multiclass_predict;
+CREATE FUNCTION xgboost_multiclass_predict AS 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF' USING JAR '${hivemall_jar}';
