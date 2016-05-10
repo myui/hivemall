@@ -19,7 +19,6 @@
 package hivemall.fm;
 
 import hivemall.fm.FactorizationMachineModel.VInitScheme;
-import hivemall.fm.StringFeature.StringFeatureWithField;
 import hivemall.utils.codec.Base91;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.lang.Primitives;
@@ -168,7 +167,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected void trainTheta(Feature[] x, double y) throws HiveException {
+    protected void trainTheta(@Nonnull Feature[] x, double y) throws HiveException {
         final float eta_t = _etaEstimator.eta(_t);
 
         final double p = _model.predict(x);
@@ -214,8 +213,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected Feature instantiateFeature(@Nonnull ByteBuffer input) {
-        return new StringFeatureWithField(input);
+    protected StringFeature instantiateFeature(@Nonnull ByteBuffer input) {
+        return new StringFeature(input);
     }
 
     @Override

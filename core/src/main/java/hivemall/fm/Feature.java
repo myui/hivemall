@@ -18,8 +18,6 @@
  */
 package hivemall.fm;
 
-import hivemall.fm.StringFeature.StringFeatureWithField;
-
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
@@ -55,11 +53,11 @@ public abstract class Feature {
         throw new UnsupportedOperationException();
     }
 
-    public void setField(@Nonnull String f) {
+    public void setField(@Nullable String f) {
         throw new UnsupportedOperationException();
     }
 
-    @Nullable
+    @Nonnull
     public String getField() {
         throw new UnsupportedOperationException();
     }
@@ -125,8 +123,7 @@ public abstract class Feature {
     }
 
     @Nonnull
-    private static Feature parse(@Nonnull final String fv, final boolean asIntFeature)
-            throws HiveException {
+    static Feature parse(@Nonnull final String fv, final boolean asIntFeature) throws HiveException {
         final int pos1 = fv.indexOf(':');
         if (pos1 == -1) {
             if (asIntFeature) {
@@ -156,12 +153,12 @@ public abstract class Feature {
                 String index = rest.substring(0, pos2);
                 String valueStr = rest.substring(pos2 + 1);
                 double value = parseFeatureValue(valueStr);
-                return new StringFeatureWithField(index, /* field */lead, value);
+                return new StringFeature(index, /* field */lead, value);
             }
         }
     }
 
-    private static void parse(@Nonnull final String fv, @Nonnull final Feature probe,
+    static void parse(@Nonnull final String fv, @Nonnull final Feature probe,
             final boolean asIntFeature) throws HiveException {
         final int pos1 = fv.indexOf(":");
         if (pos1 == -1) {
@@ -169,6 +166,7 @@ public abstract class Feature {
                 int index = parseFeatureIndex(fv);
                 probe.setFeatureIndex(index);
             } else {
+                probe.setField(null);
                 probe.setFeature(fv);
             }
             probe.value = 1.d;
@@ -182,6 +180,7 @@ public abstract class Feature {
                     probe.setFeatureIndex(index);
                     probe.value = parseFeatureValue(rest);;
                 } else {
+                    probe.setField(null);
                     probe.setFeature(lead);
                     probe.value = parseFeatureValue(rest);
                 }

@@ -23,25 +23,33 @@ import hivemall.utils.io.NIOUtils;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class StringFeature extends Feature {
 
     @Nonnull
     protected String feature;
+    @Nullable
+    protected String field;
 
     public StringFeature(@Nonnull String feature, double value) {
+        this(feature, null, value);
+    }
+
+    // VisibleForTesting
+    StringFeature(int feature, double value) {
+        this(String.valueOf(feature), null, value);
+    }
+
+    public StringFeature(@Nonnull String feature, @Nullable String field, double value) {
         super(value);
         this.feature = feature;
+        this.field = field;
     }
 
     public StringFeature(@Nonnull ByteBuffer src) {
         super();
         readFrom(src);
-    }
-
-    StringFeature(int feature, double value) {
-        super(value);
-        this.feature = Integer.toString(feature);
     }
 
     @Override
@@ -55,73 +63,44 @@ public class StringFeature extends Feature {
     }
 
     @Override
+    public void setField(@Nullable String f) {
+        this.field = f;
+    }
+
+    @Override
+    public String getField() {
+        if (field == null) {
+            return feature; // CAUTION: <field> equals to <index> for quantitative features
+        }
+        return field;
+    }
+
+    @Override
     public int bytes() {
-        return NIOUtils.requiredBytes(feature) + Double.SIZE / 8;
+        return NIOUtils.requiredBytes(feature) + NIOUtils.requiredBytes(field) + Double.SIZE / 8;
     }
 
     @Override
     public void writeTo(@Nonnull ByteBuffer dst) {
         NIOUtils.putString(feature, dst);
+        NIOUtils.putString(field, dst);
         dst.putDouble(value);
     }
 
     @Override
     public void readFrom(@Nonnull ByteBuffer src) {
         this.feature = NIOUtils.getString(src);
+        this.field = NIOUtils.getString(src);
         this.value = src.getDouble();
     }
 
     @Override
     public String toString() {
-        return feature + ':' + value;
-    }
-
-    public static final class StringFeatureWithField extends StringFeature {
-
-        @Nonnull
-        protected String field;
-
-        public StringFeatureWithField(@Nonnull String feature, @Nonnull String field, double value) {
-            super(feature, value);
-            this.field = field;
-        }
-
-        public StringFeatureWithField(@Nonnull ByteBuffer src) {
-            super(src);
-        }
-
-        @Override
-        public void setField(@Nonnull String f) {
-            this.field = f;
-        }
-
-        @Override
-        public String getField() {
-            return field;
-        }
-
-        @Override
-        public int bytes() {
-            return super.bytes() + NIOUtils.requiredBytes(field);
-        }
-
-        @Override
-        public void writeTo(@Nonnull ByteBuffer dst) {
-            super.writeTo(dst);
-            NIOUtils.putString(field, dst);
-        }
-
-        @Override
-        public void readFrom(@Nonnull ByteBuffer src) {
-            super.readFrom(src);
-            this.field = NIOUtils.getString(src);
-        }
-
-        @Override
-        public String toString() {
+        if (field == null) {
+            return feature + ':' + value;
+        } else {
             return feature + ':' + field + ':' + value;
         }
-
     }
 
     @Nonnull
