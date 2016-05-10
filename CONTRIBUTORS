@@ -45,4 +45,11 @@
 
 * Takeshi Yamamuro
 	- Various enhancement to test cases
+	- Hivemall on Spark
+	- Xgboost integration
 
+* Arnab Rakshit
+	- R2 UDAF
+	
+* Sotaro Sugimoto
+        - Implementation of Field-aware Factorization Machines
