@@ -19,8 +19,8 @@
 package hivemall.classifier;
 
 import hivemall.common.LossFunctions;
-import hivemall.io.FeatureValue;
-import hivemall.io.PredictionResult;
+import hivemall.model.FeatureValue;
+import hivemall.model.PredictionResult;
 
 import javax.annotation.Nonnull;
 

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.io;
+package hivemall.model;
 
 import hivemall.mix.MixedModel;
 import hivemall.utils.collections.IMapIterator;
