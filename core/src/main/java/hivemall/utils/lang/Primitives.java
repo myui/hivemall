@@ -26,43 +26,47 @@ public final class Primitives {
         return v & 0xFFFF; // convert to range 0-65535 from -32768-32767.
     }
 
+    public static int toUnsignedInt(final byte x) {
+        return ((int) x) & 0xff;
+    }
+
     public static short parseShort(final String s, final short defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Short.parseShort(s);
     }
 
     public static int parseInt(final String s, final int defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Integer.parseInt(s);
     }
 
     public static long parseLong(final String s, final long defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Long.parseLong(s);
     }
 
     public static float parseFloat(final String s, final float defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Float.parseFloat(s);
     }
 
     public static double parseDouble(final String s, final double defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Double.parseDouble(s);
     }
 
     public static boolean parseBoolean(final String s, final boolean defaultValue) {
-        if(s == null) {
+        if (s == null) {
             return defaultValue;
         }
         return Boolean.parseBoolean(s);

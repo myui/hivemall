@@ -22,8 +22,8 @@ import hivemall.smile.classification.DecisionTree;
 import hivemall.smile.regression.RegressionTree;
 import hivemall.smile.vm.StackMachine;
 import hivemall.smile.vm.VMRuntimeException;
-import hivemall.utils.compress.Base91;
-import hivemall.utils.compress.DeflateCodec;
+import hivemall.utils.codec.Base91;
+import hivemall.utils.codec.DeflateCodec;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.IOUtils;
 

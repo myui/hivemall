@@ -18,8 +18,6 @@
  */
 package hivemall.ensemble.bagging;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
-
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
@@ -36,9 +34,9 @@ public final class VotedAvgUDAF extends UDAF {
             int negativeCnt;
 
             void init() {
-                positiveSum = 0d;
+                positiveSum = 0.d;
                 positiveCnt = 0;
-                negativeSum = 0d;
+                negativeSum = 0.d;
                 negativeCnt = 0;
             }
 
@@ -51,16 +49,16 @@ public final class VotedAvgUDAF extends UDAF {
             this.partial = null;
         }
 
-        public boolean iterate(float w) {
-            if(partial == null) {
+        public boolean iterate(double w) {
+            if (partial == null) {
                 this.partial = new PartialResult();
                 partial.init();
             }
-            if(w > 0) {
-                partial.positiveSum += (double) w;
+            if (w > 0) {
+                partial.positiveSum += w;
                 partial.positiveCnt++;
-            } else if(w < 0) {
-                partial.negativeSum += (double) w;
+            } else if (w < 0) {
+                partial.negativeSum += w;
                 partial.negativeCnt++;
             }
             return true;
@@ -71,10 +69,10 @@ public final class VotedAvgUDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
                 partial.init();
             }
@@ -86,17 +84,17 @@ public final class VotedAvgUDAF extends UDAF {
         }
 
         public DoubleWritable terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }
-            if(partial.positiveCnt > partial.negativeCnt) {
-                return val(partial.positiveSum / partial.positiveCnt);
+            if (partial.positiveCnt > partial.negativeCnt) {
+                return new DoubleWritable(partial.positiveSum / partial.positiveCnt);
             } else {
-                if(partial.negativeCnt == 0) {
-                    assert (partial.negativeSum == 0d) : partial.negativeSum;
-                    return val(0.d);
+                if (partial.negativeCnt == 0) {
+                    assert (partial.negativeSum == 0.d) : partial.negativeSum;
+                    return new DoubleWritable(0.d);
                 }
-                return val(partial.negativeSum / partial.negativeCnt);
+                return new DoubleWritable(partial.negativeSum / partial.negativeCnt);
             }
         }
     }

@@ -34,7 +34,9 @@ public final class FMArrayModel extends FactorizationMachineModel {
     private final float[] _w;
     private final float[][] _V;
 
-    public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
+    public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p,
+            long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
+            @Nonnull VInitScheme vInit) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
         this._p = p;
         this._w = new float[p + 1];
@@ -43,7 +45,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     protected void initLearningParams() {
-        for(int i = 0; i < _p; i++) {
+        for (int i = 0; i < _p; i++) {
             _V[i] = initV();
         }
     }
@@ -81,21 +83,21 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public float getW(@Nonnull final Feature x) {
-        int i = x.getIndex();
+        int i = x.getFeatureIndex();
         assert (i >= 0) : i;
         return _w[i];
     }
 
     @Override
     protected void setW(@Nonnull Feature x, float nextWi) {
-        int i = x.getIndex();
+        int i = x.getFeatureIndex();
         assert (i >= 0) : i;
         _w[i] = nextWi;
     }
 
     @Override
     protected float[] getV(int i) {
-        if(i < 1 || i > _p) {
+        if (i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         return _V[i - 1];
@@ -103,8 +105,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public float getV(@Nonnull final Feature x, int f) {
-        final int i = x.getIndex();
-        if(i < 1 || i > _p) {
+        final int i = x.getFeatureIndex();
+        if (i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         return _V[i - 1][f];
@@ -112,8 +114,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     protected void setV(@Nonnull Feature x, int f, float nextVif) {
-        final int i = x.getIndex();
-        if(i < 1 || i > _p) {
+        final int i = x.getFeatureIndex();
+        if (i < 1 || i > _p) {
             throw new IllegalArgumentException("Index i should be in range [1," + _p + "]: " + i);
         }
         _V[i - 1][f] = nextVif;
@@ -121,8 +123,8 @@ public final class FMArrayModel extends FactorizationMachineModel {
 
     @Override
     public void check(@Nonnull Feature[] x) throws HiveException {
-        for(Feature e : x) {
-            if(e != null && e.getIndex() < 1) {
+        for (Feature e : x) {
+            if (e != null && e.getFeatureIndex() < 1) {
                 throw new HiveException("Index of x should be greater than or equals to 1: "
                         + Arrays.toString(x));
             }

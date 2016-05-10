@@ -540,6 +540,12 @@ create temporary function fm_predict as 'hivemall.fm.FMPredictGenericUDAF';
 drop temporary function train_fm;
 create temporary function train_fm as 'hivemall.fm.FactorizationMachineUDTF';
 
+drop temporary function train_ffm;
+create temporary function train_ffm as 'hivemall.fm.FieldAwareFactorizationMachineUDTF';
+
+drop temporary function ffm_predict;
+create temporary function ffm_predict as 'hivemall.fm.FFMPredictUDF';
+
 ----------------------------
 -- Smile related features --
 ----------------------------

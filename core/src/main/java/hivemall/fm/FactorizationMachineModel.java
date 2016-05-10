@@ -126,7 +126,7 @@ public abstract class FactorizationMachineModel {
         final double ret;
         if (_classification) {
             ret = (MathUtils.sigmoid(p * y) - 1.d) * y;
-        } else { // regression            
+        } else { // regression
             p = Math.min(p, _max_target);
             p = Math.max(p, _min_target);
             //ret = 2.d * (p - y);
@@ -135,7 +135,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    final double predict(@Nonnull final Feature[] x) {
+    double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW0();
 
@@ -170,7 +170,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    private String varDump(@Nonnull final Feature[] x) {
+    protected String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
@@ -232,8 +232,8 @@ public abstract class FactorizationMachineModel {
         setW(x, nextWi);
     }
 
-    final void updateV(final double dloss, @Nonnull final Feature x, final int f,
-            final double sumViX, final float eta) {
+    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
+            final float eta) {
         final double Xi = x.getValue();
         float Vif = getV(x, f);
         double h = gradV(Xi, Vif, sumViX);

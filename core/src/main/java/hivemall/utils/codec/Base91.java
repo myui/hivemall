@@ -45,11 +45,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package hivemall.utils.compress;
+package hivemall.utils.codec;
 
 import hivemall.utils.io.FastByteArrayOutputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.annotation.Nonnull;
@@ -136,6 +137,37 @@ public final class Base91 {
         }
     }
 
+    public static void encode(@Nonnull final InputStream in, @Nonnull final OutputStream out)
+            throws IOException {
+        int ebq = 0;
+        int en = 0;
+
+        int b;
+        while ((b = in.read()) != -1) {
+            ebq |= (b & 255) << en;
+            en += 8;
+            if (en > 13) {
+                int ev = ebq & 0x1FFF; // 0001 1111 1111 1111
+                if (ev > 88) {
+                    ebq >>= 13;
+                    en -= 13;
+                } else {
+                    ev = ebq & 0x3FFF; // 0011 1111 1111 1111
+                    ebq >>= 14;
+                    en -= 14;
+                }
+                out.write(ENCODING_TABLE[ev % BASE]);
+                out.write(ENCODING_TABLE[ev / BASE]);
+            }
+        }
+        if (en > 0) {
+            out.write(ENCODING_TABLE[ebq % BASE]);
+            if (en > 7 || ebq > 90) {
+                out.write(ENCODING_TABLE[ebq / BASE]);
+            }
+        }
+    }
+
     @Nonnull
     public static byte[] decode(@Nonnull final byte[] input) {
         return decode(input, 0, input.length);
@@ -177,12 +209,42 @@ public final class Base91 {
                     output.write((byte) dbq);
                     dbq >>= 8;
                     dn -= 8;
-                } while (dn > 7);
+                } while (dn >= 8);
                 dv = -1;
             }
         }
         if (dv != -1) {
             output.write((byte) (dbq | dv << dn));
+        }
+    }
+
+    public static void decode(@Nonnull final InputStream in, @Nonnull final OutputStream out)
+            throws IOException {
+        int dbq = 0;
+        int dn = 0;
+        int dv = -1;
+
+        int b;
+        while ((b = in.read()) != -1) {
+            if (DECODING_TABLE[b] == -1) {
+                continue;
+            }
+            if (dv == -1) {
+                dv = DECODING_TABLE[b];
+            } else {
+                dv += DECODING_TABLE[b] * BASE;
+                dbq |= dv << dn;
+                dn += (dv & 0x1FFF) > 88 ? 13 : 14;
+                do {
+                    out.write((byte) dbq);
+                    dbq >>= 8;
+                    dn -= 8;
+                } while (dn >= 8);
+                dv = -1;
+            }
+        }
+        if (dv != -1) {
+            out.write((byte) (dbq | dv << dn));
         }
     }
 

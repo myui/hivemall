@@ -24,17 +24,24 @@ import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
-public class FMStringFeatureMapModel extends FactorizationMachineModel {
+public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 4096;
 
     // LEARNING PARAMS
     private float _w0;
     private final OpenHashTable<String, Entry> _map;
 
-    public FMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
+    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
+            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
+            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
+        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
         this._w0 = 0.f;
-        this._map = new OpenHashTable<String, FMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+        this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+    }
+
+    @Nonnull
+    FFMPredictionModel toPredictionModel() {
+        return new FFMPredictionModel(_map, _w0, _factor);
     }
 
     @Override
@@ -62,7 +69,7 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             return 0.f;
         }
         return entry.W;
@@ -74,7 +81,7 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             float[] Vf = initV();
             entry = new Entry(nextWi, Vf);
             _map.put(j, entry);
@@ -83,16 +90,18 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
         }
     }
 
+    /**
+     * @return V_x,yField,f
+     */
     @Override
-    public float getV(@Nonnull Feature x, int f) {
-        String j = x.getFeature();
-        assert (j != null);
+    public float getV(@Nonnull Feature x, @Nonnull String yField, int f) {
+        String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
-            entry = new Entry(0.f, V);
+            entry = newEntry(V);
             _map.put(j, entry);
         } else {
             V = entry.Vf;
@@ -102,13 +111,12 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    protected void setV(@Nonnull Feature x, int f, float nextVif) {
-        String j = x.getFeature();
-        assert (j != null);
+    protected void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif) {
+        String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
             entry = new Entry(0.f, V);
             _map.put(j, entry);
@@ -119,17 +127,10 @@ public class FMStringFeatureMapModel extends FactorizationMachineModel {
         V[f] = nextVif;
     }
 
-    static final class Entry {
-
-        float W;
-        @Nonnull
-        final float[] Vf;
-
-        Entry(float W, @Nonnull float[] Vf) {
-            this.W = W;
-            this.Vf = Vf;
-        }
-
+    @Override
+    protected Entry getEntry(@Nonnull Feature x, @Nonnull String yField) {
+        String j = StringFeature.getFeatureOfField(x, yField);
+        return _map.get(j);
     }
 
 }
