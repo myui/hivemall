@@ -265,6 +265,9 @@ create temporary function vectorize_features as 'hivemall.ftvec.trans.VectorizeF
 drop temporary function categorical_features;
 create temporary function categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF';
 
+drop temporary function ffm_features;
+create temporary function ffm_features as 'hivemall.ftvec.trans.FFMFeaturesUDF';
+
 drop temporary function indexed_features;
 create temporary function indexed_features as 'hivemall.ftvec.trans.IndexedFeatures';
 
