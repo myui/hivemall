@@ -117,7 +117,7 @@ public final class MathUtils {
     public static double inverseErf(final double x) {
 
         // beware that the logarithm argument must be
-        // commputed as (1.0 - x) * (1.0 + x),
+        // computed as (1.0 - x) * (1.0 + x),
         // it must NOT be simplified as 1.0 - x * x as this
         // would induce rounding errors near the boundaries +/-1
         double w = -Math.log((1.0 - x) * (1.0 + x));

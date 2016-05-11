@@ -41,6 +41,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -49,7 +51,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.BooleanWritable;
-
 
 @Description(name = "cf_detect",
         value = "_FUNC_(array<double> x [, const string options]) - Returns anomaly/change-point scores and decisions")
@@ -99,20 +100,18 @@ public class ChangeFinderUDF extends UDFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("dim", "inputDimensions", true,
-            "Number of dimensions in input vector [default: 1]");
         opts.addOption("aWindow", "anomalyDetectionRunningWindowSize", true,
-            "Number of past samples to include in anomaly detection calculation [default: 5]");
+            "Number of past samples to include in anomaly detection calculation [default: 10]");
         opts.addOption("cWindow", "changePointDetectionRunningWindowSize", true,
-            "Number of past samples to include in change-point detection calculation [default: 5]");
+            "Number of past samples to include in change-point detection calculation [default: 10]");
         opts.addOption("aForget", "anomalyDetectionForgetfulness", true,
             "Forgetfulness parameter for anomaly detection [range: [0,1]; default: 0.02]");
         opts.addOption("cForget", "changePointDetectionForgetfulness", true,
             "Forgetfulness parameter for change-point detection [range: [0,1]; default: 0.02]");
         opts.addOption("aThresh", "anomalyDetectionThreshold", true,
-            "Score threshold for determining anomaly existence [default: 3.0]");
+            "Score threshold for determining anomaly existence [default: 10.0]");
         opts.addOption("cThresh", "changePointDetectionThreshold", true,
-            "Score threshold for determining change-point existence [default: 1.0]");
+            "Score threshold for determining change-point existence [default: 10.0]");
         return opts;
     }
 
@@ -123,8 +122,8 @@ public class ChangeFinderUDF extends UDFWithOptions {
         int cWindow = 10;
         double aForget = 0.02;
         double cForget = 0.02;
-        double aThresh = 3.d;
-        double cThresh = 1.d;
+        double aThresh = 10.d;
+        double cThresh = 10.d;
 
         CommandLine cl = parseOptions(optionValues);
         dim = Primitives.parseInt(cl.getOptionValue("dim"), dim);
@@ -146,15 +145,12 @@ public class ChangeFinderUDF extends UDFWithOptions {
         if (cForget < 0.d || cForget > 1.d) {
             throw new UDFArgumentException("cForget must be in the range [0,1]: " + cForget);
         }
-
-        this.dimensions = dim;
         this.xRunningWindowSize = aWindow;
         this.yRunningWindowSize = cWindow;
         this.xForgetfulness = aForget;
         this.yForgetfulness = cForget;
         this.xThreshold = aThresh;
         this.yThreshold = cThresh;
-
         return cl;
     }
 
@@ -162,13 +158,13 @@ public class ChangeFinderUDF extends UDFWithOptions {
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         int arguments = argOIs.length;
         if (!(arguments == 1 || arguments == 2)) {
-            throw new UDFArgumentException(getClass().getSimpleName()
+            throw new UDFArgumentLengthException(getClass().getSimpleName()
                     + " takes 1 or 2 arguments: array<double> x [, CONSTANT STRING options]: "
                     + Arrays.toString(argOIs));
         }
         xOI = HiveUtils.asListOI(argOIs[0]);
         if (!HiveUtils.isNumberOI(xOI.getListElementObjectInspector())) {
-            throw new UDFArgumentException(
+            throw new UDFArgumentTypeException(0,
                 "Unexpected Object inspector for array<double>: " + argOIs[0]);
         } else {
             xContentOI = (DoubleObjectInspector) xOI.getListElementObjectInspector();
@@ -199,21 +195,23 @@ public class ChangeFinderUDF extends UDFWithOptions {
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
         x = new ArrayRealVector(HiveUtils.asDoubleArray(args[0].get(), xOI, xContentOI));
-        dimensions = x.getDimension();
-
         if (callCount == 0) {
+            dimensions = x.getDimension();
             xHistory = new LinkedList<RealVector>();
             xMeanEstimate = new ArrayRealVector(dimensions);
             xCovar0 = new DiagonalMatrix(dimensions);
             xCovar = new RealMatrix[xRunningWindowSize];
             xModelMatrix = new RealMatrix[xRunningWindowSize];
             xModelCovar = new BlockRealMatrix(dimensions, dimensions);
+            for (int i = 0; i < dimensions; i++) {
+                xModelCovar.addToEntry(i, i, 1.d);
+            }
             yRunningSum = 0.d;
             xScoreHistory = new LinkedList<Double>();
             yMeanEstimate = 0.d;
             yCovar = new double[yRunningWindowSize + 1];
             yModelCoeff = new double[yRunningWindowSize];
-            yModelVar = 0.d;
+            yModelVar = 1.d;
             for (int i = 0; i < xRunningWindowSize; i++) {
                 xHistory.add(new ArrayRealVector(dimensions));
                 xCovar[i] = new BlockRealMatrix(dimensions, dimensions);
@@ -222,8 +220,28 @@ public class ChangeFinderUDF extends UDFWithOptions {
             for (int i = 0; i < yRunningWindowSize; i++) {
                 xScoreHistory.add(new Double(0.d));
             }
+        } else if (dimensions != x.getDimension()) {
+            throw new HiveException("Input vector dimension mismatch: " + x.getDimension()
+                    + " vs. expected dim: " + dimensions);
         }
 
+        double xScore = calcScore(x, xMeanEstimate, xModelCovar);
+        xTrain();
+        double yScore = calcScore(y, yMeanEstimate, yModelVar);
+        yTrain(xScore);
+
+        callCount++;
+        Object[] output = new Object[4];
+        output[0] = new DoubleWritable(xScore);
+        output[1] =
+                callCount > xRunningWindowSize ? (new BooleanWritable(xScore >= xThreshold)) : null;
+        output[2] = new DoubleWritable(yScore);
+        output[3] =
+                callCount > yRunningWindowSize ? (new BooleanWritable(yScore >= yThreshold)) : null;
+        return output;
+    }
+
+    private void xTrain() {
         //mean vector
         xMeanEstimate = xMeanEstimate.mapMultiplyToSelf((1.d - xForgetfulness))
                                      .add(x.mapMultiply(xForgetfulness));
@@ -261,11 +279,14 @@ public class ChangeFinderUDF extends UDFWithOptions {
         RealVector xEstimateResidual = x.subtract(xEstimate);
         xModelCovar = xModelCovar.scalarMultiply(1.d - xForgetfulness).add(
             xEstimateResidual.mapMultiply(xForgetfulness).outerProduct(xEstimateResidual));
-        double xScore = calcScore(x, xMeanEstimate, xModelCovar);
 
         xHistory.removeFirst();
         xHistory.add(x);
 
+        return;
+    }
+
+    private void yTrain(double xScore) {
         yRunningSum += xScore - xScoreHistory.getFirst();
         xScoreHistory.add(xScore);
         y = yRunningSum / yRunningWindowSize;
@@ -299,21 +320,11 @@ public class ChangeFinderUDF extends UDFWithOptions {
         double yEstimateResidual = y - yEstimate;
         yModelVar = yModelVar * (1.d - yForgetfulness)
                 + (yEstimateResidual * yEstimateResidual * yForgetfulness);
-        double yScore = calcScore(y, yMeanEstimate, yModelVar);
 
         xScoreHistory.removeFirst();
 
-        callCount++;
-        Object[] output = new Object[4];
-        output[0] = new DoubleWritable(xScore);
-        output[1] =
-                callCount > xRunningWindowSize ? (new BooleanWritable(xScore >= xThreshold)) : null;
-        output[2] = new DoubleWritable(yScore);
-        output[3] =
-                callCount > yRunningWindowSize ? (new BooleanWritable(yScore >= yThreshold)) : null;
-        return output;
+        return;
     }
-
 
     private RealMatrix divide(final RealMatrix left, final DiagonalMatrix right) {
         RealMatrix result = left.copy();//do not modify arguments
@@ -343,6 +354,47 @@ public class ChangeFinderUDF extends UDFWithOptions {
         public double visit(int row, int column, double value) {
             return value / diag[column];
         }
+    }
+
+    //package-private getters for ChangeFinderUDFTest
+    final int getxRunningWindowSize() {
+        return xRunningWindowSize;
+    }
+
+    final double getxForgetfulness() {
+        return xForgetfulness;
+    }
+
+    final double getxThreshold() {
+        return xThreshold;
+    }
+
+    final RealVector getxEstimate() {
+        return xEstimate;
+    }
+
+    final RealMatrix getxModelCovar() {
+        return xModelCovar;
+    }
+
+    final int getyRunningWindowSize() {
+        return yRunningWindowSize;
+    }
+
+    final double getyForgetfulness() {
+        return yForgetfulness;
+    }
+
+    final double getyThreshold() {
+        return yThreshold;
+    }
+
+    final double getyEstimate() {
+        return yEstimate;
+    }
+
+    final double getyModelVar() {
+        return yModelVar;
     }
 
 }

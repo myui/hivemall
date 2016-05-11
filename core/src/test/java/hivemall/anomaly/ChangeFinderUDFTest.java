@@ -19,6 +19,9 @@
 package hivemall.anomaly;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -36,10 +39,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.BooleanWritable;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ChangeFinderUDFTest {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final int MAX_LINES = 5000;
 
     @Test
@@ -55,6 +59,25 @@ public class ChangeFinderUDFTest {
         Object[] result = null;
         BufferedReader data = new BufferedReader(
             new InputStreamReader(getClass().getResourceAsStream("cf_test.tsv")));
+        
+        String fileName = null;
+        File outFile;
+        BufferedWriter output = null;
+        if (DEBUG) {
+            int runCount = 0;
+            fileName = "src/test/resources/hivemall/anomaly/cf_output";
+            outFile = new File(fileName + ".dat");
+            while (outFile.exists()) {
+                runCount++;
+                outFile = new File(fileName + runCount + ".dat");
+            }
+            fileName = outFile.getName();
+            output = new BufferedWriter(new FileWriter(outFile));
+            output.write("#\taW\taF\t\taT\tcW\tcF\t\tcT\n#\t" + udf.getxRunningWindowSize() + "\t"
+                    + udf.getxForgetfulness() + "\t" + udf.getxThreshold() + "\t"
+                    + udf.getyRunningWindowSize() + "\t" + udf.getyForgetfulness() + "\t"
+                    + udf.getyThreshold() + "\n");
+        }
 
         ArrayList<Integer> anomalies = new ArrayList<Integer>();
         ArrayList<Integer> changepoints = new ArrayList<Integer>();
@@ -62,7 +85,7 @@ public class ChangeFinderUDFTest {
             //gather features in current line
             final String input = data.readLine();
             if (input == null) {
-                System.out.println("EOF reached at line " + lineNumber);
+                println("EOF reached at line " + lineNumber);
                 break;
             }
             List<Double> vector = new ArrayList<Double>();
@@ -81,53 +104,67 @@ public class ChangeFinderUDFTest {
             result = (Object[]) udf.evaluate(new DeferredObject[] {new DeferredJavaObject(vector)});
             assert result.length == 4;
             double x = ((DoubleWritable) result[0]).get();
-            String xB =
-                    result[1] == null ? null : String.valueOf(((BooleanWritable) result[1]).get());
+            BooleanWritable resX = (BooleanWritable) result[1];
+            //double xB = resX == null ? -1.d : (resX.get() ? 1.d : 0.d); //(1, 0, -1) <-> (true, false, null)
+            double xB = resX == null ? Double.NaN : (resX.get() ? 1.d : Double.NaN); //(1, NaN, NaN) <-> (true, false, null); useful in gnuplot for plotting individual anomalies because NaNs are not plotted
             double y = ((DoubleWritable) result[2]).get();
-            String yB =
-                    result[1] == null ? null : String.valueOf(((BooleanWritable) result[3]).get());
+            BooleanWritable resY = (BooleanWritable) result[3];
+            //double yB = resY == null ? Double.NaN : (resY.get() ? 1.d : Double.NaN); //(1, 0, -1) <-> (true, false, null)
+            double yB = resY == null ? Double.NaN : (resY.get() ? 1.d : Double.NaN); //(1, NaN, NaN) <-> (true, false, null); useful in gnuplot for plotting individual change-points because NaNs are not plotted
 
-            println(x + " " + xB + " " + y + " " + yB);
-            if (xB != null && xB.equals("true")) {
+            if (DEBUG) {
+                output.write(x + " " + xB + " " + y + " " + yB + " "
+                        + udf.getxEstimate().getEntry(0) + " " + udf.getxModelCovar().getEntry(0, 0)
+                        + " " + udf.getyEstimate() + " " + udf.getyModelVar() + "\n");
+            }
+            if (xB == 1.d) {
                 anomalies.add(lineNumber);
                 println("!!!ANOMALY AT LINE " + lineNumber + "!!!");
             }
-            if (yB != null && yB.equals("true")) {
+            if (yB == 1.d) {
                 changepoints.add(lineNumber);
                 println("!!!CHANGE-POINT AT LINE " + lineNumber + "!!!");
             }
         }
         println("Detected " + anomalies.size() + " anomalies at lines: " + anomalies);
         println("Detected " + changepoints.size() + " change-points at lines: " + changepoints);
+        println("Data is in " + fileName);
         data.close();
+        if (DEBUG) {
+            output.close();
+        }
         udf.close();
     }
 
     @Test
-    public void testOptions() throws HiveException, IOException {
-        println("option test");
+    public void testExceptions() throws HiveException, IOException {
+        println("exception test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
         ConstantObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-dim 2");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
         ConstantObjectInspector param2OI = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-dim 1 -aWindow 0");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-aWindow 0");
         ConstantObjectInspector param3OI = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            "-dim 1 -aWindow 1 -aForget 5");
+            "-aWindow 1 -aForget 5");
         ConstantObjectInspector param4OI = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            "-dim 1 -aWindow 1 -aForget 0.5 -aThresh 0");;
+            "-aWindow 1 -aForget 0.5 -aThresh 0");;
         ObjectInspector[] argOIs =
                 new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(
                     PrimitiveObjectInspectorFactory.javaDoubleObjectInspector), paramOI};
 
         boolean caught = false;
+        udf.initialize(argOIs);
         try {
-            udf.initialize(argOIs);
-        } catch (UDFArgumentException e) {
+            udf.evaluate(
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
+            udf.evaluate(
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d, 1.d}))});
+        } catch (HiveException e) {
             caught = true;
         }
-        assert caught;
+        Assert.assertTrue("Dimension check broken.", caught);
 
         caught = false;
         argOIs[1] = param2OI;
@@ -136,7 +173,7 @@ public class ChangeFinderUDFTest {
         } catch (UDFArgumentException e) {
             caught = true;
         }
-        assert caught;
+        Assert.assertTrue("Window size check broken.", caught);
 
         argOIs[1] = param3OI;
         caught = false;
@@ -145,21 +182,19 @@ public class ChangeFinderUDFTest {
         } catch (UDFArgumentException e) {
             caught = true;
         }
-        assert caught;
+        Assert.assertTrue("Forgetfulness check broken.", caught);
 
         argOIs[1] = param4OI;
         udf.initialize(argOIs);
 
-        udf.evaluate(
-            new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
-        udf.evaluate(
-            new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
-        udf.evaluate(
-            new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
+        DeferredObject[] one = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))};
+        for (int i = 0; i < udf.getxRunningWindowSize(); i++) {
+            udf.evaluate(one);
+        }
         Object[] result = (Object[]) udf.evaluate(
             new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {10000.d}))});
-        assert result.length == 4;
-        assert PrimitiveObjectInspectorFactory.javaBooleanObjectInspector.get(result[1]);
+        Assert.assertTrue("Result length incorrect.", result.length == 4);
+        Assert.assertTrue("No anomaly detected for data set [1, 1, ..., 1, 10000].", ((BooleanWritable) result[1]).get());
         udf.close();
     }
 
