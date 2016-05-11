@@ -269,6 +269,9 @@ CREATE FUNCTION vectorize_features as 'hivemall.ftvec.trans.VectorizeFeaturesUDF
 DROP FUNCTION IF EXISTS categorical_features;
 CREATE FUNCTION categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS ffm_features;
+CREATE FUNCTION ffm_features as 'hivemall.ftvec.trans.FFMFeaturesUDF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS indexed_features;
 CREATE FUNCTION indexed_features as 'hivemall.ftvec.trans.IndexedFeatures' USING JAR '${hivemall_jar}';
 
