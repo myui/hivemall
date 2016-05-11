@@ -43,7 +43,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         this.scaling = scaling;
     }
 
-    public abstract float getV(@Nonnull Feature x, @Nonnull String field, int f);
+    public abstract float getV(@Nonnull Feature x, @Nonnull String yField, int f);
 
     protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
 
@@ -58,7 +58,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     @Override
-    protected double predict(@Nonnull final Feature[] x) {
+    protected final double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW0();
         // W
@@ -96,10 +96,10 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     void updateV(final double dloss, @Nonnull final Feature x, @Nonnull final String field,
             final int f, final double sumViX, long t) {
         final double Xi = x.getValue();
-        float currentV = getV(x, field, f);
         double h = Xi * sumViX;
         float gradV = (float) (dloss * h);
         float lambdaVf = getLambdaV(f);
+        float currentV = getV(x, field, f);
         float eta = etaV(t, x, field, gradV);
         float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
@@ -170,7 +170,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull String yField);//TODO yField should be Object, not String (for IntFeature support)
 
-    protected Entry newEntry(final float[] V) {
+    protected final Entry newEntry(final float[] V) {
         if (useAdaGrad) {
             return new AdaGradEntry(0.f, V);
         } else {
