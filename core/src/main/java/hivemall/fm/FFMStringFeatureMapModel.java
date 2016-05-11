@@ -64,7 +64,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    public float getW(@Nonnull Feature x) {
+    public float getW(@Nonnull final Feature x) {
         String j = x.getFeature();
         assert (j != null);
 
@@ -76,7 +76,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected void setW(@Nonnull Feature x, float nextWi) {
+    protected void setW(@Nonnull final Feature x, final float nextWi) {
         String j = x.getFeature();
         assert (j != null);
 
@@ -94,7 +94,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
      * @return V_x,yField,f
      */
     @Override
-    public float getV(@Nonnull Feature x, @Nonnull String yField, int f) {
+    public float getV(@Nonnull final Feature x, @Nonnull final String yField, final int f) {
         String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
@@ -111,7 +111,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif) {
+    protected void setV(@Nonnull final Feature x, @Nonnull final String yField, final int f, final float nextVif) {
         String j = StringFeature.getFeatureOfField(x, yField);
 
         final float[] V;
@@ -128,7 +128,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected Entry getEntry(@Nonnull Feature x, @Nonnull String yField) {
+    protected Entry getEntry(@Nonnull final Feature x, @Nonnull final String yField) {
         String j = StringFeature.getFeatureOfField(x, yField);
         return _map.get(j);
     }

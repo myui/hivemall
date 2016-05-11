@@ -92,11 +92,11 @@ public final class OpenHashTable<K, V> implements Externalizable {
         return _states;
     }
 
-    public boolean containsKey(K key) {
+    public boolean containsKey(final K key) {
         return findKey(key) >= 0;
     }
 
-    public V get(K key) {
+    public V get(final K key) {
         final int i = findKey(key);
         if (i < 0) {
             return null;
@@ -104,7 +104,7 @@ public final class OpenHashTable<K, V> implements Externalizable {
         return _values[i];
     }
 
-    public V put(K key, V value) {
+    public V put(final K key, final V value) {
         int hash = keyHash(key);
         int keyLength = _keys.length;
         int keyIdx = hash % keyLength;
@@ -175,7 +175,7 @@ public final class OpenHashTable<K, V> implements Externalizable {
         return false;
     }
 
-    protected int findKey(K key) {
+    protected int findKey(final K key) {
         K[] keys = _keys;
         byte[] states = _states;
         int keyLength = keys.length;
@@ -204,7 +204,7 @@ public final class OpenHashTable<K, V> implements Externalizable {
         return -1;
     }
 
-    public V remove(K key) {
+    public V remove(final K key) {
         K[] keys = _keys;
         V[] values = _values;
         byte[] states = _states;

@@ -24,7 +24,7 @@ import hivemall.utils.collections.OpenHashTable;
 
 import javax.annotation.Nonnull;
 
-public class FMStringFeatureMapModel extends FactorizationMachineModel {
+public final class FMStringFeatureMapModel extends FactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 4096;
 
     // LEARNING PARAMS

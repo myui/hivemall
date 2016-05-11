@@ -156,8 +156,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    public void train(@Nonnull Feature[] x, double y, boolean adaptiveRegularization)
-            throws HiveException {
+    public void train(@Nonnull final Feature[] x, final double y,
+            final boolean adaptiveRegularization) throws HiveException {
         _model.check(x);
         try {
             trainTheta(x, y);
@@ -167,7 +167,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected void trainTheta(@Nonnull Feature[] x, double y) throws HiveException {
+    protected void trainTheta(@Nonnull final Feature[] x, final double y) throws HiveException {
         final float eta_t = _etaEstimator.eta(_t);
 
         final double p = _model.predict(x);
@@ -193,10 +193,13 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
         final double[][][] sumVfx = _model.sumVfX(x, fieldList);
         for (int i = 0; i < x.length; i++) {
+            final Feature x_i = x[i];
+            final double[][] sumVf = sumVfx[i];
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
                 final String field = fieldList.get(fieldIndex);
+                final double[] sumV = sumVf[fieldIndex];
                 for (int f = 0, k = _factor; f < k; f++) {
-                    _model.updateV(lossGrad, x[i], field, f, sumVfx[i][fieldIndex][f], _t);
+                    _model.updateV(lossGrad, x_i, field, f, sumV[f], _t);
                 }
             }
         }
@@ -204,7 +207,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Nonnull
-    private List<String> getFieldList(@Nonnull Feature[] x) {
+    private List<String> getFieldList(@Nonnull final Feature[] x) {
         for (Feature e : x) {
             String field = e.getField();
             _fieldList.add(field);
@@ -213,7 +216,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected StringFeature instantiateFeature(@Nonnull ByteBuffer input) {
+    protected StringFeature instantiateFeature(@Nonnull final ByteBuffer input) {
         return new StringFeature(input);
     }
 

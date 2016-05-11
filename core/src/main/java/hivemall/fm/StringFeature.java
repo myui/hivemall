@@ -104,7 +104,7 @@ public class StringFeature extends Feature {
     }
 
     @Nonnull
-    public static String getFeatureOfField(@Nonnull Feature x, @Nonnull String yField) {
+    public static String getFeatureOfField(@Nonnull final Feature x, @Nonnull final String yField) {
         return x.getFeature() + ':' + yField;
     }
 

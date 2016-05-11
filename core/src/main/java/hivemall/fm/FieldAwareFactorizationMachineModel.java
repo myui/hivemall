@@ -126,16 +126,18 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     /**
      * sum{XiViaf} where a is field index of Xi
      */
-    double[][][] sumVfX(@Nonnull Feature[] x, @Nonnull List<String> fieldList) {
+    final double[][][] sumVfX(@Nonnull final Feature[] x, @Nonnull final List<String> fieldList) {
         final int factors = _factor;
         final int fieldSize = fieldList.size();
         final int xSize = x.length;
         final double[][][] ret = new double[xSize][fieldSize][factors];
         for (int i = 0; i < xSize; i++) {
+            final double[][] ret_i = ret[i];
             for (int fieldIndex = 0; fieldIndex < fieldSize; fieldIndex++) {
+                final double[] ret_if = ret_i[fieldIndex];
+                final String field = fieldList.get(fieldIndex);
                 for (int f = 0; f < factors; f++) {
-                    String field = fieldList.get(fieldIndex);
-                    ret[i][fieldIndex][f] = sumVfX(x, i, field, f);
+                    ret_if[f] = sumVfX(x, i, field, f);
                 }
             }
         }
@@ -144,16 +146,19 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final String field,
             final int f) {
+        final Feature xi = x[i];
+        final String xiFeature = xi.getFeature();
+        final double xiValue = xi.getValue();
+        final String xiField = xi.getField();
         double ret = 0.d;
         // find all other features whose field matches field
         for (Feature e : x) {
-            if (x[i].getFeature().equals(e.getFeature())) { // ignore x[i] = e
+            if (xiFeature.equals(e.getFeature())) { // ignore x[i] = e
                 continue;
             }
             if (e.getField().equals(field)) { // multiply x_e and v_d,field(e),f
-                double xj = x[i].getValue();
-                float Vjf = getV(e, x[i].getField(), f);
-                ret += Vjf * xj;
+                float Vjf = getV(e, xiField, f);
+                ret += Vjf * xiValue;
             }
         }
         if (!NumberUtils.isFinite(ret)) {
@@ -165,7 +170,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull String yField);//TODO yField should be Object, not String (for IntFeature support)
 
-    protected Entry newEntry(float[] V) {
+    protected Entry newEntry(final float[] V) {
         if (useAdaGrad) {
             return new AdaGradEntry(0.f, V);
         } else {
