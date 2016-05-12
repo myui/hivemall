@@ -42,11 +42,8 @@ public final class MurmurHash3UDF extends UDF {
         if (word == null) {
             return null;
         }
-        int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
-        if (r < 0) {
-            r += numFeatures;
-        }
-        return new IntWritable(r + 1);
+        int h = mhash(word, numFeatures);
+        return new IntWritable(h);
     }
 
     public IntWritable evaluate(final List<String> words) throws UDFArgumentException {
@@ -71,6 +68,18 @@ public final class MurmurHash3UDF extends UDF {
         }
         String s = b.toString();
         return evaluate(s, numFeatures);
+    }
+
+    public static int mhash(final String word) {
+        return mhash(word, MurmurHash3.DEFAULT_NUM_FEATURES);
+    }
+
+    public static int mhash(final String word, final int numFeatures) {
+        int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
+        if (r < 0) {
+            r += numFeatures;
+        }
+        return r + 1;
     }
 
 }
