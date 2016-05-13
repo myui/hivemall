@@ -19,12 +19,14 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
+import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.lang.NumberUtils;
 
 import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
@@ -126,22 +128,33 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     /**
      * sum{XiViaf} where a is field index of Xi
      */
-    final double[][][] sumVfX(@Nonnull final Feature[] x, @Nonnull final List<String> fieldList) {
-        final int factors = _factor;
-        final int fieldSize = fieldList.size();
+    @Nonnull
+    final DoubleArray3D sumVfX(@Nonnull final Feature[] x, @Nonnull final List<String> fieldList,
+            @Nullable DoubleArray3D cached) {
         final int xSize = x.length;
-        final double[][][] ret = new double[xSize][fieldSize][factors];
+        final int fieldSize = fieldList.size();
+        final int factors = _factor;
+
+        final DoubleArray3D mdarray;
+        if (cached == null) {
+            mdarray = new DoubleArray3D();
+            mdarray.setSanityCheck(false);
+        } else {
+            mdarray = cached;
+        }
+        mdarray.configure(xSize, fieldSize, factors);
+
         for (int i = 0; i < xSize; i++) {
-            final double[][] ret_i = ret[i];
             for (int fieldIndex = 0; fieldIndex < fieldSize; fieldIndex++) {
-                final double[] ret_if = ret_i[fieldIndex];
                 final String field = fieldList.get(fieldIndex);
                 for (int f = 0; f < factors; f++) {
-                    ret_if[f] = sumVfX(x, i, field, f);
+                    double val = sumVfX(x, i, field, f);
+                    mdarray.set(i, fieldIndex, f, val);
                 }
             }
         }
-        return ret;
+
+        return mdarray;
     }
 
     private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final String field,

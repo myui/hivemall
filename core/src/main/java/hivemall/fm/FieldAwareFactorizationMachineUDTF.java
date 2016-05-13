@@ -20,6 +20,7 @@ package hivemall.fm;
 
 import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.codec.Base91;
+import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.lang.Primitives;
 
@@ -57,6 +58,9 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
     private FFMStringFeatureMapModel _model;
     private List<String> _fieldList;
+
+    @Nullable
+    private DoubleArray3D _sumVfX;
 
     public FieldAwareFactorizationMachineUDTF() {
         super();
@@ -191,18 +195,21 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         // ViFf update
         final List<String> fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
-        final double[][][] sumVfx = _model.sumVfX(x, fieldList);
+        final DoubleArray3D sumVfX = _model.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
-            final double[][] sumVf = sumVfx[i];
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
                 final String field = fieldList.get(fieldIndex);
-                final double[] sumV = sumVf[fieldIndex];
                 for (int f = 0, k = _factor; f < k; f++) {
-                    _model.updateV(lossGrad, x_i, field, f, sumV[f], _t);
+                    double sumViX = sumVfX.get(i, fieldIndex, f);
+                    _model.updateV(lossGrad, x_i, field, f, sumViX, _t);
                 }
             }
         }
+
+        // clean up per training instance caches
+        sumVfX.clear();
+        this._sumVfX = sumVfX;
         fieldList.clear();
     }
 
