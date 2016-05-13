@@ -10,3 +10,8 @@ logs
 *.iml
 .DS_Store
 *~
+bin/scala*
+scalastyle-output.xml
+scalastyle.txt
+derby.log
+spark/bin/zinc-*
