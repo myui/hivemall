@@ -19,7 +19,7 @@
 package hivemall.fm;
 
 import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
-import hivemall.utils.collections.OpenHashTable;
+import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.ObjectUtils;
 
@@ -33,13 +33,13 @@ import javax.annotation.Nullable;
 
 public final class FFMPredictionModel implements Externalizable {
 
-    private OpenHashTable<String, Entry> _map;
+    private IntOpenHashTable<Entry> _map;
     private double _w0;
     private int _factors;
 
     public FFMPredictionModel() {}// for Externalizable
 
-    public FFMPredictionModel(@Nonnull OpenHashTable<String, Entry> map, double w0, int factor) {
+    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor) {
         this._map = map;
         this._w0 = w0;
         this._factors = factor;
@@ -53,9 +53,9 @@ public final class FFMPredictionModel implements Externalizable {
         return _w0;
     }
 
-    public float getW1(@Nonnull Feature e) {
-        String xi = e.getFeature();
-        Entry entry = _map.get(xi);
+    public float getW1(@Nonnull final Feature x) {
+        int j = StringFeature.toIntFeature(x);
+        Entry entry = _map.get(j);
         if (entry == null) {
             return 0.f;
         }
@@ -63,8 +63,8 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     @Nullable
-    public float[] getV(@Nonnull Feature x, @Nonnull String field) {
-        String j = StringFeature.getFeatureOfField(x, field);
+    public float[] getV(@Nonnull final Feature x, @Nonnull final String field) {
+        int j = StringFeature.toIntFeature(x, field);
         Entry entry = _map.get(j);
         if (entry == null) {
             return null;
@@ -79,20 +79,13 @@ public final class FFMPredictionModel implements Externalizable {
 
         int used = _map.size();
         out.writeInt(used);
-        final Object[] keys = _map.getKeys();
+        final int[] keys = _map.getKeys();
         final Object[] values = _map.getValues();
         final byte[] status = _map.getStates();
         final int size = keys.length;
         out.writeInt(size);
         for (int i = 0; i < size; i++) {
-            String key = (String) keys[i];
-            if (key == null) {
-                out.writeBoolean(true); // is null
-                continue;
-            } else {
-                out.writeBoolean(false); // is null      
-            }
-            IOUtils.writeString(key, out);
+            out.writeInt(keys[i]);
             Entry v = (Entry) values[i];
             out.writeFloat(v.W);
             IOUtils.writeFloats(v.Vf, out);
@@ -107,21 +100,18 @@ public final class FFMPredictionModel implements Externalizable {
 
         int used = in.readInt();
         final int size = in.readInt();
-        final String[] keys = new String[size];
+        final int[] keys = new int[size];
         final Entry[] values = new Entry[size];
         final byte[] states = new byte[size];
         for (int i = 0; i < size; i++) {
-            if (in.readBoolean()) {// is null
-                continue;
-            }
-            keys[i] = IOUtils.readString(in);
+            keys[i] = in.readInt();
             float W = in.readFloat();
             float[] Vf = IOUtils.readFloats(in);
             values[i] = new Entry(W, Vf);
             states[i] = in.readByte();
         }
 
-        this._map = new OpenHashTable<String, Entry>(keys, values, states, used);
+        this._map = new IntOpenHashTable<Entry>(keys, values, states, used);
     }
 
     public byte[] serialize() throws IOException {

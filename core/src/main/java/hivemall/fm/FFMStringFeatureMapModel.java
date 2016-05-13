@@ -19,8 +19,7 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
-import hivemall.utils.collections.IMapIterator;
-import hivemall.utils.collections.OpenHashTable;
+import hivemall.utils.collections.IntOpenHashTable;
 
 import javax.annotation.Nonnull;
 
@@ -29,14 +28,14 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     // LEARNING PARAMS
     private float _w0;
-    private final OpenHashTable<String, Entry> _map;
+    private final IntOpenHashTable<Entry> _map;
 
     public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
             @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
         this._w0 = 0.f;
-        this._map = new OpenHashTable<String, FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+        this._map = new IntOpenHashTable<FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
 
     @Nonnull
@@ -47,10 +46,6 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     @Override
     public int getSize() {
         return _map.size();
-    }
-
-    IMapIterator<String, Entry> entries() {
-        return _map.entries();
     }
 
     @Override
@@ -65,8 +60,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     public float getW(@Nonnull final Feature x) {
-        String j = x.getFeature();
-        assert (j != null);
+        int j = StringFeature.toIntFeature(x);
 
         Entry entry = _map.get(j);
         if (entry == null) {
@@ -77,8 +71,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     protected void setW(@Nonnull final Feature x, final float nextWi) {
-        String j = x.getFeature();
-        assert (j != null);
+        final int j = StringFeature.toIntFeature(x);
 
         Entry entry = _map.get(j);
         if (entry == null) {
@@ -95,7 +88,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
      */
     @Override
     public float getV(@Nonnull final Feature x, @Nonnull final String yField, final int f) {
-        String j = StringFeature.getFeatureOfField(x, yField);
+        final int j = StringFeature.toIntFeature(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -111,8 +104,9 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected void setV(@Nonnull final Feature x, @Nonnull final String yField, final int f, final float nextVif) {
-        String j = StringFeature.getFeatureOfField(x, yField);
+    protected void setV(@Nonnull final Feature x, @Nonnull final String yField, final int f,
+            final float nextVif) {
+        final int j = StringFeature.toIntFeature(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -129,7 +123,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     protected Entry getEntry(@Nonnull final Feature x, @Nonnull final String yField) {
-        String j = StringFeature.getFeatureOfField(x, yField);
+        int j = StringFeature.toIntFeature(x, yField);
         return _map.get(j);
     }
 

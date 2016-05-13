@@ -18,6 +18,7 @@
  */
 package hivemall.fm;
 
+import hivemall.utils.hashing.MurmurHash3;
 import hivemall.utils.io.NIOUtils;
 
 import java.nio.ByteBuffer;
@@ -103,9 +104,14 @@ public class StringFeature extends Feature {
         }
     }
 
-    @Nonnull
-    public static String getFeatureOfField(@Nonnull final Feature x, @Nonnull final String yField) {
-        return x.getFeature() + ':' + yField;
+    public static int toIntFeature(@Nonnull final Feature x) {
+        String f = x.getFeature();
+        return MurmurHash3.murmurhash3(f);
+    }
+
+    public static int toIntFeature(@Nonnull final Feature x, @Nonnull final String yField) {
+        String f = x.getFeature() + ':' + yField;
+        return MurmurHash3.murmurhash3(f);
     }
 
 }

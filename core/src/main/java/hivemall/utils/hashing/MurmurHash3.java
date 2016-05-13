@@ -28,9 +28,9 @@ public final class MurmurHash3 {
      * @return hash value of range from 0 to 2^24 (16777216).
      */
     public static int murmurhash3(final String data) {
-        int h = murmurhash3_x86_32(data, 0, data.length(), 0x9747b28c);
+        final int h = murmurhash3_x86_32(data, 0, data.length(), 0x9747b28c);
         int r = MathUtils.moduloPowerOfTwo(h, DEFAULT_NUM_FEATURES);
-        if(r < 0) {
+        if (r < 0) {
             r += DEFAULT_NUM_FEATURES;
         }
         return r;
@@ -38,7 +38,7 @@ public final class MurmurHash3 {
 
     public static int murmurhash3(final String data, final int numFeatures) {
         int r = murmurhash3_x86_32(data, 0, data.length(), 0x9747b28c) % numFeatures;
-        if(r < 0) {
+        if (r < 0) {
             r += numFeatures;
         }
         return r;
@@ -53,29 +53,29 @@ public final class MurmurHash3 {
     }
 
     /** Returns the MurmurHash3_x86_32 hash. */
-    public static int murmurhash3_x86_32(final CharSequence data, final int offset, final int len, final int seed) {
+    public static int murmurhash3_x86_32(final CharSequence data, final int offset, final int len,
+            final int seed) {
         final int c1 = 0xcc9e2d51;
         final int c2 = 0x1b873593;
 
         int h1 = seed;
-
+        final int end = offset + len;
         int pos = offset;
-        int end = offset + len;
         int k1 = 0;
         int k2 = 0;
         int shift = 0;
         int bits = 0;
         int nBytes = 0; // length in UTF8 bytes
 
-        while(pos < end) {
-            int code = data.charAt(pos++);
-            if(code < 0x80) {
+        while (pos < end) {
+            final int code = data.charAt(pos++);
+            if (code < 0x80) {
                 k2 = code;
                 bits = 8;
-            } else if(code < 0x800) {
+            } else if (code < 0x800) {
                 k2 = (0xC0 | (code >> 6)) | ((0x80 | (code & 0x3F)) << 8);
                 bits = 16;
-            } else if(code < 0xD800 || code > 0xDFFF || pos >= end) {
+            } else if (code < 0xD800 || code > 0xDFFF || pos >= end) {
                 // we check for pos>=end to encode an unpaired surrogate as 3 bytes.
                 k2 = (0xE0 | (code >> 12)) | ((0x80 | ((code >> 6) & 0x3F)) << 8)
                         | ((0x80 | (code & 0x3F)) << 16);
@@ -93,7 +93,7 @@ public final class MurmurHash3 {
             k1 |= k2 << shift;
 
             shift += bits;
-            if(shift >= 32) {
+            if (shift >= 32) {
                 // mix after we have a complete word
 
                 k1 *= c1;
@@ -106,7 +106,7 @@ public final class MurmurHash3 {
 
                 shift -= 32;
                 // unfortunately, java won't let you shift 32 bits off, so we need to check for 0
-                if(shift != 0) {
+                if (shift != 0) {
                     k1 = k2 >>> (bits - shift); // bits used == bits - newshift
                 } else {
                     k1 = 0;
@@ -117,7 +117,7 @@ public final class MurmurHash3 {
         } // inner
 
         // handle tail
-        if(shift > 0) {
+        if (shift > 0) {
             nBytes += shift >> 3;
             k1 *= c1;
             k1 = (k1 << 15) | (k1 >>> 17); // ROTL32(k1,15);
