@@ -127,7 +127,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("max", "max_target", true, "The maximum value of target variable");
         // learning rates
         opts.addOption("eta", true, "The initial learning rate");
-        opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
+        opts.addOption("eta0", true, "The initial learning rate [default 0.05]");
         opts.addOption("t", "total_steps", true, "The total number of training examples");
         opts.addOption("power_t", true,
             "The exponent for inverse scaling learning rate [default 0.1]");
@@ -216,7 +216,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         this._validationThreshold = validationThreshold;
         this._lossFunction = classication ? LossFunctions.getLossFunction(LossType.LogLoss)
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
-        this._etaEstimator = EtaEstimator.get(cl);
+
+        this._etaEstimator = EtaEstimator.get(cl, /* eta0 */0.05f);
         this._cvState = new ConversionState(conversionCheck, convergenceRate);
         this._parseFeatureAsInt = parseFeatureAsInt;
 

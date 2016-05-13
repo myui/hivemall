@@ -126,13 +126,19 @@ public abstract class EtaEstimator {
 
     @Nonnull
     public static EtaEstimator get(@Nullable CommandLine cl) throws UDFArgumentException {
+        return get(cl, 0.1f);
+    }
+
+    @Nonnull
+    public static EtaEstimator get(@Nullable CommandLine cl, float defaultEta0)
+            throws UDFArgumentException {
         if (cl == null) {
-            return new InvscalingEtaEstimator(0.1f, 0.1f);
+            return new InvscalingEtaEstimator(defaultEta0, 0.1d);
         }
 
         if (cl.hasOption("boldDriver")) {
-            float eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.3f);
-            return new AdjustingEtaEstimator(eta0);
+            float eta = Primitives.parseFloat(cl.getOptionValue("eta"), 0.3f);
+            return new AdjustingEtaEstimator(eta);
         }
 
         String etaValue = cl.getOptionValue("eta");
@@ -141,7 +147,7 @@ public abstract class EtaEstimator {
             return new FixedEtaEstimator(eta);
         }
 
-        float eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), 0.1f);
+        float eta0 = Primitives.parseFloat(cl.getOptionValue("eta0"), defaultEta0);
         if (cl.hasOption("t")) {
             long t = Long.parseLong(cl.getOptionValue("t"));
             return new SimpleEtaEstimator(eta0, t);
