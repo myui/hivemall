@@ -18,7 +18,9 @@
  */
 package hivemall.ftvec.trans;
 
+import hivemall.fm.Feature;
 import hivemall.utils.hadoop.HiveUtils;
+import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +30,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
@@ -38,12 +41,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "ffm_features", value = "_FUNC_(array<string> featureNames, ...)"
-        + " - Takes categroical variables and returns a feature vector array<string>"
-        + " in a libffm format <field>:<index>:<value>")
+@Description(
+        name = "ffm_features",
+        value = "_FUNC_(const boolean mhash=true, const array<string> featureNames, feature1, feature2, ..)"
+                + " - Takes categroical variables and returns a feature vector array<string>"
+                + " in a libffm format <field>:<index>:<value>")
 @UDFType(deterministic = true, stateful = false)
 public final class FFMFeaturesUDF extends GenericUDF {
 
+    private boolean mhash;
     private String[] featureNames;
     private PrimitiveObjectInspector[] inputOIs;
     private List<Text> result;
@@ -52,11 +58,12 @@ public final class FFMFeaturesUDF extends GenericUDF {
     public ObjectInspector initialize(@Nonnull final ObjectInspector[] argOIs)
             throws UDFArgumentException {
         final int numArgOIs = argOIs.length;
-        if (numArgOIs < 2) {
-            throw new UDFArgumentException("argOIs.length must be greater that or equals to 2: "
-                    + numArgOIs);
+        if (numArgOIs < 3) {
+            throw new UDFArgumentLengthException(
+                "the number of arguments must be greater that or equals to 3: " + numArgOIs);
         }
-        this.featureNames = HiveUtils.getConstStringArray(argOIs[0]);
+        this.mhash = HiveUtils.getConstBoolean(argOIs[0]);
+        this.featureNames = HiveUtils.getConstStringArray(argOIs[1]);
         if (featureNames == null) {
             throw new UDFArgumentException("#featureNames should not be null");
         }
@@ -72,15 +79,15 @@ public final class FFMFeaturesUDF extends GenericUDF {
             throw new UDFArgumentException("#featureNames must be greater than or equals to 1: "
                     + numFeatureNames);
         }
-        int numFeatures = numArgOIs - 1;
+        int numFeatures = numArgOIs - 2;
         if (numFeatureNames != numFeatures) {
-            throw new UDFArgumentException("#featureNames '" + numFeatureNames
+            throw new UDFArgumentLengthException("#featureNames '" + numFeatureNames
                     + "' != #arguments '" + numFeatures + "'");
         }
 
         this.inputOIs = new PrimitiveObjectInspector[numFeatures];
         for (int i = 0; i < numFeatures; i++) {
-            ObjectInspector oi = argOIs[i + 1];
+            ObjectInspector oi = argOIs[i + 2];
             inputOIs[i] = HiveUtils.asPrimitiveObjectInspector(oi);
         }
         this.result = new ArrayList<Text>(numFeatures);
@@ -92,9 +99,9 @@ public final class FFMFeaturesUDF extends GenericUDF {
     public List<Text> evaluate(@Nonnull final DeferredObject[] arguments) throws HiveException {
         result.clear();
 
-        final int size = arguments.length - 1;
+        final int size = arguments.length - 2;
         for (int i = 0; i < size; i++) {
-            Object argument = arguments[i + 1].get();
+            Object argument = arguments[i + 2].get();
             if (argument == null) {
                 continue;
             }
@@ -108,9 +115,18 @@ public final class FFMFeaturesUDF extends GenericUDF {
                 throw new HiveException("feature index SHOULD NOT include colon: " + s);
             }
 
-            // categorical feature representation                    
-            String featureName = featureNames[i];
-            Text f = new Text(featureName + ':' + featureName + '#' + s + ":1");
+            final String featureName = featureNames[i];
+            final String feature = featureName + '#' + s;
+            // categorical feature representation 
+            final Text f;
+            if (mhash) {
+                int field = MurmurHash3.murmurhash3(featureNames[i], Feature.NUM_FIELD);
+                int index = MurmurHash3.murmurhash3(feature);
+                f = new Text(field + ':' + index + ":1");
+            } else {
+                f = new Text(featureName + ':' + feature + ":1");
+            }
+
             result.add(f);
         }
         return result;

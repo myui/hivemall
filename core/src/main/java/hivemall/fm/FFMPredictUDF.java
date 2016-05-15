@@ -83,7 +83,7 @@ public final class FFMPredictUDF extends GenericUDF {
         if (arg2 instanceof LazyBinaryArray) {
             arg2 = ((LazyBinaryArray) arg2).getList();
         }
-        Feature[] x = Feature.parseFeatures(arg2, _featureListOI, _probes, false);
+        Feature[] x = Feature.parseFFMFeatures(arg2, _featureListOI, _probes);
         if (x == null || x.length == 0) {
             return null; // return NULL if there are no features
         }
@@ -137,11 +137,11 @@ public final class FFMPredictUDF extends GenericUDF {
         for (int i = 0; i < x.length; ++i) {
             final Feature ei = x[i];
             final double xi = ei.getValue();
-            final String iField = ei.getField();
+            final int iField = ei.getField();
             for (int j = i + 1; j < x.length; ++j) {
                 final Feature ej = x[j];
                 final double xj = ej.getValue();
-                final String jField = ej.getField();
+                final int jField = ej.getField();
                 final float[] vij = model.getV(ei, jField);
                 final float[] vji = model.getV(ej, iField);
                 if (vij == null || vji == null) {

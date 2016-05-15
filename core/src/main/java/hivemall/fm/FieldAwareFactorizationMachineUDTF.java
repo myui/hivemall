@@ -21,13 +21,13 @@ package hivemall.fm;
 import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.codec.Base91;
 import hivemall.utils.collections.DoubleArray3D;
+import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -57,7 +57,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     private boolean _linearCoeff;
 
     private FFMStringFeatureMapModel _model;
-    private List<String> _fieldList;
+    private IntArrayList _fieldList;
 
     @Nullable
     private DoubleArray3D _sumVfX;
@@ -102,7 +102,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         StructObjectInspector oi = super.initialize(argOIs);
-        this._fieldList = new ArrayList<String>();
+        this._fieldList = new IntArrayList();
         return oi;
     }
 
@@ -160,6 +160,11 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
+    protected Feature[] parseFeatures(@Nonnull final Object arg) throws HiveException {
+        return Feature.parseFFMFeatures(arg, _xOI, _probes);
+    }
+
+    @Override
     public void train(@Nonnull final Feature[] x, final double y,
             final boolean adaptiveRegularization) throws HiveException {
         _model.check(x);
@@ -193,16 +198,16 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         }
 
         // ViFf update
-        final List<String> fieldList = getFieldList(x);
+        final IntArrayList fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
         final DoubleArray3D sumVfX = _model.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
-                final String field = fieldList.get(fieldIndex);
+                final int yField = fieldList.get(fieldIndex);
                 for (int f = 0, k = _factor; f < k; f++) {
                     double sumViX = sumVfX.get(i, fieldIndex, f);
-                    _model.updateV(lossGrad, x_i, field, f, sumViX, _t);
+                    _model.updateV(lossGrad, x_i, yField, f, sumViX, _t);
                 }
             }
         }
@@ -214,9 +219,9 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Nonnull
-    private List<String> getFieldList(@Nonnull final Feature[] x) {
+    private IntArrayList getFieldList(@Nonnull final Feature[] x) {
         for (Feature e : x) {
-            String field = e.getField();
+            int field = e.getField();
             _fieldList.add(field);
         }
         return _fieldList;

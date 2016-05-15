@@ -60,7 +60,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     public float getW(@Nonnull final Feature x) {
-        int j = StringFeature.toIntFeature(x);
+        int j = x.getFeatureIndex();
 
         Entry entry = _map.get(j);
         if (entry == null) {
@@ -71,7 +71,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     protected void setW(@Nonnull final Feature x, final float nextWi) {
-        final int j = StringFeature.toIntFeature(x);
+        final int j = x.getFeatureIndex();
 
         Entry entry = _map.get(j);
         if (entry == null) {
@@ -87,8 +87,8 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
      * @return V_x,yField,f
      */
     @Override
-    public float getV(@Nonnull final Feature x, @Nonnull final String yField, final int f) {
-        final int j = StringFeature.toIntFeature(x, yField);
+    public float getV(@Nonnull final Feature x, @Nonnull final int yField, final int f) {
+        final int j = Feature.toIntFeature(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -104,9 +104,9 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected void setV(@Nonnull final Feature x, @Nonnull final String yField, final int f,
+    protected void setV(@Nonnull final Feature x, @Nonnull final int yField, final int f,
             final float nextVif) {
-        final int j = StringFeature.toIntFeature(x, yField);
+        final int j = Feature.toIntFeature(x, yField);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -122,8 +122,8 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
-    protected Entry getEntry(@Nonnull final Feature x, @Nonnull final String yField) {
-        int j = StringFeature.toIntFeature(x, yField);
+    protected Entry getEntry(@Nonnull final Feature x, @Nonnull final int yField) {
+        int j = Feature.toIntFeature(x, yField);
         return _map.get(j);
     }
 

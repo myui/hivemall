@@ -54,7 +54,8 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public float getW1(@Nonnull final Feature x) {
-        int j = StringFeature.toIntFeature(x);
+        int j = x.getFeatureIndex();
+        
         Entry entry = _map.get(j);
         if (entry == null) {
             return 0.f;
@@ -63,8 +64,9 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     @Nullable
-    public float[] getV(@Nonnull final Feature x, @Nonnull final String field) {
-        int j = StringFeature.toIntFeature(x, field);
+    public float[] getV(@Nonnull final Feature x, @Nonnull final int yField) {
+        int j = Feature.toIntFeature(x, yField);
+        
         Entry entry = _map.get(j);
         if (entry == null) {
             return null;

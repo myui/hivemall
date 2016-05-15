@@ -95,4 +95,16 @@ public final class NumberUtils {
         return (v > Float.NEGATIVE_INFINITY) & (v < Float.POSITIVE_INFINITY);
     }
 
+    public static boolean isDigits(String str) {
+        if (str == null || str.length() == 0) {
+            return false;
+        }
+        for (int i = 0, len = str.length(); i < len; i++) {
+            if (!Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

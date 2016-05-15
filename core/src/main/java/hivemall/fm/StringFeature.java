@@ -18,34 +18,25 @@
  */
 package hivemall.fm;
 
-import hivemall.utils.hashing.MurmurHash3;
 import hivemall.utils.io.NIOUtils;
 
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class StringFeature extends Feature {
 
     @Nonnull
     protected String feature;
-    @Nullable
-    protected String field;
 
     public StringFeature(@Nonnull String feature, double value) {
-        this(feature, null, value);
+        super(value);
+        this.feature = feature;
     }
 
     // VisibleForTesting
     StringFeature(int feature, double value) {
-        this(String.valueOf(feature), null, value);
-    }
-
-    public StringFeature(@Nonnull String feature, @Nullable String field, double value) {
-        super(value);
-        this.feature = feature;
-        this.field = field;
+        this(String.valueOf(feature), value);
     }
 
     public StringFeature(@Nonnull ByteBuffer src) {
@@ -64,54 +55,25 @@ public class StringFeature extends Feature {
     }
 
     @Override
-    public void setField(@Nullable String f) {
-        this.field = f;
-    }
-
-    @Override
-    public String getField() {
-        if (field == null) {
-            return feature; // CAUTION: <field> equals to <index> for quantitative features
-        }
-        return field;
-    }
-
-    @Override
     public int bytes() {
-        return NIOUtils.requiredBytes(feature) + NIOUtils.requiredBytes(field) + Double.SIZE / 8;
+        return NIOUtils.requiredBytes(feature) + Double.SIZE / Byte.SIZE;
     }
 
     @Override
     public void writeTo(@Nonnull ByteBuffer dst) {
         NIOUtils.putString(feature, dst);
-        NIOUtils.putString(field, dst);
         dst.putDouble(value);
     }
 
     @Override
     public void readFrom(@Nonnull ByteBuffer src) {
         this.feature = NIOUtils.getString(src);
-        this.field = NIOUtils.getString(src);
         this.value = src.getDouble();
     }
 
     @Override
     public String toString() {
-        if (field == null) {
-            return feature + ':' + value;
-        } else {
-            return feature + ':' + field + ':' + value;
-        }
-    }
-
-    public static int toIntFeature(@Nonnull final Feature x) {
-        String f = x.getFeature();
-        return MurmurHash3.murmurhash3(f);
-    }
-
-    public static int toIntFeature(@Nonnull final Feature x, @Nonnull final String yField) {
-        String f = x.getFeature() + ':' + yField;
-        return MurmurHash3.murmurhash3(f);
+        return feature + ':' + value;
     }
 
 }

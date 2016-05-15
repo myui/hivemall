@@ -170,7 +170,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    protected String varDump(@Nonnull final Feature[] x) {
+    protected final String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
@@ -232,7 +232,7 @@ public abstract class FactorizationMachineModel {
         setW(x, nextWi);
     }
 
-    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
+    final void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
             final float eta) {
         final double Xi = x.getValue();
         float Vif = getV(x, f);

@@ -309,7 +309,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        Feature[] x = Feature.parseFeatures(args[0], _xOI, _probes, _parseFeatureAsInt);
+        Feature[] x = parseFeatures(args[0]);
         if (x == null) {
             return;
         }
@@ -324,6 +324,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         recordTrain(x, y);
         boolean adaptiveRegularization = (_va_rand != null) && _t >= _validationThreshold;
         train(x, y, adaptiveRegularization);
+    }
+
+    @Nullable
+    protected Feature[] parseFeatures(@Nonnull final Object arg) throws HiveException {
+        return Feature.parseFeatures(arg, _xOI, _probes, _parseFeatureAsInt);
     }
 
     protected void recordTrain(@Nonnull final Feature[] x, final double y) throws HiveException {
