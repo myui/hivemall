@@ -22,6 +22,7 @@ import hivemall.utils.math.MathUtils;
 
 public final class MurmurHash3 {
 
+    /** 2^24 */
     public static final int DEFAULT_NUM_FEATURES = 16777216;
 
     /**

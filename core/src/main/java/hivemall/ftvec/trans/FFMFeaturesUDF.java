@@ -120,9 +120,9 @@ public final class FFMFeaturesUDF extends GenericUDF {
             // categorical feature representation 
             final String fv;
             if (mhash) {
-                int field = MurmurHash3.murmurhash3(featureNames[i], Feature.NUM_FIELD);
+                int field = MurmurHash3.murmurhash3(featureNames[i], Feature.NUM_FIELDS);
                 // +NUM_FIELD to avoid conflict to quantitative features
-                int index = MurmurHash3.murmurhash3(feature) + Feature.NUM_FIELD;
+                int index = MurmurHash3.murmurhash3(feature, Feature.NUM_FEATURES) + Feature.NUM_FIELDS;
                 fv = builder.append(field).append(':').append(index).append(":1").toString();
                 builder.setLength(0);
             } else {

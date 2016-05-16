@@ -24,7 +24,7 @@ import hivemall.utils.collections.IntOpenHashTable;
 import javax.annotation.Nonnull;
 
 public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
-    private static final int DEFAULT_MAPSIZE = 4096;
+    private static final int DEFAULT_MAPSIZE = 65536;
 
     // LEARNING PARAMS
     private float _w0;

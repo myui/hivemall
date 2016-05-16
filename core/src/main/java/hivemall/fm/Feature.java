@@ -31,9 +31,10 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 
 public abstract class Feature {
-    public static final int NUM_FIELD = 1024;
-    public static final int FEATURE_INDEX_RIGHT_OPEN_BOUND = MurmurHash3.DEFAULT_NUM_FEATURES
-            + NUM_FIELD;
+    public static final int NUM_FIELDS = 1024;
+    /** 2^20 */
+    public static final int NUM_FEATURES = 1048576;
+    public static final int FEATURE_INDEX_RIGHT_OPEN_BOUND = NUM_FEATURES + NUM_FIELDS;
 
     protected double value;
 
@@ -206,13 +207,13 @@ public abstract class Feature {
             final int index;
             if (NumberUtils.isDigits(lead)) {
                 index = parseFeatureIndex(lead);
-                if (index < 0 || index >= NUM_FIELD) {
+                if (index < 0 || index >= NUM_FIELDS) {
                     throw new HiveException("Invalid index value '" + index
                             + "' for a quantative features: " + fv + ", expecting index less than "
-                            + NUM_FIELD);
+                            + NUM_FIELDS);
                 }
             } else {
-                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
             }
             short field = (short) index;
             double value = parseFeatureValue(rest);
@@ -231,8 +232,8 @@ public abstract class Feature {
             field = parseField(lead);
         } else {
             // +NUM_FIELD to avoid conflict to quantitative features
-            index = MurmurHash3.murmurhash3(indexStr) + NUM_FIELD;
-            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+            index = MurmurHash3.murmurhash3(indexStr, NUM_FEATURES) + NUM_FIELDS;
+            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
         }
         String valueStr = rest.substring(pos2 + 1);
         double value = parseFeatureValue(valueStr);
@@ -278,13 +279,13 @@ public abstract class Feature {
             final int index;
             if (NumberUtils.isDigits(lead)) {
                 index = parseFeatureIndex(lead);
-                if (index < 0 || index >= NUM_FIELD) {
+                if (index < 0 || index >= NUM_FIELDS) {
                     throw new HiveException("Invalid index value '" + index
                             + "' for a quantative features: " + fv + ", expecting index less than "
-                            + NUM_FIELD);
+                            + NUM_FIELDS);
                 }
             } else {
-                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
             }
             short field = (short) index;
             probe.setField(field);
@@ -305,8 +306,8 @@ public abstract class Feature {
             field = parseField(lead);
         } else {
             // +NUM_FIELD to avoid conflict to quantitative features
-            index = MurmurHash3.murmurhash3(indexStr) + NUM_FIELD;
-            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+            index = MurmurHash3.murmurhash3(indexStr, NUM_FEATURES) + NUM_FIELDS;
+            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
         }
         probe.setField(field);
         probe.setFeatureIndex(index);
@@ -344,7 +345,7 @@ public abstract class Feature {
         } catch (NumberFormatException e) {
             throw new HiveException("Invalid field value: " + fieldStr, e);
         }
-        if (field < 0 || field >= NUM_FIELD) {
+        if (field < 0 || field >= NUM_FIELDS) {
             throw new HiveException("Invalid field value: " + fieldStr);
         }
         return field;
@@ -352,7 +353,7 @@ public abstract class Feature {
 
     public static int toIntFeature(@Nonnull final Feature x, final int yField) {
         int index = x.getFeatureIndex();
-        return index * NUM_FIELD + yField;
+        return index * NUM_FIELDS + yField;
     }
 
     @Nonnull
