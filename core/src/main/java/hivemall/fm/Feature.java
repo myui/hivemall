@@ -32,6 +32,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 
 public abstract class Feature {
     public static final int NUM_FIELD = 1024;
+    public static final int FEATURE_INDEX_RIGHT_OPEN_BOUND = MurmurHash3.DEFAULT_NUM_FEATURES
+            + NUM_FIELD;
 
     protected double value;
 
@@ -200,8 +202,21 @@ public abstract class Feature {
         final String lead = fv.substring(0, pos1);
         final String rest = fv.substring(pos1 + 1);
         final int pos2 = rest.indexOf(':');
-        if (pos2 == -1) {
-            throw new HiveException("Invalid FFM feature format: " + fv);
+        if (pos2 == -1) {// e.g., i1:1.0 (quantitative features)
+            final int index;
+            if (NumberUtils.isDigits(lead)) {
+                index = parseFeatureIndex(lead);
+                if (index < 0 || index >= NUM_FIELD) {
+                    throw new HiveException("Invalid index value '" + index
+                            + "' for a quantative features: " + fv + ", expecting index less than "
+                            + NUM_FIELD);
+                }
+            } else {
+                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+            }
+            short field = (short) index;
+            double value = parseFeatureValue(rest);
+            return new IntFeature(index, field, value);
         }
 
         final String indexStr = rest.substring(0, pos2);
@@ -209,13 +224,14 @@ public abstract class Feature {
         final short field;
         if (NumberUtils.isDigits(indexStr) && NumberUtils.isDigits(lead)) {
             index = parseFeatureIndex(indexStr);
-            if (index >= MurmurHash3.DEFAULT_NUM_FEATURES) {
+            if (index >= FEATURE_INDEX_RIGHT_OPEN_BOUND) {
                 throw new HiveException("Feature index MUST be less than "
-                        + MurmurHash3.DEFAULT_NUM_FEATURES + " but was " + index);
+                        + FEATURE_INDEX_RIGHT_OPEN_BOUND + " but was " + index);
             }
             field = parseField(lead);
         } else {
-            index = MurmurHash3.murmurhash3(indexStr);
+            // +NUM_FIELD to avoid conflict to quantitative features
+            index = MurmurHash3.murmurhash3(indexStr) + NUM_FIELD;
             field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
         }
         String valueStr = rest.substring(pos2 + 1);
@@ -258,28 +274,44 @@ public abstract class Feature {
         final String lead = fv.substring(0, pos1);
         final String rest = fv.substring(pos1 + 1);
         final int pos2 = rest.indexOf(':');
-        if (pos2 == -1) {
-            throw new HiveException("Invalid FFM feature format: " + fv);
+        if (pos2 == -1) {// e.g., i1:1.0 (quantitative features) expecting |feature| less than 1024
+            final int index;
+            if (NumberUtils.isDigits(lead)) {
+                index = parseFeatureIndex(lead);
+                if (index < 0 || index >= NUM_FIELD) {
+                    throw new HiveException("Invalid index value '" + index
+                            + "' for a quantative features: " + fv + ", expecting index less than "
+                            + NUM_FIELD);
+                }
+            } else {
+                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
+            }
+            short field = (short) index;
+            probe.setField(field);
+            probe.setFeatureIndex(index);
+            probe.value = parseFeatureValue(rest);
+            return;
         }
-        String indexStr = rest.substring(0, pos2);
-        String valueStr = rest.substring(pos2 + 1);
 
+        String indexStr = rest.substring(0, pos2);
         final int index;
         final short field;
         if (NumberUtils.isDigits(indexStr) && NumberUtils.isDigits(lead)) {
             index = parseFeatureIndex(indexStr);
-            if (index >= MurmurHash3.DEFAULT_NUM_FEATURES) {
+            if (index >= FEATURE_INDEX_RIGHT_OPEN_BOUND) {
                 throw new HiveException("Feature index MUST be less than "
-                        + MurmurHash3.DEFAULT_NUM_FEATURES + " but was " + index);
+                        + FEATURE_INDEX_RIGHT_OPEN_BOUND + " but was " + index);
             }
             field = parseField(lead);
         } else {
-            index = MurmurHash3.murmurhash3(indexStr);
+            // +NUM_FIELD to avoid conflict to quantitative features
+            index = MurmurHash3.murmurhash3(indexStr) + NUM_FIELD;
             field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELD);
         }
-
         probe.setField(field);
         probe.setFeatureIndex(index);
+
+        String valueStr = rest.substring(pos2 + 1);
         probe.value = parseFeatureValue(valueStr);
     }
 

@@ -41,9 +41,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(
-        name = "ffm_features",
-        value = "_FUNC_(const boolean mhash=true, const array<string> featureNames, feature1, feature2, ..)"
+@Description(name = "ffm_features",
+        value = "_FUNC_(boolean mhash, const array<string> featureNames, feature1, feature2, ..)"
                 + " - Takes categroical variables and returns a feature vector array<string>"
                 + " in a libffm format <field>:<index>:<value>")
 @UDFType(deterministic = true, stateful = false)
@@ -99,6 +98,7 @@ public final class FFMFeaturesUDF extends GenericUDF {
     public List<Text> evaluate(@Nonnull final DeferredObject[] arguments) throws HiveException {
         result.clear();
 
+        final StringBuilder builder = new StringBuilder(128);
         final int size = arguments.length - 2;
         for (int i = 0; i < size; i++) {
             Object argument = arguments[i + 2].get();
@@ -118,16 +118,23 @@ public final class FFMFeaturesUDF extends GenericUDF {
             final String featureName = featureNames[i];
             final String feature = featureName + '#' + s;
             // categorical feature representation 
-            final Text f;
+            final String fv;
             if (mhash) {
                 int field = MurmurHash3.murmurhash3(featureNames[i], Feature.NUM_FIELD);
-                int index = MurmurHash3.murmurhash3(feature);
-                f = new Text(field + ':' + index + ":1");
+                // +NUM_FIELD to avoid conflict to quantitative features
+                int index = MurmurHash3.murmurhash3(feature) + Feature.NUM_FIELD;
+                fv = builder.append(field).append(':').append(index).append(":1").toString();
+                builder.setLength(0);
             } else {
-                f = new Text(featureName + ':' + feature + ":1");
+                fv = builder.append(featureName)
+                            .append(':')
+                            .append(feature)
+                            .append(":1")
+                            .toString();
+                builder.setLength(0);
             }
 
-            result.add(f);
+            result.add(new Text(fv));
         }
         return result;
     }

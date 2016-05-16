@@ -41,6 +41,20 @@ public class FeatureTest {
     }
 
     @Test
+    public void testParseQuantitativeFFMFeature() throws HiveException {
+        IntFeature f1 = Feature.parseFFMFeature("163:0.3651");
+        Assert.assertEquals(163, f1.getField());
+        Assert.assertEquals(163, f1.getFeatureIndex());
+        Assert.assertEquals("163", f1.getFeature());
+        Assert.assertEquals(0.3651d, f1.getValue(), 0.d);
+    }
+
+    @Test(expected = HiveException.class)
+    public void testParseQuantitativeFFMFeatureFails() throws HiveException {
+        Feature.parseFFMFeature("1163:0.3651");
+    }
+
+    @Test
     public void testParseFeatureProbe() throws HiveException {
         Feature probe = Feature.parseFeature("dummy:-1", false);
         Feature.parseFeature("1164:0.3652", probe, false);
