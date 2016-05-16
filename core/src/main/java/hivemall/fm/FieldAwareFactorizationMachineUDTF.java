@@ -228,8 +228,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected StringFeature instantiateFeature(@Nonnull final ByteBuffer input) {
-        return new StringFeature(input);
+    protected IntFeature instantiateFeature(@Nonnull final ByteBuffer input) {
+        return new IntFeature(input);
     }
 
     @Override
