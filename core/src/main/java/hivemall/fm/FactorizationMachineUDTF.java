@@ -127,7 +127,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("max", "max_target", true, "The maximum value of target variable");
         // learning rates
         opts.addOption("eta", true, "The initial learning rate");
-        opts.addOption("eta0", true, "The initial learning rate [default 0.1]");
+        opts.addOption("eta0", true, "The initial learning rate [default 0.05]");
         opts.addOption("t", "total_steps", true, "The total number of training examples");
         opts.addOption("power_t", true,
             "The exponent for inverse scaling learning rate [default 0.1]");
@@ -216,7 +216,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         this._validationThreshold = validationThreshold;
         this._lossFunction = classication ? LossFunctions.getLossFunction(LossType.LogLoss)
                 : LossFunctions.getLossFunction(LossType.SquaredLoss);
-        this._etaEstimator = EtaEstimator.get(cl);
+
+        this._etaEstimator = EtaEstimator.get(cl, /* eta0 */0.05f);
         this._cvState = new ConversionState(conversionCheck, convergenceRate);
         this._parseFeatureAsInt = parseFeatureAsInt;
 
@@ -308,7 +309,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        Feature[] x = Feature.parseFeatures(args[0], _xOI, _probes, _parseFeatureAsInt);
+        Feature[] x = parseFeatures(args[0]);
         if (x == null) {
             return;
         }
@@ -323,6 +324,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         recordTrain(x, y);
         boolean adaptiveRegularization = (_va_rand != null) && _t >= _validationThreshold;
         train(x, y, adaptiveRegularization);
+    }
+
+    @Nullable
+    protected Feature[] parseFeatures(@Nonnull final Object arg) throws HiveException {
+        return Feature.parseFeatures(arg, _xOI, _probes, _parseFeatureAsInt);
     }
 
     protected void recordTrain(@Nonnull final Feature[] x, final double y) throws HiveException {
@@ -692,7 +698,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Nonnull
     protected Feature instantiateFeature(@Nonnull final ByteBuffer input) {
-        return Feature.createInstance(input, _parseFeatureAsInt);
+        if (_parseFeatureAsInt) {
+            return new IntFeature(input);
+        } else {
+            return new StringFeature(input);
+        }
     }
 
 }

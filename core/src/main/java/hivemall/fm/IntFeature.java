@@ -23,10 +23,18 @@ import java.nio.ByteBuffer;
 import javax.annotation.Nonnull;
 
 public final class IntFeature extends Feature {
+
     private int index;
+    /** -1 if not defined */
+    private short field;
 
     public IntFeature(int index, double value) {
+        this(index, (short) -1, value);
+    }
+
+    public IntFeature(int index, short field, double value) {
         super(value);
+        this.field = field;
         this.index = index;
     }
 
@@ -51,25 +59,41 @@ public final class IntFeature extends Feature {
     }
 
     @Override
+    public short getField() {
+        return field;
+    }
+
+    @Override
+    public void setField(short field) {
+        this.field = field;
+    }
+
+    @Override
     public int bytes() {
-        return (Integer.SIZE + Double.SIZE) / 8;
+        return (Integer.SIZE + Short.SIZE + Double.SIZE) / Byte.SIZE;
     }
 
     @Override
     public void writeTo(@Nonnull final ByteBuffer dst) {
         dst.putInt(index);
+        dst.putShort(field);
         dst.putDouble(value);
     }
 
     @Override
     public void readFrom(@Nonnull final ByteBuffer src) {
         this.index = src.getInt();
+        this.field = src.getShort();
         this.value = src.getDouble();
     }
 
     @Override
     public String toString() {
-        return index + ":" + value;
+        if (field == -1) {
+            return index + ":" + value;
+        } else {
+            return index + ":" + field + ":" + value;
+        }
     }
 
 }

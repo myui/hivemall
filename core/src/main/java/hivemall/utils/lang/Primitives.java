@@ -19,7 +19,9 @@
 package hivemall.utils.lang;
 
 public final class Primitives {
-
+    public static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
+    public static final int DOUBLE_BYTES = Double.SIZE / Byte.SIZE;
+    
     private Primitives() {}
 
     public static int toUnsignedShort(final short v) {

@@ -24,36 +24,55 @@ import org.junit.Test;
 public class FeatureTest {
 
     @Test
-    public void testParseStringBoolean() throws HiveException {
-        Feature f1 = Feature.parse("2:1163:0.3651", false);
-        Assert.assertTrue(f1 instanceof StringFeature);
-        Assert.assertEquals("2", f1.getField());
-        Assert.assertEquals("1163", f1.getFeature());
-        Assert.assertEquals(0.3651d, f1.getValue(), 0.d);
-
-        Feature f2 = Feature.parse("1164:0.3652", false);
+    public void testParseFeature() throws HiveException {
+        Feature f2 = Feature.parseFeature("1164:0.3652", false);
         Assert.assertTrue(f2 instanceof StringFeature);
-        Assert.assertEquals("1164", f2.getField());
         Assert.assertEquals("1164", f2.getFeature());
         Assert.assertEquals(0.3652d, f2.getValue(), 0.d);
     }
 
     @Test
-    public void testParseStringFeatureBoolean() throws HiveException {
-        Feature probe = new StringFeature("dummyFeature", "dummyField", Double.NaN);
-        Feature.parse("2:1163:0.3651", probe, false);
-        Assert.assertEquals("2", probe.getField());
-        Assert.assertEquals("1163", probe.getFeature());
-        Assert.assertEquals(0.3651d, probe.getValue(), 0.d);
+    public void testParseFFMFeature() throws HiveException {
+        IntFeature f1 = Feature.parseFFMFeature("2:1163:0.3651");
+        Assert.assertEquals(2, f1.getField());
+        Assert.assertEquals(1163, f1.getFeatureIndex());
+        Assert.assertEquals("1163", f1.getFeature());
+        Assert.assertEquals(0.3651d, f1.getValue(), 0.d);
+    }
 
-        Feature.parse("1164:0.3652", probe, false);
-        Assert.assertEquals("1164", probe.getField());
+    @Test
+    public void testParseQuantitativeFFMFeature() throws HiveException {
+        IntFeature f1 = Feature.parseFFMFeature("163:0.3651");
+        Assert.assertEquals(163, f1.getField());
+        Assert.assertEquals(163, f1.getFeatureIndex());
+        Assert.assertEquals("163", f1.getFeature());
+        Assert.assertEquals(0.3651d, f1.getValue(), 0.d);
+    }
+
+    @Test(expected = HiveException.class)
+    public void testParseQuantitativeFFMFeatureFails() throws HiveException {
+        Feature.parseFFMFeature("1163:0.3651");
+    }
+
+    @Test
+    public void testParseFeatureProbe() throws HiveException {
+        Feature probe = Feature.parseFeature("dummy:-1", false);
+        Feature.parseFeature("1164:0.3652", probe, false);
         Assert.assertEquals("1164", probe.getFeature());
         Assert.assertEquals(0.3652d, probe.getValue(), 0.d);
     }
 
+    public void testParseFFMFeatureProbe() throws HiveException {
+        IntFeature probe = Feature.parseFFMFeature("dummyFeature:dummyField:-1");
+        Feature.parseFFMFeature("2:1163:0.3651", probe);
+        Assert.assertEquals(2, probe.getField());
+        Assert.assertEquals(1163, probe.getFeatureIndex());
+        Assert.assertEquals("1163", probe.getFeature());
+        Assert.assertEquals(0.3651d, probe.getValue(), 0.d);
+    }
+
     public void testParseIntFeature() throws HiveException {
-        Feature f = Feature.parse("1163:0.3651", true);
+        Feature f = Feature.parseFeature("1163:0.3651", true);
         Assert.assertTrue(f instanceof IntFeature);
         Assert.assertEquals("1163", f.getFeature());
         Assert.assertEquals(1163, f.getFeatureIndex());
@@ -62,7 +81,7 @@ public class FeatureTest {
 
     @Test(expected = HiveException.class)
     public void testParseIntFeatureFails() throws HiveException {
-        Feature.parse("2:1163:0.3651", true);
+        Feature.parseFeature("2:1163:0.3651", true);
     }
 
 }

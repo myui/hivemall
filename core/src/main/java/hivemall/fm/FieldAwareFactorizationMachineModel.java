@@ -19,12 +19,14 @@
 package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
+import hivemall.utils.collections.DoubleArray3D;
+import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.lang.NumberUtils;
 
 import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
@@ -43,9 +45,9 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         this.scaling = scaling;
     }
 
-    public abstract float getV(@Nonnull Feature x, @Nonnull String field, int f);
+    public abstract float getV(@Nonnull Feature x, @Nonnull int yField, int f);
 
-    protected abstract void setV(@Nonnull Feature x, @Nonnull String yField, int f, float nextVif);
+    protected abstract void setV(@Nonnull Feature x, @Nonnull int yField, int f, float nextVif);
 
     @Override
     public float getV(Feature x, int f) {
@@ -58,7 +60,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     @Override
-    protected double predict(@Nonnull final Feature[] x) {
+    protected final double predict(@Nonnull final Feature[] x) {
         // w0
         double ret = getW0();
         // W
@@ -72,11 +74,11 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         for (int i = 0; i < x.length; i++) {
             final Feature ei = x[i];
             final double xi = ei.getValue();
-            final String iField = ei.getField();
+            final int iField = ei.getField();
             for (int j = i + 1; j < x.length; j++) {
                 final Feature ej = x[j];
                 final double xj = ej.getValue();
-                final String jField = ej.getField();
+                final int jField = ej.getField();
                 for (int f = 0, k = _factor; f < k; f++) {
                     float vijf = getV(ei, jField, f);
                     float vjif = getV(ej, iField, f);
@@ -93,28 +95,36 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
-    void updateV(final double dloss, @Nonnull final Feature x, @Nonnull final String field,
+    void updateV(final double dloss, @Nonnull final Feature x, @Nonnull final int yField,
             final int f, final double sumViX, long t) {
         final double Xi = x.getValue();
-        float currentV = getV(x, field, f);
-        double h = Xi * sumViX;
-        float gradV = (float) (dloss * h);
-        float lambdaVf = getLambdaV(f);
-        float eta = etaV(t, x, field, gradV);
-        float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
+        final double h = Xi * sumViX;
+        final float gradV = (float) (dloss * h);
+        final float lambdaVf = getLambdaV(f);
+
+        final Entry theta = getEntry(x, yField);
+        final float currentV = getV(theta, f);
+        final float eta = etaV(theta, t, gradV);
+        final float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
             throw new IllegalStateException("Got " + nextV + " for next V" + f + '['
-                    + x.getFeature() + "]\n" + "Xi=" + Xi + ", Vif=" + currentV + ", h=" + h
+                    + x.getFeatureIndex() + "]\n" + "Xi=" + Xi + ", Vif=" + currentV + ", h=" + h
                     + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(x, field, f, nextV);
+        setV(theta, f, nextV);
     }
 
-    protected final float etaV(final long t, @Nonnull final Feature x, @Nonnull final String field,
-            final float grad) {
+    private static float getV(@Nonnull final Entry theta, final int f) {
+        return theta.Vf[f];
+    }
+
+    private static float setV(@Nonnull final Entry theta, final int f, final float value) {
+        return theta.Vf[f] = value;
+    }
+
+    protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
         if (useAdaGrad) {
-            Entry theta = getEntry(x, field);
             double gg = theta.getSumOfSquaredGradients(scaling);
             theta.addGradient(grad, scaling);
             return (float) (eta0_V / Math.sqrt(eps + gg));
@@ -126,37 +136,48 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     /**
      * sum{XiViaf} where a is field index of Xi
      */
-    final double[][][] sumVfX(@Nonnull final Feature[] x, @Nonnull final List<String> fieldList) {
-        final int factors = _factor;
-        final int fieldSize = fieldList.size();
+    @Nonnull
+    final DoubleArray3D sumVfX(@Nonnull final Feature[] x, @Nonnull final IntArrayList fieldList,
+            @Nullable DoubleArray3D cached) {
         final int xSize = x.length;
-        final double[][][] ret = new double[xSize][fieldSize][factors];
+        final int fieldSize = fieldList.size();
+        final int factors = _factor;
+
+        final DoubleArray3D mdarray;
+        if (cached == null) {
+            mdarray = new DoubleArray3D();
+            mdarray.setSanityCheck(false);
+        } else {
+            mdarray = cached;
+        }
+        mdarray.configure(xSize, fieldSize, factors);
+
         for (int i = 0; i < xSize; i++) {
-            final double[][] ret_i = ret[i];
             for (int fieldIndex = 0; fieldIndex < fieldSize; fieldIndex++) {
-                final double[] ret_if = ret_i[fieldIndex];
-                final String field = fieldList.get(fieldIndex);
+                final int yField = fieldList.get(fieldIndex);
                 for (int f = 0; f < factors; f++) {
-                    ret_if[f] = sumVfX(x, i, field, f);
+                    double val = sumVfX(x, i, yField, f);
+                    mdarray.set(i, fieldIndex, f, val);
                 }
             }
         }
-        return ret;
+
+        return mdarray;
     }
 
-    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final String field,
+    private double sumVfX(@Nonnull final Feature[] x, final int i, @Nonnull final int yField,
             final int f) {
         final Feature xi = x[i];
-        final String xiFeature = xi.getFeature();
+        final int xiFeature = xi.getFeatureIndex();
         final double xiValue = xi.getValue();
-        final String xiField = xi.getField();
+        final int xiField = xi.getField();
         double ret = 0.d;
         // find all other features whose field matches field
         for (Feature e : x) {
-            if (xiFeature.equals(e.getFeature())) { // ignore x[i] = e
+            if (e.getFeatureIndex() == xiFeature) { // ignore x[i] = e
                 continue;
             }
-            if (e.getField().equals(field)) { // multiply x_e and v_d,field(e),f
+            if (e.getField() == yField) { // multiply x_e and v_d,field(e),f
                 float Vjf = getV(e, xiField, f);
                 ret += Vjf * xiValue;
             }
@@ -168,9 +189,13 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
-    protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull String yField);//TODO yField should be Object, not String (for IntFeature support)
+    @Nonnull
+    protected abstract Entry getEntry(@Nonnull Feature x);
 
-    protected Entry newEntry(final float[] V) {
+    @Nonnull
+    protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
+
+    protected final Entry newEntry(final float[] V) {
         if (useAdaGrad) {
             return new AdaGradEntry(0.f, V);
         } else {
@@ -197,7 +222,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         }
     }
 
-    static class AdaGradEntry extends Entry {
+    static final class AdaGradEntry extends Entry {
         double sumOfSqGradients;
 
         AdaGradEntry(float W, float[] Vf) {

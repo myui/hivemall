@@ -18,64 +18,68 @@
  */
 package hivemall.ftvec.hashing;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-public class MurmurHash3UDF extends UDF {
+@Description(name = "mhash",
+        value = "_FUNC_(string word) returns a murmurhash3 INT value starting from 1")
+@UDFType(deterministic = true, stateful = false)
+public final class MurmurHash3UDF extends UDF {
 
-    public IntWritable evaluate(String word) throws UDFArgumentException {
+    public IntWritable evaluate(final String word) throws UDFArgumentException {
         return evaluate(word, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public IntWritable evaluate(String word, boolean rawValue) throws UDFArgumentException {
-        if(rawValue) {
-            if(word == null) {
-                return null;
-            }
-            return val(MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c));
-        } else {
-            return evaluate(word, MurmurHash3.DEFAULT_NUM_FEATURES);
-        }
-    }
-
-    public IntWritable evaluate(String word, int numFeatures) throws UDFArgumentException {
-        if(word == null) {
+    public IntWritable evaluate(final String word, final int numFeatures)
+            throws UDFArgumentException {
+        if (word == null) {
             return null;
         }
-        int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
-        if(r < 0) {
-            r += numFeatures;
-        }
-        return val(r + 1);
+        int h = mhash(word, numFeatures);
+        return new IntWritable(h);
     }
 
-    public IntWritable evaluate(List<String> words) throws UDFArgumentException {
+    public IntWritable evaluate(final List<String> words) throws UDFArgumentException {
         return evaluate(words, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public IntWritable evaluate(List<String> words, int numFeatures) throws UDFArgumentException {
-        if(words == null) {
+    public IntWritable evaluate(final List<String> words, final int numFeatures)
+            throws UDFArgumentException {
+        if (words == null) {
             return null;
         }
         final int size = words.size();
-        if(size == 0) {
-            return val(1);
+        if (size == 0) {
+            return new IntWritable(1);
         }
         final StringBuilder b = new StringBuilder();
         b.append(words.get(0));
-        for(int i = 1; i < size; i++) {
+        for (int i = 1; i < size; i++) {
             b.append('\t');
             String v = words.get(i);
             b.append(v);
         }
         String s = b.toString();
         return evaluate(s, numFeatures);
+    }
+
+    public static int mhash(final String word) {
+        return mhash(word, MurmurHash3.DEFAULT_NUM_FEATURES);
+    }
+
+    public static int mhash(final String word, final int numFeatures) {
+        int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
+        if (r < 0) {
+            r += numFeatures;
+        }
+        return r + 1;
     }
 
 }

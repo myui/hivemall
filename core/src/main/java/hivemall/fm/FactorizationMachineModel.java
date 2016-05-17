@@ -170,7 +170,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    protected String varDump(@Nonnull final Feature[] x) {
+    protected final String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
@@ -219,7 +219,7 @@ public abstract class FactorizationMachineModel {
         setW0(nextW0);
     }
 
-    final void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
+    void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
         final double Xi = x.getValue();
         float gradWi = (float) (dloss * Xi);
         float wi = getW(x);
@@ -232,8 +232,8 @@ public abstract class FactorizationMachineModel {
         setW(x, nextWi);
     }
 
-    void updateV(final double dloss, @Nonnull final Feature x, final int f, final double sumViX,
-            final float eta) {
+    final void updateV(final double dloss, @Nonnull final Feature x, final int f,
+            final double sumViX, final float eta) {
         final double Xi = x.getValue();
         float Vif = getV(x, f);
         double h = gradV(Xi, Vif, sumViX);
@@ -395,8 +395,10 @@ public abstract class FactorizationMachineModel {
 
     protected static final void uniformFill(final float[] a, final Random rand,
             final float maxInitValue) {
-        for (int i = 0, len = a.length; i < len; i++) {
-            float v = rand.nextFloat() * (maxInitValue / len);
+        final int len = a.length;
+        final float basev = maxInitValue / len;
+        for (int i = 0; i < len; i++) {
+            float v = rand.nextFloat() * basev;
             a[i] = v;
         }
     }

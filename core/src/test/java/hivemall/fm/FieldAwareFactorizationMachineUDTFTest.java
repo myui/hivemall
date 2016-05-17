@@ -34,7 +34,7 @@ import org.junit.Test;
 
 public class FieldAwareFactorizationMachineUDTFTest {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final int ITERATIONS = 50;
     private static final int MAX_LINES = 200;
 
@@ -118,6 +118,76 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
                     "-classification -factor 10")};
+
+        udtf.initialize(argOIs);
+        FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
+        Assert.assertTrue("Actual class: " + model.getClass().getName(),
+            model instanceof FFMStringFeatureMapModel);
+
+        double loss = 0.d;
+        double cumul = 0.d;
+        for (int trainingIteration = 1; trainingIteration <= ITERATIONS; ++trainingIteration) {
+            BufferedReader data = new BufferedReader(new InputStreamReader(
+                getClass().getResourceAsStream("bigdata.tr.txt")));
+            loss = udtf._cvState.getCumulativeLoss();
+            int lines = 0;
+            for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber, ++lines) {
+                //gather features in current line
+                final String input = data.readLine();
+                if (input == null) {
+                    System.out.println("EOF reached at line " + lineNumber);
+                    break;
+                }
+                ArrayList<String> featureStrings = new ArrayList<String>();
+                ArrayList<StringFeature> features = new ArrayList<StringFeature>();
+
+                //make StringFeature for each word = data point
+                String remaining = input;
+                int wordCut = remaining.indexOf(' ');
+                while (wordCut != -1) {
+                    featureStrings.add(remaining.substring(0, wordCut));
+                    remaining = remaining.substring(wordCut + 1);
+                    wordCut = remaining.indexOf(' ');
+                }
+                int end = featureStrings.size();
+                double y = Double.parseDouble(featureStrings.get(0));
+                if (y == 0) {
+                    y = -1;//LibFFM data uses {0, 1}; Hivemall uses {-1, 1}
+                }
+                for (int wordNumber = 1; wordNumber < end; ++wordNumber) {
+                    String entireFeature = featureStrings.get(wordNumber);
+                    int featureCut = StringUtils.ordinalIndexOf(entireFeature, ":", 2);
+                    String feature = entireFeature.substring(0, featureCut);
+                    double value = Double.parseDouble(entireFeature.substring(featureCut + 1));
+                    features.add(new StringFeature(feature, value));
+                }
+                udtf.process(new Object[] {toStringArray(features), y});
+            }
+            cumul = udtf._cvState.getCumulativeLoss();
+            loss = (cumul - loss) / lines;
+            /*
+            // output with explanations
+            System.out.println("average loss for this iteration: " + loss
+                    + "; average loss up to this iteration: " + udtf._cvState.getCumulativeLoss()
+                    / (trainingIteration * lines));                     
+            */
+            // output for plotting
+            println(trainingIteration + " " + loss + " " + cumul / (trainingIteration * lines));
+            data.close();
+        }
+        Assert.assertTrue("Last loss was greater than expected: " + loss, loss < 0.30d);
+    }
+
+    @Test
+    public void testAdaGradCoeffBias() throws HiveException, IOException {
+        println("AdaGrad Coeff Bias test");
+        FieldAwareFactorizationMachineUDTF udtf = new FieldAwareFactorizationMachineUDTF();
+        ObjectInspector[] argOIs = new ObjectInspector[] {
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
+                PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
+                ObjectInspectorUtils.getConstantObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                    "-classification -factor 10 -w0 -w_i")};
 
         udtf.initialize(argOIs);
         FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
