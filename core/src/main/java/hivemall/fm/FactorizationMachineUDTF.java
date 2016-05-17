@@ -698,7 +698,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     @Nonnull
     protected Feature instantiateFeature(@Nonnull final ByteBuffer input) {
-        return Feature.createInstance(input, _parseFeatureAsInt);
+        if (_parseFeatureAsInt) {
+            return new IntFeature(input);
+        } else {
+            return new StringFeature(input);
+        }
     }
 
 }

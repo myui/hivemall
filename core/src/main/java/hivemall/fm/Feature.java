@@ -32,8 +32,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 
 public abstract class Feature {
     public static final int NUM_FIELDS = 1024;
-    /** 2^20 */
-    public static final int NUM_FEATURES = 1048576;
+    /** 2^21 */
+    public static final int NUM_FEATURES = 2097152;
     public static final int FEATURE_INDEX_RIGHT_OPEN_BOUND = NUM_FEATURES + NUM_FIELDS;
 
     protected double value;
@@ -213,7 +213,7 @@ public abstract class Feature {
                             + NUM_FIELDS);
                 }
             } else {
-                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
+                index = MurmurHash3.murmurhash3(lead, NUM_FIELDS);
             }
             short field = (short) index;
             double value = parseFeatureValue(rest);
@@ -233,7 +233,7 @@ public abstract class Feature {
         } else {
             // +NUM_FIELD to avoid conflict to quantitative features
             index = MurmurHash3.murmurhash3(indexStr, NUM_FEATURES) + NUM_FIELDS;
-            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
+            field = (short) MurmurHash3.murmurhash3(lead, NUM_FIELDS);
         }
         String valueStr = rest.substring(pos2 + 1);
         double value = parseFeatureValue(valueStr);
@@ -285,7 +285,7 @@ public abstract class Feature {
                             + NUM_FIELDS);
                 }
             } else {
-                index = MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
+                index = MurmurHash3.murmurhash3(lead, NUM_FIELDS);
             }
             short field = (short) index;
             probe.setField(field);
@@ -307,7 +307,7 @@ public abstract class Feature {
         } else {
             // +NUM_FIELD to avoid conflict to quantitative features
             index = MurmurHash3.murmurhash3(indexStr, NUM_FEATURES) + NUM_FIELDS;
-            field = (short) MurmurHash3.murmurhash3_x86_32(lead, NUM_FIELDS);
+            field = (short) MurmurHash3.murmurhash3(lead, NUM_FIELDS);
         }
         probe.setField(field);
         probe.setFeatureIndex(index);
@@ -356,12 +356,4 @@ public abstract class Feature {
         return index * NUM_FIELDS + yField;
     }
 
-    @Nonnull
-    public static Feature createInstance(@Nonnull ByteBuffer src, boolean asIntFeature) {
-        if (asIntFeature) {
-            return new IntFeature(src);
-        } else {
-            return new StringFeature(src);
-        }
-    }
 }
