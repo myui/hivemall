@@ -96,7 +96,9 @@ public final class FFMPredictionModel implements Externalizable {
             Entry v = (Entry) values[i];
             out.writeFloat(v.W);
             IOUtils.writeFloats(v.Vf, out);
+            values[i] = null; // help GC
         }
+        this._map = null; // help GC        
     }
 
     @Override

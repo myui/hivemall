@@ -255,6 +255,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         byte[] serialized;
         try {
             serialized = predModel.serialize();
+            predModel = null;
         } catch (IOException e) {
             throw new HiveException(e);
         }

@@ -107,6 +107,7 @@ public final class FFMPredictUDF extends GenericUDF {
             b = Base91.decode(b, 0, length);
             try {
                 model = FFMPredictionModel.deserialize(b);
+                b = null;
             } catch (ClassNotFoundException e) {
                 throw new HiveException(e);
             } catch (IOException e) {
