@@ -25,6 +25,7 @@ import hivemall.utils.lang.NumberUtils;
 
 import java.util.Arrays;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -181,6 +182,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
+    @CheckForNull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
     protected final Entry newEntry(final float[] V) {

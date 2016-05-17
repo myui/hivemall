@@ -76,7 +76,8 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         Entry entry = _map.get(j);
         if (entry == null) {
             float[] Vf = initV();
-            entry = new Entry(nextWi, Vf);
+            entry = newEntry(Vf);
+            entry.W = nextWi;
             _map.put(j, entry);
         } else {
             entry.W = nextWi;
@@ -112,7 +113,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         Entry entry = _map.get(j);
         if (entry == null) {
             V = initV();
-            entry = new Entry(0.f, V);
+            entry = newEntry(V);
             _map.put(j, entry);
         } else {
             V = entry.Vf;
@@ -123,8 +124,13 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     protected Entry getEntry(@Nonnull final Feature x, @Nonnull final int yField) {
-        int j = Feature.toIntFeature(x, yField);
-        return _map.get(j);
+        final int j = Feature.toIntFeature(x, yField);
+        final Entry entry = _map.get(j);
+        if (entry == null) {
+            throw new IllegalStateException("Entry not found: j=" + j + ", x=" + x + ", yField="
+                    + yField);
+        }
+        return entry;
     }
 
 }
