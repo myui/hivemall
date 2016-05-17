@@ -18,6 +18,7 @@
  */
 package hivemall.utils.io;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -101,6 +102,11 @@ public final class FastByteArrayInputStream extends InputStream {
     @Override
     public void mark(int readlimit) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.buf = null;
     }
 
 }
