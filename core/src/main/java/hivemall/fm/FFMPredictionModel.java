@@ -55,7 +55,7 @@ public final class FFMPredictionModel implements Externalizable {
 
     public float getW1(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
-        
+
         Entry entry = _map.get(j);
         if (entry == null) {
             return 0.f;
@@ -66,7 +66,7 @@ public final class FFMPredictionModel implements Externalizable {
     @Nullable
     public float[] getV(@Nonnull final Feature x, @Nonnull final int yField) {
         int j = Feature.toIntFeature(x, yField);
-        
+
         Entry entry = _map.get(j);
         if (entry == null) {
             return null;
@@ -87,11 +87,15 @@ public final class FFMPredictionModel implements Externalizable {
         final int size = keys.length;
         out.writeInt(size);
         for (int i = 0; i < size; i++) {
+            byte status_i = status[i];
+            out.writeByte(status_i);
             out.writeInt(keys[i]);
+            if (status_i != IntOpenHashTable.FULL) {
+                continue;
+            }
             Entry v = (Entry) values[i];
             out.writeFloat(v.W);
             IOUtils.writeFloats(v.Vf, out);
-            out.writeByte(status[i]);
         }
     }
 
@@ -106,11 +110,15 @@ public final class FFMPredictionModel implements Externalizable {
         final Entry[] values = new Entry[size];
         final byte[] states = new byte[size];
         for (int i = 0; i < size; i++) {
+            byte status_i = in.readByte();
+            states[i] = status_i;
             keys[i] = in.readInt();
+            if (status_i != IntOpenHashTable.FULL) {
+                continue;
+            }
             float W = in.readFloat();
             float[] Vf = IOUtils.readFloats(in);
             values[i] = new Entry(W, Vf);
-            states[i] = in.readByte();
         }
 
         this._map = new IntOpenHashTable<Entry>(keys, values, states, used);

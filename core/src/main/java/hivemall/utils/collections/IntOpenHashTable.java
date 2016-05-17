@@ -37,9 +37,9 @@ public final class IntOpenHashTable<V> implements Externalizable {
     public static final float DEFAULT_LOAD_FACTOR = 0.7f;
     public static final float DEFAULT_GROW_FACTOR = 2.0f;
 
-    protected static final byte FREE = 0;
-    protected static final byte FULL = 1;
-    protected static final byte REMOVED = 2;
+    public static final byte FREE = 0;
+    public static final byte FULL = 1;
+    public static final byte REMOVED = 2;
 
     protected/* final */float _loadFactor;
     protected/* final */float _growFactor;
