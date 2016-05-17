@@ -25,7 +25,6 @@ import hivemall.utils.lang.NumberUtils;
 
 import java.util.Arrays;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -102,8 +101,10 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         final double h = Xi * sumViX;
         final float gradV = (float) (dloss * h);
         final float lambdaVf = getLambdaV(f);
-        final float currentV = getV(x, yField, f);
-        final float eta = etaV(t, x, yField, gradV);
+
+        final Entry theta = getEntry(x, yField);
+        final float currentV = getV(theta, f);
+        final float eta = etaV(theta, t, gradV);
         final float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
             throw new IllegalStateException("Got " + nextV + " for next V" + f + '['
@@ -111,13 +112,19 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(x, yField, f, nextV);
+        setV(theta, f, nextV);
     }
 
-    protected final float etaV(final long t, @Nonnull final Feature x, @Nonnull final int yField,
-            final float grad) {
+    private static float getV(@Nonnull final Entry theta, final int f) {
+        return theta.Vf[f];
+    }
+
+    private static float setV(@Nonnull final Entry theta, final int f, final float value) {
+        return theta.Vf[f] = value;
+    }
+
+    protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
         if (useAdaGrad) {
-            Entry theta = getEntry(x, yField);
             double gg = theta.getSumOfSquaredGradients(scaling);
             theta.addGradient(grad, scaling);
             return (float) (eta0_V / Math.sqrt(eps + gg));
@@ -182,7 +189,10 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         return ret;
     }
 
-    @CheckForNull
+    @Nonnull
+    protected abstract Entry getEntry(@Nonnull Feature x);
+
+    @Nonnull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
     protected final Entry newEntry(final float[] V) {

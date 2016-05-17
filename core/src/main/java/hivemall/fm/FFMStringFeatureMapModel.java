@@ -20,6 +20,7 @@ package hivemall.fm;
 
 import hivemall.common.EtaEstimator;
 import hivemall.utils.collections.IntOpenHashTable;
+import hivemall.utils.lang.NumberUtils;
 
 import javax.annotation.Nonnull;
 
@@ -84,6 +85,22 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         }
     }
 
+    @Override
+    void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
+        final double Xi = x.getValue();
+        float gradWi = (float) (dloss * Xi);
+
+        final Entry theta = getEntry(x);
+        float wi = theta.W;
+        float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
+        if (!NumberUtils.isFinite(nextWi)) {
+            throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
+                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss
+                    + ", eta=" + eta);
+        }
+        theta.W = nextWi;
+    }
+
     /**
      * @return V_x,yField,f
      */
@@ -123,12 +140,25 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     }
 
     @Override
+    protected Entry getEntry(@Nonnull final Feature x) {
+        final int j = x.getFeatureIndex();
+        Entry entry = _map.get(j);
+        if (entry == null) {
+            float[] V = initV();
+            entry = newEntry(V);
+            _map.put(j, entry);
+        }
+        return entry;
+    }
+
+    @Override
     protected Entry getEntry(@Nonnull final Feature x, @Nonnull final int yField) {
         final int j = Feature.toIntFeature(x, yField);
-        final Entry entry = _map.get(j);
+        Entry entry = _map.get(j);
         if (entry == null) {
-            throw new IllegalStateException("Entry not found: j=" + j + ", x=" + x + ", yField="
-                    + yField);
+            float[] V = initV();
+            entry = newEntry(V);
+            _map.put(j, entry);
         }
         return entry;
     }
