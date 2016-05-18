@@ -55,10 +55,10 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
         }
-        return bos.toByteArray_clear();
     }
 
     public static byte[] toCompressedBytes(@Nonnull final Externalizable obj) throws IOException {
@@ -66,10 +66,10 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
         }
-        return bos.toByteArray_clear();
     }
 
     public static void toStream(@Nonnull final Object obj, @Nonnull final OutputStream out)
