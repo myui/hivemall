@@ -46,8 +46,10 @@ public class ChangeFinderUDFTest {
     private static final boolean DEBUG = false;
     private static final int MAX_LINES = 5000;
 
-    @Test
-    public void testDetection() throws HiveException, IOException {
+    public void testDetection(String input) throws HiveException, IOException {
+        boolean tsv = input.endsWith("tsv");
+        boolean csv = input.endsWith("csv");
+        
         println("detection test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
         ObjectInspector[] argOIs =
@@ -58,14 +60,19 @@ public class ChangeFinderUDFTest {
 
         Object[] result = null;
         BufferedReader data = new BufferedReader(
-            new InputStreamReader(getClass().getResourceAsStream("cf_test.tsv")));
+            new InputStreamReader(getClass().getResourceAsStream(input)));
         
         String fileName = null;
         File outFile;
         BufferedWriter output = null;
         if (DEBUG) {
             int runCount = 0;
-            fileName = "src/test/resources/hivemall/anomaly/cf_output";
+            if (tsv) {
+                fileName = "src/test/resources/hivemall/anomaly/tsv_output";
+            }
+            if (csv) {
+                fileName = "src/test/resources/hivemall/anomaly/csv_output";
+            }
             outFile = new File(fileName + ".dat");
             while (outFile.exists()) {
                 runCount++;
@@ -83,23 +90,38 @@ public class ChangeFinderUDFTest {
         ArrayList<Integer> changepoints = new ArrayList<Integer>();
         for (int lineNumber = 0; lineNumber < MAX_LINES; ++lineNumber) {
             //gather features in current line
-            final String input = data.readLine();
-            if (input == null) {
+            final String line = data.readLine();
+            if (line == null) {
                 println("EOF reached at line " + lineNumber);
                 break;
             }
             List<Double> vector = new ArrayList<Double>();
 
-            //cut string into vector values
-            String remaining = input;
-            int wordCut = remaining.indexOf('\t');
-            if (wordCut == -1) {
-                vector.add(Double.parseDouble(remaining));
+            if (tsv) {
+                //cut string into vector values
+                String remaining = line;
+                int wordCut = remaining.indexOf('\t');
+                if (wordCut == -1) {
+                    vector.add(Double.parseDouble(remaining));
+                }
+                while (wordCut != -1) {
+                    vector.add(Double.parseDouble(remaining.substring(0, wordCut)));
+                    remaining = remaining.substring(wordCut + 1);
+                    wordCut = remaining.indexOf('\t');
+                }
             }
-            while (wordCut != -1) {
-                vector.add(Double.parseDouble(remaining.substring(0, wordCut)));
-                remaining = remaining.substring(wordCut + 1);
-                wordCut = remaining.indexOf(' ');
+            if (csv) {
+                if (lineNumber == 0) {
+                    continue;
+                }
+                //cut string into vector values
+                String remaining = line;
+                int wordCut = remaining.lastIndexOf(',');
+                if (wordCut == -1) {
+                    vector.add(Double.parseDouble(remaining));
+                } else {
+                    vector.add(Double.parseDouble(remaining.substring(wordCut+1)));//only grabs last value: see raw_data.csv
+                }
             }
             result = (Object[]) udf.evaluate(new DeferredObject[] {new DeferredJavaObject(vector)});
             assert result.length == 4;
@@ -134,6 +156,13 @@ public class ChangeFinderUDFTest {
             output.close();
         }
         udf.close();
+    }
+    
+
+    @Test
+    public void testDetection() throws HiveException, IOException {
+        testDetection("cf_test.tsv");
+        testDetection("raw_data.csv");
     }
 
     @Test

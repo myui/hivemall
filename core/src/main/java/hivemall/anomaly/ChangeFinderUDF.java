@@ -220,6 +220,9 @@ public class ChangeFinderUDF extends UDFWithOptions {
             for (int i = 0; i < yRunningWindowSize; i++) {
                 xScoreHistory.add(new Double(0.d));
             }
+            xTrain();
+            double xScore = calcScore(x, xMeanEstimate, xModelCovar);
+            yTrain(xScore);
         } else if (dimensions != x.getDimension()) {
             throw new HiveException("Input vector dimension mismatch: " + x.getDimension()
                     + " vs. expected dim: " + dimensions);
@@ -247,10 +250,13 @@ public class ChangeFinderUDF extends UDFWithOptions {
                                      .add(x.mapMultiply(xForgetfulness));
         //residuals
         RealVector xResidual0 = x.copy().subtract(xMeanEstimate);
+
         RealVector[] xResiduals = new RealVector[xRunningWindowSize];
+
         for (int i = 0; i < xRunningWindowSize; i++) {
-            xResiduals[i] = xHistory.get(i).copy().subtract(xMeanEstimate);
+            xResiduals[i] = xHistory.get(xRunningWindowSize - i - 1).subtract(xMeanEstimate);
         }
+
         //covariance matrices
         double[] xCovarA = xCovar0.getDataRef();
         double[] xCovarB = xResidual0.ebeMultiply(xResidual0).mapMultiply(xForgetfulness).toArray();
@@ -273,7 +279,7 @@ public class ChangeFinderUDF extends UDFWithOptions {
         //x estimate
         xEstimate = xMeanEstimate.copy();
         for (int i = 0; i < xRunningWindowSize; i++) {
-            xEstimate.add(xModelMatrix[i].operate(xResiduals[i]));
+            xEstimate = xEstimate.add(xModelMatrix[i].operate(xResiduals[i]));
         }
         //sigma
         RealVector xEstimateResidual = x.subtract(xEstimate);
