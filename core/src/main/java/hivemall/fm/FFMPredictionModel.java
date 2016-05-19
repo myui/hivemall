@@ -36,13 +36,18 @@ public final class FFMPredictionModel implements Externalizable {
     private IntOpenHashTable<Entry> _map;
     private double _w0;
     private int _factors;
+    private int _numFeatures;
+    private int _numFields;
 
     public FFMPredictionModel() {}// for Externalizable
 
-    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor) {
+    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor,
+            int numFeatures, int numFields) {
         this._map = map;
         this._w0 = w0;
         this._factors = factor;
+        this._numFeatures = numFeatures;
+        this._numFields = numFields;
     }
 
     public int getNumFactors() {
@@ -53,9 +58,17 @@ public final class FFMPredictionModel implements Externalizable {
         return _w0;
     }
 
+    public int getNumFeatures() {
+        return _numFeatures;
+    }
+
+    public int getNumFields() {
+        return _numFields;
+    }
+
     public float getW1(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
-        
+
         Entry entry = _map.get(j);
         if (entry == null) {
             return 0.f;
@@ -65,8 +78,8 @@ public final class FFMPredictionModel implements Externalizable {
 
     @Nullable
     public float[] getV(@Nonnull final Feature x, @Nonnull final int yField) {
-        int j = Feature.toIntFeature(x, yField);
-        
+        int j = Feature.toIntFeature(x, yField, _numFields);
+
         Entry entry = _map.get(j);
         if (entry == null) {
             return null;
@@ -78,6 +91,8 @@ public final class FFMPredictionModel implements Externalizable {
     public void writeExternal(@Nonnull ObjectOutput out) throws IOException {
         out.writeDouble(_w0);
         out.writeInt(_factors);
+        out.writeInt(_numFeatures);
+        out.writeInt(_numFields);
 
         int used = _map.size();
         out.writeInt(used);
@@ -87,18 +102,26 @@ public final class FFMPredictionModel implements Externalizable {
         final int size = keys.length;
         out.writeInt(size);
         for (int i = 0; i < size; i++) {
+            byte status_i = status[i];
+            out.writeByte(status_i);
             out.writeInt(keys[i]);
+            if (status_i != IntOpenHashTable.FULL) {
+                continue;
+            }
             Entry v = (Entry) values[i];
             out.writeFloat(v.W);
             IOUtils.writeFloats(v.Vf, out);
-            out.writeByte(status[i]);
+            values[i] = null; // help GC
         }
+        this._map = null; // help GC        
     }
 
     @Override
     public void readExternal(@Nonnull ObjectInput in) throws IOException, ClassNotFoundException {
         this._w0 = in.readDouble();
         this._factors = in.readInt();
+        this._numFeatures = in.readInt();
+        this._numFields = in.readInt();
 
         int used = in.readInt();
         final int size = in.readInt();
@@ -106,11 +129,15 @@ public final class FFMPredictionModel implements Externalizable {
         final Entry[] values = new Entry[size];
         final byte[] states = new byte[size];
         for (int i = 0; i < size; i++) {
+            byte status_i = in.readByte();
+            states[i] = status_i;
             keys[i] = in.readInt();
+            if (status_i != IntOpenHashTable.FULL) {
+                continue;
+            }
             float W = in.readFloat();
             float[] Vf = IOUtils.readFloats(in);
             values[i] = new Entry(W, Vf);
-            states[i] = in.readByte();
         }
 
         this._map = new IntOpenHashTable<Entry>(keys, values, states, used);

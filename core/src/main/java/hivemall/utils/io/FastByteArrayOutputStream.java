@@ -120,7 +120,9 @@ public final class FastByteArrayOutputStream extends OutputStream {
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws IOException {
+        clear();
+    }
 
     public void clear() {
         this.buf = null;

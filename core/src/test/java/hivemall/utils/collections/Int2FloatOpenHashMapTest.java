@@ -25,7 +25,7 @@ public class Int2FloatOpenHashMapTest {
 
     @Test
     public void testSize() {
-        Int2FloatOpenHash map = new Int2FloatOpenHash(16384);
+        Int2FloatOpenHashTable map = new Int2FloatOpenHashTable(16384);
         map.put(1, 3.f);
         Assert.assertEquals(3.f, map.get(1), 0.d);
         map.put(1, 5.f);
@@ -35,7 +35,7 @@ public class Int2FloatOpenHashMapTest {
 
     @Test
     public void testDefaultReturnValue() {
-        Int2FloatOpenHash map = new Int2FloatOpenHash(16384);
+        Int2FloatOpenHashTable map = new Int2FloatOpenHashTable(16384);
         Assert.assertEquals(0, map.size());
         Assert.assertEquals(-1.f, map.get(1), 0.d);
         float ret = Float.MIN_VALUE;
@@ -45,7 +45,7 @@ public class Int2FloatOpenHashMapTest {
 
     @Test
     public void testPutAndGet() {
-        Int2FloatOpenHash map = new Int2FloatOpenHash(16384);
+        Int2FloatOpenHashTable map = new Int2FloatOpenHashTable(16384);
         final int numEntries = 1000000;
         for(int i = 0; i < numEntries; i++) {
             Assert.assertEquals(-1.f, map.put(i, Float.valueOf(i + 0.1f)), 0.d);
@@ -59,8 +59,8 @@ public class Int2FloatOpenHashMapTest {
 
     @Test
     public void testIterator() {
-        Int2FloatOpenHash map = new Int2FloatOpenHash(1000);
-        Int2FloatOpenHash.IMapIterator itor = map.entries();
+        Int2FloatOpenHashTable map = new Int2FloatOpenHashTable(1000);
+        Int2FloatOpenHashTable.IMapIterator itor = map.entries();
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;

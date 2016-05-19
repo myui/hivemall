@@ -31,7 +31,7 @@ import java.util.Arrays;
  * 
  * @see http://en.wikipedia.org/wiki/Double_hashing
  */
-public class Int2FloatOpenHash implements Externalizable {
+public final class Int2IntOpenHashTable implements Externalizable {
 
     protected static final byte FREE = 0;
     protected static final byte FULL = 1;
@@ -45,90 +45,90 @@ public class Int2FloatOpenHash implements Externalizable {
 
     protected int _used = 0;
     protected int _threshold;
-    protected float defaultReturnValue = -1.f;
+    protected int defaultReturnValue = -1;
 
     protected int[] _keys;
-    protected float[] _values;
+    protected int[] _values;
     protected byte[] _states;
 
-    protected Int2FloatOpenHash(int size, float loadFactor, float growFactor, boolean forcePrime) {
-        if(size < 1) {
+    protected Int2IntOpenHashTable(int size, float loadFactor, float growFactor, boolean forcePrime) {
+        if (size < 1) {
             throw new IllegalArgumentException();
         }
         this._loadFactor = loadFactor;
         this._growFactor = growFactor;
         int actualSize = forcePrime ? Primes.findLeastPrimeNumber(size) : size;
         this._keys = new int[actualSize];
-        this._values = new float[actualSize];
+        this._values = new int[actualSize];
         this._states = new byte[actualSize];
         this._threshold = (int) (actualSize * _loadFactor);
     }
 
-    public Int2FloatOpenHash(int size, float loadFactor, float growFactor) {
+    public Int2IntOpenHashTable(int size, int loadFactor, int growFactor) {
         this(size, loadFactor, growFactor, true);
     }
 
-    public Int2FloatOpenHash(int size) {
+    public Int2IntOpenHashTable(int size) {
         this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR, true);
     }
 
-    public Int2FloatOpenHash() {// required for serialization
+    public Int2IntOpenHashTable() {// required for serialization
         this._loadFactor = DEFAULT_LOAD_FACTOR;
         this._growFactor = DEFAULT_GROW_FACTOR;
     }
 
-    public void defaultReturnValue(float v) {
+    public void defaultReturnValue(int v) {
         this.defaultReturnValue = v;
     }
 
-    public boolean containsKey(int key) {
+    public boolean containsKey(final int key) {
         return findKey(key) >= 0;
     }
 
     /**
      * @return -1.f if not found
      */
-    public float get(int key) {
-        int i = findKey(key);
-        if(i < 0) {
+    public int get(final int key) {
+        final int i = findKey(key);
+        if (i < 0) {
             return defaultReturnValue;
         }
         return _values[i];
     }
 
-    public float put(int key, float value) {
-        int hash = keyHash(key);
+    public int put(final int key, final int value) {
+        final int hash = keyHash(key);
         int keyLength = _keys.length;
         int keyIdx = hash % keyLength;
 
         boolean expanded = preAddEntry(keyIdx);
-        if(expanded) {
+        if (expanded) {
             keyLength = _keys.length;
             keyIdx = hash % keyLength;
         }
 
-        int[] keys = _keys;
-        float[] values = _values;
-        byte[] states = _states;
+        final int[] keys = _keys;
+        final int[] values = _values;
+        final byte[] states = _states;
 
-        if(states[keyIdx] == FULL) {// double hashing
-            if(keys[keyIdx] == key) {
-                float old = values[keyIdx];
+        if (states[keyIdx] == FULL) {// double hashing
+            if (keys[keyIdx] == key) {
+                int old = values[keyIdx];
                 values[keyIdx] = value;
                 return old;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     break;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
-                    float old = values[keyIdx];
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
+                    int old = values[keyIdx];
                     values[keyIdx] = value;
                     return old;
                 }
@@ -142,20 +142,20 @@ public class Int2FloatOpenHash implements Externalizable {
     }
 
     /** Return weather the required slot is free for new entry */
-    protected boolean isFree(int index, int key) {
-        byte stat = _states[index];
-        if(stat == FREE) {
+    protected boolean isFree(final int index, final int key) {
+        final byte stat = _states[index];
+        if (stat == FREE) {
             return true;
         }
-        if(stat == REMOVED && _keys[index] == key) {
+        if (stat == REMOVED && _keys[index] == key) {
             return true;
         }
         return false;
     }
 
     /** @return expanded or not */
-    protected boolean preAddEntry(int index) {
-        if((_used + 1) >= _threshold) {// too filled
+    protected boolean preAddEntry(final int index) {
+        if ((_used + 1) >= _threshold) {// too filled
             int newCapacity = Math.round(_keys.length * _growFactor);
             ensureCapacity(newCapacity);
             return true;
@@ -163,28 +163,28 @@ public class Int2FloatOpenHash implements Externalizable {
         return false;
     }
 
-    protected int findKey(int key) {
-        int[] keys = _keys;
-        byte[] states = _states;
-        int keyLength = keys.length;
+    protected int findKey(final int key) {
+        final int[] keys = _keys;
+        final byte[] states = _states;
+        final int keyLength = keys.length;
 
-        int hash = keyHash(key);
+        final int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                 return keyIdx;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     return -1;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     return keyIdx;
                 }
             }
@@ -192,33 +192,33 @@ public class Int2FloatOpenHash implements Externalizable {
         return -1;
     }
 
-    public float remove(int key) {
-        int[] keys = _keys;
-        float[] values = _values;
-        byte[] states = _states;
-        int keyLength = keys.length;
+    public int remove(final int key) {
+        final int[] keys = _keys;
+        final int[] values = _values;
+        final byte[] states = _states;
+        final int keyLength = keys.length;
 
-        int hash = keyHash(key);
+        final int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
-                float old = values[keyIdx];
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
+                int old = values[keyIdx];
                 states[keyIdx] = REMOVED;
                 --_used;
                 return old;
             }
             //  second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(states[keyIdx] == FREE) {
+                if (states[keyIdx] == FREE) {
                     return defaultReturnValue;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
-                    float old = values[keyIdx];
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
+                    int old = values[keyIdx];
                     states[keyIdx] = REMOVED;
                     --_used;
                     return old;
@@ -247,11 +247,11 @@ public class Int2FloatOpenHash implements Externalizable {
         StringBuilder buf = new StringBuilder(len);
         buf.append('{');
         IMapIterator i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             buf.append(i.getKey());
             buf.append('=');
             buf.append(i.getValue());
-            if(i.hasNext()) {
+            if (i.hasNext()) {
                 buf.append(',');
             }
         }
@@ -259,33 +259,33 @@ public class Int2FloatOpenHash implements Externalizable {
         return buf.toString();
     }
 
-    protected void ensureCapacity(int newCapacity) {
+    protected void ensureCapacity(final int newCapacity) {
         int prime = Primes.findLeastPrimeNumber(newCapacity);
         rehash(prime);
         this._threshold = Math.round(prime * _loadFactor);
     }
 
-    private void rehash(int newCapacity) {
+    private void rehash(final int newCapacity) {
         int oldCapacity = _keys.length;
-        if(newCapacity <= oldCapacity) {
+        if (newCapacity <= oldCapacity) {
             throw new IllegalArgumentException("new: " + newCapacity + ", old: " + oldCapacity);
         }
-        int[] newkeys = new int[newCapacity];
-        float[] newValues = new float[newCapacity];
-        byte[] newStates = new byte[newCapacity];
+        final int[] newkeys = new int[newCapacity];
+        final int[] newValues = new int[newCapacity];
+        final byte[] newStates = new byte[newCapacity];
         int used = 0;
-        for(int i = 0; i < oldCapacity; i++) {
-            if(_states[i] == FULL) {
+        for (int i = 0; i < oldCapacity; i++) {
+            if (_states[i] == FULL) {
                 used++;
                 int k = _keys[i];
-                float v = _values[i];
+                int v = _values[i];
                 int hash = keyHash(k);
                 int keyIdx = hash % newCapacity;
-                if(newStates[keyIdx] == FULL) {// second hashing
+                if (newStates[keyIdx] == FULL) {// second hashing
                     int decr = 1 + (hash % (newCapacity - 2));
-                    while(newStates[keyIdx] != FREE) {
+                    while (newStates[keyIdx] != FREE) {
                         keyIdx -= decr;
-                        if(keyIdx < 0) {
+                        if (keyIdx < 0) {
                             keyIdx += newCapacity;
                         }
                     }
@@ -301,7 +301,7 @@ public class Int2FloatOpenHash implements Externalizable {
         this._used = used;
     }
 
-    private static int keyHash(int key) {
+    private static int keyHash(final int key) {
         return key & 0x7fffffff;
     }
 
@@ -311,9 +311,9 @@ public class Int2FloatOpenHash implements Externalizable {
 
         out.writeInt(_keys.length);
         IMapIterator i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             out.writeInt(i.getKey());
-            out.writeFloat(i.getValue());
+            out.writeInt(i.getValue());
         }
     }
 
@@ -321,23 +321,23 @@ public class Int2FloatOpenHash implements Externalizable {
         this._threshold = in.readInt();
         this._used = in.readInt();
 
-        int keylen = in.readInt();
-        int[] keys = new int[keylen];
-        float[] values = new float[keylen];
-        byte[] states = new byte[keylen];
-        for(int i = 0; i < _used; i++) {
+        final int keylen = in.readInt();
+        final int[] keys = new int[keylen];
+        final int[] values = new int[keylen];
+        final byte[] states = new byte[keylen];
+        for (int i = 0; i < _used; i++) {
             int k = in.readInt();
-            float v = in.readFloat();
+            int v = in.readInt();
             int hash = keyHash(k);
             int keyIdx = hash % keylen;
-            if(states[keyIdx] != FREE) {// second hash
+            if (states[keyIdx] != FREE) {// second hash
                 int decr = 1 + (hash % (keylen - 2));
-                for(;;) {
+                for (;;) {
                     keyIdx -= decr;
-                    if(keyIdx < 0) {
+                    if (keyIdx < 0) {
                         keyIdx += keylen;
                     }
-                    if(states[keyIdx] == FREE) {
+                    if (states[keyIdx] == FREE) {
                         break;
                     }
                 }
@@ -362,7 +362,7 @@ public class Int2FloatOpenHash implements Externalizable {
 
         public int getKey();
 
-        public float getValue();
+        public int getValue();
 
     }
 
@@ -377,7 +377,7 @@ public class Int2FloatOpenHash implements Externalizable {
 
         /** find the index of next full entry */
         int nextEntry(int index) {
-            while(index < _keys.length && _states[index] != FULL) {
+            while (index < _keys.length && _states[index] != FULL) {
                 index++;
             }
             return index;
@@ -388,7 +388,7 @@ public class Int2FloatOpenHash implements Externalizable {
         }
 
         public int next() {
-            if(!hasNext()) {
+            if (!hasNext()) {
                 return -1;
             }
             int curEntry = nextEntry;
@@ -398,14 +398,14 @@ public class Int2FloatOpenHash implements Externalizable {
         }
 
         public int getKey() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _keys[lastEntry];
         }
 
-        public float getValue() {
-            if(lastEntry == -1) {
+        public int getValue() {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _values[lastEntry];

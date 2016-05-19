@@ -30,18 +30,23 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     // LEARNING PARAMS
     private float _w0;
     private final IntOpenHashTable<Entry> _map;
+    
+    private final int _numFeatures;
+    private final int _numFields;
 
     public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
             double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
+            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling, int numFeatures, int numFields) {
         super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
         this._w0 = 0.f;
         this._map = new IntOpenHashTable<FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
+        this._numFeatures = numFeatures;
+        this._numFields = numFields;
     }
 
     @Nonnull
     FFMPredictionModel toPredictionModel() {
-        return new FFMPredictionModel(_map, _w0, _factor);
+        return new FFMPredictionModel(_map, _w0, _factor, _numFeatures, _numFields);
     }
 
     @Override
@@ -106,7 +111,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
      */
     @Override
     public float getV(@Nonnull final Feature x, @Nonnull final int yField, final int f) {
-        final int j = Feature.toIntFeature(x, yField);
+        final int j = Feature.toIntFeature(x, yField, _numFields);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -124,7 +129,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     @Override
     protected void setV(@Nonnull final Feature x, @Nonnull final int yField, final int f,
             final float nextVif) {
-        final int j = Feature.toIntFeature(x, yField);
+        final int j = Feature.toIntFeature(x, yField, _numFields);
 
         final float[] V;
         Entry entry = _map.get(j);
@@ -153,7 +158,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
     @Override
     protected Entry getEntry(@Nonnull final Feature x, @Nonnull final int yField) {
-        final int j = Feature.toIntFeature(x, yField);
+        final int j = Feature.toIntFeature(x, yField, _numFields);
         Entry entry = _map.get(j);
         if (entry == null) {
             float[] V = initV();

@@ -249,6 +249,10 @@ public final class HiveUtils {
         }
     }
 
+    public static boolean isConstString(@Nonnull final ObjectInspector oi) {
+        return ObjectInspectorUtils.isConstantObjectInspector(oi) && isStringOI(oi);
+    }
+
     public static ListTypeInfo asListTypeInfo(@Nonnull TypeInfo typeInfo)
             throws UDFArgumentException {
         if (!typeInfo.getCategory().equals(Category.LIST)) {

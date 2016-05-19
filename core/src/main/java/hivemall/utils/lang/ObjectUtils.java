@@ -55,10 +55,10 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
         }
-        return bos.toByteArray_clear();
     }
 
     public static byte[] toCompressedBytes(@Nonnull final Externalizable obj) throws IOException {
@@ -66,10 +66,10 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
         }
-        return bos.toByteArray_clear();
     }
 
     public static void toStream(@Nonnull final Object obj, @Nonnull final OutputStream out)
@@ -77,7 +77,6 @@ public final class ObjectUtils {
         ObjectOutputStream oos = new ObjectOutputStream(out);
         oos.writeObject(obj);
         oos.flush();
-        oos.close();
     }
 
     public static void toStream(@Nonnull final Externalizable obj, @Nonnull final OutputStream out)
@@ -85,17 +84,26 @@ public final class ObjectUtils {
         ObjectOutputStream oos = new ObjectOutputStream(out);
         obj.writeExternal(oos);
         oos.flush();
-        oos.close();
     }
 
     public static <T> T readObject(@Nonnull final byte[] obj) throws IOException,
             ClassNotFoundException {
-        return readObject(new FastByteArrayInputStream(obj));
+        return readObject(obj, obj.length);
+    }
+
+    public static <T> T readObject(@Nonnull final byte[] obj, final int length) throws IOException,
+            ClassNotFoundException {
+        return readObject(new FastByteArrayInputStream(obj, length));
     }
 
     public static void readObject(@Nonnull final byte[] src, @Nonnull final Externalizable dst)
             throws IOException, ClassNotFoundException {
-        readObject(new FastByteArrayInputStream(src), dst);
+        readObject(src, src.length, dst);
+    }
+
+    public static void readObject(@Nonnull final byte[] src, final int length,
+            @Nonnull final Externalizable dst) throws IOException, ClassNotFoundException {
+        readObject(new FastByteArrayInputStream(src, length), dst);
     }
 
     @SuppressWarnings("unchecked")

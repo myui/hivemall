@@ -76,19 +76,6 @@ public final class FFMPredictUDF extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
-        Object arg2 = args[2].get();
-        // [workaround]
-        // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
-        // cannot be cast to [Ljava.lang.Object;
-        if (arg2 instanceof LazyBinaryArray) {
-            arg2 = ((LazyBinaryArray) arg2).getList();
-        }
-        Feature[] x = Feature.parseFFMFeatures(arg2, _featureListOI, _probes);
-        if (x == null || x.length == 0) {
-            return null; // return NULL if there are no features
-        }
-        this._probes = x;
-
         String modelId = _modelIdOI.getPrimitiveJavaObject(args[0].get());
         if (modelId == null) {
             throw new HiveException("modelId is not set");
@@ -107,6 +94,7 @@ public final class FFMPredictUDF extends GenericUDF {
             b = Base91.decode(b, 0, length);
             try {
                 model = FFMPredictionModel.deserialize(b);
+                b = null;
             } catch (ClassNotFoundException e) {
                 throw new HiveException(e);
             } catch (IOException e) {
@@ -115,6 +103,22 @@ public final class FFMPredictUDF extends GenericUDF {
             this._cachedModeId = modelId;
             this._cachedModel = model;
         }
+        
+        int numFeatures = model.getNumFactors();
+        int numFields = model.getNumFields();
+        
+        Object arg2 = args[2].get();
+        // [workaround]
+        // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
+        // cannot be cast to [Ljava.lang.Object;
+        if (arg2 instanceof LazyBinaryArray) {
+            arg2 = ((LazyBinaryArray) arg2).getList();
+        }
+        Feature[] x = Feature.parseFFMFeatures(arg2, _featureListOI, _probes, numFeatures, numFields);
+        if (x == null || x.length == 0) {
+            return null; // return NULL if there are no features
+        }
+        this._probes = x;
 
         double predicted = predict(x, model);
         _result.set(predicted);

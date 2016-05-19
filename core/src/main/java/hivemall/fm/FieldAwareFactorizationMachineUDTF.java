@@ -56,6 +56,9 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     private boolean _globalBias;
     private boolean _linearCoeff;
 
+    private int _numFeatures;
+    private int _numFields;
+
     private FFMStringFeatureMapModel _model;
     private IntArrayList _fieldList;
 
@@ -73,6 +76,10 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             "Whether to include global bias term w0 [default: OFF]");
         opts.addOption("w_i", "linear_coeff", false,
             "Whether to include linear term [default: OFF]");
+        // feature hashing
+        opts.addOption("feature_hashing", true,
+            "The number of bits for feature hashing in range [18,31] [default:21]");
+        opts.addOption("num_fields", true, "The number of fields [default:1024]");
         // adagrad
         opts.addOption("disable_adagrad", false,
             "Whether to use AdaGrad for tuning learning rate [default: ON]");
@@ -96,6 +103,22 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         }
         this._globalBias = cl.hasOption("global_bias");
         this._linearCoeff = cl.hasOption("linear_coeff");
+
+        // feature hashing
+        int hashbits = Primitives.parseInt(cl.getOptionValue("feature_hashing"),
+            Feature.DEFAULT_FEATURE_BITS);
+        if (hashbits < 18 || hashbits > 31) {
+            throw new UDFArgumentException("-feature_hashing MUST be in range [18,31]: " + hashbits);
+        }
+        int numFeatures = 1 << hashbits;
+        int numFields = Primitives.parseInt(cl.getOptionValue("num_fields"),
+            Feature.DEFAULT_NUM_FIELDS);
+        if (numFields <= 1) {
+            throw new UDFArgumentException("-num_fields MUST be greater than 1: " + numFields);
+        }
+        this._numFeatures = numFeatures;
+        this._numFields = numFields;
+
         return cl;
     }
 
@@ -121,7 +144,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected FFMStringFeatureMapModel initModel(@Nullable CommandLine cl) {
+    protected FFMStringFeatureMapModel initModel(@Nullable CommandLine cl)
+            throws UDFArgumentException {
         float lambda0 = 0.01f;
         double sigma = 0.1d;
         double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
@@ -154,14 +178,14 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
         FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(_classification, _factor,
             lambda0, sigma, _seed, min_target, max_target, _etaEstimator, vInit, useAdaGrad,
-            eta0_V, eps, scaling);
+            eta0_V, eps, scaling, _numFeatures, _numFields);
         this._model = model;
         return model;
     }
 
     @Override
     protected Feature[] parseFeatures(@Nonnull final Object arg) throws HiveException {
-        return Feature.parseFFMFeatures(arg, _xOI, _probes);
+        return Feature.parseFFMFeatures(arg, _xOI, _probes, _numFeatures, _numFields);
     }
 
     @Override
@@ -255,6 +279,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         byte[] serialized;
         try {
             serialized = predModel.serialize();
+            predModel = null;
         } catch (IOException e) {
             throw new HiveException(e);
         }

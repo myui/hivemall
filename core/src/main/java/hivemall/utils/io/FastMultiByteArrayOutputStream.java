@@ -221,11 +221,13 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws IOException {
+        clear();
+    }
 
     public void clear() {
-        buffer = null;
-        buffers = null;
+        this.buffer = null;
+        this.buffers = null;
     }
 
 }
