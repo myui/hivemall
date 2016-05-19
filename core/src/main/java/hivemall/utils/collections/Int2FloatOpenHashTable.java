@@ -31,7 +31,7 @@ import java.util.Arrays;
  * 
  * @see http://en.wikipedia.org/wiki/Double_hashing
  */
-public class Int2FloatOpenHash implements Externalizable {
+public class Int2FloatOpenHashTable implements Externalizable {
 
     protected static final byte FREE = 0;
     protected static final byte FULL = 1;
@@ -51,7 +51,7 @@ public class Int2FloatOpenHash implements Externalizable {
     protected float[] _values;
     protected byte[] _states;
 
-    protected Int2FloatOpenHash(int size, float loadFactor, float growFactor, boolean forcePrime) {
+    protected Int2FloatOpenHashTable(int size, float loadFactor, float growFactor, boolean forcePrime) {
         if(size < 1) {
             throw new IllegalArgumentException();
         }
@@ -64,15 +64,15 @@ public class Int2FloatOpenHash implements Externalizable {
         this._threshold = (int) (actualSize * _loadFactor);
     }
 
-    public Int2FloatOpenHash(int size, float loadFactor, float growFactor) {
+    public Int2FloatOpenHashTable(int size, float loadFactor, float growFactor) {
         this(size, loadFactor, growFactor, true);
     }
 
-    public Int2FloatOpenHash(int size) {
+    public Int2FloatOpenHashTable(int size) {
         this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR, true);
     }
 
-    public Int2FloatOpenHash() {// required for serialization
+    public Int2FloatOpenHashTable() {// required for serialization
         this._loadFactor = DEFAULT_LOAD_FACTOR;
         this._growFactor = DEFAULT_GROW_FACTOR;
     }
