@@ -36,25 +36,17 @@ import hivemall.smile.data.Attribute;
 import hivemall.smile.data.Attribute.AttributeType;
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.utils.collections.IntArrayList;
-import hivemall.utils.io.FastByteArrayInputStream;
-import hivemall.utils.io.FastMultiByteArrayOutputStream;
-import hivemall.utils.io.IOUtils;
+import hivemall.utils.lang.ObjectUtils;
 import hivemall.utils.lang.StringUtils;
 
 import java.io.Externalizable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -869,44 +861,33 @@ public final class RegressionTree implements Regression<double[]> {
 
     @Nonnull
     public byte[] predictSerCodegen(boolean compress) throws HiveException {
-        final Attribute[] attrs = _attributes;
-        assert (attrs != null);
-
-        FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
-        OutputStream wrapped = compress ? new DeflaterOutputStream(bos) : bos;
-        ObjectOutputStream oos = null;
         try {
-            oos = new ObjectOutputStream(wrapped);
-            _root.writeExternal(oos);
-            oos.flush();
+            if (compress) {
+                return ObjectUtils.toCompressedBytes(_root);
+            } else {
+                return ObjectUtils.toBytes(_root);
+            }
         } catch (IOException ioe) {
             throw new HiveException("IOException cause while serializing DecisionTree object", ioe);
         } catch (Exception e) {
             throw new HiveException("Exception cause while serializing DecisionTree object", e);
-        } finally {
-            IOUtils.closeQuietly(oos);
         }
-        return bos.toByteArray_clear();
     }
 
     public static Node deserializeNode(final byte[] serializedObj, final int length,
             final boolean compressed) throws HiveException {
-        FastByteArrayInputStream bis = new FastByteArrayInputStream(serializedObj, length);
-        InputStream wrapped = compressed ? new InflaterInputStream(bis) : bis;
-
-        final Node root;
-        ObjectInputStream ois = null;
+        final Node root = new Node();
         try {
-            ois = new ObjectInputStream(wrapped);
-            root = new Node();
-            root.readExternal(ois);
+            if (compressed) {
+                ObjectUtils.readCompressedObject(serializedObj, 0, length, root);
+            } else {
+                ObjectUtils.readObject(serializedObj, length, root);
+            }
         } catch (IOException ioe) {
             throw new HiveException("IOException cause while deserializing DecisionTree object",
                 ioe);
         } catch (Exception e) {
             throw new HiveException("Exception cause while deserializing DecisionTree object", e);
-        } finally {
-            IOUtils.closeQuietly(ois);
         }
         return root;
     }

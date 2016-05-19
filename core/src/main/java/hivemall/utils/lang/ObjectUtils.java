@@ -88,12 +88,22 @@ public final class ObjectUtils {
 
     public static <T> T readObject(@Nonnull final byte[] obj) throws IOException,
             ClassNotFoundException {
-        return readObject(new FastByteArrayInputStream(obj));
+        return readObject(obj, obj.length);
+    }
+
+    public static <T> T readObject(@Nonnull final byte[] obj, final int length) throws IOException,
+            ClassNotFoundException {
+        return readObject(new FastByteArrayInputStream(obj, length));
     }
 
     public static void readObject(@Nonnull final byte[] src, @Nonnull final Externalizable dst)
             throws IOException, ClassNotFoundException {
-        readObject(new FastByteArrayInputStream(src), dst);
+        readObject(src, src.length, dst);
+    }
+
+    public static void readObject(@Nonnull final byte[] src, final int length,
+            @Nonnull final Externalizable dst) throws IOException, ClassNotFoundException {
+        readObject(new FastByteArrayInputStream(src, length), dst);
     }
 
     @SuppressWarnings("unchecked")
