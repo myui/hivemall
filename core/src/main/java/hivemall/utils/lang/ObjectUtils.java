@@ -52,10 +52,11 @@ public final class ObjectUtils {
 
     public static byte[] toCompressedBytes(@Nonnull final Object obj) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
-        final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
+        DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
             dos.finish();
+            dos.flush();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
@@ -64,10 +65,11 @@ public final class ObjectUtils {
 
     public static byte[] toCompressedBytes(@Nonnull final Externalizable obj) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
-        final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
+        DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
             dos.finish();
+            dos.flush();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
