@@ -36,13 +36,18 @@ public final class FFMPredictionModel implements Externalizable {
     private IntOpenHashTable<Entry> _map;
     private double _w0;
     private int _factors;
+    private int _numFeatures;
+    private int _numFields;
 
     public FFMPredictionModel() {}// for Externalizable
 
-    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor) {
+    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor,
+            int numFeatures, int numFields) {
         this._map = map;
         this._w0 = w0;
         this._factors = factor;
+        this._numFeatures = numFeatures;
+        this._numFields = numFields;
     }
 
     public int getNumFactors() {
@@ -51,6 +56,14 @@ public final class FFMPredictionModel implements Externalizable {
 
     public double getW0() {
         return _w0;
+    }
+
+    public int getNumFeatures() {
+        return _numFeatures;
+    }
+
+    public int getNumFields() {
+        return _numFields;
     }
 
     public float getW1(@Nonnull final Feature x) {
@@ -65,7 +78,7 @@ public final class FFMPredictionModel implements Externalizable {
 
     @Nullable
     public float[] getV(@Nonnull final Feature x, @Nonnull final int yField) {
-        int j = Feature.toIntFeature(x, yField);
+        int j = Feature.toIntFeature(x, yField, _numFields);
 
         Entry entry = _map.get(j);
         if (entry == null) {
@@ -78,6 +91,8 @@ public final class FFMPredictionModel implements Externalizable {
     public void writeExternal(@Nonnull ObjectOutput out) throws IOException {
         out.writeDouble(_w0);
         out.writeInt(_factors);
+        out.writeInt(_numFeatures);
+        out.writeInt(_numFields);
 
         int used = _map.size();
         out.writeInt(used);
@@ -105,6 +120,8 @@ public final class FFMPredictionModel implements Externalizable {
     public void readExternal(@Nonnull ObjectInput in) throws IOException, ClassNotFoundException {
         this._w0 = in.readDouble();
         this._factors = in.readInt();
+        this._numFeatures = in.readInt();
+        this._numFields = in.readInt();
 
         int used = in.readInt();
         final int size = in.readInt();

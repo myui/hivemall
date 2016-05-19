@@ -269,7 +269,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
-    protected FactorizationMachineModel initModel(@Nullable CommandLine cl) {
+    protected FactorizationMachineModel initModel(@Nullable CommandLine cl)
+            throws UDFArgumentException {
         float lambda0 = 0.01f;
         double sigma = 0.1d;
         double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
