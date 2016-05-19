@@ -18,6 +18,8 @@
  */
 package hivemall.utils.lang;
 
+import hivemall.utils.codec.ASCII85InputStream;
+import hivemall.utils.codec.ASCII85OutputStream;
 import hivemall.utils.io.FastByteArrayInputStream;
 import hivemall.utils.io.FastByteArrayOutputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
@@ -52,9 +54,11 @@ public final class ObjectUtils {
 
     public static byte[] toCompressedBytes(@Nonnull final Object obj) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
-        final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
+        DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            dos.finish();
+            dos.flush();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
@@ -63,12 +67,32 @@ public final class ObjectUtils {
 
     public static byte[] toCompressedBytes(@Nonnull final Externalizable obj) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
-        final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
+        DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            dos.finish();
+            dos.flush();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
+        }
+    }
+
+    public static byte[] toCompressedBytes(@Nonnull final Externalizable obj, final boolean bin2txt)
+            throws IOException {
+        FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
+        OutputStream out = null;
+        DeflaterOutputStream dos = null;
+        try {
+            out = bin2txt ? new ASCII85OutputStream(bos) : bos;
+            dos = new DeflaterOutputStream(bos);
+            toStream(obj, dos);
+            dos.finish();
+            dos.flush();
+            return bos.toByteArray_clear();
+        } finally {
+            IOUtils.closeQuietly(dos);
+            IOUtils.closeQuietly(out);
         }
     }
 
@@ -138,6 +162,22 @@ public final class ObjectUtils {
             readObject(iis, dst);
         } finally {
             IOUtils.closeQuietly(iis);
+        }
+    }
+
+    public static void readCompressedObject(@Nonnull final byte[] src, final int len,
+            @Nonnull final Externalizable dst, final boolean bin2txt) throws IOException,
+            ClassNotFoundException {
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(src, len);
+        InputStream in = null;
+        InflaterInputStream iis = null;
+        try {
+            in = bin2txt ? new ASCII85InputStream(bis) : bis;
+            iis = new InflaterInputStream(bis);
+            readObject(iis, dst);
+        } finally {
+            IOUtils.closeQuietly(iis);
+            IOUtils.closeQuietly(in);
         }
     }
 

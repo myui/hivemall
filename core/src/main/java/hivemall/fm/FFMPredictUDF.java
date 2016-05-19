@@ -18,7 +18,6 @@
  */
 package hivemall.fm;
 
-import hivemall.utils.codec.Base91;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.NumberUtils;
 
@@ -90,10 +89,9 @@ public final class FFMPredictUDF extends GenericUDF {
                 throw new HiveException("Model is null for model ID: " + modelId);
             }
             byte[] b = serModel.getBytes();
-            int length = serModel.getLength();
-            b = Base91.decode(b, 0, length);
+            final int length = serModel.getLength();
             try {
-                model = FFMPredictionModel.deserialize(b);
+                model = FFMPredictionModel.deserialize(b, length);
                 b = null;
             } catch (ClassNotFoundException e) {
                 throw new HiveException(e);
@@ -103,10 +101,10 @@ public final class FFMPredictUDF extends GenericUDF {
             this._cachedModeId = modelId;
             this._cachedModel = model;
         }
-        
+
         int numFeatures = model.getNumFactors();
         int numFields = model.getNumFields();
-        
+
         Object arg2 = args[2].get();
         // [workaround]
         // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
@@ -114,7 +112,8 @@ public final class FFMPredictUDF extends GenericUDF {
         if (arg2 instanceof LazyBinaryArray) {
             arg2 = ((LazyBinaryArray) arg2).getList();
         }
-        Feature[] x = Feature.parseFFMFeatures(arg2, _featureListOI, _probes, numFeatures, numFields);
+        Feature[] x = Feature.parseFFMFeatures(arg2, _featureListOI, _probes, numFeatures,
+            numFields);
         if (x == null || x.length == 0) {
             return null; // return NULL if there are no features
         }

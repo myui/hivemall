@@ -19,7 +19,6 @@
 package hivemall.fm;
 
 import hivemall.fm.FactorizationMachineModel.VInitScheme;
-import hivemall.utils.codec.Base91;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
@@ -276,14 +275,13 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         FFMPredictionModel predModel = _model.toPredictionModel();
         this._model = null; // help GC
 
-        byte[] serialized;
+        final byte[] serialized;
         try {
             serialized = predModel.serialize();
             predModel = null;
         } catch (IOException e) {
             throw new HiveException(e);
         }
-        serialized = Base91.encode(serialized);
         modelObj.set(serialized);
 
         forward(forwardObjs);

@@ -34,7 +34,7 @@ import org.junit.Test;
 
 public class FieldAwareFactorizationMachineUDTFTest {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final int ITERATIONS = 50;
     private static final int MAX_LINES = 200;
 
@@ -47,7 +47,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-classification -factor 10 -disable_adagrad")};
+                    "-classification -factor 10 -disable_adagrad -seed 43")};
 
         udtf.initialize(argOIs);
         FactorizationMachineModel model = udtf.getModel();
@@ -117,7 +117,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-classification -factor 10")};
+                    "-classification -factor 10 -seed 43")};
 
         udtf.initialize(argOIs);
         FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
@@ -187,7 +187,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-classification -factor 10 -w0 -w_i")};
+                    "-classification -factor 10 -w0 -w_i -seed 43")};
 
         udtf.initialize(argOIs);
         FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
