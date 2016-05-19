@@ -23,27 +23,25 @@ import java.io.InputStream;
 
 /**
  * This class represents an ASCII85 stream.
- * 
- * This class is based on the implementation in Apache PDFBox 
- * https://pdfbox.apache.org/
+ * This class is based on the implementation in Apache PDFBox.
  * 
  * @author Ben Litchfield
  */
 public final class ASCII85InputStream extends FilterInputStream {
+    private static final byte TERMINATOR = '~';
+    private static final byte OFFSET = '!';
+    private static final byte NEWLINE = '\n';
+    private static final byte RETURN = '\r';
+    private static final byte SPACE = ' ';
+    private static final byte PADDING_U = 'u';
+    private static final byte Z = 'z';
+
     private int index;
     private int n;
     private boolean eof;
-
+    
     private byte[] ascii;
     private byte[] b;
-
-    private static final char TERMINATOR = '~';
-    private static final char OFFSET = '!';
-    private static final char NEWLINE = '\n';
-    private static final char RETURN = '\r';
-    private static final char SPACE = ' ';
-    private static final char PADDING_U = 'u';
-    private static final char Z = 'z';
 
     /**
      * Constructor.
@@ -106,7 +104,7 @@ public final class ASCII85InputStream extends FilterInputStream {
                     ascii[k] = z;
                     if (z == TERMINATOR) {
                         // don't include ~ as padding byte
-                        ascii[k] = (byte) PADDING_U;
+                        ascii[k] = PADDING_U;
                         break;
                     }
                 }
@@ -120,7 +118,7 @@ public final class ASCII85InputStream extends FilterInputStream {
                 if (k < 5) {
                     for (++k; k < 5; ++k) {
                         // use 'u' for padding
-                        ascii[k] = (byte) PADDING_U;
+                        ascii[k] = PADDING_U;
                     }
                     eof = true;
                 }

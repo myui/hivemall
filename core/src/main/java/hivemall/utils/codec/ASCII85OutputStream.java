@@ -23,28 +23,22 @@ import java.io.OutputStream;
 
 /**
  * This class represents an ASCII85 output stream.
- *
- * This class is based on the implementation in Apache PDFBox https://pdfbox.apache.org/
+ * This class is based on the implementation in Apache PDFBox.
  * 
  * @author Ben Litchfield
  */
 public final class ASCII85OutputStream extends FilterOutputStream {
+    private static final long a85p2 = 85L * 85L;
+    private static final long a85p3 = 85L * 85L * 85L;
+    private static final long a85p4 = 85L * 85L * 85L * 85L;
+    private static final byte TERMINATOR = '~';
+    private static final byte OFFSET = '!';
+    private static final byte Z = 'z';
 
-    private int lineBreak;
     private int count;
-
     private byte[] indata;
     private byte[] outdata;
-
-    /**
-     * Function produces five ASCII printing characters from four bytes of binary data.
-     */
-    private int maxline;
     private boolean flushed;
-    private char terminator;
-    private static final char OFFSET = '!';
-    private static final char NEWLINE = '\n';
-    private static final char Z = 'z';
 
     /**
      * Constructor.
@@ -53,55 +47,10 @@ public final class ASCII85OutputStream extends FilterOutputStream {
      */
     public ASCII85OutputStream(OutputStream out) {
         super(out);
-        lineBreak = 36 * 2;
-        maxline = 36 * 2;
         count = 0;
         indata = new byte[4];
         outdata = new byte[5];
         flushed = true;
-        terminator = '~';
-    }
-
-    /**
-     * This will set the terminating character.
-     *
-     * @param term The terminating character.
-     */
-    public void setTerminator(char term) {
-        if (term < 118 || term > 126 || term == Z) {
-            throw new IllegalArgumentException("Terminator must be 118-126 excluding z");
-        }
-        terminator = term;
-    }
-
-    /**
-     * This will get the terminating character.
-     *
-     * @return The terminating character.
-     */
-    public char getTerminator() {
-        return terminator;
-    }
-
-    /**
-     * This will set the line length that will be used.
-     *
-     * @param l The length of the line to use.
-     */
-    public void setLineLength(int l) {
-        if (lineBreak > l) {
-            lineBreak = l;
-        }
-        maxline = l;
-    }
-
-    /**
-     * This will get the length of the line.
-     *
-     * @return The line length attribute.
-     */
-    public int getLineLength() {
-        return maxline;
     }
 
     /**
@@ -111,22 +60,22 @@ public final class ASCII85OutputStream extends FilterOutputStream {
         long word = ((((indata[0] << 8) | (indata[1] & 0xFF)) << 16) | ((indata[2] & 0xFF) << 8) | (indata[3] & 0xFF)) & 0xFFFFFFFFL;
 
         if (word == 0) {
-            outdata[0] = (byte) Z;
+            outdata[0] = Z;
             outdata[1] = 0;
             return;
         }
-        long x;
-        x = word / (85L * 85L * 85L * 85L);
+
+        long x = word / a85p4;
         outdata[0] = (byte) (x + OFFSET);
-        word -= x * 85L * 85L * 85L * 85L;
+        word -= x * a85p4;
 
-        x = word / (85L * 85L * 85L);
+        x = word / a85p3;
         outdata[1] = (byte) (x + OFFSET);
-        word -= x * 85L * 85L * 85L;
+        word -= x * a85p3;
 
-        x = word / (85L * 85L);
+        x = word / a85p2;
         outdata[2] = (byte) (x + OFFSET);
-        word -= x * 85L * 85L;
+        word -= x * a85p2;
 
         x = word / 85L;
         outdata[3] = (byte) (x + OFFSET);
@@ -154,10 +103,6 @@ public final class ASCII85OutputStream extends FilterOutputStream {
                 break;
             }
             out.write(outdata[i]);
-            if (--lineBreak == 0) {
-                out.write(NEWLINE);
-                lineBreak = maxline;
-            }
         }
         count = 0;
     }
@@ -180,25 +125,15 @@ public final class ASCII85OutputStream extends FilterOutputStream {
             if (outdata[0] == Z) {
                 for (int i = 0; i < 5; i++) // expand 'z',
                 {
-                    outdata[i] = (byte) OFFSET;
+                    outdata[i] = OFFSET;
                 }
             }
             for (int i = 0; i < count + 1; i++) {
                 out.write(outdata[i]);
-                if (--lineBreak == 0) {
-                    out.write(NEWLINE);
-                    lineBreak = maxline;
-                }
             }
         }
-        if (--lineBreak == 0) {
-            out.write(NEWLINE);
-        }
-        out.write(terminator);
-        out.write('>');
-        out.write(NEWLINE);
+        out.write(TERMINATOR);
         count = 0;
-        lineBreak = maxline;
         flushed = true;
         super.flush();
     }
