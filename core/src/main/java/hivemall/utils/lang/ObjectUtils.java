@@ -77,7 +77,6 @@ public final class ObjectUtils {
         ObjectOutputStream oos = new ObjectOutputStream(out);
         oos.writeObject(obj);
         oos.flush();
-        oos.close();
     }
 
     public static void toStream(@Nonnull final Externalizable obj, @Nonnull final OutputStream out)
@@ -85,7 +84,6 @@ public final class ObjectUtils {
         ObjectOutputStream oos = new ObjectOutputStream(out);
         obj.writeExternal(oos);
         oos.flush();
-        oos.close();
     }
 
     public static <T> T readObject(@Nonnull final byte[] obj) throws IOException,
