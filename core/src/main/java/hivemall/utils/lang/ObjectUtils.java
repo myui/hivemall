@@ -18,6 +18,7 @@
  */
 package hivemall.utils.lang;
 
+import hivemall.utils.codec.Base64InputStream;
 import hivemall.utils.io.FastByteArrayInputStream;
 import hivemall.utils.io.FastByteArrayOutputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
@@ -33,6 +34,8 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 import javax.annotation.Nonnull;
+
+import org.apache.commons.codec.binary.Base64OutputStream;
 
 public final class ObjectUtils {
 
@@ -73,6 +76,24 @@ public final class ObjectUtils {
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
+        }
+    }
+
+    public static byte[] toCompressedBytes(@Nonnull final Externalizable obj, final boolean base64)
+            throws IOException {
+        FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
+        OutputStream out = null;
+        DeflaterOutputStream dos = null;
+        try {
+            out = base64 ? new Base64OutputStream(bos) : bos;
+            dos = new DeflaterOutputStream(bos);
+            toStream(obj, dos);
+            dos.finish();
+            dos.flush();
+            return bos.toByteArray_clear();
+        } finally {
+            IOUtils.closeQuietly(dos);
+            IOUtils.closeQuietly(out);
         }
     }
 
@@ -142,6 +163,22 @@ public final class ObjectUtils {
             readObject(iis, dst);
         } finally {
             IOUtils.closeQuietly(iis);
+        }
+    }
+
+    public static void readCompressedObject(@Nonnull final byte[] src, final int len,
+            @Nonnull final Externalizable dst, final boolean base64) throws IOException,
+            ClassNotFoundException {
+        FastByteArrayInputStream bis = new FastByteArrayInputStream(src, len);
+        InputStream in = null;
+        InflaterInputStream iis = null;
+        try {
+            in = base64 ? new Base64InputStream(bis) : bis;
+            iis = new InflaterInputStream(bis);
+            readObject(iis, dst);
+        } finally {
+            IOUtils.closeQuietly(iis);
+            IOUtils.closeQuietly(in);
         }
     }
 

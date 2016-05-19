@@ -144,13 +144,13 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
-        return ObjectUtils.toCompressedBytes(this);
+        return ObjectUtils.toCompressedBytes(this, true);
     }
 
-    public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj)
+    public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj, final int len)
             throws ClassNotFoundException, IOException {
         FFMPredictionModel model = new FFMPredictionModel();
-        ObjectUtils.readCompressedObject(serializedObj, model);
+        ObjectUtils.readCompressedObject(serializedObj, len, model, true);
         return model;
     }
 
