@@ -22,10 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * This class represents an ASCII85 output stream.
- * This class is based on the implementation in Apache PDFBox.
- * 
- * @author Ben Litchfield
+ * This class represents an ASCII85 output stream. This class is based on the implementation in
+ * Apache PDFBox.
  */
 public final class ASCII85OutputStream extends FilterOutputStream {
     private static final long a85p2 = 85L * 85L;
@@ -35,9 +33,10 @@ public final class ASCII85OutputStream extends FilterOutputStream {
     private static final byte OFFSET = '!';
     private static final byte Z = 'z';
 
+    private final byte[] indata;
+    private final byte[] encoded;
+
     private int count;
-    private byte[] indata;
-    private byte[] outdata;
     private boolean flushed;
 
     /**
@@ -47,9 +46,9 @@ public final class ASCII85OutputStream extends FilterOutputStream {
      */
     public ASCII85OutputStream(OutputStream out) {
         super(out);
-        count = 0;
         indata = new byte[4];
-        outdata = new byte[5];
+        encoded = new byte[5];
+        count = 0;
         flushed = true;
     }
 
@@ -60,27 +59,27 @@ public final class ASCII85OutputStream extends FilterOutputStream {
         long word = ((((indata[0] << 8) | (indata[1] & 0xFF)) << 16) | ((indata[2] & 0xFF) << 8) | (indata[3] & 0xFF)) & 0xFFFFFFFFL;
 
         if (word == 0) {
-            outdata[0] = Z;
-            outdata[1] = 0;
+            encoded[0] = Z;
+            encoded[1] = 0;
             return;
         }
 
         long x = word / a85p4;
-        outdata[0] = (byte) (x + OFFSET);
+        encoded[0] = (byte) (x + OFFSET);
         word -= x * a85p4;
 
         x = word / a85p3;
-        outdata[1] = (byte) (x + OFFSET);
+        encoded[1] = (byte) (x + OFFSET);
         word -= x * a85p3;
 
         x = word / a85p2;
-        outdata[2] = (byte) (x + OFFSET);
+        encoded[2] = (byte) (x + OFFSET);
         word -= x * a85p2;
 
         x = word / 85L;
-        outdata[3] = (byte) (x + OFFSET);
+        encoded[3] = (byte) (x + OFFSET);
 
-        outdata[4] = (byte) ((word % 85L) + OFFSET);
+        encoded[4] = (byte) ((word % 85L) + OFFSET);
     }
 
     /**
@@ -99,10 +98,10 @@ public final class ASCII85OutputStream extends FilterOutputStream {
         }
         transformASCII85();
         for (int i = 0; i < 5; i++) {
-            if (outdata[i] == 0) {
+            if (encoded[i] == 0) {
                 break;
             }
-            out.write(outdata[i]);
+            out.write(encoded[i]);
         }
         count = 0;
     }
@@ -122,14 +121,13 @@ public final class ASCII85OutputStream extends FilterOutputStream {
                 indata[i] = 0;
             }
             transformASCII85();
-            if (outdata[0] == Z) {
-                for (int i = 0; i < 5; i++) // expand 'z',
-                {
-                    outdata[i] = OFFSET;
+            if (encoded[0] == Z) {
+                for (int i = 0; i < 5; i++) {
+                    encoded[i] = OFFSET;// expand 'z',
                 }
             }
             for (int i = 0; i < count + 1; i++) {
-                out.write(outdata[i]);
+                out.write(encoded[i]);
             }
         }
         out.write(TERMINATOR);
@@ -145,11 +143,7 @@ public final class ASCII85OutputStream extends FilterOutputStream {
      */
     @Override
     public void close() throws IOException {
-        try {
-            flush();
-            super.close();
-        } finally {
-            indata = outdata = null;
-        }
+        flush();
+        super.close();
     }
 }

@@ -22,10 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * This class represents an ASCII85 stream.
- * This class is based on the implementation in Apache PDFBox.
- * 
- * @author Ben Litchfield
+ * This class represents an ASCII85 stream. This class is based on the implementation in Apache
+ * PDFBox.
  */
 public final class ASCII85InputStream extends FilterInputStream {
     private static final byte TERMINATOR = '~';
@@ -39,9 +37,9 @@ public final class ASCII85InputStream extends FilterInputStream {
     private int index;
     private int n;
     private boolean eof;
-    
-    private byte[] ascii;
-    private byte[] b;
+
+    private final byte[] ascii;
+    private final byte[] decoded;
 
     /**
      * Constructor.
@@ -54,94 +52,87 @@ public final class ASCII85InputStream extends FilterInputStream {
         n = 0;
         eof = false;
         ascii = new byte[5];
-        b = new byte[4];
+        decoded = new byte[4];
     }
 
     /**
      * This will read the next byte from the stream.
      *
      * @return The next byte read from the stream.
-     *
      * @throws IOException If there is an error reading from the wrapped stream.
      */
     @Override
     public int read() throws IOException {
-        if (index >= n) {
-            if (eof) {
+        if (index < n) {
+            return decoded[index++] & 0xFF;
+        }
+        if (eof) {
+            return -1;
+        }
+
+        index = 0;
+        int k;
+        byte z;
+        do {
+            int zz = (byte) in.read();
+            if (zz == -1) {
+                eof = true;
                 return -1;
             }
-            index = 0;
-            int k;
-            byte z;
-            do {
-                int zz = (byte) in.read();
-                if (zz == -1) {
-                    eof = true;
-                    return -1;
-                }
-                z = (byte) zz;
-            } while (z == NEWLINE || z == RETURN || z == SPACE);
+            z = (byte) zz;
+        } while (z == NEWLINE || z == RETURN || z == SPACE);
 
-            if (z == TERMINATOR) {
-                eof = true;
-                ascii = b = null;
-                n = 0;
-                return -1;
-            } else if (z == Z) {
-                b[0] = b[1] = b[2] = b[3] = 0;
-                n = 4;
-            } else {
-                ascii[0] = z; // may be EOF here....
-                for (k = 1; k < 5; ++k) {
-                    do {
-                        int zz = (byte) in.read();
-                        if (zz == -1) {
-                            eof = true;
-                            return -1;
-                        }
-                        z = (byte) zz;
-                    } while (z == NEWLINE || z == RETURN || z == SPACE);
-                    ascii[k] = z;
-                    if (z == TERMINATOR) {
-                        // don't include ~ as padding byte
-                        ascii[k] = PADDING_U;
-                        break;
-                    }
-                }
-                n = k - 1;
-                if (n == 0) {
-                    eof = true;
-                    ascii = null;
-                    b = null;
-                    return -1;
-                }
-                if (k < 5) {
-                    for (++k; k < 5; ++k) {
-                        // use 'u' for padding
-                        ascii[k] = PADDING_U;
-                    }
-                    eof = true;
-                }
-                // decode stream
-                long t = 0;
-                for (k = 0; k < 5; ++k) {
-                    z = (byte) (ascii[k] - OFFSET);
-                    if (z < 0 || z > 93) {
-                        n = 0;
+        if (z == TERMINATOR) {
+            eof = true;
+            n = 0;
+            return -1;
+        } else if (z == Z) {
+            decoded[0] = decoded[1] = decoded[2] = decoded[3] = 0;
+            n = 4;
+        } else {
+            ascii[0] = z; // may be EOF here....
+            for (k = 1; k < 5; ++k) {
+                do {
+                    int zz = (byte) in.read();
+                    if (zz == -1) {
                         eof = true;
-                        ascii = null;
-                        b = null;
-                        throw new IOException("Invalid data in Ascii85 stream");
+                        return -1;
                     }
-                    t = (t * 85L) + z;
+                    z = (byte) zz;
+                } while (z == NEWLINE || z == RETURN || z == SPACE);
+                ascii[k] = z;
+                if (z == TERMINATOR) {
+                    // don't include ~ as padding byte
+                    ascii[k] = PADDING_U;
+                    break;
                 }
-                for (k = 3; k >= 0; --k) {
-                    b[k] = (byte) (t & 0xFFL);
-                    t >>>= 8;
+            }
+            n = k - 1;
+            if (n == 0) {
+                eof = true;
+                return -1;
+            }
+            if (k < 5) {
+                for (++k; k < 5; ++k) {
+                    ascii[k] = PADDING_U;
                 }
+                eof = true;
+            }
+            // decode stream
+            long t = 0;
+            for (k = 0; k < 5; ++k) {
+                z = (byte) (ascii[k] - OFFSET);
+                if (z < 0 || z > 93) {
+                    throw new IOException("Invalid data in Ascii85 stream");
+                }
+                t = (t * 85L) + z;
+            }
+            for (k = 3; k >= 0; --k) {
+                decoded[k] = (byte) (t & 0xFFL);
+                t >>>= 8;
             }
         }
-        return b[index++] & 0xFF;
+        return decoded[index++] & 0xFF;
     }
 
     /**
@@ -156,13 +147,13 @@ public final class ASCII85InputStream extends FilterInputStream {
      * @throws IOException If there is an error reading data from the underlying stream.
      */
     @Override
-    public int read(byte[] data, int offset, int len) throws IOException {
+    public int read(final byte[] data, final int offset, final int len) throws IOException {
         if (eof && index >= n) {
             return -1;
         }
         for (int i = 0; i < len; i++) {
             if (index < n) {
-                data[i + offset] = b[index++];
+                data[i + offset] = decoded[index++];
             } else {
                 int t = read();
                 if (t == -1) {
@@ -181,9 +172,7 @@ public final class ASCII85InputStream extends FilterInputStream {
      */
     @Override
     public void close() throws IOException {
-        ascii = null;
         eof = true;
-        b = null;
         super.close();
     }
 
