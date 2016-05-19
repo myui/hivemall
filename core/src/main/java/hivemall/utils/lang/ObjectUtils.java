@@ -55,6 +55,7 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            dos.finish();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
@@ -66,6 +67,7 @@ public final class ObjectUtils {
         final DeflaterOutputStream dos = new DeflaterOutputStream(bos);
         try {
             toStream(obj, dos);
+            dos.finish();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
