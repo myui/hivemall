@@ -23,7 +23,7 @@ import java.util.logging.Logger
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-import hivemall.io.{DenseModel, PredictionModel, WeightValue}
+import hivemall.model.{DenseModel, PredictionModel, WeightValue}
 import hivemall.mix.MixMessage.MixEventName
 import hivemall.mix.client.MixClient
 import hivemall.mix.server.MixServer.ServerState
