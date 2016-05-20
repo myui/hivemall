@@ -28,9 +28,12 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import org.roaringbitmap.RoaringBitmap;
 
 public final class FFMPredictionModel implements Externalizable {
 
@@ -115,18 +118,19 @@ public final class FFMPredictionModel implements Externalizable {
         final int factors = _factors;
         int used = _map.size();
         out.writeInt(used);
+
         final int[] keys = _map.getKeys();
-        final Object[] values = _map.getValues();
-        final byte[] status = _map.getStates();
         final int size = keys.length;
         out.writeInt(size);
+
+        final Object[] values = _map.getValues();
+        final RoaringBitmap emptyStatus = writeEmptyStates(_map.getStates(), out);
+
         for (int i = 0; i < size; i++) {
-            byte status_i = status[i];
-            out.writeByte(status_i);
-            ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
-            if (status_i != IntOpenHashTable.FULL) {
+            if (emptyStatus.contains(i)) {
                 continue;
             }
+            ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
             Entry v = (Entry) values[i];
             ZigZagLEB128Codec.writeFloat(v.W, out);
             IOUtils.writeVFloats(v.Vf, factors, out);
@@ -135,8 +139,24 @@ public final class FFMPredictionModel implements Externalizable {
         this._map = null; // help GC        
     }
 
+    @Nonnull
+    private static RoaringBitmap writeEmptyStates(@Nonnull final byte[] status,
+            @Nonnull final ObjectOutput out) throws IOException {
+        final RoaringBitmap emptyBits = new RoaringBitmap();
+        final int size = status.length;
+        for (int i = 0; i < size; i++) {
+            if (status[i] != IntOpenHashTable.FULL) {
+                emptyBits.add(i);
+            }
+        }
+        emptyBits.runOptimize();
+        emptyBits.serialize(out);
+        return emptyBits;
+    }
+
     @Override
-    public void readExternal(@Nonnull ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(@Nonnull final ObjectInput in) throws IOException,
+            ClassNotFoundException {
         this._w0 = in.readDouble();
         final int factors = in.readInt();
         this._factors = factors;
@@ -148,19 +168,31 @@ public final class FFMPredictionModel implements Externalizable {
         final int[] keys = new int[size];
         final Entry[] values = new Entry[size];
         final byte[] states = new byte[size];
+        readStates(in, states);
+
         for (int i = 0; i < size; i++) {
-            byte status_i = in.readByte();
-            states[i] = status_i;
-            keys[i] = ZigZagLEB128Codec.readSignedVInt(in);
-            if (status_i != IntOpenHashTable.FULL) {
+            if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
+            keys[i] = ZigZagLEB128Codec.readSignedVInt(in);
             float W = ZigZagLEB128Codec.readFloat(in);
             float[] Vf = IOUtils.readVFloats(in, factors);
             values[i] = new Entry(W, Vf);
         }
 
         this._map = new IntOpenHashTable<Entry>(keys, values, states, used);
+    }
+
+    @Nonnull
+    private static void readStates(@Nonnull final ObjectInput in, @Nonnull final byte[] status)
+            throws ClassNotFoundException, IOException {
+        RoaringBitmap emptyBits = new RoaringBitmap();
+        emptyBits.deserialize(in);
+
+        Arrays.fill(status, IntOpenHashTable.FULL);
+        for (int i : emptyBits) {
+            status[i] = IntOpenHashTable.FREE;
+        }
     }
 
     public byte[] serialize() throws IOException {
