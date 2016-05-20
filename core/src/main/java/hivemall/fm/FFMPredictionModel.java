@@ -124,10 +124,11 @@ public final class FFMPredictionModel implements Externalizable {
         out.writeInt(size);
 
         final Object[] values = _map.getValues();
-        final RoaringBitmap emptyStatus = writeEmptyStates(_map.getStates(), out);
+        final byte[] states = _map.getStates();
+        writeEmptyStates(states, out);
 
         for (int i = 0; i < size; i++) {
-            if (emptyStatus.contains(i)) {
+            if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
             ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
@@ -140,7 +141,7 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     @Nonnull
-    private static RoaringBitmap writeEmptyStates(@Nonnull final byte[] status,
+    private static void writeEmptyStates(@Nonnull final byte[] status,
             @Nonnull final ObjectOutput out) throws IOException {
         final RoaringBitmap emptyBits = new RoaringBitmap();
         final int size = status.length;
@@ -151,7 +152,6 @@ public final class FFMPredictionModel implements Externalizable {
         }
         emptyBits.runOptimize();
         emptyBits.serialize(out);
-        return emptyBits;
     }
 
     @Override
