@@ -287,7 +287,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             LOG.info("Serializing a model '" + modelId + "'... Configured # features: "
                     + _numFeatures + ", Configured # fields: " + _numFields
                     + ", Actual # features: " + predModel.getActualNumFeatures()
-                    + ", Estimated bytes: " + NumberUtils.prettySize(predModel.consumedBytes()));
+                    + ", Estimated bytes: " + NumberUtils.prettySize(predModel.approxBytesConsumed()));
         }
 
         byte[] serialized;

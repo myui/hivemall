@@ -18,6 +18,8 @@
  */
 package hivemall.utils.io;
 
+import hivemall.utils.codec.ZigZagCodec;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.DataInput;
@@ -240,12 +242,48 @@ public final class IOUtils {
         }
     }
 
+    public static void writeFloats(@Nonnull final float[] floats, final int size,
+            @Nonnull final DataOutput out) throws IOException {
+        for (int i = 0; i < size; i++) {
+            out.writeFloat(floats[i]);
+        }
+    }
+
     @Nonnull
     public static float[] readFloats(@Nonnull final DataInput in) throws IOException {
         final int size = in.readInt();
         final float[] floats = new float[size];
         for (int i = 0; i < size; i++) {
             floats[i] = in.readFloat();
+        }
+        return floats;
+    }
+
+    @Nonnull
+    public static float[] readFloats(@Nonnull final DataInput in, final int size)
+            throws IOException {
+        final float[] floats = new float[size];
+        for (int i = 0; i < size; i++) {
+            floats[i] = in.readFloat();
+        }
+        return floats;
+    }
+
+    public static void writeVFloats(@Nonnull final float[] floats, final int size,
+            @Nonnull final DataOutput out) throws IOException {
+        for (int i = 0; i < size; i++) {
+            int bits = Float.floatToIntBits(floats[i]);
+            ZigZagCodec.writeSignedVInt(bits, out);
+        }
+    }
+
+    @Nonnull
+    public static float[] readVFloats(@Nonnull final DataInput in, final int size)
+            throws IOException {
+        final float[] floats = new float[size];
+        for (int i = 0; i < size; i++) {
+            int bits = ZigZagCodec.readSignedVInt(in);
+            floats[i] = Float.intBitsToFloat(bits);
         }
         return floats;
     }
