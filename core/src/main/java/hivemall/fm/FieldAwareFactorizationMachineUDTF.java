@@ -22,6 +22,7 @@ import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.io.IOException;
@@ -33,6 +34,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -51,6 +54,7 @@ import org.apache.hadoop.io.Text;
         name = "train_ffm",
         value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction model")
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
+    private static final Log LOG = LogFactory.getLog(FieldAwareFactorizationMachineUDTF.class);
 
     private boolean _globalBias;
     private boolean _linearCoeff;
@@ -261,10 +265,14 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         // help GC
         this._model = null;
         this._fieldList = null;
+        this._sumVfX = null;
     }
 
     @Override
     protected void forwardModel() throws HiveException {
+        this._fieldList = null;
+        this._sumVfX = null;
+
         Text modelId = new Text();
         Text modelObj = new Text();
         Object[] forwardObjs = new Object[] {modelId, modelObj};
@@ -275,14 +283,27 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         FFMPredictionModel predModel = _model.toPredictionModel();
         this._model = null; // help GC
 
-        final byte[] serialized;
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Serializing a model '" + modelId + "'... Configured # features: "
+                    + _numFeatures + ", Configured # fields: " + _numFields
+                    + ", Actual # features: " + predModel.getActualNumFeatures()
+                    + ", Estimated bytes: " + NumberUtils.prettySize(predModel.consumedBytes()));
+        }
+
+        byte[] serialized;
         try {
             serialized = predModel.serialize();
             predModel = null;
         } catch (IOException e) {
-            throw new HiveException(e);
+            throw new HiveException("Failed to serialize a model", e);
         }
+
         modelObj.set(serialized);
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Forwarding a model '" + modelId + "' of size = "
+                    + NumberUtils.prettySize(serialized.length));
+        }
+        serialized = null;
 
         forward(forwardObjs);
     }

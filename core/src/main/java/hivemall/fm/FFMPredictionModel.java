@@ -66,6 +66,23 @@ public final class FFMPredictionModel implements Externalizable {
         return _numFields;
     }
 
+    public int getActualNumFeatures() {
+        return _map.size();
+    }
+
+    public long consumedBytes() {
+        int size = _map.size();
+        // map
+        long bytes = size * (1L + 4L + (4L + 4L * _factors));
+        int rest = _map.capacity() - size;
+        if (rest > 0) {
+            bytes += rest * (1L + 4L);
+        }
+        // w0, factors, numFeatures, numFields, used
+        bytes += (8 + 4 + 4 + 4 + 4);
+        return bytes;
+    }
+
     public float getW1(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
 
