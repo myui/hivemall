@@ -21,7 +21,7 @@ package hivemall.utils.lang;
 public final class Primitives {
     public static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
     public static final int DOUBLE_BYTES = Double.SIZE / Byte.SIZE;
-    
+
     private Primitives() {}
 
     public static int toUnsignedShort(final short v) {
@@ -81,6 +81,14 @@ public final class Primitives {
     public static void putChar(final byte[] b, final int off, final char val) {
         b[off + 1] = (byte) (val >>> 0);
         b[off] = (byte) (val >>> 8);
+    }
+
+    public static int toIntExact(final long longValue) {
+        final int casted = (int) longValue;
+        if (casted != longValue) {
+            throw new ArithmeticException("integer overflow: " + longValue);
+        }
+        return casted;
     }
 
 }

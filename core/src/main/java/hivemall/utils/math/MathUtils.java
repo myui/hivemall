@@ -218,5 +218,23 @@ public final class MathUtils {
         return Math.log(n) / Math.log(base);
     }
 
+    public static int floorDiv(final int x, final int y) {
+        int r = x / y;
+        // if the signs are different and modulo not zero, round down
+        if ((x ^ y) < 0 && (r * y != x)) {
+            r--;
+        }
+        return r;
+    }
+
+    public static long floorDiv(final long x, final long y) {
+        long r = x / y;
+        // if the signs are different and modulo not zero, round down
+        if ((x ^ y) < 0 && (r * y != x)) {
+            r--;
+        }
+        return r;
+    }
+
 
 }
