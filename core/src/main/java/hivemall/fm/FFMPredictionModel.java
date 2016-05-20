@@ -19,6 +19,7 @@
 package hivemall.fm;
 
 import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
+import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.ObjectUtils;
@@ -66,6 +67,23 @@ public final class FFMPredictionModel implements Externalizable {
         return _numFields;
     }
 
+    public int getActualNumFeatures() {
+        return _map.size();
+    }
+
+    public long approxBytesConsumed() {
+        int size = _map.size();
+        // map
+        long bytes = size * (1L + 4L + (4L * _factors));
+        int rest = _map.capacity() - size;
+        if (rest > 0) {
+            bytes += rest * 4L;
+        }
+        // w0, factors, numFeatures, numFields, used
+        bytes += (8 + 4 + 4 + 4 + 4);
+        return bytes;
+    }
+
     public float getW1(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
 
@@ -94,6 +112,7 @@ public final class FFMPredictionModel implements Externalizable {
         out.writeInt(_numFeatures);
         out.writeInt(_numFields);
 
+        final int factors = _factors;
         int used = _map.size();
         out.writeInt(used);
         final int[] keys = _map.getKeys();
@@ -104,13 +123,13 @@ public final class FFMPredictionModel implements Externalizable {
         for (int i = 0; i < size; i++) {
             byte status_i = status[i];
             out.writeByte(status_i);
-            out.writeInt(keys[i]);
+            ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
             if (status_i != IntOpenHashTable.FULL) {
                 continue;
             }
             Entry v = (Entry) values[i];
-            out.writeFloat(v.W);
-            IOUtils.writeFloats(v.Vf, out);
+            ZigZagLEB128Codec.writeFloat(v.W, out);
+            IOUtils.writeVFloats(v.Vf, factors, out);
             values[i] = null; // help GC
         }
         this._map = null; // help GC        
@@ -119,7 +138,8 @@ public final class FFMPredictionModel implements Externalizable {
     @Override
     public void readExternal(@Nonnull ObjectInput in) throws IOException, ClassNotFoundException {
         this._w0 = in.readDouble();
-        this._factors = in.readInt();
+        final int factors = in.readInt();
+        this._factors = factors;
         this._numFeatures = in.readInt();
         this._numFields = in.readInt();
 
@@ -131,12 +151,12 @@ public final class FFMPredictionModel implements Externalizable {
         for (int i = 0; i < size; i++) {
             byte status_i = in.readByte();
             states[i] = status_i;
-            keys[i] = in.readInt();
+            keys[i] = ZigZagLEB128Codec.readSignedVInt(in);
             if (status_i != IntOpenHashTable.FULL) {
                 continue;
             }
-            float W = in.readFloat();
-            float[] Vf = IOUtils.readFloats(in);
+            float W = ZigZagLEB128Codec.readFloat(in);
+            float[] Vf = IOUtils.readVFloats(in, factors);
             values[i] = new Entry(W, Vf);
         }
 

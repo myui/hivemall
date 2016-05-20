@@ -22,6 +22,7 @@ import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
+import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
 import java.io.IOException;
@@ -33,6 +34,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -51,6 +54,7 @@ import org.apache.hadoop.io.Text;
         name = "train_ffm",
         value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction model")
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
+    private static final Log LOG = LogFactory.getLog(FieldAwareFactorizationMachineUDTF.class);
 
     private boolean _globalBias;
     private boolean _linearCoeff;
@@ -71,6 +75,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
+        opts.addOption("all_terms", false,
+            "Whether to include all terms (i.e., w0 and w_i) [default: OFF]");
         opts.addOption("w0", "global_bias", false,
             "Whether to include global bias term w0 [default: OFF]");
         opts.addOption("w_i", "linear_coeff", false,
@@ -100,8 +106,13 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         if (_parseFeatureAsInt) {
             throw new UDFArgumentException("int_feature option is not supported yet");
         }
-        this._globalBias = cl.hasOption("global_bias");
-        this._linearCoeff = cl.hasOption("linear_coeff");
+        if (cl.hasOption("all_terms")) {
+            this._globalBias = true;
+            this._linearCoeff = true;
+        } else {
+            this._globalBias = cl.hasOption("global_bias");
+            this._linearCoeff = cl.hasOption("linear_coeff");
+        }
 
         // feature hashing
         int hashbits = Primitives.parseInt(cl.getOptionValue("feature_hashing"),
@@ -261,10 +272,14 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         // help GC
         this._model = null;
         this._fieldList = null;
+        this._sumVfX = null;
     }
 
     @Override
     protected void forwardModel() throws HiveException {
+        this._fieldList = null;
+        this._sumVfX = null;
+
         Text modelId = new Text();
         Text modelObj = new Text();
         Object[] forwardObjs = new Object[] {modelId, modelObj};
@@ -275,14 +290,28 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         FFMPredictionModel predModel = _model.toPredictionModel();
         this._model = null; // help GC
 
-        final byte[] serialized;
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Serializing a model '" + modelId + "'... Configured # features: "
+                    + _numFeatures + ", Configured # fields: " + _numFields
+                    + ", Actual # features: " + predModel.getActualNumFeatures()
+                    + ", Estimated uncompressed bytes: "
+                    + NumberUtils.prettySize(predModel.approxBytesConsumed()));
+        }
+
+        byte[] serialized;
         try {
             serialized = predModel.serialize();
             predModel = null;
         } catch (IOException e) {
-            throw new HiveException(e);
+            throw new HiveException("Failed to serialize a model", e);
         }
+
         modelObj.set(serialized);
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Forwarding a serialized/compressed model '" + modelId + "' of size: "
+                    + NumberUtils.prettySize(serialized.length));
+        }
+        serialized = null;
 
         forward(forwardObjs);
     }
