@@ -75,6 +75,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
+        opts.addOption("all_terms", false,
+            "Whether to include all terms (i.e., w0 and w_i) [default: OFF]");
         opts.addOption("w0", "global_bias", false,
             "Whether to include global bias term w0 [default: OFF]");
         opts.addOption("w_i", "linear_coeff", false,
@@ -104,8 +106,13 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         if (_parseFeatureAsInt) {
             throw new UDFArgumentException("int_feature option is not supported yet");
         }
-        this._globalBias = cl.hasOption("global_bias");
-        this._linearCoeff = cl.hasOption("linear_coeff");
+        if (cl.hasOption("all_terms")) {
+            this._globalBias = true;
+            this._linearCoeff = true;
+        } else {
+            this._globalBias = cl.hasOption("global_bias");
+            this._linearCoeff = cl.hasOption("linear_coeff");
+        }
 
         // feature hashing
         int hashbits = Primitives.parseInt(cl.getOptionValue("feature_hashing"),
@@ -301,7 +308,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
         modelObj.set(serialized);
         if (LOG.isInfoEnabled()) {
-            LOG.info("Forwarding a serialized/compressed model '" + modelId + "' of size = "
+            LOG.info("Forwarding a serialized/compressed model '" + modelId + "' of size: "
                     + NumberUtils.prettySize(serialized.length));
         }
         serialized = null;
