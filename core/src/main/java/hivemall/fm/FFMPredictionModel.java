@@ -80,10 +80,10 @@ public final class FFMPredictionModel implements Externalizable {
         long bytes = size * (1L + 4L + (4L * _factors));
         int rest = _map.capacity() - size;
         if (rest > 0) {
-            bytes += rest * 4L;
+            bytes += rest * 1L;
         }
-        // w0, factors, numFeatures, numFields, used
-        bytes += (8 + 4 + 4 + 4 + 4);
+        // w0, factors, numFeatures, numFields, used, size
+        bytes += (8 + 4 + 4 + 4 + 4 + 4);
         return bytes;
     }
 
