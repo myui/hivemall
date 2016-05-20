@@ -131,7 +131,7 @@ public final class FFMPredictionModel implements Externalizable {
             if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
-            ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
+            ZigZagLEB128Codec.writeSignedInt(keys[i], out);
             Entry v = (Entry) values[i];
             ZigZagLEB128Codec.writeFloat(v.W, out);
             IOUtils.writeVFloats(v.Vf, factors, out);
@@ -174,7 +174,7 @@ public final class FFMPredictionModel implements Externalizable {
             if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
-            keys[i] = ZigZagLEB128Codec.readSignedVInt(in);
+            keys[i] = ZigZagLEB128Codec.readSignedInt(in);
             float W = ZigZagLEB128Codec.readFloat(in);
             float[] Vf = IOUtils.readVFloats(in, factors);
             values[i] = new Entry(W, Vf);

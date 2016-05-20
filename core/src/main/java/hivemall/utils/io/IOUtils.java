@@ -273,7 +273,7 @@ public final class IOUtils {
             @Nonnull final DataOutput out) throws IOException {
         for (int i = 0; i < size; i++) {
             int bits = Float.floatToIntBits(floats[i]);
-            ZigZagLEB128Codec.writeSignedVInt(bits, out);
+            ZigZagLEB128Codec.writeSignedInt(bits, out);
         }
     }
 
@@ -282,7 +282,7 @@ public final class IOUtils {
             throws IOException {
         final float[] floats = new float[size];
         for (int i = 0; i < size; i++) {
-            int bits = ZigZagLEB128Codec.readSignedVInt(in);
+            int bits = ZigZagLEB128Codec.readSignedInt(in);
             floats[i] = Float.intBitsToFloat(bits);
         }
         return floats;
