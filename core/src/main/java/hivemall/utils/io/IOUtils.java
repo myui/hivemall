@@ -18,7 +18,7 @@
  */
 package hivemall.utils.io;
 
-import hivemall.utils.codec.ZigZagCodec;
+import hivemall.utils.codec.ZigZagLEB128Codec;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -273,7 +273,7 @@ public final class IOUtils {
             @Nonnull final DataOutput out) throws IOException {
         for (int i = 0; i < size; i++) {
             int bits = Float.floatToIntBits(floats[i]);
-            ZigZagCodec.writeSignedVInt(bits, out);
+            ZigZagLEB128Codec.writeSignedVInt(bits, out);
         }
     }
 
@@ -282,7 +282,7 @@ public final class IOUtils {
             throws IOException {
         final float[] floats = new float[size];
         for (int i = 0; i < size; i++) {
-            int bits = ZigZagCodec.readSignedVInt(in);
+            int bits = ZigZagLEB128Codec.readSignedVInt(in);
             floats[i] = Float.intBitsToFloat(bits);
         }
         return floats;

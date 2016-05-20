@@ -19,7 +19,7 @@
 package hivemall.fm;
 
 import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
-import hivemall.utils.codec.ZigZagCodec;
+import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.ObjectUtils;
@@ -123,12 +123,12 @@ public final class FFMPredictionModel implements Externalizable {
         for (int i = 0; i < size; i++) {
             byte status_i = status[i];
             out.writeByte(status_i);
-            ZigZagCodec.writeSignedVInt(keys[i], out);
+            ZigZagLEB128Codec.writeSignedVInt(keys[i], out);
             if (status_i != IntOpenHashTable.FULL) {
                 continue;
             }
             Entry v = (Entry) values[i];
-            ZigZagCodec.writeFloat(v.W, out);
+            ZigZagLEB128Codec.writeFloat(v.W, out);
             IOUtils.writeVFloats(v.Vf, factors, out);
             values[i] = null; // help GC
         }
@@ -151,11 +151,11 @@ public final class FFMPredictionModel implements Externalizable {
         for (int i = 0; i < size; i++) {
             byte status_i = in.readByte();
             states[i] = status_i;
-            keys[i] = ZigZagCodec.readSignedVInt(in);
+            keys[i] = ZigZagLEB128Codec.readSignedVInt(in);
             if (status_i != IntOpenHashTable.FULL) {
                 continue;
             }
-            float W = ZigZagCodec.readFloat(in);
+            float W = ZigZagLEB128Codec.readFloat(in);
             float[] Vf = IOUtils.readVFloats(in, factors);
             values[i] = new Entry(W, Vf);
         }

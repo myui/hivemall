@@ -23,9 +23,12 @@ import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
-public final class ZigZagCodec {
+/**
+ * @link https://en.wikipedia.org/wiki/LEB128
+ */
+public final class ZigZagLEB128Codec {
 
-    private ZigZagCodec() {}
+    private ZigZagLEB128Codec() {}
 
     public static int encode(final int n) {
         return (n << 1) ^ (n >> 31);
@@ -85,7 +88,7 @@ public final class ZigZagCodec {
             value |= (b & 0x7F) << i;
             i += 7;
             if (i > 35) {
-                throw new IllegalArgumentException("Variable length quantity is too long");
+                throw new IllegalArgumentException("Variable length quantity is too long: " + i);
             }
         }
         return value | (b << i);
@@ -105,7 +108,7 @@ public final class ZigZagCodec {
             value |= (b & 0x7F) << i;
             i += 7;
             if (i > 63) {
-                throw new IllegalArgumentException("Variable length quantity is too long");
+                throw new IllegalArgumentException("Variable length quantity is too long: " + i);
             }
         }
         return value | (b << i);
