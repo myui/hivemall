@@ -287,7 +287,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             LOG.info("Serializing a model '" + modelId + "'... Configured # features: "
                     + _numFeatures + ", Configured # fields: " + _numFields
                     + ", Actual # features: " + predModel.getActualNumFeatures()
-                    + ", Estimated bytes: " + NumberUtils.prettySize(predModel.approxBytesConsumed()));
+                    + ", Estimated uncompressed bytes: "
+                    + NumberUtils.prettySize(predModel.approxBytesConsumed()));
         }
 
         byte[] serialized;
@@ -300,7 +301,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
         modelObj.set(serialized);
         if (LOG.isInfoEnabled()) {
-            LOG.info("Forwarding a model '" + modelId + "' of size = "
+            LOG.info("Forwarding a serialized/compressed model '" + modelId + "' of size = "
                     + NumberUtils.prettySize(serialized.length));
         }
         serialized = null;
