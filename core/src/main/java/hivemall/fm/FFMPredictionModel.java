@@ -21,6 +21,7 @@ package hivemall.fm;
 import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
 import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.collections.IntOpenHashTable;
+import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.ObjectUtils;
 
@@ -196,13 +197,13 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
-        return ObjectUtils.toCompressedBytes(this, true);
+        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma, true);
     }
 
     public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj, final int len)
             throws ClassNotFoundException, IOException {
         FFMPredictionModel model = new FFMPredictionModel();
-        ObjectUtils.readCompressedObject(serializedObj, len, model, true);
+        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma, true);
         return model;
     }
 
