@@ -114,21 +114,25 @@ public final class ZigZagLEB128Codec {
         return value | (b << i);
     }
 
+    @Deprecated
     public static void writeFloat(final float value, final DataOutput out) throws IOException {
         int bits = Float.floatToIntBits(value);
         writeSignedInt(bits, out);
     }
 
+    @Deprecated
     public static float readFloat(@Nonnull final DataInput in) throws IOException {
         int bits = readSignedInt(in);
         return Float.intBitsToFloat(bits);
     }
 
+    @Deprecated
     public static void writeDouble(final double value, final DataOutput out) throws IOException {
         long bits = Double.doubleToLongBits(value);
         writeSignedLong(bits, out);
     }
 
+    @Deprecated
     public static double readDouble(@Nonnull final DataInput in) throws IOException {
         long bits = readSignedLong(in);
         return Double.longBitsToDouble(bits);

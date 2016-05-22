@@ -26,6 +26,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -269,6 +270,7 @@ public final class IOUtils {
         return floats;
     }
 
+    @Deprecated
     public static void writeVFloats(@Nonnull final float[] floats, final int size,
             @Nonnull final DataOutput out) throws IOException {
         for (int i = 0; i < size; i++) {
@@ -277,6 +279,7 @@ public final class IOUtils {
         }
     }
 
+    @Deprecated
     @Nonnull
     public static float[] readVFloats(@Nonnull final DataInput in, final int size)
             throws IOException {
@@ -294,6 +297,22 @@ public final class IOUtils {
         } else {
             out.flush();
         }
+    }
+
+    public static void readFully(final InputStream in, final byte[] b, int offset, int len)
+            throws IOException {
+        do {
+            final int bytesRead = in.read(b, offset, len);
+            if (bytesRead < 0) {
+                throw new EOFException();
+            }
+            len -= bytesRead;
+            offset += bytesRead;
+        } while (len != 0);
+    }
+
+    public static void readFully(final InputStream in, final byte[] b) throws IOException {
+        readFully(in, b, 0, b.length);
     }
 
 }

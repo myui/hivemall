@@ -19,12 +19,15 @@
 package hivemall.fm;
 
 import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
+import hivemall.utils.codec.VariableByteCodec;
 import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.ObjectUtils;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -33,8 +36,6 @@ import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.roaringbitmap.RoaringBitmap;
 
 public final class FFMPredictionModel implements Externalizable {
 
@@ -126,7 +127,7 @@ public final class FFMPredictionModel implements Externalizable {
 
         final Object[] values = _map.getValues();
         final byte[] states = _map.getStates();
-        writeEmptyStates(states, out);
+        writeStates(states, out);
 
         for (int i = 0; i < size; i++) {
             if (states[i] != IntOpenHashTable.FULL) {
@@ -134,25 +135,37 @@ public final class FFMPredictionModel implements Externalizable {
             }
             ZigZagLEB128Codec.writeSignedInt(keys[i], out);
             Entry v = (Entry) values[i];
-            ZigZagLEB128Codec.writeFloat(v.W, out);
-            IOUtils.writeVFloats(v.Vf, factors, out);
+            out.writeFloat(v.W);
+            IOUtils.writeFloats(v.Vf, factors, out);
             values[i] = null; // help GC
         }
         this._map = null; // help GC        
     }
 
     @Nonnull
-    private static void writeEmptyStates(@Nonnull final byte[] status,
-            @Nonnull final ObjectOutput out) throws IOException {
-        final RoaringBitmap emptyBits = new RoaringBitmap();
+    static void writeStates(@Nonnull final byte[] status, @Nonnull final DataOutput out)
+            throws IOException {
+        // write empty states's indexes differentially
         final int size = status.length;
+        int cardinarity = 0;
         for (int i = 0; i < size; i++) {
             if (status[i] != IntOpenHashTable.FULL) {
-                emptyBits.add(i);
+                cardinarity++;
             }
         }
-        emptyBits.runOptimize();
-        emptyBits.serialize(out);
+        out.writeInt(cardinarity);
+        if (cardinarity == 0) {
+            return;
+        }
+        int prev = 0;
+        for (int i = 0; i < size; i++) {
+            if (status[i] != IntOpenHashTable.FULL) {
+                int diff = i - prev;
+                assert (diff >= 0);
+                VariableByteCodec.encodeUnsignedInt(diff, out);
+                prev = i;
+            }
+        }
     }
 
     @Override
@@ -176,8 +189,8 @@ public final class FFMPredictionModel implements Externalizable {
                 continue;
             }
             keys[i] = ZigZagLEB128Codec.readSignedInt(in);
-            float W = ZigZagLEB128Codec.readFloat(in);
-            float[] Vf = IOUtils.readVFloats(in, factors);
+            float W = in.readFloat();
+            float[] Vf = IOUtils.readFloats(in, factors);
             values[i] = new Entry(W, Vf);
         }
 
@@ -185,25 +198,28 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     @Nonnull
-    private static void readStates(@Nonnull final ObjectInput in, @Nonnull final byte[] status)
-            throws ClassNotFoundException, IOException {
-        RoaringBitmap emptyBits = new RoaringBitmap();
-        emptyBits.deserialize(in);
-
+    static void readStates(@Nonnull final DataInput in, @Nonnull final byte[] status)
+            throws IOException {
+        // read non-empty states differentially
+        final int cardinarity = in.readInt();
         Arrays.fill(status, IntOpenHashTable.FULL);
-        for (int i : emptyBits) {
+        int prev = 0;
+        for (int j = 0; j < cardinarity; j++) {
+            int i = VariableByteCodec.decodeUnsignedInt(in) + prev;
             status[i] = IntOpenHashTable.FREE;
+            prev = i;
         }
     }
 
     public byte[] serialize() throws IOException {
-        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.deflate, true);
+        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.deflate_l7, true);
     }
 
     public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj, final int len)
             throws ClassNotFoundException, IOException {
         FFMPredictionModel model = new FFMPredictionModel();
-        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.deflate, true);
+        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.deflate,
+            true);
         return model;
     }
 

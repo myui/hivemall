@@ -21,6 +21,7 @@ package hivemall.utils.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -38,14 +39,15 @@ public final class CompressionStreamFactory {
     private CompressionStreamFactory() {}
 
     public enum CompressionAlgorithm {
-        deflate, xz, lzma2;
+        deflate, deflate_l7, xz, lzma2;
     }
 
     @Nonnull
     public static InputStream createInputStream(@Nonnull final InputStream in,
             @Nonnull final CompressionAlgorithm algo) {
         switch (algo) {
-            case deflate: {
+            case deflate:
+            case deflate_l7: {
                 return new InflaterInputStream(in);
             }
             case xz: {
@@ -70,6 +72,19 @@ public final class CompressionStreamFactory {
         switch (algo) {
             case deflate: {
                 final DeflaterOutputStream deflate = new DeflaterOutputStream(out);
+                return new FinishableOutputStreamAdapter(deflate) {
+                    @Override
+                    public void finish() throws IOException {
+                        deflate.finish();
+                        deflate.flush();
+                        IOUtils.finishStream(out);
+                    }
+                };
+            }
+            case deflate_l7: {
+                final Deflater l7 = new Deflater(7);
+                final DeflaterOutputStream deflate = new hivemall.utils.io.DeflaterOutputStream(
+                    out, l7);
                 return new FinishableOutputStreamAdapter(deflate) {
                     @Override
                     public void finish() throws IOException {
