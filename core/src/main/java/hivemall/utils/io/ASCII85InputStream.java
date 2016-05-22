@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.utils.codec;
+package hivemall.utils.io;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -26,6 +26,7 @@ import java.io.InputStream;
  * PDFBox.
  */
 public final class ASCII85InputStream extends FilterInputStream {
+
     private static final byte TERMINATOR = '~';
     private static final byte OFFSET = '!';
     private static final byte NEWLINE = '\n';
