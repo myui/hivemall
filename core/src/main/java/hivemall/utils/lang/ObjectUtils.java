@@ -18,13 +18,14 @@
  */
 package hivemall.utils.lang;
 
-import hivemall.utils.codec.ASCII85InputStream;
-import hivemall.utils.codec.ASCII85OutputStream;
+import hivemall.utils.io.Base91InputStream;
+import hivemall.utils.io.Base91OutputStream;
 import hivemall.utils.io.CompressionStreamFactory;
 import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.FastByteArrayInputStream;
 import hivemall.utils.io.FastByteArrayOutputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
+import hivemall.utils.io.FinishableOutputStream;
 import hivemall.utils.io.IOUtils;
 
 import java.io.Externalizable;
@@ -37,9 +38,6 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 import javax.annotation.Nonnull;
-
-import org.tukaani.xz.FinishableOutputStream;
-
 
 public final class ObjectUtils {
 
@@ -89,7 +87,7 @@ public final class ObjectUtils {
         OutputStream out = null;
         FinishableOutputStream dos = null;
         try {
-            out = bin2txt ? new ASCII85OutputStream(bos) : bos;
+            out = bin2txt ? new Base91OutputStream(bos) : bos;
             dos = CompressionStreamFactory.createOutputStream(out, algo);
             toStream(obj, dos);
             dos.finish();
@@ -177,7 +175,7 @@ public final class ObjectUtils {
         InputStream in = null;
         InputStream compressedStream = null;
         try {
-            in = bin2txt ? new ASCII85InputStream(bis) : bis;
+            in = bin2txt ? new Base91InputStream(bis) : bis;
             compressedStream = CompressionStreamFactory.createInputStream(in, algo);
             readObject(compressedStream, dst);
         } finally {
