@@ -137,6 +137,47 @@ public final class Base91 {
         }
     }
 
+    public static int encode(@Nonnull final byte[] input, final int offset, final int len,
+            @Nonnull final OutputStream output, @Nonnull final Base91Buf buf) throws IOException {
+        int ebq = buf.queue;
+        int en = buf.bits;
+        int n = 0;
+        for (int i = offset; i < len; ++i) {
+            ebq |= (input[i] & 255) << en;
+            en += 8;
+            if (en > 13) { /* enough bits in queue */
+                int ev = ebq & 0x1FFF; // 0001 1111 1111 1111
+                if (ev > 88) {
+                    ebq >>= 13;
+                    en -= 13;
+                } else {
+                    ev = ebq & 0x3FFF; // 0011 1111 1111 1111
+                    ebq >>= 14;
+                    en -= 14;
+                }
+                output.write(ENCODING_TABLE[ev % BASE]);
+                output.write(ENCODING_TABLE[ev / BASE]);
+                n += 2;
+            }
+        }
+        buf.queue = ebq;
+        buf.bits = en;
+        return n;
+    }
+
+    public static void encodeEnd(@Nonnull final OutputStream output, @Nonnull final Base91Buf buf)
+            throws IOException {
+        int ebq = buf.queue;
+        int en = buf.bits;
+        if (en > 0) {
+            output.write(ENCODING_TABLE[ebq % BASE]);
+            if (en > 7 || ebq > 90) {
+                output.write(ENCODING_TABLE[ebq / BASE]);
+            }
+        }
+        buf.clear();
+    }
+
     public static void encode(@Nonnull final InputStream in, @Nonnull final OutputStream out)
             throws IOException {
         int ebq = 0;
@@ -218,6 +259,61 @@ public final class Base91 {
         }
     }
 
+    public static int decode(@Nonnull final byte[] input, final int offset, final int len,
+            @Nonnull final OutputStream output, @Nonnull final Base91Buf buf) throws IOException {
+        int dbq = buf.queue;
+        int dn = buf.bits;
+        int dv = buf.value;
+        int n = 0;
+        for (int i = offset; i < len; ++i) {
+            if (DECODING_TABLE[input[i]] == -1) {
+                continue; /* ignore non-alphabet chars */
+            }
+            if (dv == -1) {
+                dv = DECODING_TABLE[input[i]]; /* start next value */
+            } else {
+                dv += DECODING_TABLE[input[i]] * BASE;
+                dbq |= dv << dn;
+                dn += (dv & 0x1FFF) > 88 ? 13 : 14;
+                do {
+                    output.write((byte) dbq);
+                    ++n;
+                    dbq >>= 8;
+                    dn -= 8;
+                } while (dn >= 8);
+                dv = -1; /* mark value complete */
+            }
+        }
+        buf.queue = dbq;
+        buf.bits = dn;
+        buf.value = dv;
+        return n;
+    }
+
+    public static void decodeEnd(@Nonnull final OutputStream output, @Nonnull final Base91Buf buf)
+            throws IOException {
+        int dbq = buf.queue;
+        int dn = buf.bits;
+        int dv = buf.value;
+        if (dv != -1) {
+            output.write((byte) (dbq | dv << dn));
+        }
+        buf.clear();
+    }
+
+    public static byte decodeEnd(@Nonnull final Base91Buf buf) throws IOException {
+        int dv = buf.value;
+        if (dv == -1) {
+            throw new IllegalStateException("SHOULD not be called");
+        }
+        int dbq = buf.queue;
+        int dn = buf.bits;
+
+        buf.clear();
+
+        return (byte) (dbq | dv << dn);
+    }
+
     public static void decode(@Nonnull final InputStream in, @Nonnull final OutputStream out)
             throws IOException {
         int dbq = 0;
@@ -246,6 +342,28 @@ public final class Base91 {
         if (dv != -1) {
             out.write((byte) (dbq | dv << dn));
         }
+    }
+
+    public static final class Base91Buf {
+
+        private int queue;
+        private int bits;
+        private int value;
+
+        public Base91Buf() {
+            clear();
+        }
+
+        public boolean isEmpty() {
+            return value == -1;
+        }
+
+        public void clear() {
+            this.queue = 0;
+            this.bits = 0;
+            this.value = -1;
+        }
+
     }
 
 }
