@@ -75,6 +75,7 @@ public final class CompressionStreamFactory {
                     public void finish() throws IOException {
                         deflate.finish();
                         deflate.flush();
+                        IOUtils.finishStream(out);
                     }
                 };
             }
@@ -95,7 +96,7 @@ public final class CompressionStreamFactory {
                     @Override
                     public void finish() throws IOException {
                         xz.finish();
-                        out.flush();
+                        IOUtils.finishStream(out);
                     }
                 };
             }
@@ -112,7 +113,7 @@ public final class CompressionStreamFactory {
                     @Override
                     public void finish() throws IOException {
                         lzma2.finish();
-                        out.flush();
+                        IOUtils.finishStream(out);
                     }
                 };
             }

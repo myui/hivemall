@@ -288,4 +288,12 @@ public final class IOUtils {
         return floats;
     }
 
+    public static void finishStream(@Nonnull final OutputStream out) throws IOException {
+        if (out instanceof FinishableOutputStream) {
+            ((FinishableOutputStream) out).finish();
+        } else {
+            out.flush();
+        }
+    }
+
 }
