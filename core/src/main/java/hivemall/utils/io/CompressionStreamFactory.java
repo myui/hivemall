@@ -26,18 +26,19 @@ import java.util.zip.InflaterInputStream;
 
 import javax.annotation.Nonnull;
 
-import org.tukaani.xz.FinishableOutputStream;
 import org.tukaani.xz.FinishableWrapperOutputStream;
 import org.tukaani.xz.LZMA2InputStream;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.UnsupportedOptionsException;
+import org.tukaani.xz.XZInputStream;
+import org.tukaani.xz.XZOutputStream;
 
 public final class CompressionStreamFactory {
 
     private CompressionStreamFactory() {}
 
     public enum CompressionAlgorithm {
-        deflate, lzma;
+        deflate, xz, lzma2;
     }
 
     @Nonnull
@@ -47,7 +48,14 @@ public final class CompressionStreamFactory {
             case deflate: {
                 return new InflaterInputStream(in);
             }
-            case lzma: {
+            case xz: {
+                try {
+                    return new XZInputStream(in);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed to decode by XZ", e);
+                }
+            }
+            case lzma2: {
                 return new LZMA2InputStream(in, LZMA2Options.DICT_SIZE_DEFAULT);
             }
             default:
@@ -62,7 +70,7 @@ public final class CompressionStreamFactory {
         switch (algo) {
             case deflate: {
                 final DeflaterOutputStream deflate = new DeflaterOutputStream(out);
-                return new FinishableWrapperOutputStream(deflate) {
+                return new FinishableOutputStreamAdapter(deflate) {
                     @Override
                     public void finish() throws IOException {
                         deflate.finish();
@@ -70,16 +78,43 @@ public final class CompressionStreamFactory {
                     }
                 };
             }
-            case lzma: {
-                LZMA2Options options = new LZMA2Options();
+            case xz: {
+                final LZMA2Options options;
                 try {
-                    options.setDictSize(LZMA2Options.DICT_SIZE_DEFAULT);
+                    options = new LZMA2Options(7);
                 } catch (UnsupportedOptionsException e) {
-                    throw new IllegalStateException("LZMA2Options#setDictSize("
-                            + LZMA2Options.DICT_SIZE_DEFAULT + ") failed", e);
+                    throw new IllegalStateException("LZMA2Option configuration failed", e);
                 }
-                FinishableOutputStream wrapped = new FinishableWrapperOutputStream(out);
-                return options.getOutputStream(wrapped);
+                final XZOutputStream xz;
+                try {
+                    xz = new XZOutputStream(out, options);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed to encode by XZ", e);
+                }
+                return new FinishableOutputStreamAdapter(xz) {
+                    @Override
+                    public void finish() throws IOException {
+                        xz.finish();
+                        out.flush();
+                    }
+                };
+            }
+            case lzma2: {
+                final LZMA2Options options;
+                try {
+                    options = new LZMA2Options(7);
+                } catch (UnsupportedOptionsException e) {
+                    throw new IllegalStateException("LZMA2Option configuration failed", e);
+                }
+                FinishableWrapperOutputStream wrapped = new FinishableWrapperOutputStream(out);
+                final org.tukaani.xz.FinishableOutputStream lzma2 = options.getOutputStream(wrapped);
+                return new FinishableOutputStreamAdapter(lzma2) {
+                    @Override
+                    public void finish() throws IOException {
+                        lzma2.finish();
+                        out.flush();
+                    }
+                };
             }
             default:
                 throw new UnsupportedOperationException("Unsupported compression algorithm: "
