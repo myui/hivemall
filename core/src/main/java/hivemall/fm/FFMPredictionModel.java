@@ -24,6 +24,7 @@ import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.IOUtils;
+import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.lang.ObjectUtils;
 
 import java.io.DataInput;
@@ -135,11 +136,39 @@ public final class FFMPredictionModel implements Externalizable {
             }
             ZigZagLEB128Codec.writeSignedInt(keys[i], out);
             Entry v = (Entry) values[i];
-            out.writeFloat(v.W);
-            IOUtils.writeFloats(v.Vf, factors, out);
+            writeEntry(v, factors, out);
             values[i] = null; // help GC
         }
         this._map = null; // help GC        
+    }
+
+    private static void writeEntry(@Nonnull final Entry v, final int factors,
+            @Nonnull final DataOutput out) throws IOException {
+        final float W = v.W;
+        final float[] Vf = v.Vf;
+        if (isRepresentableAsHalfFloat(W, Vf)) {
+            out.writeBoolean(true);
+            out.writeShort(HalfFloat.floatToHalfFloat(W));
+            for (int i = 0; i < factors; i++) {
+                out.writeShort(HalfFloat.floatToHalfFloat(Vf[i]));
+            }
+        } else {
+            out.writeBoolean(false);
+            out.writeFloat(W);
+            IOUtils.writeFloats(Vf, factors, out);
+        }
+    }
+
+    private static boolean isRepresentableAsHalfFloat(final float W, @Nonnull final float[] Vf) {
+        if (!HalfFloat.isRepresentable(W)) {
+            return false;
+        }
+        for (float V : Vf) {
+            if (!HalfFloat.isRepresentable(V)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Nonnull
@@ -189,12 +218,28 @@ public final class FFMPredictionModel implements Externalizable {
                 continue;
             }
             keys[i] = ZigZagLEB128Codec.readSignedInt(in);
-            float W = in.readFloat();
-            float[] Vf = IOUtils.readFloats(in, factors);
-            values[i] = new Entry(W, Vf);
+            values[i] = readEntry(in, factors);
         }
 
         this._map = new IntOpenHashTable<Entry>(keys, values, states, used);
+    }
+
+    @Nonnull
+    private static Entry readEntry(@Nonnull final DataInput in, final int factors)
+            throws IOException {
+        final float W;
+        final float[] Vf;
+        if (in.readBoolean()) {// HalfFloat
+            W = HalfFloat.halfFloatToFloat(in.readShort());
+            Vf = new float[factors];
+            for (int i = 0; i < factors; i++) {
+                Vf[i] = HalfFloat.halfFloatToFloat(in.readShort());
+            }
+        } else {
+            W = in.readFloat();
+            Vf = IOUtils.readFloats(in, factors);
+        }
+        return new Entry(W, Vf);
     }
 
     @Nonnull

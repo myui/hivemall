@@ -19,22 +19,26 @@
 package hivemall.utils.lang;
 
 /**
- * A utility class to deal with half-precision floating-point.
- * The conversion is very fast because there is no conditional branch instruction in the conversion.
+ * A utility class to deal with half-precision floating-point. The conversion is very fast because
+ * there is no conditional branch instruction in the conversion.
+ * 
  * <pre>
  * |sign|       exponent          |                   mantissa                                 |
  * | 31 | 30 29 28 27 26 25 24 23 | 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 |
  * </pre>
  * 
  * @see http://en.wikipedia.org/wiki/Half-precision_floating-point_format
- * @see http://en.wikipedia.org/wiki/Single_precision_floating-point_format 
+ * @see http://en.wikipedia.org/wiki/Single_precision_floating-point_format
  * @see ftp://www.fox-toolkit.org/pub/fasthalffloatconversion.pdf
  */
 public final class HalfFloat {
 
     public static final short ZERO = 0;
     public static final short ONE;
-    public static final float MAX_FLOAT = 65520;
+    // Integers equal to or above 65520 are rounded to "infinity"
+    public static final float MAX_FLOAT_INTEGER = 65520f;
+    /** (2-2^-10) * 2^15 */
+    public static final float MAX_FLOAT = 65504f;
 
     /**
      * Smallest positive e for which HalfFloat (1.0 + e) != HalfFloat (1.0)
@@ -87,24 +91,24 @@ public final class HalfFloat {
         populateExponentTable(exponenttable);
         populateOffsetTable(offsettable);
 
-        for(int i = 0; i < 256; i++) {
+        for (int i = 0; i < 256; i++) {
             final int e = i - 127;
-            if(e < -24) { // Very small numbers map to zero
+            if (e < -24) { // Very small numbers map to zero
                 //basetable[i | 0x000] = (short) 0x0000;
                 basetable[i | 0x100] = (short) 0x8000;
                 shifttable[i | 0x000] = 24;
                 shifttable[i | 0x100] = 24;
-            } else if(e < -14) { // Small numbers map to denorms
+            } else if (e < -14) { // Small numbers map to denorms
                 basetable[i | 0x000] = (short) (0x0400 >> (-e - 14));
                 basetable[i | 0x100] = (short) ((0x0400 >> (-e - 14)) | 0x8000);
                 shifttable[i | 0x000] = (byte) (-e - 1);
                 shifttable[i | 0x100] = (byte) (-e - 1);
-            } else if(e <= 15) { // Normal numbers just lose precision
+            } else if (e <= 15) { // Normal numbers just lose precision
                 basetable[i | 0x000] = (short) ((e + 15) << 10);
                 basetable[i | 0x100] = (short) (((e + 15) << 10) | 0x8000);
                 shifttable[i | 0x000] = 13;
                 shifttable[i | 0x100] = 13;
-            } else if(e < 128) { // Large numbers map to Infinity
+            } else if (e < 128) { // Large numbers map to Infinity
                 basetable[i | 0x000] = (short) 0x7C00;
                 basetable[i | 0x100] = (short) 0xFC00;
                 shifttable[i | 0x000] = 24;
@@ -120,10 +124,10 @@ public final class HalfFloat {
 
     private static void populateMantissaTable(final int[] mantissatable) {
         mantissatable[0] = 0;
-        for(int i = 1; i < 1024; i++) {
+        for (int i = 1; i < 1024; i++) {
             mantissatable[i] = convertMantissa(i);
         }
-        for(int i = 1024; i < 2048; i++) {
+        for (int i = 1024; i < 2048; i++) {
             mantissatable[i] = 0x38000000 + ((i - 1024) << 13);
         }
     }
@@ -132,7 +136,7 @@ public final class HalfFloat {
         int m = i << 13; // Zero pad mantissa bits
         int e = 0; // Zero exponent
 
-        while((m & 0x00800000) == 0) {// While not normalized
+        while ((m & 0x00800000) == 0) {// While not normalized
             e -= 0x00800000; // Decrement exponent (1<<23)
             m <<= 1; // Shift mantissa
         }
@@ -144,12 +148,12 @@ public final class HalfFloat {
 
     private static void populateExponentTable(final int[] exponenttable) {
         exponenttable[0] = 0;
-        for(int i = 1; i < 31; i++) {
+        for (int i = 1; i < 31; i++) {
             exponenttable[i] = i << 23;
         }
         exponenttable[31] = 0x47800000;
         exponenttable[32] = 0x80000000;
-        for(int i = 33; i < 63; i++) {
+        for (int i = 33; i < 63; i++) {
             exponenttable[i] = 0x80000000 + ((i - 32) << 23);
         }
         exponenttable[63] = 0xC7800000;
@@ -157,10 +161,29 @@ public final class HalfFloat {
 
     private static void populateOffsetTable(final short[] offsettable) {
         offsettable[0] = 0;
-        for(int i = 1; i < 64; i++) {
+        for (int i = 1; i < 64; i++) {
             offsettable[i] = 1024;
         }
         offsettable[32] = 0;
+    }
+
+    public static boolean isRepresentable(final float f) {
+        return Math.abs(f) <= HalfFloat.MAX_FLOAT_INTEGER;
+    }
+
+    public static boolean isRepresentable(final float f, final boolean strict) {
+        if (strict) {
+            return Math.abs(f) <= HalfFloat.MAX_FLOAT;
+        } else {
+            return Math.abs(f) <= HalfFloat.MAX_FLOAT_INTEGER;
+        }
+    }
+
+    public static void checkRange(final float f) {
+        if (Math.abs(f) > HalfFloat.MAX_FLOAT) {
+            throw new IllegalArgumentException("Acceptable maximum weight is "
+                    + HalfFloat.MAX_FLOAT + ": " + f);
+        }
     }
 
 }
