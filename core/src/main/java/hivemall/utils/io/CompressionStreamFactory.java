@@ -97,7 +97,7 @@ public final class CompressionStreamFactory {
             case xz: {
                 final LZMA2Options options;
                 try {
-                    options = new LZMA2Options(7);
+                    options = new LZMA2Options(LZMA2Options.PRESET_DEFAULT);
                 } catch (UnsupportedOptionsException e) {
                     throw new IllegalStateException("LZMA2Option configuration failed", e);
                 }
@@ -118,7 +118,7 @@ public final class CompressionStreamFactory {
             case lzma2: {
                 final LZMA2Options options;
                 try {
-                    options = new LZMA2Options(7);
+                    options = new LZMA2Options(LZMA2Options.PRESET_DEFAULT);
                 } catch (UnsupportedOptionsException e) {
                     throw new IllegalStateException("LZMA2Option configuration failed", e);
                 }
