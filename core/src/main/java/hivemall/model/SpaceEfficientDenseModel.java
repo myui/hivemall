@@ -126,18 +126,12 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     private void setWeight(final int i, final float v) {
-        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
-            throw new IllegalArgumentException("Acceptable maximum weight is "
-                    + HalfFloat.MAX_FLOAT + ": " + v);
-        }
+        HalfFloat.checkRange(v);
         weights[i] = HalfFloat.floatToHalfFloat(v);
     }
 
     private void setCovar(final int i, final float v) {
-        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
-            throw new IllegalArgumentException("Acceptable maximum weight is "
-                    + HalfFloat.MAX_FLOAT + ": " + v);
-        }
+        HalfFloat.checkRange(v);
         covars[i] = HalfFloat.floatToHalfFloat(v);
     }
 

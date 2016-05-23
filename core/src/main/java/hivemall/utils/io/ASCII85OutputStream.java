@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.utils.codec;
+package hivemall.utils.io;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -26,6 +26,7 @@ import java.io.OutputStream;
  * Apache PDFBox.
  */
 public final class ASCII85OutputStream extends FilterOutputStream {
+
     private static final long a85p2 = 85L * 85L;
     private static final long a85p3 = 85L * 85L * 85L;
     private static final long a85p4 = 85L * 85L * 85L * 85L;

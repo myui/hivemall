@@ -22,6 +22,7 @@ import hivemall.fm.FactorizationMachineModel.VInitScheme;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
+import hivemall.utils.hadoop.Text3;
 import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.lang.Primitives;
 
@@ -281,9 +282,6 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         this._sumVfX = null;
 
         Text modelId = new Text();
-        Text modelObj = new Text();
-        Object[] forwardObjs = new Object[] {modelId, modelObj};
-
         String taskId = HadoopUtils.getUniqueTaskIdString();
         modelId.set(taskId);
 
@@ -306,12 +304,14 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             throw new HiveException("Failed to serialize a model", e);
         }
 
-        modelObj.set(serialized);
         if (LOG.isInfoEnabled()) {
             LOG.info("Forwarding a serialized/compressed model '" + modelId + "' of size: "
                     + NumberUtils.prettySize(serialized.length));
         }
+
+        Text modelObj = new Text3(serialized);
         serialized = null;
+        Object[] forwardObjs = new Object[] {modelId, modelObj};
 
         forward(forwardObjs);
     }

@@ -26,6 +26,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -269,23 +270,49 @@ public final class IOUtils {
         return floats;
     }
 
+    @Deprecated
     public static void writeVFloats(@Nonnull final float[] floats, final int size,
             @Nonnull final DataOutput out) throws IOException {
         for (int i = 0; i < size; i++) {
             int bits = Float.floatToIntBits(floats[i]);
-            ZigZagLEB128Codec.writeSignedVInt(bits, out);
+            ZigZagLEB128Codec.writeSignedInt(bits, out);
         }
     }
 
+    @Deprecated
     @Nonnull
     public static float[] readVFloats(@Nonnull final DataInput in, final int size)
             throws IOException {
         final float[] floats = new float[size];
         for (int i = 0; i < size; i++) {
-            int bits = ZigZagLEB128Codec.readSignedVInt(in);
+            int bits = ZigZagLEB128Codec.readSignedInt(in);
             floats[i] = Float.intBitsToFloat(bits);
         }
         return floats;
+    }
+
+    public static void finishStream(@Nonnull final OutputStream out) throws IOException {
+        if (out instanceof FinishableOutputStream) {
+            ((FinishableOutputStream) out).finish();
+        } else {
+            out.flush();
+        }
+    }
+
+    public static void readFully(final InputStream in, final byte[] b, int offset, int len)
+            throws IOException {
+        do {
+            final int bytesRead = in.read(b, offset, len);
+            if (bytesRead < 0) {
+                throw new EOFException();
+            }
+            len -= bytesRead;
+            offset += bytesRead;
+        } while (len != 0);
+    }
+
+    public static void readFully(final InputStream in, final byte[] b) throws IOException {
+        readFully(in, b, 0, b.length);
     }
 
 }

@@ -18,11 +18,14 @@
  */
 package hivemall.utils.lang;
 
-import hivemall.utils.codec.ASCII85InputStream;
-import hivemall.utils.codec.ASCII85OutputStream;
+import hivemall.utils.io.Base91InputStream;
+import hivemall.utils.io.Base91OutputStream;
+import hivemall.utils.io.CompressionStreamFactory;
+import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.FastByteArrayInputStream;
 import hivemall.utils.io.FastByteArrayOutputStream;
 import hivemall.utils.io.FastMultiByteArrayOutputStream;
+import hivemall.utils.io.FinishableOutputStream;
 import hivemall.utils.io.IOUtils;
 
 import java.io.Externalizable;
@@ -78,17 +81,17 @@ public final class ObjectUtils {
         }
     }
 
-    public static byte[] toCompressedBytes(@Nonnull final Externalizable obj, final boolean bin2txt)
-            throws IOException {
+    public static byte[] toCompressedBytes(@Nonnull final Externalizable obj,
+            @Nonnull final CompressionAlgorithm algo, final boolean bin2txt) throws IOException {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
         OutputStream out = null;
-        DeflaterOutputStream dos = null;
-        try {
-            out = bin2txt ? new ASCII85OutputStream(bos) : bos;
-            dos = new DeflaterOutputStream(bos);
+        FinishableOutputStream dos = null;
+        try {            
+            out = bin2txt ? new Base91OutputStream(bos) : bos;
+            dos = CompressionStreamFactory.createOutputStream(out, algo);
             toStream(obj, dos);
             dos.finish();
-            dos.flush();
+            //dos.flush();
             return bos.toByteArray_clear();
         } finally {
             IOUtils.closeQuietly(dos);
@@ -166,17 +169,17 @@ public final class ObjectUtils {
     }
 
     public static void readCompressedObject(@Nonnull final byte[] src, final int len,
-            @Nonnull final Externalizable dst, final boolean bin2txt) throws IOException,
-            ClassNotFoundException {
+            @Nonnull final Externalizable dst, @Nonnull final CompressionAlgorithm algo,
+            final boolean bin2txt) throws IOException, ClassNotFoundException {
         FastByteArrayInputStream bis = new FastByteArrayInputStream(src, len);
         InputStream in = null;
-        InflaterInputStream iis = null;
+        InputStream compressedStream = null;
         try {
-            in = bin2txt ? new ASCII85InputStream(bis) : bis;
-            iis = new InflaterInputStream(bis);
-            readObject(iis, dst);
+            in = bin2txt ? new Base91InputStream(bis) : bis;
+            compressedStream = CompressionStreamFactory.createInputStream(in, algo);
+            readObject(compressedStream, dst);
         } finally {
-            IOUtils.closeQuietly(iis);
+            IOUtils.closeQuietly(compressedStream);
             IOUtils.closeQuietly(in);
         }
     }

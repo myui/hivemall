@@ -102,7 +102,7 @@ public final class FFMPredictUDF extends GenericUDF {
             this._cachedModel = model;
         }
 
-        int numFeatures = model.getNumFactors();
+        int numFeatures = model.getNumFeatures();
         int numFields = model.getNumFields();
 
         Object arg2 = args[2].get();

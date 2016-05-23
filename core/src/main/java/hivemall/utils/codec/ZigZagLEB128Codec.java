@@ -46,12 +46,12 @@ public final class ZigZagLEB128Codec {
         return (n >>> 1) ^ -(n & 1);
     }
 
-    public static void writeSignedVInt(final int value, @Nonnull final DataOutput out)
+    public static void writeSignedInt(final int value, @Nonnull final DataOutput out)
             throws IOException {
-        writeUnsignedVInt(encode(value), out);
+        writeUnsignedInt(encode(value), out);
     }
 
-    public static void writeUnsignedVInt(int value, @Nonnull final DataOutput out)
+    public static void writeUnsignedInt(int value, @Nonnull final DataOutput out)
             throws IOException {
         while ((value & ~0x7F) != 0L) {
             out.writeByte((value & 0x7F) | 0x80);
@@ -60,12 +60,12 @@ public final class ZigZagLEB128Codec {
         out.writeByte(value & 0x7F);
     }
 
-    public static void writeSignedVLong(final long value, @Nonnull final DataOutput out)
+    public static void writeSignedLong(final long value, @Nonnull final DataOutput out)
             throws IOException {
-        writeUnsignedVLong(encode(value), out);
+        writeUnsignedLong(encode(value), out);
     }
 
-    private static void writeUnsignedVLong(long value, @Nonnull final DataOutput out)
+    private static void writeUnsignedLong(long value, @Nonnull final DataOutput out)
             throws IOException {
         while ((value & ~0x7FL) != 0L) {
             out.writeByte(((int) value & 0x7F) | 0x80);
@@ -74,13 +74,13 @@ public final class ZigZagLEB128Codec {
         out.writeByte((int) value & 0x7F);
     }
 
-    public static int readSignedVInt(@Nonnull final DataInput in) throws IOException {
-        int raw = readUnsignedVInt(in);
+    public static int readSignedInt(@Nonnull final DataInput in) throws IOException {
+        int raw = readUnsignedInt(in);
         int temp = (((raw << 31) >> 31) ^ raw) >> 1;
         return temp ^ (raw & (1 << 31));
     }
 
-    public static int readUnsignedVInt(@Nonnull final DataInput in) throws IOException {
+    public static int readUnsignedInt(@Nonnull final DataInput in) throws IOException {
         int value = 0;
         int i = 0;
         int b;
@@ -94,13 +94,13 @@ public final class ZigZagLEB128Codec {
         return value | (b << i);
     }
 
-    public static long readSignedVarLong(@Nonnull final DataInput in) throws IOException {
-        long raw = readUnsignedVLong(in);
+    public static long readSignedLong(@Nonnull final DataInput in) throws IOException {
+        long raw = readUnsignedLong(in);
         long temp = (((raw << 63) >> 63) ^ raw) >> 1;
         return temp ^ (raw & (1L << 63));
     }
 
-    public static long readUnsignedVLong(@Nonnull final DataInput in) throws IOException {
+    public static long readUnsignedLong(@Nonnull final DataInput in) throws IOException {
         long value = 0L;
         int i = 0;
         long b;
@@ -114,23 +114,27 @@ public final class ZigZagLEB128Codec {
         return value | (b << i);
     }
 
+    @Deprecated
     public static void writeFloat(final float value, final DataOutput out) throws IOException {
         int bits = Float.floatToIntBits(value);
-        writeSignedVInt(bits, out);
+        writeSignedInt(bits, out);
     }
 
+    @Deprecated
     public static float readFloat(@Nonnull final DataInput in) throws IOException {
-        int bits = readSignedVInt(in);
+        int bits = readSignedInt(in);
         return Float.intBitsToFloat(bits);
     }
 
+    @Deprecated
     public static void writeDouble(final double value, final DataOutput out) throws IOException {
         long bits = Double.doubleToLongBits(value);
-        writeSignedVLong(bits, out);
+        writeSignedLong(bits, out);
     }
 
+    @Deprecated
     public static double readDouble(@Nonnull final DataInput in) throws IOException {
-        long bits = readSignedVarLong(in);
+        long bits = readSignedLong(in);
         return Double.longBitsToDouble(bits);
     }
 
