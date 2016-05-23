@@ -79,7 +79,7 @@ public final class FFMPredictionModel implements Externalizable {
     public long approxBytesConsumed() {
         int size = _map.size();
         // map
-        long bytes = size * (1L + 4L + (4L * _factors));
+        long bytes = size * (1L + 4L + 4L + (4L * _factors));
         int rest = _map.capacity() - size;
         if (rest > 0) {
             bytes += rest * 1L;
@@ -212,13 +212,13 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
-        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.deflate_l7, true);
+        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma2, true);
     }
 
     public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj, final int len)
             throws ClassNotFoundException, IOException {
         FFMPredictionModel model = new FFMPredictionModel();
-        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.deflate,
+        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma2,
             true);
         return model;
     }
