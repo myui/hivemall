@@ -10,6 +10,7 @@ import org.junit.Test;
 
 public class ZigZagLEB128CodecTest {
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testWriteFloat() throws IOException {
         FastByteArrayOutputStream out = new FastByteArrayOutputStream();
