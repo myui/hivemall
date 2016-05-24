@@ -18,7 +18,7 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
+import hivemall.fm.FMHyperParameters.FFMHyperParameters;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.lang.NumberUtils;
@@ -35,14 +35,12 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     protected final float eps;
     protected final float scaling;
 
-    public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta,
-            VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
-        this.useAdaGrad = useAdaGrad;
-        this.eta0_V = eta0_V;
-        this.eps = eps;
-        this.scaling = scaling;
+    public FieldAwareFactorizationMachineModel(@Nonnull FFMHyperParameters params) {
+        super(params);
+        this.useAdaGrad = params.useAdaGrad;
+        this.eta0_V = params.eta0_V;
+        this.eps = params.eps;
+        this.scaling = params.scaling;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull int yField, int f);

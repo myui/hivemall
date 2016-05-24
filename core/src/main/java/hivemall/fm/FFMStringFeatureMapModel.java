@@ -18,7 +18,7 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
+import hivemall.fm.FMHyperParameters.FFMHyperParameters;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.lang.NumberUtils;
 
@@ -30,18 +30,16 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     // LEARNING PARAMS
     private float _w0;
     private final IntOpenHashTable<Entry> _map;
-    
+
     private final int _numFeatures;
     private final int _numFields;
 
-    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling, int numFeatures, int numFields) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
+    public FFMStringFeatureMapModel(@Nonnull FFMHyperParameters params) {
+        super(params);
         this._w0 = 0.f;
         this._map = new IntOpenHashTable<FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
-        this._numFeatures = numFeatures;
-        this._numFields = numFields;
+        this._numFeatures = params.numFeatures;
+        this._numFields = params.numFields;
     }
 
     @Nonnull

@@ -49,24 +49,22 @@ public abstract class FactorizationMachineModel {
     protected float _lambdaW;
     protected final float[] _lambdaV;
 
-    public FactorizationMachineModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit) {
-        this._classification = classification;
-        this._factor = factor;
-        this._sigma = sigma;
-        this._eta = eta;
-        this._initScheme = vInit;
-        this._rnd = new Random(seed);
+    public FactorizationMachineModel(@Nonnull FMHyperParameters params) {
+        this._classification = params.classification;
+        this._factor = params.factor;
+        this._sigma = params.sigma;
+        this._eta = params.eta;
+        this._initScheme = params.vInit;
+        this._rnd = new Random(params.seed);
 
-        this._min_target = minTarget;
-        this._max_target = maxTarget;
+        this._min_target = params.minTarget;
+        this._max_target = params.maxTarget;
 
         // Regulation Variables
-        this._lambdaW0 = lambda0;
-        this._lambdaW = lambda0;
-        this._lambdaV = new float[factor];
-        Arrays.fill(_lambdaV, lambda0);
+        this._lambdaW0 = params.lambda0;
+        this._lambdaW = params.lambda0;
+        this._lambdaV = new float[params.factor];
+        Arrays.fill(_lambdaV, params.lambda0);
 
         initLearningParams();
     }

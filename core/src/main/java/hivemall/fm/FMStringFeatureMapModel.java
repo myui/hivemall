@@ -18,7 +18,6 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.collections.OpenHashTable;
 
@@ -31,8 +30,8 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
     private float _w0;
     private final OpenHashTable<String, Entry> _map;
 
-    public FMStringFeatureMapModel(boolean classification, int factor, float lambda0, double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta, @Nonnull VInitScheme vInit) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
+    public FMStringFeatureMapModel(@Nonnull FMHyperParameters params) {
+        super(params);
         this._w0 = 0.f;
         this._map = new OpenHashTable<String, FMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
     }
@@ -62,7 +61,7 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             return 0.f;
         }
         return entry.W;
@@ -74,7 +73,7 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
         assert (j != null);
 
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             float[] Vf = initV();
             entry = new Entry(nextWi, Vf);
             _map.put(j, entry);
@@ -90,7 +89,7 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
             entry = new Entry(0.f, V);
             _map.put(j, entry);
@@ -108,7 +107,7 @@ public final class FMStringFeatureMapModel extends FactorizationMachineModel {
 
         final float[] V;
         Entry entry = _map.get(j);
-        if(entry == null) {
+        if (entry == null) {
             V = initV();
             entry = new Entry(0.f, V);
             _map.put(j, entry);

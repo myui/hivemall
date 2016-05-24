@@ -18,7 +18,6 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
 import hivemall.utils.collections.Int2FloatOpenHashTable;
 import hivemall.utils.collections.IntOpenHashMap;
 
@@ -38,10 +37,8 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
 
     private int _minIndex, _maxIndex;
 
-    public FMIntFeatureMapModel(boolean classification, int factor, float lambda0, double sigma,
-            long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
+    public FMIntFeatureMapModel(@Nonnull FMHyperParameters params) {
+        super(params);
         this._w0 = 0.f;
         this._w = new Int2FloatOpenHashTable(DEFAULT_MAPSIZE);
         _w.defaultReturnValue(0.f);

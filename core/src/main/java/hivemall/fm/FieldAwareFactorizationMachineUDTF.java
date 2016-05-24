@@ -18,13 +18,12 @@
  */
 package hivemall.fm;
 
-import hivemall.fm.FactorizationMachineModel.VInitScheme;
+import hivemall.fm.FMHyperParameters.FFMHyperParameters;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.Text3;
 import hivemall.utils.lang.NumberUtils;
-import hivemall.utils.lang.Primitives;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -57,15 +56,18 @@ import org.apache.hadoop.io.Text;
 public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachineUDTF {
     private static final Log LOG = LogFactory.getLog(FieldAwareFactorizationMachineUDTF.class);
 
+    // ----------------------------------------
+    // Learning hyper-parameters/options
     private boolean _globalBias;
     private boolean _linearCoeff;
 
     private int _numFeatures;
     private int _numFields;
+    // ----------------------------------------
 
-    private FFMStringFeatureMapModel _model;
+    private FFMStringFeatureMapModel _ffmModel;
+
     private IntArrayList _fieldList;
-
     @Nullable
     private DoubleArray3D _sumVfX;
 
@@ -93,6 +95,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true,
             "Internal scaling/descaling factor for cumulative weights [100]");
+        opts.addOption("l1_v", "L1_V", true, "L1 regularization value for AdaGrad [default: 0.01]");
         return opts;
     }
 
@@ -102,33 +105,23 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
+    protected FFMHyperParameters newHyperParameters() {
+        return new FFMHyperParameters();
+    }
+
+    @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        if (_parseFeatureAsInt) {
+
+        FFMHyperParameters params = (FFMHyperParameters) _params;
+        if (params.parseFeatureAsInt) {
             throw new UDFArgumentException("int_feature option is not supported yet");
         }
-        if (cl.hasOption("all_terms")) {
-            this._globalBias = true;
-            this._linearCoeff = true;
-        } else {
-            this._globalBias = cl.hasOption("global_bias");
-            this._linearCoeff = cl.hasOption("linear_coeff");
-        }
 
-        // feature hashing
-        int hashbits = Primitives.parseInt(cl.getOptionValue("feature_hashing"),
-            Feature.DEFAULT_FEATURE_BITS);
-        if (hashbits < 18 || hashbits > 31) {
-            throw new UDFArgumentException("-feature_hashing MUST be in range [18,31]: " + hashbits);
-        }
-        int numFeatures = 1 << hashbits;
-        int numFields = Primitives.parseInt(cl.getOptionValue("num_fields"),
-            Feature.DEFAULT_NUM_FIELDS);
-        if (numFields <= 1) {
-            throw new UDFArgumentException("-num_fields MUST be greater than 1: " + numFields);
-        }
-        this._numFeatures = numFeatures;
-        this._numFields = numFields;
+        this._globalBias = params.globalBias;
+        this._linearCoeff = params.linearCoeff;
+        this._numFeatures = params.numFeatures;
+        this._numFields = params.numFields;
 
         return cl;
     }
@@ -136,12 +129,13 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         StructObjectInspector oi = super.initialize(argOIs);
+
         this._fieldList = new IntArrayList();
         return oi;
     }
 
     @Override
-    protected StructObjectInspector getOutputOI() {
+    protected StructObjectInspector getOutputOI(@Nonnull FMHyperParameters params) {
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
@@ -155,42 +149,12 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected FFMStringFeatureMapModel initModel(@Nullable CommandLine cl)
-            throws UDFArgumentException {
-        float lambda0 = 0.01f;
-        double sigma = 0.1d;
-        double min_target = Double.MIN_VALUE, max_target = Double.MAX_VALUE;
-        String vInitOpt = null;
-        float maxInitValue = 1.f;
-        double initStdDev = 0.1d;
-        if (cl != null) {
-            // FFM hyperparameters
-            lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
-            sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
-            // Hyperparameter for regression
-            min_target = Primitives.parseDouble(cl.getOptionValue("min_target"), min_target);
-            max_target = Primitives.parseDouble(cl.getOptionValue("max_target"), max_target);
-            // V initialization
-            vInitOpt = cl.getOptionValue("init_v");
-            maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
-            initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
-        }
-        VInitScheme vInit = VInitScheme.resolve(vInitOpt);
-        vInit.setMaxInitValue(maxInitValue);
-        initStdDev = Math.max(initStdDev, 1.0d / _factor);
-        vInit.setInitStdDev(initStdDev);
-        vInit.initRandom(_factor, _seed);
+    protected FFMStringFeatureMapModel initModel(@Nullable CommandLine cl,
+            @Nonnull FMHyperParameters params) throws UDFArgumentException {
+        FFMHyperParameters ffmParams = (FFMHyperParameters) params;
 
-        // adagrad
-        boolean useAdaGrad = !cl.hasOption("disable_adagrad");
-        float eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), 1.f);
-        float eps = Primitives.parseFloat(cl.getOptionValue("eps"), 1.f);
-        float scaling = Primitives.parseFloat(cl.getOptionValue("scale"), 100f);
-
-        FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(_classification, _factor,
-            lambda0, sigma, _seed, min_target, max_target, _etaEstimator, vInit, useAdaGrad,
-            eta0_V, eps, scaling, _numFeatures, _numFields);
-        this._model = model;
+        FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(ffmParams);
+        this._ffmModel = model;
         return model;
     }
 
@@ -202,7 +166,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     public void train(@Nonnull final Feature[] x, final double y,
             final boolean adaptiveRegularization) throws HiveException {
-        _model.check(x);
+        _ffmModel.check(x);
         try {
             trainTheta(x, y);
         } catch (Exception ex) {
@@ -214,35 +178,35 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     protected void trainTheta(@Nonnull final Feature[] x, final double y) throws HiveException {
         final float eta_t = _etaEstimator.eta(_t);
 
-        final double p = _model.predict(x);
-        final double lossGrad = _model.dloss(p, y);
+        final double p = _ffmModel.predict(x);
+        final double lossGrad = _ffmModel.dloss(p, y);
 
         double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
 
         // w0 update
         if (_globalBias) {
-            _model.updateW0(lossGrad, eta_t);
+            _ffmModel.updateW0(lossGrad, eta_t);
         }
 
         // wi update
         if (_linearCoeff) {
             for (int i = 0; i < x.length; i++) {
-                _model.updateWi(lossGrad, x[i], eta_t);
+                _ffmModel.updateWi(lossGrad, x[i], eta_t);
             }
         }
 
         // ViFf update
         final IntArrayList fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
-        final DoubleArray3D sumVfX = _model.sumVfX(x, fieldList, _sumVfX);
+        final DoubleArray3D sumVfX = _ffmModel.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
                 final int yField = fieldList.get(fieldIndex);
                 for (int f = 0, k = _factor; f < k; f++) {
                     double sumViX = sumVfX.get(i, fieldIndex, f);
-                    _model.updateV(lossGrad, x_i, yField, f, sumViX, _t);
+                    _ffmModel.updateV(lossGrad, x_i, yField, f, sumViX, _t);
                 }
             }
         }
@@ -270,14 +234,12 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     public void close() throws HiveException {
         super.close();
-        // help GC
-        this._model = null;
-        this._fieldList = null;
-        this._sumVfX = null;
+        this._ffmModel = null;
     }
 
     @Override
     protected void forwardModel() throws HiveException {
+        this._model = null;
         this._fieldList = null;
         this._sumVfX = null;
 
@@ -285,8 +247,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         String taskId = HadoopUtils.getUniqueTaskIdString();
         modelId.set(taskId);
 
-        FFMPredictionModel predModel = _model.toPredictionModel();
-        this._model = null; // help GC
+        FFMPredictionModel predModel = _ffmModel.toPredictionModel();
+        this._ffmModel = null; // help GC
 
         if (LOG.isInfoEnabled()) {
             LOG.info("Serializing a model '" + modelId + "'... Configured # features: "
