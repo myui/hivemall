@@ -96,12 +96,15 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         opts.addOption("disable_ftrl", false,
             "Whether not to use Follow-The-Regularized-Reader [default: OFF]");
         opts.addOption("alpha", "alphaFTRL", true,
-            "Alpha (learning rate) value of Follow-The-Regularized-Reader [default 0.01]");
+            "Alpha value (learning rate) of Follow-The-Regularized-Reader [default 0.1]");
         opts.addOption("beta", "betaFTRL", true,
-            "Beta (a learning rate constants) value of Follow-The-Regularized-Reader [default 1]");
-        opts.addOption("lambda1", true,
-            "L1 value of Follow-The-Regularized-Reader that controls model Sparseness [default 1]");
-        opts.addOption("lambda2", true, "L2 value of Follow-The-Regularized-Reader [default 0]");
+            "Beta value (a learning smoothing parameter) of Follow-The-Regularized-Reader [default 1.0]");
+        opts.addOption(
+            "lambda1",
+            true,
+            "L1 regularization value of Follow-The-Regularized-Reader that controls model Sparseness [default 0.1]");
+        opts.addOption("lambda2", true,
+            "L2 regularization value of Follow-The-Regularized-Reader [default 0.01]");
         return opts;
     }
 
@@ -191,6 +194,10 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
 
+        if (lossGrad == 0.0f) {
+            return;
+        }
+
         // w0 update
         if (_globalBias) {
             _ffmModel.updateW0(lossGrad, eta_t);
@@ -202,6 +209,9 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         final DoubleArray3D sumVfX = _ffmModel.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
+            if (x_i.value == 0.f) {
+                continue;
+            }
             boolean useV = updateWi(lossGrad, x_i, eta_t); // wi update
             if (useV == false) {
                 continue;

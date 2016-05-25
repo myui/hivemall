@@ -150,10 +150,10 @@ class FMHyperParameters {
 
         // FTRL
         boolean useFTRL = true;
-        float alphaFTRL = 1.f; // learning rate
-        float betaFTRL = 1.f; // eps of adagrad
-        float lambda1 = 0.1f; // regularization
-        float lamdda2 = 0.001f;
+        float alphaFTRL = 0.1f; // Learning Rate
+        float betaFTRL = 1.f; // Smoothing parameter for AdaGrad
+        float lambda1 = 0.1f; // L1 Regularization
+        float lamdda2 = 0.01f; // L2 Regularization
 
         FFMHyperParameters() {
             super();
@@ -189,6 +189,9 @@ class FMHyperParameters {
             // FTRL
             this.useFTRL = !cl.hasOption("disable_ftrl");
             this.alphaFTRL = Primitives.parseFloat(cl.getOptionValue("alphaFTRL"), alphaFTRL);
+            if (alphaFTRL == 0.f) {
+                throw new UDFArgumentException("-alphaFTRL SHOULD NOT be 0");
+            }
             this.betaFTRL = Primitives.parseFloat(cl.getOptionValue("betaFTRL"), betaFTRL);
             this.lambda1 = Primitives.parseFloat(cl.getOptionValue("lambda1"), lambda1);
             this.lamdda2 = Primitives.parseFloat(cl.getOptionValue("lamdda2"), lamdda2);

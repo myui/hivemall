@@ -299,6 +299,10 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         @Override
         double updateN(final float gradW) {
             double newN = n + gradW * gradW;
+            if (!NumberUtils.isFinite(newN)) {
+                throw new IllegalStateException("Got newN " + newN + " where n=" + n + ", gradW="
+                        + gradW);
+            }
             this.n = newN;
             return newN;
         }

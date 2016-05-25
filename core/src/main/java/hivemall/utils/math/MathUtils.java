@@ -79,7 +79,8 @@ public final class MathUtils {
     }
 
     public static double sigmoid(final double x) {
-        return 1.d / (1.d + Math.exp(-x));
+        double x2 = Math.max(Math.min(x, 23.d), -23.d);
+        return 1.d / (1.d + Math.exp(-x2));
     }
 
     public static double lnSigmoid(final double x) {
