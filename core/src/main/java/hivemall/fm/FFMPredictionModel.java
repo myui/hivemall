@@ -257,13 +257,13 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
-        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma2_l5, true);
+        return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma2, true);
     }
 
     public static FFMPredictionModel deserialize(@Nonnull final byte[] serializedObj, final int len)
             throws ClassNotFoundException, IOException {
         FFMPredictionModel model = new FFMPredictionModel();
-        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma2_l5,
+        ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma2,
             true);
         return model;
     }

@@ -35,19 +35,24 @@ import org.tukaani.xz.XZInputStream;
 import org.tukaani.xz.XZOutputStream;
 
 public final class CompressionStreamFactory {
+    public static final int DEFAULT_COMPRESSION_LEVEL = -1;
 
     private CompressionStreamFactory() {}
 
     public enum CompressionAlgorithm {
-        deflate, deflate_l7, xz, lzma2, lzma2_l5;
+        deflate, xz, lzma2;
+    }
+
+    public static InputStream createInputStream(@Nonnull final InputStream in,
+            @Nonnull final CompressionAlgorithm algo) {
+        return createInputStream(in, algo, DEFAULT_COMPRESSION_LEVEL);
     }
 
     @Nonnull
     public static InputStream createInputStream(@Nonnull final InputStream in,
-            @Nonnull final CompressionAlgorithm algo) {
+            @Nonnull final CompressionAlgorithm algo, final int level) {
         switch (algo) {
-            case deflate:
-            case deflate_l7: {
+            case deflate: {
                 return new InflaterInputStream(in);
             }
             case xz: {
@@ -57,17 +62,19 @@ public final class CompressionStreamFactory {
                     throw new IllegalStateException("Failed to decode by XZ", e);
                 }
             }
-            case lzma2: { // level 6
-                return new LZMA2InputStream(in, LZMA2Options.DICT_SIZE_DEFAULT);
-            }
-            case lzma2_l5: {// level 5
-                final LZMA2Options options;
-                try {
-                    options = new LZMA2Options(5);
-                } catch (UnsupportedOptionsException e) {
-                    throw new IllegalStateException("LZMA2Option configuration failed", e);
+            case lzma2: {
+                final int dictSize;
+                if (level == DEFAULT_COMPRESSION_LEVEL) {
+                    dictSize = LZMA2Options.DICT_SIZE_DEFAULT; // level 6
+                } else {
+                    final LZMA2Options options;
+                    try {
+                        options = new LZMA2Options(level);
+                    } catch (UnsupportedOptionsException e) {
+                        throw new IllegalStateException("LZMA2Option configuration failed", e);
+                    }
+                    dictSize = options.getDictSize();
                 }
-                int dictSize = options.getDictSize();
                 return new LZMA2InputStream(in, dictSize);
             }
             default:
@@ -79,35 +86,37 @@ public final class CompressionStreamFactory {
     @Nonnull
     public static FinishableOutputStream createOutputStream(@Nonnull final OutputStream out,
             @Nonnull final CompressionAlgorithm algo) {
+        return createOutputStream(out, algo, DEFAULT_COMPRESSION_LEVEL);
+    }
+
+    @Nonnull
+    public static FinishableOutputStream createOutputStream(@Nonnull final OutputStream out,
+            @Nonnull final CompressionAlgorithm algo, int level) {
         switch (algo) {
             case deflate: {
-                final DeflaterOutputStream deflate = new DeflaterOutputStream(out);
-                return new FinishableOutputStreamAdapter(deflate) {
+                final DeflaterOutputStream deflateOut;
+                if (level == DEFAULT_COMPRESSION_LEVEL) {
+                    deflateOut = new DeflaterOutputStream(out);
+                } else {
+                    Deflater d = new Deflater(level);
+                    deflateOut = new hivemall.utils.io.DeflaterOutputStream(out, d);
+                }
+                return new FinishableOutputStreamAdapter(deflateOut) {
                     @Override
                     public void finish() throws IOException {
-                        deflate.finish();
-                        deflate.flush();
-                        IOUtils.finishStream(out);
-                    }
-                };
-            }
-            case deflate_l7: {
-                final Deflater l7 = new Deflater(7);
-                final DeflaterOutputStream deflate = new hivemall.utils.io.DeflaterOutputStream(
-                    out, l7);
-                return new FinishableOutputStreamAdapter(deflate) {
-                    @Override
-                    public void finish() throws IOException {
-                        deflate.finish();
-                        deflate.flush();
+                        deflateOut.finish();
+                        deflateOut.flush();
                         IOUtils.finishStream(out);
                     }
                 };
             }
             case xz: {
+                if (level == DEFAULT_COMPRESSION_LEVEL) {
+                    level = LZMA2Options.PRESET_DEFAULT; // level 6
+                }
                 final LZMA2Options options;
                 try {
-                    options = new LZMA2Options(LZMA2Options.PRESET_DEFAULT);
+                    options = new LZMA2Options(level);
                 } catch (UnsupportedOptionsException e) {
                     throw new IllegalStateException("LZMA2Option configuration failed", e);
                 }
@@ -125,27 +134,13 @@ public final class CompressionStreamFactory {
                     }
                 };
             }
-            case lzma2: { // level 6
-                final LZMA2Options options;
-                try {
-                    options = new LZMA2Options(LZMA2Options.PRESET_DEFAULT);
-                } catch (UnsupportedOptionsException e) {
-                    throw new IllegalStateException("LZMA2Option configuration failed", e);
+            case lzma2: {
+                if (level == DEFAULT_COMPRESSION_LEVEL) {
+                    level = LZMA2Options.PRESET_DEFAULT; // level 6
                 }
-                FinishableWrapperOutputStream wrapped = new FinishableWrapperOutputStream(out);
-                final org.tukaani.xz.FinishableOutputStream lzma2 = options.getOutputStream(wrapped);
-                return new FinishableOutputStreamAdapter(lzma2) {
-                    @Override
-                    public void finish() throws IOException {
-                        lzma2.finish();
-                        IOUtils.finishStream(out);
-                    }
-                };
-            }
-            case lzma2_l5: {
                 final LZMA2Options options;
                 try {
-                    options = new LZMA2Options(5);
+                    options = new LZMA2Options(level);
                 } catch (UnsupportedOptionsException e) {
                     throw new IllegalStateException("LZMA2Option configuration failed", e);
                 }
