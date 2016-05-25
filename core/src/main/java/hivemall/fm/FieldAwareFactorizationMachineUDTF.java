@@ -188,20 +188,16 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         if (_globalBias) {
             _ffmModel.updateW0(lossGrad, eta_t);
         }
-
-        // wi update
-        if (_linearCoeff) {
-            for (int i = 0; i < x.length; i++) {
-                _ffmModel.updateWi(lossGrad, x[i], eta_t);
-            }
-        }
-
+        
         // ViFf update
         final IntArrayList fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
         final DoubleArray3D sumVfX = _ffmModel.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
+            if (_linearCoeff) {// wi update
+                _ffmModel.updateWi(lossGrad, x[i], eta_t);
+            }
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
                 final int yField = fieldList.get(fieldIndex);
                 for (int f = 0, k = _factor; f < k; f++) {

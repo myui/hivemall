@@ -31,6 +31,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     private float _w0;
     private final IntOpenHashTable<Entry> _map;
 
+    // hyperparams
     private final int _numFeatures;
     private final int _numFields;
 
@@ -79,9 +80,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
 
         Entry entry = _map.get(j);
         if (entry == null) {
-            float[] Vf = initV();
-            entry = newEntry(Vf);
-            entry.W = nextWi;
+            entry = newEntry(nextWi);
             _map.put(j, entry);
         } else {
             entry.W = nextWi;
@@ -118,8 +117,12 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
             entry = newEntry(V);
             _map.put(j, entry);
         } else {
-            V = entry.Vf;
-            assert (V != null);
+            if(entry.Vf == null) {
+                V = initV();
+                entry.Vf = V;
+            } else {
+                V = entry.Vf;
+            }
         }
         return V[f];
     }
@@ -136,8 +139,12 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
             entry = newEntry(V);
             _map.put(j, entry);
         } else {
-            V = entry.Vf;
-            assert (V != null);
+            if(entry.Vf == null) {
+                V = initV();
+                entry.Vf = V;
+            } else {
+                V = entry.Vf;
+            }
         }
         V[f] = nextVif;
     }

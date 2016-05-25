@@ -40,6 +40,11 @@ import javax.annotation.Nullable;
 
 public final class FFMPredictionModel implements Externalizable {
 
+    private static final byte HALF_FLOAT_ENTRY = 1;
+    private static final byte W_ONLY_HALF_FLOAT_ENTRY = 2;
+    private static final byte FLOAT_ENTRY = 3;
+    private static final byte W_ONLY_FLOAT_ENTRY = 4;
+
     private IntOpenHashTable<Entry> _map;
     private double _w0;
     private int _factors;
@@ -108,7 +113,7 @@ public final class FFMPredictionModel implements Externalizable {
         if (entry == null) {
             return null;
         }
-        return entry.Vf;
+        return entry.Vf; // okey to return NULL
     }
 
     @Override
@@ -145,15 +150,23 @@ public final class FFMPredictionModel implements Externalizable {
     private static void writeEntry(@Nonnull final Entry v, final int factors,
             @Nonnull final DataOutput out) throws IOException {
         final float W = v.W;
-        final float[] Vf = v.Vf;
-        if (isRepresentableAsHalfFloat(W, Vf)) {
-            out.writeBoolean(true);
+        final float[] Vf = v.Vf; // may become NULL
+        if (Vf == null) {
+            if (HalfFloat.isRepresentable(W)) {
+                out.writeByte(W_ONLY_HALF_FLOAT_ENTRY);
+                out.writeShort(HalfFloat.floatToHalfFloat(W));
+            } else {
+                out.writeByte(W_ONLY_FLOAT_ENTRY);
+                out.writeFloat(W);
+            }
+        } else if (isRepresentableAsHalfFloat(W, Vf)) {
+            out.writeByte(HALF_FLOAT_ENTRY);
             out.writeShort(HalfFloat.floatToHalfFloat(W));
             for (int i = 0; i < factors; i++) {
                 out.writeShort(HalfFloat.floatToHalfFloat(Vf[i]));
             }
         } else {
-            out.writeBoolean(false);
+            out.writeByte(FLOAT_ENTRY);
             out.writeFloat(W);
             IOUtils.writeFloats(Vf, factors, out);
         }
@@ -229,16 +242,35 @@ public final class FFMPredictionModel implements Externalizable {
             throws IOException {
         final float W;
         final float[] Vf;
-        if (in.readBoolean()) {// HalfFloat
-            W = HalfFloat.halfFloatToFloat(in.readShort());
-            Vf = new float[factors];
-            for (int i = 0; i < factors; i++) {
-                Vf[i] = HalfFloat.halfFloatToFloat(in.readShort());
+        final byte type = in.readByte();
+        switch (type) {
+            case HALF_FLOAT_ENTRY: {
+                W = HalfFloat.halfFloatToFloat(in.readShort());
+                Vf = new float[factors];
+                for (int i = 0; i < factors; i++) {
+                    Vf[i] = HalfFloat.halfFloatToFloat(in.readShort());
+                }
+                break;
             }
-        } else {
-            W = in.readFloat();
-            Vf = IOUtils.readFloats(in, factors);
+            case W_ONLY_HALF_FLOAT_ENTRY: {
+                W = HalfFloat.halfFloatToFloat(in.readShort());
+                Vf = null;
+                break;
+            }
+            case FLOAT_ENTRY: {
+                W = in.readFloat();
+                Vf = IOUtils.readFloats(in, factors);
+                break;
+            }
+            case W_ONLY_FLOAT_ENTRY: {
+                W = in.readFloat();
+                Vf = null;
+                break;
+            }
+            default:
+                throw new IOException("Unexpected Entry type: " + type);
         }
+
         return new Entry(W, Vf);
     }
 

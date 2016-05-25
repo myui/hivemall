@@ -30,21 +30,23 @@ import javax.annotation.Nullable;
 
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
-    protected final boolean useAdaGrad;
-    protected final float eta0_V;
-    protected final float eps;
-    protected final float scaling;
+    @Nonnull
+    protected final FFMHyperParameters _params;
+    protected final float _eta0_V;
+    protected final float _eps;
+    protected final float _scaling;
 
     public FieldAwareFactorizationMachineModel(@Nonnull FFMHyperParameters params) {
         super(params);
-        this.useAdaGrad = params.useAdaGrad;
-        this.eta0_V = params.eta0_V;
-        this.eps = params.eps;
-        this.scaling = params.scaling;
+        this._params = params;
+        this._eta0_V = params.eta0_V;
+        this._eps = params.eps;
+        this._scaling = params.scaling;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull int yField, int f);
 
+    @Deprecated
     protected abstract void setV(@Nonnull Feature x, @Nonnull int yField, int f, float nextVif);
 
     @Override
@@ -101,7 +103,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         final float lambdaVf = getLambdaV(f);
 
         final Entry theta = getEntry(x, yField);
-        final float currentV = getV(theta, f);
+        assert (theta.Vf != null) : "theta.Vf is NULL: x=" + x + ", yField=" + yField;
+        final float currentV = theta.Vf[f];
         final float eta = etaV(theta, t, gradV);
         final float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
@@ -110,22 +113,14 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(theta, f, nextV);
-    }
-
-    private static float getV(@Nonnull final Entry theta, final int f) {
-        return theta.Vf[f];
-    }
-
-    private static float setV(@Nonnull final Entry theta, final int f, final float value) {
-        return theta.Vf[f] = value;
+        theta.Vf[f] = nextV;
     }
 
     protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
-        if (useAdaGrad) {
-            double gg = theta.getSumOfSquaredGradients(scaling);
-            theta.addGradient(grad, scaling);
-            return (float) (eta0_V / Math.sqrt(eps + gg));
+        if (_params.useAdaGrad) {
+            double gg = theta.getSumOfSquaredGradients(_scaling);
+            theta.addGradient(grad, _scaling);
+            return (float) (_eta0_V / Math.sqrt(_eps + gg));
         } else {
             return _eta.eta(t);
         }
@@ -193,8 +188,16 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     @Nonnull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
+    protected final Entry newEntry(final float W) {
+        if (_params.useAdaGrad) {
+            return new AdaGradEntry(W);
+        } else {
+            return new Entry(W);
+        }
+    }
+
     protected final Entry newEntry(final float[] V) {
-        if (useAdaGrad) {
+        if (_params.useAdaGrad) {
             return new AdaGradEntry(0.f, V);
         } else {
             return new Entry(0.f, V);
@@ -203,10 +206,14 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     static class Entry {
         float W;
-        @Nonnull
-        final float[] Vf;
+        @Nullable
+        float[] Vf;
 
-        Entry(float W, @Nonnull float[] Vf) {
+        Entry(float W) {
+            this(W, null);
+        }
+
+        Entry(float W, @Nullable float[] Vf) {
             this.W = W;
             this.Vf = Vf;
         }
@@ -223,9 +230,13 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     static final class AdaGradEntry extends Entry {
         double sumOfSqGradients;
 
-        AdaGradEntry(float W, float[] Vf) {
+        AdaGradEntry(float W) {
+            this(W, null);
+        }
+
+        AdaGradEntry(float W, @Nullable float[] Vf) {
             super(W, Vf);
-            sumOfSqGradients = 0.d;
+            this.sumOfSqGradients = 0.d;
         }
 
         @Override
