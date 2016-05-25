@@ -92,8 +92,6 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             "Whether to use AdaGrad for tuning learning rate [default: ON]");
         opts.addOption("eta0_V", true, "The initial learning rate for V [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
-        opts.addOption("scale", true,
-            "Internal scaling/descaling factor for cumulative weights [100]");
         // FTRL
         opts.addOption("disable_ftrl", false,
             "Whether not to use Follow-The-Regularized-Reader [default: OFF]");

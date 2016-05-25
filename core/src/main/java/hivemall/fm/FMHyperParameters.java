@@ -150,7 +150,7 @@ class FMHyperParameters {
 
         // FTRL
         boolean useFTRL = true;
-        float alphaFTRL = 0.05f; // learning rate
+        float alphaFTRL = 1.f; // learning rate
         float betaFTRL = 1.f; // eps of adagrad
         float lambda1 = 0.1f; // regularization
         float lamdda2 = 0.001f;
