@@ -61,10 +61,10 @@ public abstract class FactorizationMachineModel {
         this._max_target = params.maxTarget;
 
         // Regulation Variables
-        this._lambdaW0 = params.lambda0;
-        this._lambdaW = params.lambda0;
+        this._lambdaW0 = params.lambdaW0;
+        this._lambdaW = params.lambdaW;
         this._lambdaV = new float[params.factor];
-        Arrays.fill(_lambdaV, params.lambda0);
+        Arrays.fill(_lambdaV, params.lambdaV);
 
         initLearningParams();
     }
@@ -217,6 +217,9 @@ public abstract class FactorizationMachineModel {
         setW0(nextW0);
     }
 
+    /**
+     * @return whether to update V or not
+     */
     void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
         final double Xi = x.getValue();
         float gradWi = (float) (dloss * Xi);

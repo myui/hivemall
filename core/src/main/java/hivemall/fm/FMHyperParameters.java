@@ -36,7 +36,10 @@ class FMHyperParameters {
     int factor = 5;
 
     // regularization
-    float lambda0 = 0.01f;
+    float lambda = 0.01f;
+    float lambdaW0 = 0.01f;
+    float lambdaW = 0.01f;
+    float lambdaV = 0.01f;
 
     // V initialization
     double sigma = 0.1d;
@@ -68,10 +71,26 @@ class FMHyperParameters {
 
     FMHyperParameters() {}
 
+    @Override
+    public String toString() {
+        return "FMHyperParameters [classification=" + classification + ", factor=" + factor
+                + ", lambda=" + lambda + ", lambdaW0=" + lambdaW0 + ", lambdaW=" + lambdaW
+                + ", lambdaV=" + lambdaV + ", sigma=" + sigma + ", seed=" + seed + ", vInit="
+                + vInit + ", minTarget=" + minTarget + ", maxTarget=" + maxTarget + ", eta=" + eta
+                + ", numFeatures=" + numFeatures + ", iters=" + iters + ", conversionCheck="
+                + conversionCheck + ", convergenceRate=" + convergenceRate
+                + ", adaptiveReglarization=" + adaptiveReglarization + ", validationRatio="
+                + validationRatio + ", validationThreshold=" + validationThreshold
+                + ", parseFeatureAsInt=" + parseFeatureAsInt + "]";
+    }
+
     void processOptions(@Nonnull CommandLine cl) throws UDFArgumentException {
         this.classification = cl.hasOption("classification");
         this.factor = Primitives.parseInt(cl.getOptionValue("factor"), factor);
-        this.lambda0 = Primitives.parseFloat(cl.getOptionValue("lambda0"), lambda0);
+        this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), lambda);
+        this.lambdaW0 = Primitives.parseFloat(cl.getOptionValue("lambda_w0"), lambda);
+        this.lambdaW = Primitives.parseFloat(cl.getOptionValue("lambda_w"), lambda);
+        this.lambdaV = Primitives.parseFloat(cl.getOptionValue("lambda_v"), lambda);
         this.sigma = Primitives.parseDouble(cl.getOptionValue("sigma"), sigma);
         this.seed = Primitives.parseLong(cl.getOptionValue("seed"), seed);
         if (seed == -1L) {
@@ -119,7 +138,7 @@ class FMHyperParameters {
 
         // FFM hyper parameters
         boolean globalBias = false;
-        boolean linearCoeff = false;
+        boolean linearCoeff = true;
 
         // feature hashing
         int numFields = Feature.DEFAULT_NUM_FIELDS;
@@ -128,8 +147,13 @@ class FMHyperParameters {
         boolean useAdaGrad = true;
         float eta0_V = 1.f;
         float eps = 1.f;
-        float scaling = 100f;
-        float L1_V = 0.01f;
+
+        // FTRL
+        boolean useFTRL = true;
+        float alphaFTRL = 0.05f; // learning rate
+        float betaFTRL = 1.f; // eps of adagrad
+        float lambda1 = 0.1f; // regularization
+        float lamdda2 = 0.001f;
 
         FFMHyperParameters() {
             super();
@@ -139,13 +163,8 @@ class FMHyperParameters {
         void processOptions(@Nonnull CommandLine cl) throws UDFArgumentException {
             super.processOptions(cl);
 
-            if (cl.hasOption("all_terms")) {
-                this.globalBias = true;
-                this.linearCoeff = true;
-            } else {
-                this.globalBias = cl.hasOption("global_bias");
-                this.linearCoeff = cl.hasOption("linear_coeff");
-            }
+            this.globalBias = cl.hasOption("global_bias");
+            this.linearCoeff = !cl.hasOption("no_coeff");
 
             // feature hashing
             if (numFeatures == -1) {
@@ -166,9 +185,24 @@ class FMHyperParameters {
             this.useAdaGrad = !cl.hasOption("disable_adagrad");
             this.eta0_V = Primitives.parseFloat(cl.getOptionValue("eta0_V"), eta0_V);
             this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), eps);
-            this.scaling = Primitives.parseFloat(cl.getOptionValue("scale"), scaling);
-            this.L1_V = Primitives.parseFloat(cl.getOptionValue("l1_v"), L1_V);
+
+            // FTRL
+            this.useFTRL = !cl.hasOption("disable_ftrl");
+            this.alphaFTRL = Primitives.parseFloat(cl.getOptionValue("alphaFTRL"), alphaFTRL);
+            this.betaFTRL = Primitives.parseFloat(cl.getOptionValue("betaFTRL"), betaFTRL);
+            this.lambda1 = Primitives.parseFloat(cl.getOptionValue("lambda1"), lambda1);
+            this.lamdda2 = Primitives.parseFloat(cl.getOptionValue("lamdda2"), lamdda2);
         }
+
+        @Override
+        public String toString() {
+            return "FFMHyperParameters [globalBias=" + globalBias + ", linearCoeff=" + linearCoeff
+                    + ", numFields=" + numFields + ", useAdaGrad=" + useAdaGrad + ", eta0_V="
+                    + eta0_V + ", eps=" + eps + ", useFTRL=" + useFTRL + ", alphaFTRL=" + alphaFTRL
+                    + ", betaFTRL=" + betaFTRL + ", lambda1=" + lambda1 + ", lamdda2=" + lamdda2
+                    + "], " + super.toString();
+        }
+
     }
 
 }

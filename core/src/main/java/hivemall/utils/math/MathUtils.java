@@ -214,6 +214,10 @@ public final class MathUtils {
         return v < 0 ? -1 : 1;
     }
 
+    public static float sign(final float v) {
+        return v < 0.f ? -1.f : 1.f;
+    }
+
     public static double log(final double n, final int base) {
         return Math.log(n) / Math.log(base);
     }

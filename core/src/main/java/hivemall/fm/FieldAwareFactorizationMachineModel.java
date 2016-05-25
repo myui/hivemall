@@ -34,14 +34,17 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     protected final FFMHyperParameters _params;
     protected final float _eta0_V;
     protected final float _eps;
-    protected final float _scaling;
+
+    protected final boolean _useAdaGrad;
+    protected final boolean _useFTRL;
 
     public FieldAwareFactorizationMachineModel(@Nonnull FFMHyperParameters params) {
         super(params);
         this._params = params;
         this._eta0_V = params.eta0_V;
         this._eps = params.eps;
-        this._scaling = params.scaling;
+        this._useAdaGrad = params.useAdaGrad;
+        this._useFTRL = params.useFTRL;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull int yField, int f);
@@ -117,9 +120,9 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
-        if (_params.useAdaGrad) {
-            double gg = theta.getSumOfSquaredGradients(_scaling);
-            theta.addGradient(grad, _scaling);
+        if (_useAdaGrad) {
+            double gg = theta.getSumOfSquaredGradients();
+            theta.addGradient(grad);
             return (float) (_eta0_V / Math.sqrt(_eps + gg));
         } else {
             return _eta.eta(t);
@@ -189,15 +192,19 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
     protected final Entry newEntry(final float W) {
-        if (_params.useAdaGrad) {
+        if (_useFTRL) {
+            return new FTRLEntry(W);
+        } else if (_useAdaGrad) {
             return new AdaGradEntry(W);
         } else {
             return new Entry(W);
         }
     }
 
-    protected final Entry newEntry(final float[] V) {
-        if (_params.useAdaGrad) {
+    protected final Entry newEntry(@Nonnull final float[] V) {
+        if (_useFTRL) {
+            return new FTRLEntry(0.f, V);
+        } else if (_useAdaGrad) {
             return new AdaGradEntry(0.f, V);
         } else {
             return new Entry(0.f, V);
@@ -218,17 +225,27 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             this.Vf = Vf;
         }
 
-        public double getSumOfSquaredGradients(float scaling) {
+        double getSumOfSquaredGradients() {
             throw new UnsupportedOperationException();
         }
 
-        public void addGradient(float grad, float scaling) {
+        void addGradient(float grad) {
             throw new UnsupportedOperationException();
         }
+
+        float updateZ(float gradW, float alpha) {
+            throw new UnsupportedOperationException();
+        }
+
+        double updateN(float gradW) {
+            throw new UnsupportedOperationException();
+        }
+
     }
 
-    static final class AdaGradEntry extends Entry {
-        double sumOfSqGradients;
+    static class AdaGradEntry extends Entry {
+        /** sum of gradients */
+        double n;
 
         AdaGradEntry(float W) {
             this(W, null);
@@ -236,18 +253,50 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
         AdaGradEntry(float W, @Nullable float[] Vf) {
             super(W, Vf);
-            this.sumOfSqGradients = 0.d;
+            this.n = 0.d;
         }
 
         @Override
-        public double getSumOfSquaredGradients(float scaling) {
-            return sumOfSqGradients * scaling;
+        final double getSumOfSquaredGradients() {
+            return n;
         }
 
         @Override
-        public void addGradient(float grad, float scaling) {
-            this.sumOfSqGradients += grad * grad / scaling;
+        final void addGradient(final float grad) {
+            this.n += grad * grad;
         }
 
     }
+
+    static final class FTRLEntry extends AdaGradEntry {
+
+        float z;
+
+        FTRLEntry(float W) {
+            this(W, null);
+        }
+
+        FTRLEntry(float W, @Nullable float[] Vf) {
+            super(W, Vf);
+            this.z = 0.f;
+        }
+
+        @Override
+        float updateZ(final float gradW, final float alpha) {
+            double gg = gradW * gradW;
+            float sigma = (float) ((Math.sqrt(n + gg) - Math.sqrt(n)) / alpha);
+
+            float newZ = z + gradW - sigma * W;
+            this.z = newZ;
+            return newZ;
+        }
+
+        @Override
+        double updateN(final float gradW) {
+            double newN = n + gradW * gradW;
+            this.n = newN;
+            return newN;
+        }
+    }
+
 }

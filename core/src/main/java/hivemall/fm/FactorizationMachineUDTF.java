@@ -65,7 +65,7 @@ import org.apache.hadoop.mapred.Reporter;
         name = "train_fm",
         value = "_FUNC_(array<string> x, double y [, const string options]) - Returns a prediction model")
 public class FactorizationMachineUDTF extends UDTFWithOptions {
-    private static final Log logger = LogFactory.getLog(FactorizationMachineUDTF.class);
+    private static final Log LOG = LogFactory.getLog(FactorizationMachineUDTF.class);
     private static final int INT_BYTES = Integer.SIZE / 8;
 
     protected ListObjectInspector _xOI;
@@ -119,8 +119,14 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("num_features", true, "The size of feature dimensions");
         opts.addOption("f", "factor", true, "The number of the latent variables [default: 5]");
         opts.addOption("sigma", true, "The standard deviation for initializing V [default: 0.1]");
-        opts.addOption("lambda", "lambda0", true,
+        opts.addOption("lambda", true,
             "The initial lambda value for regularization [default: 0.01]");
+        opts.addOption("lambdaW0", "lambda_w0", true,
+            "The initial lambda value for W0 regularization [default: 0.01]");
+        opts.addOption("lambdaWi", "lambda_wi", true,
+            "The initial lambda value for Wi regularization [default: 0.01]");
+        opts.addOption("lambdaV", "lambda_v", true,
+            "The initial lambda value for V regularization [default: 0.01]");
         // regression
         opts.addOption("min", "min_target", true, "The minimum value of target variable");
         opts.addOption("max", "max_target", true, "The maximum value of target variable");
@@ -216,6 +222,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         this._model = initModel(cl, _params);
         this._t = 0L;
 
+        if (LOG.isInfoEnabled()) {
+            LOG.info(_params);
+        }
+
         return getOutputOI(_params);
     }
 
@@ -296,7 +306,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new UDFArgumentException("Cannot write a temporary file: "
                             + file.getAbsolutePath());
                 }
-                logger.info("Record training examples to a file: " + file.getAbsolutePath());
+                LOG.info("Record training examples to a file: " + file.getAbsolutePath());
             } catch (IOException ioe) {
                 throw new UDFArgumentException(ioe);
             } catch (Throwable e) {
@@ -413,7 +423,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
         final int P = _model.getSize();
         if (P <= 0) {
-            logger.warn("Model size P was less than zero: " + P);
+            LOG.warn("Model size P was less than zero: " + P);
             this._model = null;
             return;
         }
@@ -549,7 +559,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                     }
                     inputBuf.rewind();
                 }
-                logger.info("Performed " + i + " iterations of "
+                LOG.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(_t)
                         + " training updates in total) ");
@@ -565,9 +575,9 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                     throw new HiveException("Failed to flush a file: "
                             + fileIO.getFile().getAbsolutePath(), e);
                 }
-                if (logger.isInfoEnabled()) {
+                if (LOG.isInfoEnabled()) {
                     File tmpFile = fileIO.getFile();
-                    logger.info("Wrote " + numTrainingExamples
+                    LOG.info("Wrote " + numTrainingExamples
                             + " records to a temporary file for iterative training: "
                             + tmpFile.getAbsolutePath() + " (" + FileUtils.prettyFileSize(tmpFile)
                             + ")");
@@ -631,7 +641,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                         break;
                     }
                 }
-                logger.info("Performed " + i + " iterations of "
+                LOG.info("Performed " + i + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on a secondary storage (thus "
                         + NumberUtils.formatNumber(_t) + " training updates in total)");

@@ -58,6 +58,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
 
     // ----------------------------------------
     // Learning hyper-parameters/options
+    private boolean _FTRL;
+
     private boolean _globalBias;
     private boolean _linearCoeff;
 
@@ -78,12 +80,9 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("all_terms", false,
-            "Whether to include all terms (i.e., w0 and w_i) [default: OFF]");
         opts.addOption("w0", "global_bias", false,
             "Whether to include global bias term w0 [default: OFF]");
-        opts.addOption("w_i", "linear_coeff", false,
-            "Whether to include linear term [default: OFF]");
+        opts.addOption("disable_wi", "no_coeff", false, "Not to include linear term [default: OFF]");
         // feature hashing
         opts.addOption("feature_hashing", true,
             "The number of bits for feature hashing in range [18,31] [default:21]");
@@ -95,7 +94,16 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
         opts.addOption("scale", true,
             "Internal scaling/descaling factor for cumulative weights [100]");
-        opts.addOption("l1_v", "L1_V", true, "L1 regularization value for AdaGrad [default: 0.01]");
+        // FTRL
+        opts.addOption("disable_ftrl", false,
+            "Whether not to use Follow-The-Regularized-Reader [default: OFF]");
+        opts.addOption("alpha", "alphaFTRL", true,
+            "Alpha (learning rate) value of Follow-The-Regularized-Reader [default 0.01]");
+        opts.addOption("beta", "betaFTRL", true,
+            "Beta (a learning rate constants) value of Follow-The-Regularized-Reader [default 1]");
+        opts.addOption("lambda1", true,
+            "L1 value of Follow-The-Regularized-Reader that controls model Sparseness [default 1]");
+        opts.addOption("lambda2", true, "L2 value of Follow-The-Regularized-Reader [default 0]");
         return opts;
     }
 
@@ -118,6 +126,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
             throw new UDFArgumentException("int_feature option is not supported yet");
         }
 
+        this._FTRL = params.useFTRL;
         this._globalBias = params.globalBias;
         this._linearCoeff = params.linearCoeff;
         this._numFeatures = params.numFeatures;
@@ -188,15 +197,16 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         if (_globalBias) {
             _ffmModel.updateW0(lossGrad, eta_t);
         }
-        
+
         // ViFf update
         final IntArrayList fieldList = getFieldList(x);
         // sumVfX[i as in index for x][index for field list][index for factorized dimension]
         final DoubleArray3D sumVfX = _ffmModel.sumVfX(x, fieldList, _sumVfX);
         for (int i = 0; i < x.length; i++) {
             final Feature x_i = x[i];
-            if (_linearCoeff) {// wi update
-                _ffmModel.updateWi(lossGrad, x[i], eta_t);
+            boolean useV = updateWi(lossGrad, x_i, eta_t); // wi update
+            if (useV == false) {
+                continue;
             }
             for (int fieldIndex = 0, size = fieldList.size(); fieldIndex < size; fieldIndex++) {
                 final int yField = fieldList.get(fieldIndex);
@@ -211,6 +221,18 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         sumVfX.clear();
         this._sumVfX = sumVfX;
         fieldList.clear();
+    }
+
+    private boolean updateWi(double lossGrad, @Nonnull Feature xi, float eta) {
+        if (!_linearCoeff) {
+            return true;
+        }
+        if (_FTRL) {
+            return _ffmModel.updateWiFTRL(lossGrad, xi, eta);
+        } else {
+            _ffmModel.updateWi(lossGrad, xi, eta);
+            return true;
+        }
     }
 
     @Nonnull
