@@ -34,7 +34,7 @@ import org.junit.Test;
 
 public class FieldAwareFactorizationMachineUDTFTest {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final int ITERATIONS = 50;
     private static final int MAX_LINES = 200;
 

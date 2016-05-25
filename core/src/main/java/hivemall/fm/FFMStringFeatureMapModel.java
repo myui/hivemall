@@ -128,19 +128,18 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         final float z = theta.updateZ(gradWi, _alpha);
         final double n = theta.updateN(gradWi);
 
-        final float nextWi;
         if (Math.abs(z) <= _lambda1) {
-            nextWi = 0.f;
-        } else {
-            nextWi = (float) (-(z - MathUtils.sign(z) * _lambda1) / ((_beta + Math.sqrt(n))
-                    / _alpha + _lamdda2));
-            if (!NumberUtils.isFinite(nextWi)) {
-                throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
-                        + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss="
-                        + dloss + ", eta=" + eta + ", n=" + n + ", z=" + z);
-            }
+            removeEntry(x);
+            return wi != 0;
         }
 
+        final float nextWi = (float) (-(z - MathUtils.sign(z) * _lambda1) / ((_beta + Math.sqrt(n))
+                / _alpha + _lamdda2));
+        if (!NumberUtils.isFinite(nextWi)) {
+            throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
+                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss
+                    + ", eta=" + eta + ", n=" + n + ", z=" + z);
+        }
         theta.W = nextWi;
         return (nextWi != 0) || (wi != 0);
     }
@@ -217,6 +216,11 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
             }
         }
         return entry;
+    }
+
+    protected void removeEntry(@Nonnull final Feature x) {
+        int j = x.getFeatureIndex();
+        _map.remove(j);
     }
 
 }
