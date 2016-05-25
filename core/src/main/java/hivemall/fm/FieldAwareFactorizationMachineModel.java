@@ -287,6 +287,11 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             float sigma = (float) ((Math.sqrt(n + gg) - Math.sqrt(n)) / alpha);
 
             float newZ = z + gradW - sigma * W;
+            if (!NumberUtils.isFinite(newZ)) {
+                throw new IllegalStateException("Got newZ " + newZ + " where z=" + z + ", gradW="
+                        + gradW + ", sigma=" + sigma + ", W=" + W + ", n=" + n + ", gg=" + gg
+                        + ", alpha=" + alpha);
+            }
             this.z = newZ;
             return newZ;
         }
