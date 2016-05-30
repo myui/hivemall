@@ -40,8 +40,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
-
-import com.sun.istack.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * A class that is a growable array of bytes. Growth is managed in terms of chunks that are
@@ -110,6 +109,18 @@ public final class DynamicByteArray {
             currentOffset = 0;
             currentLength = Math.min(length, chunkSize - currentOffset);
         }
+    }
+
+    public int getInt(final int index) {
+        return toInt(get(index), get(index + 1), get(index + 2), get(index + 3));
+    }
+
+    public float getFloat(final int index) {
+        return Float.intBitsToFloat(getInt(index));
+    }
+
+    private static int toInt(final byte b3, final byte b2, final byte b1, final byte b0) {
+        return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
     }
 
     public void set(final int index, final byte value) {
