@@ -133,7 +133,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
             return wi != 0;
         }
 
-        final float nextWi = (float) (-(z - MathUtils.sign(z) * _lambda1) / ((_beta + Math.sqrt(n))
+        final float nextWi = (float) ((MathUtils.sign(z) * _lambda1 - z) / ((_beta + Math.sqrt(n))
                 / _alpha + _lamdda2));
         if (!NumberUtils.isFinite(nextWi)) {
             throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()

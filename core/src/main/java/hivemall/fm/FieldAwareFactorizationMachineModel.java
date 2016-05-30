@@ -121,8 +121,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
         if (_useAdaGrad) {
-            double gg = theta.getSumOfSquaredGradients();
-            theta.addGradient(grad);
+            double gg = theta.getSumOfSquaredGradientsV();
+            theta.addGradientV(grad);
             return (float) (_eta0_V / Math.sqrt(_eps + gg));
         } else {
             return _eta.eta(t);
@@ -225,11 +225,11 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             this.Vf = Vf;
         }
 
-        double getSumOfSquaredGradients() {
+        double getSumOfSquaredGradientsV() {
             throw new UnsupportedOperationException();
         }
 
-        void addGradient(float grad) {
+        void addGradientV(float grad) {
             throw new UnsupportedOperationException();
         }
 
@@ -244,8 +244,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     static class AdaGradEntry extends Entry {
-        /** sum of gradients */
-        double n;
+        /** sum of gradients of V */
+        double v_gg;
 
         AdaGradEntry(float W) {
             this(W, null);
@@ -253,17 +253,17 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
         AdaGradEntry(float W, @Nullable float[] Vf) {
             super(W, Vf);
-            this.n = 0.d;
+            this.v_gg = 0.d;
         }
 
         @Override
-        final double getSumOfSquaredGradients() {
-            return n;
+        final double getSumOfSquaredGradientsV() {
+            return v_gg;
         }
 
         @Override
-        final void addGradient(final float grad) {
-            this.n += grad * grad;
+        final void addGradientV(final float gradV) {
+            this.v_gg += gradV * gradV;
         }
 
     }
@@ -271,6 +271,8 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     static final class FTRLEntry extends AdaGradEntry {
 
         float z;
+        /** sum of gradients of W */
+        double n;
 
         FTRLEntry(float W) {
             this(W, null);
@@ -279,6 +281,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         FTRLEntry(float W, @Nullable float[] Vf) {
             super(W, Vf);
             this.z = 0.f;
+            this.n = 0.d;
         }
 
         @Override
