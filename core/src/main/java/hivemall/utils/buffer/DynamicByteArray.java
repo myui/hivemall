@@ -140,7 +140,7 @@ public final class DynamicByteArray {
      * @param valueLength the number of bytes to copy from value
      * @return the offset of the start of the value
      */
-    public int add(final byte[] value, int valueOffset, final int valueLength) {
+    public int add(@Nonnull final byte[] value, int valueOffset, final int valueLength) {
         int i = length / chunkSize;
         int j = length % chunkSize;
         grow((length + valueLength) / chunkSize);
@@ -148,6 +148,32 @@ public final class DynamicByteArray {
         while (remaining > 0) {
             int size = Math.min(remaining, chunkSize - j);
             System.arraycopy(value, valueOffset, data[i], j, size);
+            remaining -= size;
+            valueOffset += size;
+            i += 1;
+            j = 0;
+        }
+        int result = length;
+        length += valueLength;
+        return result;
+    }
+
+    /**
+     * Copy a slice of a byte array into our buffer.
+     * 
+     * @param src the buffer to copy from
+     * @param valueOffset the first location to copy from value
+     * @param valueLength the number of bytes to copy from value
+     * @return the offset of the start of the value
+     */
+    public int add(@Nonnull final ByteBuffer src, int valueOffset, final int valueLength) {
+        int i = length / chunkSize;
+        int j = length % chunkSize;
+        grow((length + valueLength) / chunkSize);
+        int remaining = valueLength;
+        while (remaining > 0) {
+            int size = Math.min(remaining, chunkSize - j);
+            src.get(data[i], j, size);
             remaining -= size;
             valueOffset += size;
             i += 1;
