@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
+import org.apache.commons.math3.distribution.PoissonDistribution;
+import org.apache.commons.math3.distribution.UniformIntegerDistribution;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
@@ -44,12 +47,87 @@ import org.junit.Test;
 
 public class ChangeFinderUDFTest {
     private static final boolean DEBUG = false;
+    private static final boolean MAKE_NEW_RAND = false;
     private static final int MAX_LINES = 5000;
+    private static final int MAX_WRITE = 1000000000;//1 billion
+    private static final int DIM = 3;
 
-    public void testDetection(String input) throws HiveException, IOException {
-        boolean tsv = input.endsWith("tsv");
-        boolean csv = input.endsWith("csv");
-        
+    public String writeRand() throws UDFArgumentException, IOException {
+        println("generating data");
+
+        UniformIntegerDistribution params = new UniformIntegerDistribution(0, 10);
+        PoissonDistribution event = new PoissonDistribution(100.d);
+        NormalDistribution dataGenerator[] = new NormalDistribution[DIM];
+
+        String fileName = null;
+        File outFile;
+        BufferedWriter output = null;
+        BufferedWriter output2 = null;
+        if (DEBUG) {
+            int runCount = 0;
+            fileName = "src/test/resources/hivemall/anomaly/rand_output";
+            outFile = new File(fileName + runCount + ".dat");
+            while (outFile.exists()) {
+                runCount++;
+                outFile = new File(fileName + runCount + ".dat");
+            }
+            fileName = outFile.getName();
+            output = new BufferedWriter(new FileWriter(outFile));
+            output2 = new BufferedWriter(
+                new FileWriter("src/test/resources/hivemall/anomaly/rand_hints.txt"));
+        }
+        {
+            int ln = 1;
+            for (int i = 0; i < MAX_WRITE;) {
+                int len = event.sample();
+                if (DEBUG) {
+                    output2.write("length " + len + "-" + (ln + len) + ": ");
+                }
+                double data[][] = new double[DIM][len];
+                for (int j = 0; j < DIM; j++) {
+                    int mean = params.sample() * 5;
+                    int sd = params.sample() / 10 + 1;
+                    dataGenerator[j] = new NormalDistribution(mean, sd);
+                    data[j] = dataGenerator[j].sample(len);
+                    if (DEBUG) {
+                        output2.write("N(" + mean + "," + sd + "), ");
+                    }
+                    data[j][len / (j + 2) + DIM % (j + 1)] = mean + (j + 4) * sd;
+                }
+                if (DEBUG) {
+                    output2.write("\n");
+                }
+                for (int j = 0; j < len; j++) {
+                    String contents = ln + "\t";
+                    for (int k = 0; k < DIM - 1; k++) {
+                        contents += data[k][j] + ",";
+                    }
+                    contents += data[DIM - 1][j] + "\n";
+                    if (DEBUG) {
+                        output.write(contents);
+                    }
+                    i += contents.length();
+                    ln++;
+                }
+            }
+        }
+
+        if (DEBUG) {
+            output.close();
+            output2.close();
+        }
+        return fileName.substring(fileName.lastIndexOf('/', fileName.length() - 1) + 1);
+    }
+
+    public void testFile(String input) throws HiveException, IOException {
+        if (!(new File(input).exists())) {
+            println("File DNE: " + input);
+            return;
+        }
+        boolean tsv = input.endsWith(".tsv");
+        boolean csv = input.endsWith(".csv");
+        boolean dat = input.endsWith(".dat");
+
         println("detection test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
         ObjectInspector[] argOIs =
@@ -59,9 +137,9 @@ public class ChangeFinderUDFTest {
         udf.initialize(argOIs);
 
         Object[] result = null;
-        BufferedReader data = new BufferedReader(
-            new InputStreamReader(getClass().getResourceAsStream(input)));
-        
+        BufferedReader data =
+                new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(input)));
+
         String fileName = null;
         File outFile;
         BufferedWriter output = null;
@@ -72,6 +150,9 @@ public class ChangeFinderUDFTest {
             }
             if (csv) {
                 fileName = "src/test/resources/hivemall/anomaly/csv_output";
+            }
+            if (dat) {
+                fileName = "src/test/resources/hivemall/anomaly/dat_output";
             }
             outFile = new File(fileName + ".dat");
             while (outFile.exists()) {
@@ -120,10 +201,24 @@ public class ChangeFinderUDFTest {
                 if (wordCut == -1) {
                     vector.add(Double.parseDouble(remaining));
                 } else {
-                    vector.add(Double.parseDouble(remaining.substring(wordCut+1)));//only grabs last value: see raw_data.csv
+                    vector.add(Double.parseDouble(remaining.substring(wordCut + 1)));//only grabs last value: see raw_data.csv
                 }
             }
-            result = (Object[]) udf.evaluate(new DeferredObject[] {new DeferredJavaObject(vector)});
+            if (dat) {
+                //cut string into vector values
+                String remaining = line;
+                int wordCut = remaining.indexOf('\t');
+                remaining = remaining.substring(wordCut + 1);
+                wordCut = remaining.indexOf(',');
+                while (wordCut != -1) {
+                    vector.add(Double.parseDouble(remaining.substring(0, wordCut)));
+                    remaining = remaining.substring(wordCut + 1);
+                    wordCut = remaining.indexOf(',');
+                }
+                vector.add(Double.parseDouble(remaining.substring(wordCut + 1)));
+            }
+            DeferredObject[] a = new DeferredObject[] {new DeferredJavaObject(vector)};
+            result = (Object[]) udf.evaluate(a);
             assert result.length == 4;
             double x = ((DoubleWritable) result[0]).get();
             BooleanWritable resX = (BooleanWritable) result[1];
@@ -140,12 +235,10 @@ public class ChangeFinderUDFTest {
                         + " " + udf.getyEstimate() + " " + udf.getyModelVar() + "\n");
             }
             if (xB == 1.d) {
-                anomalies.add(lineNumber);
-                println("!!!ANOMALY AT LINE " + lineNumber + "!!!");
+                anomalies.add(lineNumber + 1);
             }
             if (yB == 1.d) {
-                changepoints.add(lineNumber);
-                println("!!!CHANGE-POINT AT LINE " + lineNumber + "!!!");
+                changepoints.add(lineNumber + 1);
             }
         }
         println("Detected " + anomalies.size() + " anomalies at lines: " + anomalies);
@@ -157,12 +250,18 @@ public class ChangeFinderUDFTest {
         }
         udf.close();
     }
-    
+
 
     @Test
     public void testDetection() throws HiveException, IOException {
-        testDetection("cf_test.tsv");
-        testDetection("raw_data.csv");
+        testFile("cf_test.tsv");
+        testFile("raw_data.csv");
+        String randName = "rand_output1.dat";
+        if (MAKE_NEW_RAND) {
+            randName = writeRand();
+        }
+        testFile(randName);
+        return;
     }
 
     @Test
@@ -170,15 +269,14 @@ public class ChangeFinderUDFTest {
         println("exception test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
         ConstantObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-aWindow 2");
         ConstantObjectInspector param2OI = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-aWindow 0");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-aWindow 1");
         ConstantObjectInspector param3OI = ObjectInspectorUtils.getConstantObjectInspector(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            "-aWindow 1 -aForget 5");
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-aWindow 2 -aForget 5");
         ConstantObjectInspector param4OI = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            "-aWindow 1 -aForget 0.5 -aThresh 0");;
+            "-aWindow 2 -aForget 0.5 -aThresh 0");;
         ObjectInspector[] argOIs =
                 new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(
                     PrimitiveObjectInspectorFactory.javaDoubleObjectInspector), paramOI};
@@ -188,8 +286,8 @@ public class ChangeFinderUDFTest {
         try {
             udf.evaluate(
                 new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
-            udf.evaluate(
-                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d, 1.d}))});
+            udf.evaluate(new DeferredObject[] {
+                    new DeferredJavaObject(Arrays.asList(new Double[] {1.d, 1.d}))});
         } catch (HiveException e) {
             caught = true;
         }
@@ -216,15 +314,30 @@ public class ChangeFinderUDFTest {
         argOIs[1] = param4OI;
         udf.initialize(argOIs);
 
-        DeferredObject[] one = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))};
+        DeferredObject[] one =
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))};
         for (int i = 0; i < udf.getxRunningWindowSize(); i++) {
             udf.evaluate(one);
         }
         Object[] result = (Object[]) udf.evaluate(
             new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {10000.d}))});
         Assert.assertTrue("Result length incorrect.", result.length == 4);
-        Assert.assertTrue("No anomaly detected for data set [1, 1, ..., 1, 10000].", ((BooleanWritable) result[1]).get());
+        Assert.assertTrue("No anomaly detected for data set [1, 1, ..., 1, 10000].",
+            ((BooleanWritable) result[1]).get());
         udf.close();
+
+        println("multidim");
+        udf.initialize(argOIs);
+        Double[] data = new Double[] {1.d, 1.d, 1.d, 1.d, 1.d};
+        DeferredObject[] increasing =
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
+        for (int i = 0; i < 5; i++) {
+            udf.evaluate(increasing);
+            for (int j = 0; j < 5; j++) {
+                data[j] = new Double(i * i + j);
+                increasing[j] = new DeferredJavaObject(Arrays.asList(data));
+            }
+        }
     }
 
     private static void println(String line) {

@@ -21,7 +21,6 @@ package hivemall.anomaly;
 import hivemall.UDFWithOptions;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Primitives;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -35,10 +34,12 @@ import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.linear.DefaultRealMatrixChangingVisitor;
-import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.random.JDKRandomGenerator;
+import org.apache.commons.math3.random.UncorrelatedRandomVectorGenerator;
+import org.apache.commons.math3.random.UniformRandomGenerator;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -59,10 +60,10 @@ public class ChangeFinderUDF extends UDFWithOptions {
     private DoubleObjectInspector xContentOI;
 
     private int dimensions;
-    private long callCount;
+    private boolean firstCall;
 
     private RealVector x;
-    private LinkedList<RealVector> xHistory;
+    private LinkedList<RealVector> xHistory;//history is ordered from newest to oldest, i.e. xHistory.getFirst() is from t-1.
     //mu
     private RealVector xMeanEstimate;
     //C0
@@ -117,7 +118,6 @@ public class ChangeFinderUDF extends UDFWithOptions {
 
     @Override
     protected CommandLine processOptions(@Nonnull String optionValues) throws UDFArgumentException {
-        int dim = 1;
         int aWindow = 10;
         int cWindow = 10;
         double aForget = 0.02;
@@ -126,18 +126,17 @@ public class ChangeFinderUDF extends UDFWithOptions {
         double cThresh = 10.d;
 
         CommandLine cl = parseOptions(optionValues);
-        dim = Primitives.parseInt(cl.getOptionValue("dim"), dim);
         aWindow = Primitives.parseInt(cl.getOptionValue("aWindow"), aWindow);
         cWindow = Primitives.parseInt(cl.getOptionValue("cWindow"), cWindow);
         aForget = Primitives.parseDouble(cl.getOptionValue("aForget"), aForget);
         cForget = Primitives.parseDouble(cl.getOptionValue("cForget"), cForget);
         aThresh = Primitives.parseDouble(cl.getOptionValue("aThresh"), aThresh);
         cThresh = Primitives.parseDouble(cl.getOptionValue("cThresh"), cThresh);
-        if (aWindow <= 0) {
-            throw new UDFArgumentException("aWindow must be positive: " + aWindow);
+        if (aWindow <= 1) {
+            throw new UDFArgumentException("aWindow must be 2 or greater: " + aWindow);
         }
-        if (cWindow <= 0) {
-            throw new UDFArgumentException("cWindow must be positive: " + cWindow);
+        if (cWindow <= 1) {
+            throw new UDFArgumentException("cWindow must be 2 or greater: " + cWindow);
         }
         if (aForget < 0.d || aForget > 1.d) {
             throw new UDFArgumentException("aForget must be in the range [0,1]: " + aForget);
@@ -176,19 +175,18 @@ public class ChangeFinderUDF extends UDFWithOptions {
         }
         processOptions(optionValues);
 
-        callCount = 0L;
+        firstCall = true;//most variables are initialized at first input (see evaluate(), init()) because dimensions is still unknown at initialization
 
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-        fieldNames.add("Anomaly Score");
+        fieldNames.add("anomaly_score");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
-        fieldNames.add("Anomaly Decision");
+        fieldNames.add("anomaly_decision");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableBooleanObjectInspector);
-        fieldNames.add("Change-point Score");
+        fieldNames.add("changepoint_score");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
-        fieldNames.add("Change-point Decision");
+        fieldNames.add("changepoint_decision");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableBooleanObjectInspector);
-
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
@@ -228,19 +226,17 @@ public class ChangeFinderUDF extends UDFWithOptions {
                     + " vs. expected dim: " + dimensions);
         }
 
-        double xScore = calcScore(x, xMeanEstimate, xModelCovar);
+        double xScore = Math.min(xThreshold * 100.d, calcScore(x, xMeanEstimate, xModelCovar));
         xTrain();
         double yScore = calcScore(y, yMeanEstimate, yModelVar);
         yTrain(xScore);
 
-        callCount++;
+        firstCall = false;
         Object[] output = new Object[4];
         output[0] = new DoubleWritable(xScore);
-        output[1] =
-                callCount > xRunningWindowSize ? (new BooleanWritable(xScore >= xThreshold)) : null;
+        output[1] = new BooleanWritable(xScore >= xThreshold);
         output[2] = new DoubleWritable(yScore);
-        output[3] =
-                callCount > yRunningWindowSize ? (new BooleanWritable(yScore >= yThreshold)) : null;
+        output[3] = new BooleanWritable(yScore >= yThreshold);
         return output;
     }
 
@@ -286,8 +282,8 @@ public class ChangeFinderUDF extends UDFWithOptions {
         xModelCovar = xModelCovar.scalarMultiply(1.d - xForgetfulness).add(
             xEstimateResidual.mapMultiply(xForgetfulness).outerProduct(xEstimateResidual));
 
-        xHistory.removeFirst();
-        xHistory.add(x);
+        xHistory.removeLast();
+        xHistory.addFirst(x);
 
         return;
     }
@@ -332,34 +328,16 @@ public class ChangeFinderUDF extends UDFWithOptions {
         return;
     }
 
-    private RealMatrix divide(final RealMatrix left, final DiagonalMatrix right) {
-        RealMatrix result = left.copy();//do not modify arguments
-        result.walkInOptimizedOrder(new PostDivideByDiagonalMatrixChangingVisitor(right));
-        return result;
-    }
-
     private double calcScore(double y, double mean, double var) {
-        return -Math.log(new NormalDistribution(mean, Math.sqrt(var)).density(y));
+        return -Math.log(
+            Math.pow(new NormalDistribution(mean, Math.sqrt(var)).density(y), 1.d / dimensions));
     }
 
     private double calcScore(RealVector x, RealVector means, RealMatrix covar) {
-        return -Math.log(
+        return -Math.log(Math.pow(
             new MultivariateNormalDistribution(null, means.toArray(), covar.getData()).density(
-                x.toArray()));
-    }
-
-    private static class PostDivideByDiagonalMatrixChangingVisitor
-            extends DefaultRealMatrixChangingVisitor {
-        private double[] diag;
-
-        private PostDivideByDiagonalMatrixChangingVisitor(DiagonalMatrix right) {
-            this.diag = right.getDataRef();
-        }
-
-        @Override
-        public double visit(int row, int column, double value) {
-            return value / diag[column];
-        }
+                x.toArray()),
+            1.d / dimensions));
     }
 
     //package-private getters for ChangeFinderUDFTest
