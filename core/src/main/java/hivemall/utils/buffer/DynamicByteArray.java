@@ -115,12 +115,102 @@ public final class DynamicByteArray {
         return toInt(get(index), get(index + 1), get(index + 2), get(index + 3));
     }
 
+    public long getLong(final int index) {
+        return toLong(get(index), get(index + 1), get(index + 2), get(index + 3), get(index + 4),
+            get(index + 5), get(index + 6), get(index + 7));
+    }
+
     public float getFloat(final int index) {
         return Float.intBitsToFloat(getInt(index));
     }
 
+    public double getDouble(final int index) {
+        return Double.longBitsToDouble(getLong(index));
+    }
+
     private static int toInt(final byte b3, final byte b2, final byte b1, final byte b0) {
         return (((b3) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | ((b0 & 0xff)));
+    }
+
+    private static long toLong(final byte b7, final byte b6, final byte b5, final byte b4,
+            final byte b3, final byte b2, final byte b1, final byte b0) {
+        return ((((long) b7) << 56) | (((long) b6 & 0xff) << 48) | (((long) b5 & 0xff) << 40)
+                | (((long) b4 & 0xff) << 32) | (((long) b3 & 0xff) << 24)
+                | (((long) b2 & 0xff) << 16) | (((long) b1 & 0xff) << 8) | (((long) b0 & 0xff)));
+    }
+
+    public void setInt(final int index, final int value) {
+        set(index, int3(value));
+        set(index + 1, int2(value));
+        set(index + 2, int1(value));
+        set(index + 3, int0(value));
+    }
+
+    public void setLong(final int index, final long value) {
+        set(index, long7(value));
+        set(index + 1, long6(value));
+        set(index + 2, long5(value));
+        set(index + 3, long4(value));
+        set(index + 4, long3(value));
+        set(index + 5, long2(value));
+        set(index + 6, long1(value));
+        set(index + 7, long0(value));
+    }
+
+    public void setFloat(final int index, final float value) {
+        setInt(index, Float.floatToIntBits(value));
+    }
+
+    public void setDouble(final int index, final double value) {
+        setLong(index, Double.doubleToLongBits(value));
+    }
+
+    private static byte int3(final int x) {
+        return (byte) (x >> 24);
+    }
+
+    private static byte int2(final int x) {
+        return (byte) (x >> 16);
+    }
+
+    private static byte int1(final int x) {
+        return (byte) (x >> 8);
+    }
+
+    private static byte int0(final int x) {
+        return (byte) (x);
+    }
+
+    private static byte long7(final long x) {
+        return (byte) (x >> 56);
+    }
+
+    private static byte long6(final long x) {
+        return (byte) (x >> 48);
+    }
+
+    private static byte long5(final long x) {
+        return (byte) (x >> 40);
+    }
+
+    private static byte long4(final long x) {
+        return (byte) (x >> 32);
+    }
+
+    private static byte long3(final long x) {
+        return (byte) (x >> 24);
+    }
+
+    private static byte long2(final long x) {
+        return (byte) (x >> 16);
+    }
+
+    private static byte long1(final long x) {
+        return (byte) (x >> 8);
+    }
+
+    private static byte long0(final long x) {
+        return (byte) (x);
     }
 
     public void set(final int index, final byte value) {
