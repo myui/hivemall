@@ -21,19 +21,23 @@ package hivemall.anomaly;
 import hivemall.UDFWithOptions;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.lang.Primitives;
+import smile.math.matrix.CholeskyDecomposition;
+import smile.stat.distribution.MultivariateGaussianDistribution;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -53,8 +57,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspe
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.BooleanWritable;
 
-@Description(name = "cf_detect",
-        value = "_FUNC_(array<double> x [, const string options]) - Returns anomaly/change-point scores and decisions")
+@Description(
+        name = "cf_detect",
+        value = "_FUNC_(array<double> x [, const string options]) - Returns anomaly/change-point scores and decisions via ChangeFinder")
 public class ChangeFinderUDF extends UDFWithOptions {
     private ListObjectInspector xOI;
     private DoubleObjectInspector xContentOI;
@@ -67,7 +72,7 @@ public class ChangeFinderUDF extends UDFWithOptions {
     //mu
     private RealVector xMeanEstimate;
     //C0
-    private DiagonalMatrix xCovar0;
+    private RealMatrix xCovar0;
     //Ci
     private RealMatrix[] xCovar;
     //Ai
@@ -82,7 +87,7 @@ public class ChangeFinderUDF extends UDFWithOptions {
 
     private double y;
     private double yRunningSum;
-    private LinkedList<Double> xScoreHistory;
+    private LinkedList<Double> xScoreHistory;//newest to oldest
     private double yMeanEstimate;
     private double[] yCovar;
     private double[] yModelCoeff;
@@ -106,9 +111,9 @@ public class ChangeFinderUDF extends UDFWithOptions {
         opts.addOption("cWindow", "changePointDetectionRunningWindowSize", true,
             "Number of past samples to include in change-point detection calculation [default: 10]");
         opts.addOption("aForget", "anomalyDetectionForgetfulness", true,
-            "Forgetfulness parameter for anomaly detection [range: [0,1]; default: 0.02]");
+            "Forgetfulness parameter for anomaly detection [range: (0,1); default: 0.02]");
         opts.addOption("cForget", "changePointDetectionForgetfulness", true,
-            "Forgetfulness parameter for change-point detection [range: [0,1]; default: 0.02]");
+            "Forgetfulness parameter for change-point detection [range: (0,1); default: 0.02]");
         opts.addOption("aThresh", "anomalyDetectionThreshold", true,
             "Score threshold for determining anomaly existence [default: 10.0]");
         opts.addOption("cThresh", "changePointDetectionThreshold", true,
@@ -163,8 +168,8 @@ public class ChangeFinderUDF extends UDFWithOptions {
         }
         xOI = HiveUtils.asListOI(argOIs[0]);
         if (!HiveUtils.isNumberOI(xOI.getListElementObjectInspector())) {
-            throw new UDFArgumentTypeException(0,
-                "Unexpected Object inspector for array<double>: " + argOIs[0]);
+            throw new UDFArgumentTypeException(0, "Unexpected Object inspector for array<double>: "
+                    + argOIs[0]);
         } else {
             xContentOI = (DoubleObjectInspector) xOI.getListElementObjectInspector();
         }
@@ -190,46 +195,77 @@ public class ChangeFinderUDF extends UDFWithOptions {
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
     }
 
+    private void init(RealVector x) {
+        dimensions = x.getDimension();
+        xHistory = new LinkedList<RealVector>();
+        xMeanEstimate = new ArrayRealVector(dimensions);
+        xCovar0 = new BlockRealMatrix(dimensions, dimensions);
+        xCovar = new RealMatrix[xRunningWindowSize];
+        xModelMatrix = new RealMatrix[xRunningWindowSize];
+        xModelCovar = new BlockRealMatrix(dimensions, dimensions);
+
+        UncorrelatedRandomVectorGenerator gen = new UncorrelatedRandomVectorGenerator(dimensions,
+            new UniformRandomGenerator(new JDKRandomGenerator()));
+        for (int i = 0; i < xRunningWindowSize; i++) {
+            ArrayRealVector rand = new ArrayRealVector(gen.nextVector()).add(x);
+            xHistory.addFirst(rand);
+            xMeanEstimate = xMeanEstimate.add(rand.mapMultiply(xForgetfulness));
+            xMeanEstimate.mapMultiplyToSelf(1.d - xForgetfulness);
+        }
+        {
+            RealVector xResidual0 = x.copy().subtract(xMeanEstimate);
+            xCovar0 = xResidual0.outerProduct(xResidual0);
+            int i = 0;
+            for (Iterator<RealVector> xNewToOld = xHistory.iterator(); xNewToOld.hasNext(); i++) {
+                xCovar[i] = xResidual0.outerProduct(xNewToOld.next().subtract(xMeanEstimate));
+            }
+        }
+        yRunningSum = 0.d;
+        xScoreHistory = new LinkedList<Double>();
+        yCovar = new double[yRunningWindowSize + 1];
+        yModelCoeff = new double[yRunningWindowSize];
+        yModelVar = 1.d;
+        Random rand = new Random();
+        for (int i = 0; i < yRunningWindowSize; i++) {
+            double nextScore = xThreshold / 2.d + rand.nextDouble() - 0.5d;
+            xScoreHistory.addFirst(new Double(nextScore));
+            yRunningSum += nextScore;
+        }
+        yMeanEstimate = yRunningSum / yRunningWindowSize;
+        {
+            double lastScore = xThreshold / 2.d + rand.nextDouble() - 0.5d;
+            yRunningSum += lastScore - xScoreHistory.getLast();
+            yMeanEstimate = yMeanEstimate * (1.d - yForgetfulness) + lastScore * yForgetfulness;
+            xScoreHistory.addFirst(lastScore);
+            for (int i = 0; i <= yRunningWindowSize; i++) {
+                yCovar[i] = lastScore * xScoreHistory.get(i);
+            }
+            xScoreHistory.removeLast();
+        }
+
+        return;
+    }
+
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
         x = new ArrayRealVector(HiveUtils.asDoubleArray(args[0].get(), xOI, xContentOI));
-        if (callCount == 0) {
-            dimensions = x.getDimension();
-            xHistory = new LinkedList<RealVector>();
-            xMeanEstimate = new ArrayRealVector(dimensions);
-            xCovar0 = new DiagonalMatrix(dimensions);
-            xCovar = new RealMatrix[xRunningWindowSize];
-            xModelMatrix = new RealMatrix[xRunningWindowSize];
-            xModelCovar = new BlockRealMatrix(dimensions, dimensions);
-            for (int i = 0; i < dimensions; i++) {
-                xModelCovar.addToEntry(i, i, 1.d);
-            }
-            yRunningSum = 0.d;
-            xScoreHistory = new LinkedList<Double>();
-            yMeanEstimate = 0.d;
-            yCovar = new double[yRunningWindowSize + 1];
-            yModelCoeff = new double[yRunningWindowSize];
-            yModelVar = 1.d;
-            for (int i = 0; i < xRunningWindowSize; i++) {
-                xHistory.add(new ArrayRealVector(dimensions));
-                xCovar[i] = new BlockRealMatrix(dimensions, dimensions);
-                xModelMatrix[i] = new BlockRealMatrix(dimensions, dimensions);
-            }
-            for (int i = 0; i < yRunningWindowSize; i++) {
-                xScoreHistory.add(new Double(0.d));
-            }
+        double xScore, yScore;
+        if (firstCall) {
+            init(x);
             xTrain();
-            double xScore = calcScore(x, xMeanEstimate, xModelCovar);
+            xScore = Math.min(xThreshold * 100.d, calcScore(x, xMeanEstimate, xModelCovar));
             yTrain(xScore);
-        } else if (dimensions != x.getDimension()) {
-            throw new HiveException("Input vector dimension mismatch: " + x.getDimension()
-                    + " vs. expected dim: " + dimensions);
+            yScore = Math.min(yThreshold * 100.d, calcScore(y, yMeanEstimate, yModelVar));
+        } else {
+            if (dimensions != x.getDimension()) {
+                throw new HiveException("Input vector dimension mismatch: " + x.getDimension()
+                + " vs. expected dim: " + dimensions);
+            }
+            xScore = Math.min(xThreshold * 100.d, calcScore(x, xMeanEstimate, xModelCovar));
+            xTrain();
+            yScore = Math.min(yThreshold * 100.d, calcScore(y, yMeanEstimate, yModelVar));
+            yTrain(xScore);
         }
-
-        double xScore = Math.min(xThreshold * 100.d, calcScore(x, xMeanEstimate, xModelCovar));
-        xTrain();
-        double yScore = calcScore(y, yMeanEstimate, yModelVar);
-        yTrain(xScore);
 
         firstCall = false;
         Object[] output = new Object[4];
@@ -244,61 +280,79 @@ public class ChangeFinderUDF extends UDFWithOptions {
         //mean vector
         xMeanEstimate = xMeanEstimate.mapMultiplyToSelf((1.d - xForgetfulness))
                                      .add(x.mapMultiply(xForgetfulness));
+        
         //residuals
         RealVector xResidual0 = x.copy().subtract(xMeanEstimate);
 
         RealVector[] xResiduals = new RealVector[xRunningWindowSize];
 
         for (int i = 0; i < xRunningWindowSize; i++) {
-            xResiduals[i] = xHistory.get(xRunningWindowSize - i - 1).subtract(xMeanEstimate);
+            xResiduals[i] = xHistory.get(i).subtract(xMeanEstimate);
         }
 
         //covariance matrices
-        double[] xCovarA = xCovar0.getDataRef();
-        double[] xCovarB = xResidual0.ebeMultiply(xResidual0).mapMultiply(xForgetfulness).toArray();
-        for (int i = 0; i < dimensions; i++) {
-            xCovarA[i] = xCovarA[i] * (1.d - xForgetfulness) + xCovarB[i];
-        }
-        xCovar0 = new DiagonalMatrix(xCovarA);
+        xCovar0 = xCovar0.scalarMultiply(1.d - xForgetfulness).add(xResidual0.mapMultiply(xForgetfulness).outerProduct(xResidual0));
         for (int i = 0; i < xRunningWindowSize; i++) {
-            xCovar[i] = xCovar[i].scalarMultiply(1.d - xForgetfulness).add(
-                xResidual0.mapMultiply(xForgetfulness).outerProduct(xResiduals[i]));
+            xCovar[i] = xCovar[i].scalarMultiply(1.d - xForgetfulness).add(xResidual0.mapMultiply(xForgetfulness).outerProduct(xResiduals[i]));
         }
         //model matrices
+        RealMatrix[][] xCovarsCombinedRaw = new RealMatrix[xRunningWindowSize][xRunningWindowSize];
         for (int i = 0; i < xRunningWindowSize; i++) {
-            RealMatrix C = xCovar[i];
+            xCovarsCombinedRaw[i][i] = xCovar0;
             for (int j = 0; j < i; j++) {
-                C = C.subtract(xModelMatrix[j].multiply(xCovar[i - j - 1]));
+                int index = i-j-1;
+                xCovarsCombinedRaw[i][j] = xCovar[index].transpose();
             }
-            xModelMatrix[i] = divide(C, xCovar0);
         }
-        //x estimate
-        xEstimate = xMeanEstimate.copy();
+        RealMatrix[][] xCovarVector = new RealMatrix[xRunningWindowSize][1];
         for (int i = 0; i < xRunningWindowSize; i++) {
+            xCovarVector[i][0] = xCovar[i];
+        }
+        CholeskyDecomposition xCholesky = new CholeskyDecomposition(combineMatricesRaw(xCovarsCombinedRaw));
+        RealMatrix invert = MatrixUtils.inverse(combineMatrices(xCovarsCombinedRaw));//FIXME remove later (debug)
+        RealMatrix inverse = new BlockRealMatrix(xCholesky.inverse());//FIXME unnecessary
+        RealMatrix diff = inverse.subtract(invert);//FIXME remove later (debug)
+        double[][] xCovarVectorsCombined = combineMatricesRaw(xCovarVector);
+        double[][] xModelMatricesCombinedRaw = new double[xCovarVectorsCombined.length][xCovarVectorsCombined[0].length];
+        xCholesky.solve(xCovarVectorsCombined, xModelMatricesCombinedRaw);
+        RealMatrix xModelMatricesCombined = new BlockRealMatrix(BlockRealMatrix.toBlocksLayout(xModelMatricesCombinedRaw));
+        
+        //x estimate
+        xEstimate = new ArrayRealVector(dimensions);
+        for (int i = 0; i < xRunningWindowSize; i++) {
+            int offset = i*dimensions;
+            xModelMatrix[i] = new BlockRealMatrix(dimensions, dimensions);
+            xModelMatrix[i] = xModelMatricesCombined.getSubMatrix(0, dimensions-1, offset, offset + dimensions-1);
             xEstimate = xEstimate.add(xModelMatrix[i].operate(xResiduals[i]));
         }
         //sigma
-        RealVector xEstimateResidual = x.subtract(xEstimate);
+        RealVector xEstimateResidual = xResidual0.subtract(xEstimate);//(x - mu) - (xhat - mu) = x - xhat
         xModelCovar = xModelCovar.scalarMultiply(1.d - xForgetfulness).add(
             xEstimateResidual.mapMultiply(xForgetfulness).outerProduct(xEstimateResidual));
 
-        xHistory.removeLast();
-        xHistory.addFirst(x);
-
+        if (firstCall) {
+            firstCall = false;
+        } else {
+            xHistory.removeLast();
+            xHistory.addFirst(x);
+        }
+        
         return;
     }
 
     private void yTrain(double xScore) {
-        yRunningSum += xScore - xScoreHistory.getFirst();
-        xScoreHistory.add(xScore);
+        yRunningSum += xScore - xScoreHistory.getLast();
+        xScoreHistory.addFirst(xScore);
         y = yRunningSum / yRunningWindowSize;
         //mean vector
         yMeanEstimate = yMeanEstimate * (1.d - yForgetfulness) + y * yForgetfulness;
         //residuals
         double[] yResiduals = new double[yRunningWindowSize + 1];
-        Iterator<Double> scoresNewToOld = xScoreHistory.descendingIterator();
-        for (int i = 0; scoresNewToOld.hasNext(); i++) {
-            yResiduals[i] = scoresNewToOld.next() - yMeanEstimate;
+        {
+            int i = 0;
+            for (Iterator<Double> scoresNewToOld = xScoreHistory.iterator(); scoresNewToOld.hasNext(); i++) {
+                yResiduals[i] = scoresNewToOld.next() - yMeanEstimate;
+            }
         }
         //variance
         double yRes0 = yResiduals[0];
@@ -306,13 +360,33 @@ public class ChangeFinderUDF extends UDFWithOptions {
             yCovar[i] = yCovar[i] * (1.d - yForgetfulness) + yRes0 * yResiduals[i] * yForgetfulness;
         }
         //model coefficients
+        double[] yCovarVectorRaw = new double[yRunningWindowSize];
+        double[][] yCovarsCombinedRaw = new double[yRunningWindowSize][yRunningWindowSize];
         for (int i = 0; i < yRunningWindowSize; i++) {
-            double C = yCovar[i + 1];
+            yCovarVectorRaw[i] = yCovar[i+1];
+            yCovarsCombinedRaw[i][i] = yCovar[0];
             for (int j = 0; j < i; j++) {
-                C -= yModelCoeff[j] * yCovar[i - j];
+                yCovarsCombinedRaw[i][j] = yCovar[i-j];
+                yCovarsCombinedRaw[j][i] = yCovar[i-j];
             }
-            yModelCoeff[i] = C / yCovar[0];
         }
+        
+
+        RealMatrix[][] xCovarVector = new RealMatrix[1][xRunningWindowSize];
+        for (int i = 0; i < xRunningWindowSize; i++) {
+            xCovarVector[0][i] = xCovar[i];
+        }
+        CholeskyDecomposition yCholesky = new CholeskyDecomposition(yCovarsCombinedRaw);
+        
+        RealVector yCovarVector = new ArrayRealVector(yCovarVectorRaw);
+        yCholesky.solve(yCovarVector.toArray(), yModelCoeff);
+        
+        RealMatrix invert = MatrixUtils.inverse(new BlockRealMatrix(yCovarsCombinedRaw));//FIXME remove later (debug)
+        RealMatrix inverse = new BlockRealMatrix(yCholesky.inverse());//FIXME unnecessary
+        RealMatrix diff = inverse.subtract(invert);//FIXME remove later (debug)
+        
+        
+        
         //y estimate
         yEstimate = yMeanEstimate;
         for (int i = 0; i < yRunningWindowSize; i++) {
@@ -323,21 +397,75 @@ public class ChangeFinderUDF extends UDFWithOptions {
         yModelVar = yModelVar * (1.d - yForgetfulness)
                 + (yEstimateResidual * yEstimateResidual * yForgetfulness);
 
-        xScoreHistory.removeFirst();
+        xScoreHistory.removeLast();
 
         return;
     }
 
     private double calcScore(double y, double mean, double var) {
-        return -Math.log(
-            Math.pow(new NormalDistribution(mean, Math.sqrt(var)).density(y), 1.d / dimensions));
+        return -Math.log(Math.pow(new NormalDistribution(mean, Math.sqrt(var)).density(y),
+            1.d / dimensions));
     }
 
     private double calcScore(RealVector x, RealVector means, RealMatrix covar) {
-        return -Math.log(Math.pow(
-            new MultivariateNormalDistribution(null, means.toArray(), covar.getData()).density(
-                x.toArray()),
-            1.d / dimensions));
+        MultivariateGaussianDistribution dist = new MultivariateGaussianDistribution(
+            means.toArray(), covar.getData());
+        double pdf = dist.p(x.toArray());
+        return -Math.log(Math.pow(pdf, 1.d / dimensions));
+    }
+
+    private RealMatrix combineMatrices(RealMatrix[][] grid) {//combine grid of dim*dim matrices into one
+            RealMatrix combined = new BlockRealMatrix(grid.length*dimensions, grid[0].length*dimensions);
+            for (int i = 0; i < grid.length; i++) {
+                for (int j = 0; j < grid[i].length; j++) {
+                    if (j > i) {
+                        break;
+                    }
+                    combined.setSubMatrix(grid[i][j].getData(), i*dimensions, j*dimensions);
+                }
+            }
+            return combined;
+        }
+    
+    private double[][] combineMatricesRaw(RealMatrix[][] grid) {//combine grid of dim*dim matrices into one
+        CombineMatrixVisitor v = new CombineMatrixVisitor(grid.length*dimensions, grid[0].length*dimensions, dimensions);
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (j > i) {
+                    break;
+                }
+                v.setNextPosition(i, j);
+                grid[i][j].walkInOptimizedOrder(v);
+            }
+        }
+        return v.getWalkResult();
+    }
+    
+    private static class CombineMatrixVisitor extends DefaultRealMatrixPreservingVisitor {
+        double[][] copy;
+        int dimensions;
+        int iOffset;
+        int jOffset;
+        
+        public CombineMatrixVisitor(int rows, int columns, int dimensions) {
+            this.dimensions = dimensions;
+            copy = new double[rows][columns];
+        }
+        
+        public void setNextPosition(int i, int j) {
+            iOffset = i*dimensions;
+            jOffset = j*dimensions;
+        }
+
+        @Override
+        public void visit(int row, int column, double value) {
+            copy[iOffset + row][jOffset + column] = value;
+            return;
+        }
+
+        public double[][] getWalkResult() {
+            return copy;
+        }
     }
 
     //package-private getters for ChangeFinderUDFTest
