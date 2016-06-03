@@ -43,8 +43,9 @@ public class Int2LongOpenHashTable implements Externalizable {
     protected static final byte FULL = 1;
     protected static final byte REMOVED = 2;
 
-    private static final float DEFAULT_LOAD_FACTOR = 0.7f;
-    private static final float DEFAULT_GROW_FACTOR = 2.0f;
+    public static final int DEFAULT_SIZE = 65536;
+    public static final float DEFAULT_LOAD_FACTOR = 0.7f;
+    public static final float DEFAULT_GROW_FACTOR = 2.0f;
 
     protected final transient float _loadFactor;
     protected final transient float _growFactor;
@@ -78,13 +79,36 @@ public class Int2LongOpenHashTable implements Externalizable {
         this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR, true);
     }
 
-    public Int2LongOpenHashTable() {// required for serialization
+    /**
+     * Constructor for Externalizable. Should not be called otherwise.
+     */
+    public Int2LongOpenHashTable() {// for Externalizable
         this._loadFactor = DEFAULT_LOAD_FACTOR;
         this._growFactor = DEFAULT_GROW_FACTOR;
     }
 
+    @Nonnull
+    public static Int2LongOpenHashTable newInstance() {
+        return new Int2LongOpenHashTable(DEFAULT_SIZE);
+    }
+
     public void defaultReturnValue(long v) {
         this.defaultReturnValue = v;
+    }
+
+    @Nonnull
+    public int[] getKeys() {
+        return _keys;
+    }
+
+    @Nonnull
+    public long[] getValues() {
+        return _values;
+    }
+
+    @Nonnull
+    public byte[] getStates() {
+        return _states;
     }
 
     public boolean containsKey(int key) {

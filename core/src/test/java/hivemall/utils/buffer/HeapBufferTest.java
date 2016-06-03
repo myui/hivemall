@@ -17,8 +17,12 @@
  */
 package hivemall.utils.buffer;
 
+import hivemall.utils.lang.ObjectUtils;
 import hivemall.utils.lang.Preconditions;
 import hivemall.utils.lang.SizeOf;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 
@@ -30,7 +34,7 @@ public class HeapBufferTest {
     @Test
     public void testSingleEntry() {
         final int factors = 5;
-        HeapBuffer heap = new HeapBuffer();
+        HeapBuffer heap = new HeapBuffer(HeapBuffer.DEFAULT_CHUNK_SIZE);
 
         Entry1 e1 = new Entry1(heap, factors);
         long ptr1 = heap.allocate(e1.size());
@@ -54,7 +58,7 @@ public class HeapBufferTest {
     @Test
     public void testMultipleEntries() {
         final int factors = 5;
-        final HeapBuffer buf = new HeapBuffer();
+        final HeapBuffer buf = new HeapBuffer(HeapBuffer.DEFAULT_CHUNK_SIZE);
 
         Entry1 e1 = new Entry1(buf, factors);
         long ptr1 = buf.allocate(e1.size());
@@ -117,7 +121,7 @@ public class HeapBufferTest {
         final int loop = 10000;
         final int factors = 5;
         final float[] v = new float[factors];
-        final HeapBuffer buf = new HeapBuffer(2, 1024);
+        final HeapBuffer buf = new HeapBuffer(1024, 2);
         final long[] ptrs = new long[loop];
 
         final Entry1 entryProbe = new Entry1(buf, factors);
@@ -137,6 +141,43 @@ public class HeapBufferTest {
             entryProbe.getV(v);
             for (int f = 0; f < factors; f++) {
                 Assert.assertEquals(i + f, v[f], 0.f);
+            }
+        }
+    }
+
+    @Test
+    public void testSerDe() throws IOException, ClassNotFoundException {
+        final int loop = 10000;
+        final int factors = 5;
+        final float[] v = new float[factors];
+        HeapBuffer buf = new HeapBuffer(1024, 2);
+        final long[] ptrs = new long[loop];
+
+        Entry1 entryProbe = new Entry1(buf, factors);
+        for (int i = 0; i < loop; i++) {
+            entryProbe.setOffset(buf.allocate(entryProbe.size()));
+            ptrs[i] = entryProbe.getOffset();
+            entryProbe.setW(i);
+            for (int f = 0; f < factors; f++) {
+                v[f] = i + f;
+            }
+            entryProbe.setV(v);
+        }
+
+        long expected = buf.consumedBytes();
+        byte[] b = ObjectUtils.toCompressedBytes(buf);
+        buf = HeapBuffer.newInstance();
+        ObjectUtils.readCompressedObject(b, buf);
+        entryProbe = new Entry1(buf, factors);
+        Assert.assertEquals(expected, buf.consumedBytes());
+
+        for (int i = 0; i < loop; i++) {
+            entryProbe.setOffset(ptrs[i]);
+            Assert.assertEquals(i, entryProbe.getW(), 0.f);
+            entryProbe.getV(v);
+            for (int f = 0; f < factors; f++) {
+                Assert.assertEquals("Failed at i=" + i + ", V=" + Arrays.toString(v), i + f, v[f],
+                    0.f);
             }
         }
     }

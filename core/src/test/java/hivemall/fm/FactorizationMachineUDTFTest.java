@@ -28,7 +28,7 @@ public class FactorizationMachineUDTFTest {
                 PrimitiveObjectInspectorFactory.javaDoubleObjectInspector,
                 ObjectInspectorUtils.getConstantObjectInspector(
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                    "-factor 5 -min 1 -max 5 -iters 1 -init_v gaussian -eta0 0.01")};
+                    "-factors 5 -min 1 -max 5 -iters 1 -init_v gaussian -eta0 0.01")};
 
         udtf.initialize(argOIs);
         FactorizationMachineModel model = udtf.getModel();

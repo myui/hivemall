@@ -33,7 +33,7 @@ class FMHyperParameters {
     // Model parameters
 
     boolean classification = false;
-    int factor = 5;
+    int factors = 5;
 
     // regularization
     float lambda = 0.01f;
@@ -73,7 +73,7 @@ class FMHyperParameters {
 
     @Override
     public String toString() {
-        return "FMHyperParameters [classification=" + classification + ", factors=" + factor
+        return "FMHyperParameters [classification=" + classification + ", factors=" + factors
                 + ", lambda=" + lambda + ", lambdaW0=" + lambdaW0 + ", lambdaW=" + lambdaW
                 + ", lambdaV=" + lambdaV + ", sigma=" + sigma + ", seed=" + seed + ", vInit="
                 + vInit + ", minTarget=" + minTarget + ", maxTarget=" + maxTarget + ", eta=" + eta
@@ -86,7 +86,7 @@ class FMHyperParameters {
 
     void processOptions(@Nonnull CommandLine cl) throws UDFArgumentException {
         this.classification = cl.hasOption("classification");
-        this.factor = Primitives.parseInt(cl.getOptionValue("factors"), factor);
+        this.factors = Primitives.parseInt(cl.getOptionValue("factors"), factors);
         this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), lambda);
         this.lambdaW0 = Primitives.parseFloat(cl.getOptionValue("lambda_w0"), lambda);
         this.lambdaW = Primitives.parseFloat(cl.getOptionValue("lambda_w"), lambda);
@@ -96,7 +96,7 @@ class FMHyperParameters {
         if (seed == -1L) {
             this.seed = System.nanoTime();
         }
-        this.vInit = instantiateVInit(cl, factor, seed);
+        this.vInit = instantiateVInit(cl, factors, seed);
         this.minTarget = Primitives.parseDouble(cl.getOptionValue("min_target"), minTarget);
         this.maxTarget = Primitives.parseDouble(cl.getOptionValue("max_target"), maxTarget);
         this.eta = EtaEstimator.get(cl, DEFAULT_ETA0);

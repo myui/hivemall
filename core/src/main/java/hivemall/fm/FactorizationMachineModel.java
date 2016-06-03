@@ -51,7 +51,7 @@ public abstract class FactorizationMachineModel {
 
     public FactorizationMachineModel(@Nonnull FMHyperParameters params) {
         this._classification = params.classification;
-        this._factor = params.factor;
+        this._factor = params.factors;
         this._sigma = params.sigma;
         this._eta = params.eta;
         this._initScheme = params.vInit;
@@ -63,7 +63,7 @@ public abstract class FactorizationMachineModel {
         // Regulation Variables
         this._lambdaW0 = params.lambdaW0;
         this._lambdaW = params.lambdaW;
-        this._lambdaV = new float[params.factor];
+        this._lambdaV = new float[params.factors];
         Arrays.fill(_lambdaV, params.lambdaV);
 
         initLearningParams();

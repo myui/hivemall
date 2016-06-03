@@ -23,6 +23,11 @@ import hivemall.utils.lang.Primitives;
 import hivemall.utils.lang.SizeOf;
 import hivemall.utils.lang.UnsafeUtils;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -30,8 +35,8 @@ import sun.misc.Unsafe;
 
 @SuppressWarnings("restriction")
 @NotThreadSafe
-public final class HeapBuffer {
-    /** 4 (int) * 4 MiB = 16 MiB */
+public final class HeapBuffer implements Externalizable {
+    /** 4 * 1024 * 1024 entries * 4 B (int) = 16 MiB */
     public static final int DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
     /** 16 MiB * 8 Chunks = 128 MiB */
     public static final int DEFAULT_NUM_CHUNKS = 8;
@@ -39,8 +44,8 @@ public final class HeapBuffer {
     @Nonnull
     private final Unsafe _UNSAFE;
 
-    private final int _chunkSize;
-    private final int _chunkBytes;
+    private/* final */int _chunkSize;
+    private/* final */int _chunkBytes;
     @Nonnull
     private int[][] _chunks;
     /** the number of chunks created */
@@ -60,11 +65,18 @@ public final class HeapBuffer {
 
     //-----------------------------
 
+    /**
+     * Constructor for Externalizable. Should not be called otherwise.
+     */
+    public HeapBuffer() {
+        this._UNSAFE = UnsafeUtils.getUnsafe();
+    }// for Externalizable
+
     public HeapBuffer(int chunkSize) {
-        this(DEFAULT_NUM_CHUNKS, chunkSize);
+        this(chunkSize, DEFAULT_NUM_CHUNKS);
     }
 
-    public HeapBuffer(int initNumChunks, int chunkSize) {
+    public HeapBuffer(int chunkSize, int initNumChunks) {
         this._UNSAFE = UnsafeUtils.getUnsafe();
         this._chunkSize = chunkSize;
         this._chunkBytes = SizeOf.INT * chunkSize;
@@ -74,6 +86,19 @@ public final class HeapBuffer {
         this._numAllocated = 0;
         this._allocatedBytes = 0L;
         this._skippedBytes = 0L;
+    }
+
+    @Nonnull
+    public static HeapBuffer newInstance() {
+        return new HeapBuffer(DEFAULT_CHUNK_SIZE);
+    }
+
+    public void init(int chunkSize, long position, @Nonnull int[][] chunks) {
+        this._chunkSize = chunkSize;
+        this._chunkBytes = chunkSize * SizeOf.INT;
+        this._chunks = chunks;
+        this._initializedChunks = chunks.length;
+        this._position = position;
     }
 
     /**
@@ -310,15 +335,8 @@ public final class HeapBuffer {
         return _position;
     }
 
-    long consumedBytes() {
-        long bytes = 0L;
-        for (int[] c : _chunks) {
-            if (c == null) {
-                continue;
-            }
-            bytes += SizeOf.INT * c.length;
-        }
-        return bytes;
+    public long consumedBytes() {
+        return _chunkBytes * _initializedChunks;
     }
 
     long allocatedBytes() {
@@ -335,6 +353,46 @@ public final class HeapBuffer {
 
     int getChunkSize() {
         return _chunkBytes;
+    }
+
+    @Override
+    public void writeExternal(@Nonnull final ObjectOutput out) throws IOException {
+        out.writeInt(_chunkSize);
+        out.writeLong(_position);
+
+        final int[][] chunks = _chunks;
+        final int numChunks = _initializedChunks;
+        out.writeInt(numChunks);
+        for (int i = 0; i < numChunks; i++) {
+            final int[] chunk = chunks[i];
+            if (chunk.length != _chunkSize) {
+                throw new IllegalStateException("Illegal chunk size at chunk[" + i + ']');
+            }
+            for (int j = 0; j < chunk.length; j++) {
+                out.writeInt(chunk[j]);
+            }
+            chunks[i] = null;
+        }
+        // help GC
+        this._chunks = null;
+    }
+
+    @Override
+    public void readExternal(@Nonnull final ObjectInput in) throws IOException,
+            ClassNotFoundException {
+        final int chunkSize = in.readInt();
+        final long position = in.readLong();
+        final int numChunks = in.readInt();
+        final int[][] chunks = new int[numChunks][];
+        for (int i = 0; i < numChunks; i++) {
+            final int[] chunk = new int[chunkSize];
+            for (int j = 0; j < chunkSize; j++) {
+                chunk[j] = in.readInt();
+            }
+            chunks[i] = chunk;
+        }
+
+        init(chunkSize, position, chunks);
     }
 
 }

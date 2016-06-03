@@ -36,7 +36,7 @@ public final class FMArrayModel extends FactorizationMachineModel {
         super(params);
         this._p = params.numFeatures;
         this._w = new float[params.numFeatures + 1];
-        this._V = new float[params.numFeatures][params.factor];
+        this._V = new float[params.numFeatures][params.factors];
     }
 
     @Override

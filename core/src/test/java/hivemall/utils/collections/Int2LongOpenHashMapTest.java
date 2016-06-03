@@ -70,7 +70,7 @@ public class Int2LongOpenHashMapTest {
         }
 
         byte[] b = ObjectUtils.toCompressedBytes(map);
-        map = new Int2LongOpenHashTable();
+        map = new Int2LongOpenHashTable(16384);
         ObjectUtils.readCompressedObject(b, map);
 
         Assert.assertEquals(numEntries, map.size());

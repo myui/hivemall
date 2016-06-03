@@ -41,30 +41,31 @@ public class FieldAwareFactorizationMachineUDTFTest {
     @Test
     public void testSGD() throws HiveException, IOException {
         runTest("Pure SGD test",
-            "-classification -factor 10 -w0 -seed 43 -disable_adagrad -disable_ftrl", 0.60f);
+            "-classification -factors 10 -w0 -seed 43 -disable_adagrad -disable_ftrl", 0.60f);
     }
 
     @Test
     public void testSGDWithFTRL() throws HiveException, IOException {
-        runTest("SGD w/ FTRL test", "-classification -factor 10 -w0 -seed 43 -disable_adagrad",
+        runTest("SGD w/ FTRL test", "-classification -factors 10 -w0 -seed 43 -disable_adagrad",
             0.60f);
     }
 
     @Test
     public void testAdaGradNoCoeff() throws HiveException, IOException {
-        runTest("AdaGrad No Coeff test", "-classification -factor 10 -w0 -seed 43 -no_coeff", 0.30f);
+        runTest("AdaGrad No Coeff test", "-classification -factors 10 -w0 -seed 43 -no_coeff",
+            0.30f);
     }
 
     @Test
     public void testAdaGradNoFTRL() throws HiveException, IOException {
-        runTest("AdaGrad w/o FTRL test", "-classification -factor 10 -w0 -seed 43 -disable_ftrl",
+        runTest("AdaGrad w/o FTRL test", "-classification -factors 10 -w0 -seed 43 -disable_ftrl",
             0.30f);
     }
 
     @Test
     public void testAdaGradDefault() throws HiveException, IOException {
         runTest("AdaGrad DEFAULT (adagrad for V + FTRL for W)",
-            "-classification -factor 10 -w0 -seed 43", 0.30f);
+            "-classification -factors 10 -w0 -seed 43", 0.30f);
     }
 
     private static void runTest(String testName, String testOptions, float lossThreshold)

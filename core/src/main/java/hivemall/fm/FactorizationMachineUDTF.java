@@ -84,7 +84,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     protected boolean _classification;
     protected int _iterations;
-    protected int _factor;
+    protected int _factors;
     protected boolean _parseFeatureAsInt;
 
     // adaptive regularization
@@ -182,7 +182,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
         this._classification = params.classification;
         this._iterations = params.iters;
-        this._factor = params.factor;
+        this._factors = params.factors;
         this._parseFeatureAsInt = params.parseFeatureAsInt;
         if (params.adaptiveReglarization) {
             this._va_rand = new Random(params.seed + 31L);
@@ -383,7 +383,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         for (Feature xi : x) {
             // wi update
             _model.updateWi(lossGrad, xi, eta);
-            for (int f = 0, k = _factor; f < k; f++) {
+            for (int f = 0, k = _factors; f < k; f++) {
                 // Vif update
                 _model.updateV(lossGrad, xi, f, sumVfx[f], eta);
             }
@@ -434,10 +434,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     protected void forwardModel() throws HiveException {
         if (_parseFeatureAsInt) {
-            forwardAsIntFeature(_model, _factor);
+            forwardAsIntFeature(_model, _factors);
         } else {
             FMStringFeatureMapModel strModel = (FMStringFeatureMapModel) _model;
-            forwardAsStringFeature(strModel, _factor);
+            forwardAsStringFeature(strModel, _factors);
         }
     }
 

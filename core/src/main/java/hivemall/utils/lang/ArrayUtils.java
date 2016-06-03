@@ -245,4 +245,28 @@ public final class ArrayUtils {
         return newArray;
     }
 
+    public static boolean equals(@Nonnull final float[] array, final float value) {
+        for (int i = 0, size = array.length; i < size; i++) {
+            if (array[i] != value) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean almostEquals(@Nonnull final float[] array, final float expected) {
+        return equals(array, expected, 1E-15f);
+    }
+
+    public static boolean equals(@Nonnull final float[] array, final float expected,
+            final float delta) {
+        for (int i = 0, size = array.length; i < size; i++) {
+            float actual = array[i];
+            if (Math.abs(expected - actual) > delta) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

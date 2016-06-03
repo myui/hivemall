@@ -106,8 +106,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         final float lambdaVf = getLambdaV(f);
 
         final Entry theta = getEntry(x, yField);
-        assert (theta.Vf != null) : "theta.Vf is NULL: x=" + x + ", yField=" + yField;
-        final float currentV = theta.Vf[f];
+        final float currentV = theta.getV(f);
         final float eta = etaV(theta, t, gradV);
         final float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
@@ -116,7 +115,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        theta.Vf[f] = nextV;
+        theta.setV(f, nextV);
     }
 
     protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
@@ -190,125 +189,5 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     @Nonnull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
-
-    protected final Entry newEntry(final float W) {
-        if (_useFTRL) {
-            return new FTRLEntry(W);
-        } else if (_useAdaGrad) {
-            return new AdaGradEntry(W);
-        } else {
-            return new Entry(W);
-        }
-    }
-
-    protected final Entry newEntry(@Nonnull final float[] V) {
-        if (_useFTRL) {
-            return new FTRLEntry(0.f, V);
-        } else if (_useAdaGrad) {
-            return new AdaGradEntry(0.f, V);
-        } else {
-            return new Entry(0.f, V);
-        }
-    }
-
-    static class Entry {
-        float W;
-        @Nullable
-        float[] Vf;
-
-        Entry(float W) {
-            this(W, null);
-        }
-
-        Entry(float W, @Nullable float[] Vf) {
-            this.W = W;
-            this.Vf = Vf;
-        }
-
-        double getSumOfSquaredGradientsV() {
-            throw new UnsupportedOperationException();
-        }
-
-        void addGradientV(float grad) {
-            throw new UnsupportedOperationException();
-        }
-
-        float updateZ(float gradW, float alpha) {
-            throw new UnsupportedOperationException();
-        }
-
-        double updateN(float gradW) {
-            throw new UnsupportedOperationException();
-        }
-
-    }
-
-    static class AdaGradEntry extends Entry {
-        /** sum of gradients of V */
-        double v_gg;
-
-        AdaGradEntry(float W) {
-            this(W, null);
-        }
-
-        AdaGradEntry(float W, @Nullable float[] Vf) {
-            super(W, Vf);
-            this.v_gg = 0.d;
-        }
-
-        @Override
-        final double getSumOfSquaredGradientsV() {
-            return v_gg;
-        }
-
-        @Override
-        final void addGradientV(final float gradV) {
-            this.v_gg += gradV * gradV;
-        }
-
-    }
-
-    static final class FTRLEntry extends AdaGradEntry {
-
-        float z;
-        /** sum of gradients of W */
-        double n;
-
-        FTRLEntry(float W) {
-            this(W, null);
-        }
-
-        FTRLEntry(float W, @Nullable float[] Vf) {
-            super(W, Vf);
-            this.z = 0.f;
-            this.n = 0.d;
-        }
-
-        @Override
-        float updateZ(final float gradW, final float alpha) {
-            double gg = gradW * gradW;
-            float sigma = (float) ((Math.sqrt(n + gg) - Math.sqrt(n)) / alpha);
-
-            float newZ = z + gradW - sigma * W;
-            if (!NumberUtils.isFinite(newZ)) {
-                throw new IllegalStateException("Got newZ " + newZ + " where z=" + z + ", gradW="
-                        + gradW + ", sigma=" + sigma + ", W=" + W + ", n=" + n + ", gg=" + gg
-                        + ", alpha=" + alpha);
-            }
-            this.z = newZ;
-            return newZ;
-        }
-
-        @Override
-        double updateN(final float gradW) {
-            double newN = n + gradW * gradW;
-            if (!NumberUtils.isFinite(newN)) {
-                throw new IllegalStateException("Got newN " + newN + " where n=" + n + ", gradW="
-                        + gradW);
-            }
-            this.n = newN;
-            return newN;
-        }
-    }
 
 }
