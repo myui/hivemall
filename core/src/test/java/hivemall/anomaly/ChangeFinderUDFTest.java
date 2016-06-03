@@ -71,8 +71,10 @@ public class ChangeFinderUDFTest {
             outputFile = File.createTempFile("rand_output", ".txt");
             outputFile.deleteOnExit();
             fileName = outputFile.getName();
-            outputHintFile = new File("src/test/resources/hivemall/anomaly/"+fileName+"_hints.txt");
-            outputHintCondensedFile = new File("src/test/resources/hivemall/anomaly/"+fileName+"_hints_condensed.txt");
+            outputHintFile =
+                    new File("src/test/resources/hivemall/anomaly/" + fileName + "_hints.txt");
+            outputHintCondensedFile = new File(
+                "src/test/resources/hivemall/anomaly/" + fileName + "_hints_condensed.txt");
             output = new BufferedWriter(new FileWriter(outputFile));
             output2 = new BufferedWriter(new FileWriter(outputHintFile));
             output3 = new BufferedWriter(new FileWriter(outputHintCondensedFile));
@@ -132,7 +134,9 @@ public class ChangeFinderUDFTest {
 
         println("detection test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
-        ObjectInspector[] argOIs = new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)};
+        ObjectInspector[] argOIs =
+                new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)};
 
         udf.initialize(argOIs);
 
@@ -171,7 +175,8 @@ public class ChangeFinderUDFTest {
             output.write("#\taW\taF\t\taT\tcW\tcF\t\tcT\n#\t" + udf.getxRunningWindowSize() + "\t"
                     + udf.getxForgetfulness() + "\t" + udf.getxThreshold() + "\t"
                     + udf.getyRunningWindowSize() + "\t" + udf.getyForgetfulness() + "\t"
-                    + udf.getyThreshold() + "\n#x\txBool\ty\tyBool\txHat[0]\txModelCovar[0,0]\tyHat\tyModelVar\n");
+                    + udf.getyThreshold()
+                    + "\n#x\txBool\ty\tyBool\txHat[0]\txModelCovar[0,0]\tyHat\tyModelVar\n");
         }
 
         ArrayList<Integer> anomalies = new ArrayList<Integer>();
@@ -240,9 +245,8 @@ public class ChangeFinderUDFTest {
 
             if (DEBUG) {
                 output.write(x + " " + xB + " " + y + " " + yB + " "
-                        + udf.getxEstimate().getEntry(0) + " "
-                        + udf.getxModelCovar().getEntry(0, 0) + " " + udf.getyEstimate() + " "
-                        + udf.getyModelVar() + "\n");
+                        + udf.getxEstimate().getEntry(0) + " " + udf.getxModelCovar().getEntry(0, 0)
+                        + " " + udf.getyEstimate() + " " + udf.getyModelVar() + "\n");
             }
             if (xB == 1.d) {
                 anomalies.add(lineNumber + 1);
@@ -290,17 +294,17 @@ public class ChangeFinderUDFTest {
         ConstantObjectInspector param4OI = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-aWindow 2 -aForget 0.5 -aThresh 0");;
-        ObjectInspector[] argOIs = new ObjectInspector[] {
-                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
-                paramOI};
+        ObjectInspector[] argOIs =
+                new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaDoubleObjectInspector), paramOI};
 
         boolean caught = false;
         udf.initialize(argOIs);
         try {
-            udf.evaluate(new DeferredObject[] {new DeferredJavaObject(
-                Arrays.asList(new Double[] {1.d}))});
-            udf.evaluate(new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {
-                    1.d, 1.d}))});
+            udf.evaluate(
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {1.d}))});
+            udf.evaluate(new DeferredObject[] {
+                    new DeferredJavaObject(Arrays.asList(new Double[] {1.d, 1.d}))});
         } catch (HiveException e) {
             caught = true;
         }
@@ -327,13 +331,13 @@ public class ChangeFinderUDFTest {
         argOIs[1] = param4OI;
         udf.initialize(argOIs);
 
-        DeferredObject[] one = new DeferredObject[] {new DeferredJavaObject(
-            Arrays.asList(new Double[] {1.d}))};
-        for (int i = 0; i < udf.getxRunningWindowSize(); i++) {
-            udf.evaluate(one);
-        }
-        Object[] result = (Object[]) udf.evaluate(new DeferredObject[] {new DeferredJavaObject(
-            Arrays.asList(new Double[] {10000.d}))});
+        DeferredObject[] one =
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {54.d}))};
+        //for (int i = 0; i < udf.getxRunningWindowSize(); i++) {
+        udf.evaluate(one);
+        //}
+        Object[] result = (Object[]) udf.evaluate(
+            new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {10000.d}))});
         Assert.assertTrue("Result length incorrect.", result.length == 4);
         Assert.assertTrue("No anomaly detected for data set [1, 1, ..., 1, 10000].",
             ((BooleanWritable) result[1]).get());
@@ -341,15 +345,18 @@ public class ChangeFinderUDFTest {
 
         println("multidim");
         udf.initialize(argOIs);
-        Double[] data = new Double[] {1.d, 1.d, 1.d, 1.d, 1.d};
-        DeferredObject[] increasing = new DeferredObject[] {new DeferredJavaObject(
-            Arrays.asList(data))};
-        for (int i = 0; i < 5; i++) {
-            udf.evaluate(increasing);
-            for (int j = 0; j < 5; j++) {
-                data[j] = new Double(i * i + j);
-            }
-        }
+        Double[] data = new Double[] {1.d, 1.d};
+        DeferredObject[] increasing =
+                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
+        udf.evaluate(increasing);
+        data = new Double[] {2.d, 1.d};
+        udf.evaluate(increasing);
+        data = new Double[] {1.d, 2.d};
+        udf.evaluate(increasing);
+        data = new Double[] {2.d, 2.d};
+        udf.evaluate(increasing);
+        data = new Double[] {1.d, 1.d};
+        udf.evaluate(increasing);
     }
 
     private static void write(Writer output2, String content) throws IOException {
@@ -357,6 +364,7 @@ public class ChangeFinderUDFTest {
             output2.write(content);
         }
     }
+
     private static void println(String line) {
         if (DEBUG) {
             System.out.println(line);
