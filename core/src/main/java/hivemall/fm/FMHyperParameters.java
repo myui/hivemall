@@ -73,7 +73,7 @@ class FMHyperParameters {
 
     @Override
     public String toString() {
-        return "FMHyperParameters [classification=" + classification + ", factor=" + factor
+        return "FMHyperParameters [classification=" + classification + ", factors=" + factor
                 + ", lambda=" + lambda + ", lambdaW0=" + lambdaW0 + ", lambdaW=" + lambdaW
                 + ", lambdaV=" + lambdaV + ", sigma=" + sigma + ", seed=" + seed + ", vInit="
                 + vInit + ", minTarget=" + minTarget + ", maxTarget=" + maxTarget + ", eta=" + eta
@@ -86,7 +86,7 @@ class FMHyperParameters {
 
     void processOptions(@Nonnull CommandLine cl) throws UDFArgumentException {
         this.classification = cl.hasOption("classification");
-        this.factor = Primitives.parseInt(cl.getOptionValue("factor"), factor);
+        this.factor = Primitives.parseInt(cl.getOptionValue("factors"), factor);
         this.lambda = Primitives.parseFloat(cl.getOptionValue("lambda"), lambda);
         this.lambdaW0 = Primitives.parseFloat(cl.getOptionValue("lambda_w0"), lambda);
         this.lambdaW = Primitives.parseFloat(cl.getOptionValue("lambda_w"), lambda);

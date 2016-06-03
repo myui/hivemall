@@ -117,7 +117,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("seed", true, "Seed value [default: -1 (random)]");
         opts.addOption("iters", "iterations", true, "The number of iterations [default: 1]");
         opts.addOption("num_features", true, "The size of feature dimensions");
-        opts.addOption("f", "factor", true, "The number of the latent variables [default: 5]");
+        opts.addOption("f", "factors", true, "The number of the latent variables [default: 5]");
         opts.addOption("sigma", true, "The standard deviation for initializing V [default: 0.1]");
         opts.addOption("lambda", true,
             "The initial lambda value for regularization [default: 0.01]");
