@@ -270,6 +270,14 @@ public final class IOUtils {
         return floats;
     }
 
+    @Nonnull
+    public static void readFloats(@Nonnull final DataInput in, @Nonnull final float[] dst)
+            throws IOException {
+        for (int i = 0, len = dst.length; i < len; i++) {
+            dst[i] = in.readFloat();
+        }
+    }
+
     @Deprecated
     public static void writeVFloats(@Nonnull final float[] floats, final int size,
             @Nonnull final DataOutput out) throws IOException {

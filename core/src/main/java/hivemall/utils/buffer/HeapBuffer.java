@@ -23,11 +23,6 @@ import hivemall.utils.lang.Primitives;
 import hivemall.utils.lang.SizeOf;
 import hivemall.utils.lang.UnsafeUtils;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -35,17 +30,19 @@ import sun.misc.Unsafe;
 
 @SuppressWarnings("restriction")
 @NotThreadSafe
-public final class HeapBuffer implements Externalizable {
-    /** 4 * 1024 * 1024 entries * 4 B (int) = 16 MiB */
+public final class HeapBuffer {
+    /** 4 * 1024 * 1024 = 4M entries */
     public static final int DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
+    /** 4 bytes (int) * 4M = 16 MiB */
+    public static final int DEFAULT_CHUNK_BYTES = SizeOf.INT * DEFAULT_CHUNK_SIZE;
     /** 16 MiB * 8 Chunks = 128 MiB */
     public static final int DEFAULT_NUM_CHUNKS = 8;
 
     @Nonnull
     private final Unsafe _UNSAFE;
 
-    private/* final */int _chunkSize;
-    private/* final */int _chunkBytes;
+    private final int _chunkSize;
+    private final int _chunkBytes;
     @Nonnull
     private int[][] _chunks;
     /** the number of chunks created */
@@ -56,6 +53,7 @@ public final class HeapBuffer implements Externalizable {
 
     //-----------------------------
     // buffer stats
+
     /** The number of allocation */
     private int _numAllocated;
     /** Total allocated bytes */
@@ -65,15 +63,16 @@ public final class HeapBuffer implements Externalizable {
 
     //-----------------------------
 
-    /**
-     * Constructor for Externalizable. Should not be called otherwise.
-     */
     public HeapBuffer() {
-        this._UNSAFE = UnsafeUtils.getUnsafe();
-    }// for Externalizable
+        this(DEFAULT_CHUNK_SIZE);
+    }
 
     public HeapBuffer(int chunkSize) {
         this(chunkSize, DEFAULT_NUM_CHUNKS);
+    }
+
+    public int getChunkSize() {
+        return _chunkBytes;
     }
 
     public HeapBuffer(int chunkSize, int initNumChunks) {
@@ -86,19 +85,6 @@ public final class HeapBuffer implements Externalizable {
         this._numAllocated = 0;
         this._allocatedBytes = 0L;
         this._skippedBytes = 0L;
-    }
-
-    @Nonnull
-    public static HeapBuffer newInstance() {
-        return new HeapBuffer(DEFAULT_CHUNK_SIZE);
-    }
-
-    public void init(int chunkSize, long position, @Nonnull int[][] chunks) {
-        this._chunkSize = chunkSize;
-        this._chunkBytes = chunkSize * SizeOf.INT;
-        this._chunks = chunks;
-        this._initializedChunks = chunks.length;
-        this._position = position;
     }
 
     /**
@@ -331,68 +317,31 @@ public final class HeapBuffer implements Externalizable {
                 + NumberUtils.formatNumber(_chunkBytes) + " bytes]";
     }
 
-    long position() {
-        return _position;
-    }
-
     public long consumedBytes() {
         return _chunkBytes * _initializedChunks;
     }
 
-    long allocatedBytes() {
-        return _allocatedBytes;
-    }
-
-    int getNumChunks() {
-        return _chunks.length;
-    }
-
-    int getNumInitializedChunks() {
+    public int getNumInitializedChunks() {
         return _initializedChunks;
     }
 
-    int getChunkSize() {
-        return _chunkBytes;
+    public int getNumChunks() {
+        return _chunks.length;
     }
 
-    @Override
-    public void writeExternal(@Nonnull final ObjectOutput out) throws IOException {
-        out.writeInt(_chunkSize);
-        out.writeLong(_position);
-
-        final int[][] chunks = _chunks;
-        final int numChunks = _initializedChunks;
-        out.writeInt(numChunks);
-        for (int i = 0; i < numChunks; i++) {
-            final int[] chunk = chunks[i];
-            if (chunk.length != _chunkSize) {
-                throw new IllegalStateException("Illegal chunk size at chunk[" + i + ']');
-            }
-            for (int j = 0; j < chunk.length; j++) {
-                out.writeInt(chunk[j]);
-            }
-            chunks[i] = null;
-        }
-        // help GC
-        this._chunks = null;
+    public long position() {
+        return _position;
     }
 
-    @Override
-    public void readExternal(@Nonnull final ObjectInput in) throws IOException,
-            ClassNotFoundException {
-        final int chunkSize = in.readInt();
-        final long position = in.readLong();
-        final int numChunks = in.readInt();
-        final int[][] chunks = new int[numChunks][];
-        for (int i = 0; i < numChunks; i++) {
-            final int[] chunk = new int[chunkSize];
-            for (int j = 0; j < chunkSize; j++) {
-                chunk[j] = in.readInt();
-            }
-            chunks[i] = chunk;
-        }
-
-        init(chunkSize, position, chunks);
+    public int getNumAllocated() {
+        return _numAllocated;
     }
 
+    public long getAllocatedBytes() {
+        return _allocatedBytes;
+    }
+
+    public long getSkippedBytes() {
+        return _skippedBytes;
+    }
 }

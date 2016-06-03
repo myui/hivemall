@@ -50,13 +50,29 @@ public class Int2LongOpenHashTable implements Externalizable {
     protected final transient float _loadFactor;
     protected final transient float _growFactor;
 
-    protected int _used = 0;
-    protected int _threshold;
-    protected long defaultReturnValue = -1L;
-
     protected int[] _keys;
     protected long[] _values;
     protected byte[] _states;
+
+    protected int _used;
+    protected int _threshold;
+    protected long defaultReturnValue = -1L;
+    
+    /**
+     * Constructor for Externalizable. Should not be called otherwise.
+     */
+    public Int2LongOpenHashTable() {// for Externalizable
+        this._loadFactor = DEFAULT_LOAD_FACTOR;
+        this._growFactor = DEFAULT_GROW_FACTOR;
+    }
+
+    public Int2LongOpenHashTable(int size) {
+        this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR, true);
+    }
+
+    public Int2LongOpenHashTable(int size, float loadFactor, float growFactor) {
+        this(size, loadFactor, growFactor, true);
+    }
 
     protected Int2LongOpenHashTable(int size, float loadFactor, float growFactor, boolean forcePrime) {
         if (size < 1) {
@@ -68,25 +84,21 @@ public class Int2LongOpenHashTable implements Externalizable {
         this._keys = new int[actualSize];
         this._values = new long[actualSize];
         this._states = new byte[actualSize];
+        this._used = 0;
         this._threshold = (int) (actualSize * _loadFactor);
     }
-
-    public Int2LongOpenHashTable(int size, float loadFactor, float growFactor) {
-        this(size, loadFactor, growFactor, true);
-    }
-
-    public Int2LongOpenHashTable(int size) {
-        this(size, DEFAULT_LOAD_FACTOR, DEFAULT_GROW_FACTOR, true);
-    }
-
-    /**
-     * Constructor for Externalizable. Should not be called otherwise.
-     */
-    public Int2LongOpenHashTable() {// for Externalizable
+    
+    public Int2LongOpenHashTable(@Nonnull int[] keys, @Nonnull long[] values, @Nonnull byte[] states,
+            int used) {
         this._loadFactor = DEFAULT_LOAD_FACTOR;
         this._growFactor = DEFAULT_GROW_FACTOR;
+        this._keys = keys;
+        this._values = values;
+        this._states = states;
+        this._used = used;
+        this._threshold = keys.length;
     }
-
+    
     @Nonnull
     public static Int2LongOpenHashTable newInstance() {
         return new Int2LongOpenHashTable(DEFAULT_SIZE);
