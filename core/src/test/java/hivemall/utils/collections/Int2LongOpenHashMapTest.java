@@ -18,6 +18,10 @@
  */
 package hivemall.utils.collections;
 
+import hivemall.utils.lang.ObjectUtils;
+
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,6 +54,25 @@ public class Int2LongOpenHashMapTest {
         for (int i = 0; i < numEntries; i++) {
             Assert.assertEquals(-1L, map.put(i, i));
         }
+        Assert.assertEquals(numEntries, map.size());
+        for (int i = 0; i < numEntries; i++) {
+            long v = map.get(i);
+            Assert.assertEquals(i, v);
+        }
+    }
+
+    @Test
+    public void testSerde() throws IOException, ClassNotFoundException {
+        Int2LongOpenHashTable map = new Int2LongOpenHashTable(16384);
+        final int numEntries = 1000000;
+        for (int i = 0; i < numEntries; i++) {
+            Assert.assertEquals(-1L, map.put(i, i));
+        }
+
+        byte[] b = ObjectUtils.toCompressedBytes(map);
+        map = new Int2LongOpenHashTable();
+        ObjectUtils.readCompressedObject(b, map);
+
         Assert.assertEquals(numEntries, map.size());
         for (int i = 0; i < numEntries; i++) {
             long v = map.get(i);

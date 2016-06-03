@@ -18,13 +18,19 @@
  */
 package hivemall.utils.collections;
 
+import hivemall.utils.codec.VariableByteCodec;
+import hivemall.utils.codec.ZigZagLEB128Codec;
 import hivemall.utils.math.Primes;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
+
+import javax.annotation.Nonnull;
 
 /**
  * An open-addressing hash table with double hashing
@@ -232,6 +238,10 @@ public class Int2LongOpenHashTable implements Externalizable {
         return _used;
     }
 
+    public int capacity() {
+        return _keys.length;
+    }
+
     public void clear() {
         Arrays.fill(_states, FREE);
         this._used = 0;
@@ -305,50 +315,90 @@ public class Int2LongOpenHashTable implements Externalizable {
         return key & 0x7fffffff;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(_threshold);
         out.writeInt(_used);
 
-        out.writeInt(_keys.length);
-        IMapIterator i = entries();
-        while (i.next() != -1) {
-            out.writeInt(i.getKey());
-            out.writeLong(i.getValue());
+        final int[] keys = _keys;
+        final int size = keys.length;
+        out.writeInt(size);
+
+        final byte[] states = _states;
+        writeStates(states, out);
+
+        final long[] values = _values;
+        for (int i = 0; i < size; i++) {
+            if (states[i] != FULL) {
+                continue;
+            }
+            ZigZagLEB128Codec.writeSignedInt(keys[i], out);
+            ZigZagLEB128Codec.writeSignedLong(values[i], out);
         }
     }
 
+    @Nonnull
+    private static void writeStates(@Nonnull final byte[] status, @Nonnull final DataOutput out)
+            throws IOException {
+        // write empty states's indexes differentially
+        final int size = status.length;
+        int cardinarity = 0;
+        for (int i = 0; i < size; i++) {
+            if (status[i] != FULL) {
+                cardinarity++;
+            }
+        }
+        out.writeInt(cardinarity);
+        if (cardinarity == 0) {
+            return;
+        }
+        int prev = 0;
+        for (int i = 0; i < size; i++) {
+            if (status[i] != FULL) {
+                int diff = i - prev;
+                assert (diff >= 0);
+                VariableByteCodec.encodeUnsignedInt(diff, out);
+                prev = i;
+            }
+        }
+    }
+
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this._threshold = in.readInt();
         this._used = in.readInt();
 
-        int keylen = in.readInt();
-        int[] keys = new int[keylen];
-        long[] values = new long[keylen];
-        byte[] states = new byte[keylen];
-        for (int i = 0; i < _used; i++) {
-            int k = in.readInt();
-            long v = in.readLong();
-            int hash = keyHash(k);
-            int keyIdx = hash % keylen;
-            if (states[keyIdx] != FREE) {// second hash
-                int decr = 1 + (hash % (keylen - 2));
-                for (;;) {
-                    keyIdx -= decr;
-                    if (keyIdx < 0) {
-                        keyIdx += keylen;
-                    }
-                    if (states[keyIdx] == FREE) {
-                        break;
-                    }
-                }
+        final int size = in.readInt();
+        final int[] keys = new int[size];
+        final long[] values = new long[size];
+        final byte[] states = new byte[size];
+        readStates(in, states);
+
+        for (int i = 0; i < size; i++) {
+            if (states[i] != FULL) {
+                continue;
             }
-            states[keyIdx] = FULL;
-            keys[keyIdx] = k;
-            values[keyIdx] = v;
+            keys[i] = ZigZagLEB128Codec.readSignedInt(in);
+            values[i] = ZigZagLEB128Codec.readSignedLong(in);
         }
+
         this._keys = keys;
         this._values = values;
         this._states = states;
+    }
+
+    @Nonnull
+    private static void readStates(@Nonnull final DataInput in, @Nonnull final byte[] status)
+            throws IOException {
+        // read non-empty states differentially
+        final int cardinarity = in.readInt();
+        Arrays.fill(status, IntOpenHashTable.FULL);
+        int prev = 0;
+        for (int j = 0; j < cardinarity; j++) {
+            int i = VariableByteCodec.decodeUnsignedInt(in) + prev;
+            status[i] = IntOpenHashTable.FREE;
+            prev = i;
+        }
     }
 
     public interface IMapIterator {
