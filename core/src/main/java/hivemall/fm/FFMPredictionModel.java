@@ -40,7 +40,11 @@ import java.util.Arrays;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public final class FFMPredictionModel implements Externalizable {
+    private static final Log LOG = LogFactory.getLog(FFMPredictionModel.class);
 
     private static final byte HALF_FLOAT_ENTRY = 1;
     private static final byte W_ONLY_HALF_FLOAT_ENTRY = 2;
@@ -329,6 +333,7 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
+        LOG.info("FFMPredictionModel#serialize(): " + _buf.toString());
         return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma2, true);
     }
 
@@ -337,6 +342,7 @@ public final class FFMPredictionModel implements Externalizable {
         FFMPredictionModel model = new FFMPredictionModel();
         ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma2,
             true);
+        LOG.info("FFMPredictionModel#deserialize(): " + model._buf.toString());
         return model;
     }
 
