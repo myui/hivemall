@@ -58,8 +58,10 @@ public final class HeapBuffer {
     /** Total skipped bytes */
     private long _skippedBytes;
 
-    public HeapBuffer() {
-        this(DEFAULT_NUM_CHUNKS, DEFAULT_CHUNK_SIZE);
+    //-----------------------------
+
+    public HeapBuffer(int chunkSize) {
+        this(DEFAULT_NUM_CHUNKS, chunkSize);
     }
 
     public HeapBuffer(int initNumChunks, int chunkSize) {
