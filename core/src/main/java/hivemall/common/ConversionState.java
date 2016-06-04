@@ -92,7 +92,8 @@ public final class ConversionState {
 
         if (currLosses > prevLosses) {
             if (logger.isInfoEnabled()) {
-                logger.info("currLoss [" + currLosses + "] > prevLosses [" + prevLosses + "]");
+                logger.info("Iteration #" + iter + " currLoss `" + currLosses + "` > prevLosses `"
+                        + prevLosses + '`');
             }
             this.prevLosses = currLosses;
             this.currLosses = 0.d;
@@ -106,16 +107,16 @@ public final class ConversionState {
                 // NOTE: never be true at the first iteration where prevLosses == Double.POSITIVE_INFINITY
                 logger.info("Training converged at " + iter + "-th iteration. [curLosses="
                         + currLosses + ", prevLosses=" + prevLosses + ", changeRate=" + changeRate
-                        + "]");
+                        + ']');
                 return true;
             } else {
                 this.readyToFinishIterations = true;
             }
         } else {
             if (logger.isDebugEnabled()) {
-                logger.debug("iter: " + iter + "[curLosses=" + currLosses + ", prevLosses="
+                logger.debug("Iteration #" + iter + " [curLosses=" + currLosses + ", prevLosses="
                         + prevLosses + ", changeRate=" + changeRate + ", #trainingExamples="
-                        + obserbedTrainingExamples + "]");
+                        + obserbedTrainingExamples + ']');
             }
             this.readyToFinishIterations = false;
         }
@@ -127,8 +128,8 @@ public final class ConversionState {
 
     public void logState(int iter, float eta) {
         if (logger.isInfoEnabled()) {
-            logger.info("[iter " + iter + "] curLoss=" + currLosses + ", prevLoss=" + prevLosses
-                    + ", eta=" + eta);
+            logger.info("Iteration #" + iter + " [curLoss=" + currLosses + ", prevLoss="
+                    + prevLosses + ", eta=" + eta + ']');
         }
         this.curIter = iter;
         this.curEta = eta;
