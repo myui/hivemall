@@ -115,7 +115,7 @@ public abstract class FactorizationMachineModel {
         return _lambdaV[f];
     }
 
-    final double dloss(@Nonnull final Feature[] x, final double y) {
+    final double dloss(@Nonnull final Feature[] x, final double y) throws HiveException {
         double p = predict(x);
         return dloss(p, y);
     }
@@ -133,7 +133,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    double predict(@Nonnull final Feature[] x) {
+    protected double predict(@Nonnull final Feature[] x) throws HiveException {
         // w0
         double ret = getW0();
 
@@ -161,7 +161,7 @@ public abstract class FactorizationMachineModel {
             assert (!Double.isNaN(ret));
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Detected " + ret
+            throw new HiveException("Detected " + ret
                     + " in predict. We recommend to normalize training examples.\n"
                     + "Dumping variables ...\n" + varDump(x));
         }
@@ -177,10 +177,10 @@ public abstract class FactorizationMachineModel {
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("x[").append(j).append("] => ").append(xj);
+            buf.append("x[").append(j).append("] = ").append(xj);
         }
-        buf.append("\n\n");
-        buf.append("W0 => ").append(getW0()).append('\n');
+        buf.append("\n");
+        buf.append("W0 = ").append(getW0()).append('\n');
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
             String j = e.getFeature();
@@ -188,9 +188,9 @@ public abstract class FactorizationMachineModel {
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("W[").append(j).append("] => ").append(wi);
+            buf.append("W[").append(j).append("] = ").append(wi);
         }
-        buf.append("\n\n");
+        buf.append("\n");
         for (int f = 0, k = _factor; f < k; f++) {
             for (int i = 0; i < x.length; i++) {
                 Feature e = x[i];
@@ -199,7 +199,7 @@ public abstract class FactorizationMachineModel {
                 if (i != 0) {
                     buf.append(", ");
                 }
-                buf.append('V').append(f).append('[').append(j).append("] => ").append(vjf);
+                buf.append('V').append(f).append('[').append(j).append("] = ").append(vjf);
             }
             buf.append('\n');
         }

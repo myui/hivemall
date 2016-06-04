@@ -28,6 +28,8 @@ import java.util.Arrays;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
     @Nonnull
@@ -63,7 +65,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     @Override
-    protected final double predict(@Nonnull final Feature[] x) {
+    protected final double predict(@Nonnull final Feature[] x) throws HiveException {
         // w0
         double ret = getW0();
         // W
@@ -91,7 +93,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             }
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Detected " + ret
+            throw new HiveException("Detected " + ret
                     + " in predict. We recommend to normalize training examples.\n"
                     + "Dumping variables ...\n" + varDump(x));
         }
@@ -193,6 +195,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     @Override
     protected final String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
+        // X[
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
             String j = e.getFeature();
@@ -200,10 +203,12 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("x[").append(j).append("] => ").append(xj);
+            buf.append("x[").append(j).append("] = ").append(xj);
         }
-        buf.append("\n\n");
-        buf.append("W0 => ").append(getW0()).append('\n');
+        buf.append("\n");
+        // W0
+        buf.append("W0 = ").append(getW0()).append('\n');
+        // Wi
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
             String j = e.getFeature();
@@ -211,9 +216,44 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("W[").append(j).append("] => ").append(wi);
+            buf.append("W[").append(j).append("] = ").append(wi);
         }
-        buf.append("\n");
+        buf.append('\n');
+        // V
+        for (int i = 0; i < x.length; i++) {
+            final Feature ei = x[i];
+            final int iField = ei.getField();
+            if (i != 0) {
+                buf.append('\n');
+            }
+            for (int j = i + 1; j < x.length; j++) {
+                final Feature ej = x[j];
+                final int jField = ej.getField();
+                for (int f = 0, k = _factor; f < k; f++) {
+                    float vijf = getV(ei, jField, f);
+                    float vjif = getV(ej, iField, f);
+                    if (!(j == (i + 1) && f == 0)) {
+                        buf.append(", ");
+                    }
+                    buf.append("V[i")
+                       .append(i)
+                       .append("][j")
+                       .append(j)
+                       .append("][f")
+                       .append(f)
+                       .append("] = ")
+                       .append(vijf);
+                    buf.append(", V[j")
+                       .append(j)
+                       .append("][i")
+                       .append(i)
+                       .append("][f")
+                       .append(f)
+                       .append("] = ")
+                       .append(vjif);
+                }
+            }
+        }
         return buf.toString();
     }
 }
