@@ -241,5 +241,43 @@ public final class MathUtils {
         return r;
     }
 
+    public static boolean equals(@Nonnull final float value, final float expected, final float delta) {
+        if (Math.abs(expected - value) > delta) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean equals(@Nonnull final double value, final double expected,
+            final double delta) {
+        if (Math.abs(expected - value) > delta) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean almostEquals(@Nonnull final float value, final float expected,
+            final float delta) {
+        return equals(value, expected, 1E-15f);
+    }
+
+    public static boolean almostEquals(@Nonnull final double value, final double expected,
+            final double delta) {
+        return equals(value, expected, 1E-15d);
+    }
+
+    public static boolean closeToZero(@Nonnull final float value) {
+        if (Math.abs(value) > 1E-15f) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean closeToZero(@Nonnull final double value) {
+        if (Math.abs(value) > 1E-15d) {
+            return false;
+        }
+        return true;
+    }
 
 }

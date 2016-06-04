@@ -30,6 +30,7 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;
 import hivemall.utils.io.NioStatefullSegment;
 import hivemall.utils.lang.NumberUtils;
+import hivemall.utils.math.MathUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -155,7 +156,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         opts.addOption("init_v", true,
             "Initialization strategy of matrix V [random, gaussian] (default: random)");
         opts.addOption("maxval", "max_init_value", true,
-            "The maximum initial value in the matrix V [default: 1.0]");
+            "The maximum initial value in the matrix V [default: 0.5]");
         opts.addOption("min_init_stddev", true,
             "The minimum standard deviation of initial matrix V [default: 0.1]");
         // feature representation
@@ -375,6 +376,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         final double lossGrad = _model.dloss(p, y);
         double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
+
+        if (MathUtils.closeToZero(lossGrad)) {
+            return;
+        }
 
         // w0 update
         _model.updateW0(lossGrad, eta);

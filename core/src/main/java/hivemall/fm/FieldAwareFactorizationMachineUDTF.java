@@ -24,6 +24,7 @@ import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.Text3;
 import hivemall.utils.lang.NumberUtils;
+import hivemall.utils.math.MathUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -194,7 +195,7 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         double loss = _lossFunction.loss(p, y);
         _cvState.incrLoss(loss);
 
-        if (lossGrad == 0.0f) {
+        if (MathUtils.closeToZero(lossGrad)) {
             return;
         }
 

@@ -123,7 +123,7 @@ class FMHyperParameters {
     @Nonnull
     private static VInitScheme instantiateVInit(@Nonnull CommandLine cl, int factor, long seed) {
         String vInitOpt = cl.getOptionValue("init_v");
-        float maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 1.f);
+        float maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 0.5f);
         double initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
 
         VInitScheme vInit = VInitScheme.resolve(vInitOpt);
