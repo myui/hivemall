@@ -18,12 +18,13 @@
  */
 package hivemall.model;
 
+import static org.junit.Assert.assertEquals;
 import hivemall.utils.collections.IMapIterator;
+import hivemall.utils.lang.HalfFloat;
 
 import java.util.Random;
 
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
 
 public class SpaceEfficientDenseModelTest {
 
@@ -37,9 +38,9 @@ public class SpaceEfficientDenseModelTest {
         //model2.configureClock();
 
         final Random rand = new Random();
-        for(int t = 0; t < 1000; t++) {
+        for (int t = 0; t < 1000; t++) {
             int i = rand.nextInt(size);
-            float f = 65520f * rand.nextFloat();
+            float f = HalfFloat.MAX_FLOAT * rand.nextFloat();
             IWeightValue w = new WeightValue(f);
             model1.set(i, w);
             model2.set(i, w);
@@ -48,7 +49,7 @@ public class SpaceEfficientDenseModelTest {
         assertEquals(model2.size(), model1.size());
 
         IMapIterator<Integer, IWeightValue> itor = model1.entries();
-        while(itor.next() != -1) {
+        while (itor.next() != -1) {
             int k = itor.getKey();
             float expected = itor.getValue().get();
             float actual = model2.getWeight(k);
