@@ -153,8 +153,8 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                         + "At least N training examples are used before validation [default: 1000]");
         }
         // initialization of V
-        opts.addOption("init_v", true,
-            "Initialization strategy of matrix V [random, gaussian] (default: random)");
+        opts.addOption("init_v", true, "Initialization strategy of matrix V [random, gaussian]"
+                + "(default: 'random' for regression / 'gaussian' for classification)");
         opts.addOption("maxval", "max_init_value", true,
             "The maximum initial value in the matrix V [default: 0.5]");
         opts.addOption("min_init_stddev", true,

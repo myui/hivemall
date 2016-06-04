@@ -350,14 +350,19 @@ public abstract class FactorizationMachineModel {
 
         @Nonnull
         public static VInitScheme resolve(@Nullable String opt) {
+            return resolve(opt, random);
+        }
+
+        @Nonnull
+        public static VInitScheme resolve(@Nullable String opt, @Nonnull VInitScheme defaultScheme) {
             if (opt == null) {
-                return random;
+                return defaultScheme;
             } else if ("gaussian".equalsIgnoreCase(opt)) {
                 return gaussian;
             } else if ("random".equalsIgnoreCase(opt)) {
                 return random;
             }
-            return random;
+            return defaultScheme;
         }
 
         public void setMaxInitValue(float maxInitValue) {

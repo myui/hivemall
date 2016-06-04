@@ -96,7 +96,7 @@ class FMHyperParameters {
         if (seed == -1L) {
             this.seed = System.nanoTime();
         }
-        this.vInit = instantiateVInit(cl, factors, seed);
+        this.vInit = instantiateVInit(cl, factors, seed, classification);
         this.minTarget = Primitives.parseDouble(cl.getOptionValue("min_target"), minTarget);
         this.maxTarget = Primitives.parseDouble(cl.getOptionValue("max_target"), maxTarget);
         this.eta = EtaEstimator.get(cl, DEFAULT_ETA0);
@@ -121,12 +121,14 @@ class FMHyperParameters {
     }
 
     @Nonnull
-    private static VInitScheme instantiateVInit(@Nonnull CommandLine cl, int factor, long seed) {
+    private static VInitScheme instantiateVInit(@Nonnull CommandLine cl, int factor, long seed,
+            final boolean classification) {
         String vInitOpt = cl.getOptionValue("init_v");
         float maxInitValue = Primitives.parseFloat(cl.getOptionValue("max_init_value"), 0.5f);
         double initStdDev = Primitives.parseDouble(cl.getOptionValue("min_init_stddev"), 0.1d);
 
-        VInitScheme vInit = VInitScheme.resolve(vInitOpt);
+        VInitScheme defaultInit = classification ? VInitScheme.gaussian : VInitScheme.random;
+        VInitScheme vInit = VInitScheme.resolve(vInitOpt, defaultInit);
         vInit.setMaxInitValue(maxInitValue);
         initStdDev = Math.max(initStdDev, 1.0d / factor);
         vInit.setInitStdDev(initStdDev);
