@@ -66,7 +66,6 @@ public class Base91OutputStreamTest {
         Base91InputStream base91in = new Base91InputStream(bis);
 
         byte[] actual = IOUtils.toByteArray(base91in);
-        System.out.println(new String(actual));
         Assert.assertArrayEquals(expected, actual);
     }
 
