@@ -199,7 +199,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
         // X
         for (int i = 0; i < x.length; i++) {
-            Feature e = x[i];            
+            Feature e = x[i];
             String j = e.getFeature();
             double xj = e.getValue();
             if (i != 0) {
@@ -213,7 +213,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         double ret = getW0();
         buf1.append("predict(x) = w0");
         buf2.append("predict(x) = ").append(ret);
-        
+
         // W
         for (Feature e : x) {
             String i = e.getFeature();
@@ -236,7 +236,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                            .toString();
             }
         }
-        
+
         // V
         for (int i = 0; i < x.length; i++) {
             final Feature ei = x[i];
@@ -254,15 +254,15 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
                     buf1.append(" + (v[i")
                         .append(fi)
-                        .append('j')
+                        .append("-j")
                         .append(jField)
-                        .append('f')
+                        .append("-f")
                         .append(f)
                         .append("] * v[j")
                         .append(fj)
-                        .append('i')
+                        .append("-i")
                         .append(iField)
-                        .append('f')
+                        .append("-f")
                         .append(f)
                         .append("] * x[")
                         .append(fi)
