@@ -89,6 +89,18 @@ public final class MathUtils {
     }
 
     /**
+     * <a href="https://en.wikipedia.org/wiki/Logit">Logit</a> is the inverse of
+     * {@link #sigmoid(double)} function.
+     */
+    public static double logit(final double p) {
+        return Math.log(p / (1.d - p));
+    }
+
+    public static double logit(final double p, final double hi, final double lo) {
+        return Math.log((p - lo) / (hi - p));
+    }
+
+    /**
      * Returns the inverse erf. This code is based on erfInv() in
      * org.apache.commons.math3.special.Erf.
      * <p>
