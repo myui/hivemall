@@ -194,66 +194,113 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
 
     @Override
     protected final String varDump(@Nonnull final Feature[] x) {
-        final StringBuilder buf = new StringBuilder(1024);
-        // X[
+        final StringBuilder buf1 = new StringBuilder(1024);
+        final StringBuilder buf2 = new StringBuilder(1024);
+
+        // X
         for (int i = 0; i < x.length; i++) {
-            Feature e = x[i];
+            Feature e = x[i];            
             String j = e.getFeature();
             double xj = e.getValue();
             if (i != 0) {
-                buf.append(", ");
+                buf1.append(", ");
             }
-            buf.append("x[").append(j).append("] = ").append(xj);
+            buf1.append("x[").append(j).append("] = ").append(xj);
         }
-        buf.append("\n");
-        // W0
-        buf.append("W0 = ").append(getW0()).append('\n');
-        // Wi
-        for (int i = 0; i < x.length; i++) {
-            Feature e = x[i];
-            String j = e.getFeature();
+        buf1.append("\n");
+
+        // w0        
+        double ret = getW0();
+        buf1.append("predict(x) = w0");
+        buf2.append("predict(x) = ").append(ret);
+        
+        // W
+        for (Feature e : x) {
+            String i = e.getFeature();
+            double xi = e.getValue();
             float wi = getW(e);
-            if (i != 0) {
-                buf.append(", ");
+
+            buf1.append(" + (w[").append(i).append("] * x[").append(i).append("])");
+            buf2.append(" + (").append(wi).append(" * ").append(xi).append(')');
+
+            double wx = wi * xi;
+            ret += wx;
+
+            if (!NumberUtils.isFinite(ret)) {
+                return buf1.append(" + ... = ")
+                           .append(ret)
+                           .append('\n')
+                           .append(buf2)
+                           .append(" + ... = ")
+                           .append(ret)
+                           .toString();
             }
-            buf.append("W[").append(j).append("] = ").append(wi);
         }
-        buf.append('\n');
+        
         // V
         for (int i = 0; i < x.length; i++) {
             final Feature ei = x[i];
+            final String fi = ei.getFeature();
+            final double xi = ei.getValue();
             final int iField = ei.getField();
-            if (i != 0) {
-                buf.append('\n');
-            }
             for (int j = i + 1; j < x.length; j++) {
                 final Feature ej = x[j];
+                final String fj = ej.getFeature();
+                final double xj = ej.getValue();
                 final int jField = ej.getField();
                 for (int f = 0, k = _factor; f < k; f++) {
                     float vijf = getV(ei, jField, f);
                     float vjif = getV(ej, iField, f);
-                    if (!(j == (i + 1) && f == 0)) {
-                        buf.append(", ");
+
+                    buf1.append(" + (v[i")
+                        .append(fi)
+                        .append('j')
+                        .append(jField)
+                        .append('f')
+                        .append(f)
+                        .append("] * v[j")
+                        .append(fj)
+                        .append('i')
+                        .append(iField)
+                        .append('f')
+                        .append(f)
+                        .append("] * x[")
+                        .append(fi)
+                        .append("] * x[")
+                        .append(fj)
+                        .append("])");
+
+                    buf2.append(" + (")
+                        .append(vijf)
+                        .append(" * ")
+                        .append(vjif)
+                        .append(" * ")
+                        .append(xi)
+                        .append(" * ")
+                        .append(xj)
+                        .append(')');
+
+                    ret += vijf * vjif * xi * xj;
+
+                    if (!NumberUtils.isFinite(ret)) {
+                        return buf1.append(" + ... = ")
+                                   .append(ret)
+                                   .append('\n')
+                                   .append(buf2)
+                                   .append(" + ... = ")
+                                   .append(ret)
+                                   .toString();
                     }
-                    buf.append("V[i")
-                       .append(i)
-                       .append("][j")
-                       .append(j)
-                       .append("][f")
-                       .append(f)
-                       .append("] = ")
-                       .append(vijf);
-                    buf.append(", V[j")
-                       .append(j)
-                       .append("][i")
-                       .append(i)
-                       .append("][f")
-                       .append(f)
-                       .append("] = ")
-                       .append(vjif);
                 }
             }
         }
-        return buf.toString();
+
+        return buf1.append(" = ")
+                   .append(ret)
+                   .append('\n')
+                   .append(buf2)
+                   .append(" = ")
+                   .append(ret)
+                   .toString();
     }
 }
