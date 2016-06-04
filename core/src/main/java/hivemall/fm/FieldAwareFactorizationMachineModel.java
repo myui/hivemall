@@ -190,4 +190,30 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     @Nonnull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
+    @Override
+    protected final String varDump(@Nonnull final Feature[] x) {
+        final StringBuilder buf = new StringBuilder(1024);
+        for (int i = 0; i < x.length; i++) {
+            Feature e = x[i];
+            String j = e.getFeature();
+            double xj = e.getValue();
+            if (i != 0) {
+                buf.append(", ");
+            }
+            buf.append("x[").append(j).append("] => ").append(xj);
+        }
+        buf.append("\n\n");
+        buf.append("W0 => ").append(getW0()).append('\n');
+        for (int i = 0; i < x.length; i++) {
+            Feature e = x[i];
+            String j = e.getFeature();
+            float wi = getW(e);
+            if (i != 0) {
+                buf.append(", ");
+            }
+            buf.append("W[").append(j).append("] => ").append(wi);
+        }
+        buf.append("\n");
+        return buf.toString();
+    }
 }

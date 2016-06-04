@@ -168,7 +168,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    protected final String varDump(@Nonnull final Feature[] x) {
+    protected String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
