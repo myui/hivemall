@@ -535,10 +535,10 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                 }
                 inputBuf.flip();
 
-                int i = 1;
-                for (; i < iterations; i++) {
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
                     reportProgress(reporter);
-                    setCounterValue(iterCounter, i);
+                    setCounterValue(iterCounter, iter);
 
                     while (inputBuf.remaining() > 0) {
                         int bytes = inputBuf.getInt();
@@ -553,13 +553,12 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                         ++_t;
                         train(x, y, adaregr);
                     }
-                    if (_cvState.isConverged(i + 1, numTrainingExamples)) {
-                        i++;
+                    if (_cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                     inputBuf.rewind();
                 }
-                LOG.info("Performed " + i + " iterations of "
+                LOG.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(_t)
                         + " training updates in total) ");
@@ -584,9 +583,9 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                 }
 
                 // run iterations
-                int i = 1;
-                for (; i < iterations; i++) {
-                    setCounterValue(iterCounter, i);
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
+                    setCounterValue(iterCounter, iter);
 
                     inputBuf.clear();
                     fileIO.resetPosition();
@@ -636,12 +635,11 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                         }
                         inputBuf.compact();
                     }
-                    if (_cvState.isConverged(i + 1, numTrainingExamples)) {
-                        i++;
+                    if (_cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                 }
-                LOG.info("Performed " + i + " iterations of "
+                LOG.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on a secondary storage (thus "
                         + NumberUtils.formatNumber(_t) + " training updates in total)");

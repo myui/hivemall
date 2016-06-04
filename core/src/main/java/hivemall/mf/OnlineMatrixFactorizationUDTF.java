@@ -478,10 +478,10 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
                 }
                 inputBuf.flip();
 
-                int i = 1;
-                for (; i < iterations; i++) {
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
                     reportProgress(reporter);
-                    setCounterValue(iterCounter, i);
+                    setCounterValue(iterCounter, iter);
 
                     while (inputBuf.remaining() > 0) {
                         int user = inputBuf.getInt();
@@ -492,12 +492,12 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
                         train(user, item, rating);
                     }
                     cvState.multiplyLoss(0.5d);
-                    if (cvState.isConverged(i + 1, numTrainingExamples)) {
+                    if (cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                     inputBuf.rewind();
                 }
-                logger.info("Performed " + i + " iterations of "
+                logger.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples on memory (thus " + NumberUtils.formatNumber(count)
                         + " training updates in total) ");
@@ -524,9 +524,9 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
                 }
 
                 // run iterations
-                int i = 1;
-                for (; i < iterations; i++) {
-                    setCounterValue(iterCounter, i);
+                int iter = 2;
+                for (; iter <= iterations; iter++) {
+                    setCounterValue(iterCounter, iter);
 
                     inputBuf.clear();
                     long seekPos = 0L;
@@ -562,11 +562,11 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
                         inputBuf.compact();
                     }
                     cvState.multiplyLoss(0.5d);
-                    if (cvState.isConverged(i + 1, numTrainingExamples)) {
+                    if (cvState.isConverged(iter, numTrainingExamples)) {
                         break;
                     }
                 }
-                logger.info("Performed " + i + " iterations of "
+                logger.info("Performed " + Math.min(iter, iterations) + " iterations of "
                         + NumberUtils.formatNumber(numTrainingExamples)
                         + " training examples using a secondary storage (thus "
                         + NumberUtils.formatNumber(count) + " training updates in total)");
