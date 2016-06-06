@@ -201,6 +201,12 @@ public final class HiveUtils {
         }
     }
 
+    @Nonnull
+    public static boolean isListOI(@Nonnull final ObjectInspector oi) {
+        Category category = oi.getCategory();
+        return category == Category.LIST;
+    }
+
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
         return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
     }
