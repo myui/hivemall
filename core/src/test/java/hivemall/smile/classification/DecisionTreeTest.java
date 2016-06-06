@@ -19,12 +19,13 @@
 package hivemall.smile.classification;
 
 import static org.junit.Assert.assertEquals;
+import hivemall.smile.ModelType;
 import hivemall.smile.classification.DecisionTree.Node;
 import hivemall.smile.data.Attribute;
-import hivemall.smile.tools.TreePredictByJavascriptUDF;
-import hivemall.smile.tools.TreePredictByStackMachineUDF;
+import hivemall.smile.tools.TreePredictUDF;
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.smile.vm.StackMachine;
+import hivemall.utils.lang.ArrayUtils;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -33,8 +34,11 @@ import java.net.URL;
 import java.text.ParseException;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
 import org.junit.Assert;
@@ -256,12 +260,21 @@ public class DecisionTreeTest {
             IOException {
         String script = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(script);
-        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
+
+        TreePredictUDF udf = new TreePredictUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)});
-        IntWritable result = (IntWritable) udf.evaluate(script, x, true);
-        result = (IntWritable) udf.evaluate(script, x, true);
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
+                ObjectInspectorUtils.getConstantObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaBooleanObjectInspector, true)});
+        DeferredObject[] arguments = new DeferredObject[] {new DeferredJavaObject("model_id#1"),
+                new DeferredJavaObject(ModelType.opscode.getId()), new DeferredJavaObject(script),
+                new DeferredJavaObject(ArrayUtils.toList(x)), new DeferredJavaObject(true)};
+
+        IntWritable result = (IntWritable) udf.evaluate(arguments);
+        result = (IntWritable) udf.evaluate(arguments);
         udf.close();
         return result.get();
     }
@@ -270,12 +283,23 @@ public class DecisionTreeTest {
             IOException {
         String script = tree.predictJsCodegen();
         debugPrint(script);
-        TreePredictByJavascriptUDF udf = new TreePredictByJavascriptUDF();
+
+        TreePredictUDF udf = new TreePredictUDF();
         udf.initialize(new ObjectInspector[] {
                 PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)});
-        IntWritable result = (IntWritable) udf.evaluate(script, x, true);
-        result = (IntWritable) udf.evaluate(script, x, true);
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
+                ObjectInspectorUtils.getConstantObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaBooleanObjectInspector, true)});
+
+        DeferredObject[] arguments = new DeferredObject[] {new DeferredJavaObject("model_id#1"),
+                new DeferredJavaObject(ModelType.javascript.getId()),
+                new DeferredJavaObject(script), new DeferredJavaObject(ArrayUtils.toList(x)),
+                new DeferredJavaObject(true)};
+
+        IntWritable result = (IntWritable) udf.evaluate(arguments);
+        result = (IntWritable) udf.evaluate(arguments);
         udf.close();
         return result.get();
     }

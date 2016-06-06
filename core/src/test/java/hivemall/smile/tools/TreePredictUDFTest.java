@@ -19,11 +19,13 @@
 package hivemall.smile.tools;
 
 import static org.junit.Assert.assertEquals;
+import hivemall.smile.ModelType;
 import hivemall.smile.classification.DecisionTree;
 import hivemall.smile.data.Attribute;
 import hivemall.smile.regression.RegressionTree;
 import hivemall.smile.utils.SmileExtUtils;
 import hivemall.smile.vm.StackMachine;
+import hivemall.utils.lang.ArrayUtils;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -32,7 +34,13 @@ import java.net.URL;
 import java.text.ParseException;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
 import org.junit.Test;
 
@@ -143,20 +151,46 @@ public class TreePredictUDFTest {
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
-        TreePredictUDF udf = new TreePredictUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
-        IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
+
+        TreePredictUDF udf = new TreePredictUDF();
+        udf.initialize(new ObjectInspector[] {
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
+                ObjectInspectorUtils.getConstantObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaBooleanObjectInspector, true)});
+        DeferredObject[] arguments = new DeferredObject[] {new DeferredJavaObject("model_id#1"),
+                new DeferredJavaObject(ModelType.opscode.getId()),
+                new DeferredJavaObject(opScript), new DeferredJavaObject(ArrayUtils.toList(x)),
+                new DeferredJavaObject(true)};
+
+        IntWritable result = (IntWritable) udf.evaluate(arguments);
         udf.close();
         return result.get();
     }
 
     private static double evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
-        TreePredictUDF udf = new TreePredictUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
-        DoubleWritable result = (DoubleWritable) udf.evaluate(opScript, x, false);
+
+        TreePredictUDF udf = new TreePredictUDF();
+        udf.initialize(new ObjectInspector[] {
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                PrimitiveObjectInspectorFactory.javaIntObjectInspector,
+                PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+                ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector),
+                ObjectInspectorUtils.getConstantObjectInspector(
+                    PrimitiveObjectInspectorFactory.javaBooleanObjectInspector, false)});
+        DeferredObject[] arguments = new DeferredObject[] {new DeferredJavaObject("model_id#1"),
+                new DeferredJavaObject(ModelType.opscode.getId()),
+                new DeferredJavaObject(opScript), new DeferredJavaObject(ArrayUtils.toList(x)),
+                new DeferredJavaObject(false)};
+
+        DoubleWritable result = (DoubleWritable) udf.evaluate(arguments);
         udf.close();
         return result.get();
     }
