@@ -49,21 +49,25 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ChangeFinderUDFTest {
-    private static final boolean DEBUG = true;
-    private static final boolean MAKE_NEW_RAND = true;
+    private static final boolean DEBUG = false;
+    private static final boolean TEST_CSV = false;
+    private static final boolean TEST_TSV = false;
+    private static final boolean TEST_MULTIDIM = false;
+    private static final boolean MAKE_NEW_RAND_MULTIDIM = false;
     private static final int MAX_LINES = 5000;
     private static final int MAX_WRITE = 1000000;//1 million
-    private static final int DIM = 3;
+    private static final int DIM = 5;
 
     public File writeRand() throws UDFArgumentException, IOException {
         println("generating data");
 
         UniformIntegerDistribution params = new UniformIntegerDistribution(0, 10);
-        PoissonDistribution event = new PoissonDistribution(100.d);
+        PoissonDistribution event = new PoissonDistribution(1000.d);
         NormalDistribution dataGenerator[] = new NormalDistribution[DIM];
 
-        String fileName;
-        File outputFile, outputHintFile, outputHintCondensedFile;
+        String fileName = null;//Suppresses uninitialized error when DEBUG = false
+        File outputFile = null;//Suppresses uninitialized error when DEBUG = false
+        File outputHintFile, outputHintCondensedFile;
         BufferedWriter output = null;
         BufferedWriter output2 = null;
         BufferedWriter output3 = null;
@@ -90,6 +94,9 @@ public class ChangeFinderUDFTest {
                 for (int j = 0; j < DIM; j++) {
                     mean[j] = params.sample() * 5;
                     sd[j] = params.sample() / 10 * 5 + 1;
+                    if (i % 5 == 0) {
+                        mean[j] += 50;
+                    }
                     dataGenerator[j] = new NormalDistribution(mean[j], sd[j]);
                     data[j] = dataGenerator[j].sample(len);
                     data[j][len / (j + 2) + DIM % (j + 1)] = mean[j] + (j + 4) * sd[j];
@@ -111,7 +118,7 @@ public class ChangeFinderUDFTest {
                     }
                     contents += data[DIM - 1][j] + "\n";
                     write(output, contents);
-                    i += contents.length();
+                    i++;
                     ln++;
                 }
             }
@@ -126,7 +133,7 @@ public class ChangeFinderUDFTest {
         return outputFile;
     }
 
-    public void testFile(InputStream input) throws HiveException, IOException {
+    public void testFile(InputStream input, String options) throws HiveException, IOException {
         if (input == null) {
             println("File DNE: " + input);
             return;
@@ -134,11 +141,11 @@ public class ChangeFinderUDFTest {
 
         println("detection test");
         ChangeFinderUDF udf = new ChangeFinderUDF();
+        ConstantObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, options);
         ObjectInspector[] argOIs =
                 new ObjectInspector[] {ObjectInspectorFactory.getStandardListObjectInspector(
-                    PrimitiveObjectInspectorFactory.javaDoubleObjectInspector)};
-
-        udf.initialize(argOIs);
+                    PrimitiveObjectInspectorFactory.javaDoubleObjectInspector), paramOI};
 
         Object[] result = null;
         BufferedReader data = new BufferedReader(new InputStreamReader(input));
@@ -153,6 +160,9 @@ public class ChangeFinderUDFTest {
         BufferedWriter output = null;
         if (DEBUG) {
             int runCount = 0;
+            /*
+             * Add or remove options freely by modifying the empty string inside paramOI
+             */
             if (tsv) {
                 fileName = "src/test/resources/hivemall/anomaly/tsv_output";
             }
@@ -165,22 +175,18 @@ public class ChangeFinderUDFTest {
             if (single) {
                 fileName = "src/test/resources/hivemall/anomaly/1D_output";
             }
-            outFile = new File(fileName + ".dat");
+            outFile = new File(fileName + ".txt");
             while (outFile.exists()) {
                 runCount++;
                 outFile = new File(fileName + runCount + ".txt");
             }
             fileName = outFile.getName();
             output = new BufferedWriter(new FileWriter(outFile));
-            output.write("#\taW\taF\t\taT\tcW\tcF\t\tcT\n#\t" + udf.getxRunningWindowSize() + "\t"
-                    + udf.getxForgetfulness() + "\t" + udf.getxThreshold() + "\t"
-                    + udf.getyRunningWindowSize() + "\t" + udf.getyForgetfulness() + "\t"
-                    + udf.getyThreshold()
-                    + "\n#x\txBool\ty\tyBool\txHat[0]\txModelCovar[0,0]\tyHat\tyModelVar\n");
         }
 
         ArrayList<Integer> anomalies = new ArrayList<Integer>();
         ArrayList<Integer> changepoints = new ArrayList<Integer>();
+        udf.initialize(argOIs);
         for (int lineNumber = 1; lineNumber < MAX_LINES; ++lineNumber) {
             //gather features in current line
             final String line = data.readLine();
@@ -240,13 +246,34 @@ public class ChangeFinderUDFTest {
             //double xB = resX == null ? Double.NaN : (resX.get() ? 1.d : Double.NaN); //(1, NaN, NaN) <-> (true, false, null); useful in gnuplot for plotting individual anomalies because NaNs are not plotted
             double y = ((DoubleWritable) result[2]).get();
             BooleanWritable resY = (BooleanWritable) result[3];
-            double yB = resY == null ? -1.d : (resX.get() ? 1.d : 0.d); //(1, 0, -1) <-> (true, false, null)
+            double yB = resY == null ? -1.d : (resY.get() ? 1.d : 0.d); //(1, 0, -1) <-> (true, false, null)
             //double yB = resY == null ? Double.NaN : (resY.get() ? 1.d : Double.NaN); //(1, NaN, NaN) <-> (true, false, null); useful in gnuplot for plotting individual change-points because NaNs are not plotted
 
             if (DEBUG) {
-                output.write(x + " " + xB + " " + y + " " + yB + " "
-                        + udf.getxEstimate().getEntry(0) + " " + udf.getxModelCovar().getEntry(0, 0)
-                        + " " + udf.getyEstimate() + " " + udf.getyModelVar() + "\n");
+                if (lineNumber == 1) {
+                    output.write("#\taW\taF\t\taT\tcW\tcF\t\tcT\n#\t" + udf.getxRunningWindowSize() + "\t"
+                            + udf.getxForgetfulness() + "\t" + udf.getxThreshold() + "\t"
+                            + udf.getyRunningWindowSize() + "\t" + udf.getyForgetfulness() + "\t"
+                            + udf.getyThreshold()
+                            + "\n#x\txBool\ty\tyBool\txMu\txHat[0]\txModelCovar[0,0]\tyMu\ty\tyHat\tyModelVar\n");
+                }
+                output.write(x + " " + xB + " " + y + " " + yB + " ");// + vector.get(0) + " ");
+                if (lineNumber >= udf.getxRunningWindowSize()) {
+                    output.write(udf.getxMeanEstimate().getEntry(0) + " ");
+                }
+                if (lineNumber >= udf.getxRunningWindowSize() + 2 * vector.size()) {
+                    output.write(udf.getxEstimate().getEntry(0) + " "
+                            + udf.getxModelCovar().getEntry(0, 0) + " ");
+                }
+                if (lineNumber >= udf.getxRunningWindowSize() + 2 * vector.size()
+                        + udf.getyRunningWindowSize()) {
+                    output.write(udf.getyMeanEstimate() + " ");
+                }
+                if (lineNumber >= udf.getxRunningWindowSize() + 2 * vector.size()
+                        + udf.getyRunningWindowSize() + 2) {
+                    output.write(udf.gety() + " " + udf.getyEstimate() + " " + udf.getyModelVar());
+                }
+                output.write("\n");
             }
             if (xB == 1.d) {
                 anomalies.add(lineNumber + 1);
@@ -268,16 +295,28 @@ public class ChangeFinderUDFTest {
 
     @Test
     public void testDetection() throws HiveException, IOException {
-        println("cf_test.tsv");
-        testFile(getClass().getResourceAsStream("cf_test.tsv"));
-        println("raw_data.csv");
-        testFile(getClass().getResourceAsStream("raw_data.csv"));
-        println("rand");
-        InputStream randFile = getClass().getResourceAsStream("rand_output0.dat");
-        if (MAKE_NEW_RAND) {
-            randFile = new FileInputStream(writeRand());
+        if (TEST_TSV) {
+            println("cf_test.tsv");
+            testFile(getClass().getResourceAsStream("cf_test.tsv"), "-aThresh 20 -cThresh 11 -cForget 0.02 -noFuture");
+        } else {
+            println("Skipping Sample TSV data (set TEST_TSV to true)");
         }
-        testFile(randFile);
+        if (TEST_CSV) {
+            println("raw_data.csv");
+            testFile(getClass().getResourceAsStream("raw_data.csv"), "-aThresh 15 -cThresh 15");
+        } else {
+            println("Skipping Tw CSV data (set TEST_CSV to true)");
+        }
+        if (TEST_MULTIDIM) {
+            println("rand");
+            InputStream randFile = getClass().getResourceAsStream("rand_output.txt");//Change filename as needed if not using MAKE_NEW_RAND_MULTIDIM
+            if (MAKE_NEW_RAND_MULTIDIM) {
+                randFile = new FileInputStream(writeRand());
+            }
+            testFile(randFile, "-aForget 0.01");
+        } else {
+            println("Skipping Multidim rand (set TEST_MULTIDIM to true)");
+        }
         return;
     }
 
@@ -331,11 +370,11 @@ public class ChangeFinderUDFTest {
         argOIs[1] = param4OI;
         udf.initialize(argOIs);
 
-        DeferredObject[] one =
-                new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {54.d}))};
-        //for (int i = 0; i < udf.getxRunningWindowSize(); i++) {
-        udf.evaluate(one);
-        //}
+        for (int i = 0; i < 10 * udf.getxRunningWindowSize(); i++) {
+            DeferredObject[] one = new DeferredObject[] {
+                    new DeferredJavaObject(Arrays.asList(new Double[] {new Double((double) i)}))};
+            udf.evaluate(one);
+        }
         Object[] result = (Object[]) udf.evaluate(
             new DeferredObject[] {new DeferredJavaObject(Arrays.asList(new Double[] {10000.d}))});
         Assert.assertTrue("Result length incorrect.", result.length == 4);
@@ -349,13 +388,17 @@ public class ChangeFinderUDFTest {
         DeferredObject[] increasing =
                 new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
         udf.evaluate(increasing);
-        data = new Double[] {2.d, 1.d};
+        data = new Double[] {3.d, 1.d};
+        increasing = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
         udf.evaluate(increasing);
-        data = new Double[] {1.d, 2.d};
+        data = new Double[] {1.d, 4.d};
+        increasing = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
         udf.evaluate(increasing);
         data = new Double[] {2.d, 2.d};
+        increasing = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
         udf.evaluate(increasing);
         data = new Double[] {1.d, 1.d};
+        increasing = new DeferredObject[] {new DeferredJavaObject(Arrays.asList(data))};
         udf.evaluate(increasing);
     }
 
