@@ -169,6 +169,9 @@ create temporary function array_hash_values as 'hivemall.ftvec.hashing.ArrayHash
 drop temporary function prefixed_hash_values;
 create temporary function prefixed_hash_values as 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF';
 
+drop temporary function feature_hashing;
+create temporary function feature_hashing as 'hivemall.ftvec.hashing.FeatureHashingUDF';
+
 -----------------------
 -- pairing functions --
 -----------------------

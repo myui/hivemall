@@ -173,6 +173,9 @@ CREATE FUNCTION array_hash_values as 'hivemall.ftvec.hashing.ArrayHashValuesUDF'
 DROP FUNCTION IF EXISTS prefixed_hash_values;
 CREATE FUNCTION prefixed_hash_values as 'hivemall.ftvec.hashing.ArrayPrefixedHashValuesUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS feature_hashing;
+CREATE FUNCTION feature_hashing as 'hivemall.ftvec.hashing.FeatureHashingUDF' USING JAR '${hivemall_jar}';
+
 -----------------------
 -- pairing functions --
 -----------------------

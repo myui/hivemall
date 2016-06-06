@@ -25,10 +25,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-public class ArrayHashValuesUDF extends UDF {
+@Description(
+        name = "array_hash_values",
+        value = "_FUNC_(array<string> values, [string prefix [, int numFeatures], boolean useIndexAsPrefix])"
+                + " returns hash values in array<int>")
+@UDFType(deterministic = true, stateful = false)
+public final class ArrayHashValuesUDF extends UDF {
 
     public List<IntWritable> evaluate(List<String> values) {
         return evaluate(values, null, MurmurHash3.DEFAULT_NUM_FEATURES);
@@ -46,25 +53,27 @@ public class ArrayHashValuesUDF extends UDF {
         return evaluate(values, prefix, numFeatures, false);
     }
 
-    public List<IntWritable> evaluate(List<String> values, String prefix, int numFeatures, boolean useIndexAsPrefix) {
+    public List<IntWritable> evaluate(List<String> values, String prefix, int numFeatures,
+            boolean useIndexAsPrefix) {
         return hashValues(values, prefix, numFeatures, useIndexAsPrefix);
     }
 
-    static List<IntWritable> hashValues(List<String> values, String prefix, int numFeatures, boolean useIndexAsPrefix) {
-        if(values == null) {
+    static List<IntWritable> hashValues(List<String> values, String prefix, int numFeatures,
+            boolean useIndexAsPrefix) {
+        if (values == null) {
             return null;
         }
-        if(values.isEmpty()) {
+        if (values.isEmpty()) {
             return Collections.emptyList();
         }
         final int size = values.size();
         final IntWritable[] ary = new IntWritable[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             String v = values.get(i);
-            if(v == null) {
+            if (v == null) {
                 ary[i] = null;
             } else {
-                if(useIndexAsPrefix) {
+                if (useIndexAsPrefix) {
                     v = i + ':' + v;
                 }
                 String data = (prefix == null) ? v : (prefix + v);
