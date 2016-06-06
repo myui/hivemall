@@ -18,16 +18,18 @@
  */
 package hivemall.ftvec.hashing;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-public class Sha1UDF extends UDF {
+@Description(name = "sha1", value = "_FUNC_(string word [, int numFeatures]) returns a SHA-1 value")
+@UDFType(deterministic = true, stateful = false)
+public final class Sha1UDF extends UDF {
 
     public static final int DEFAULT_NUM_FEATURES = 16777216;
 
@@ -47,8 +49,9 @@ public class Sha1UDF extends UDF {
     }
 
     public IntWritable evaluate(String word, boolean rawValue) {
-        if(rawValue) {
-            return val(sha1(word));
+        if (rawValue) {
+            int sha1 = sha1(word);
+            return new IntWritable(sha1);
         } else {
             return evaluate(word, DEFAULT_NUM_FEATURES);
         }
@@ -56,10 +59,10 @@ public class Sha1UDF extends UDF {
 
     public IntWritable evaluate(String word, int numFeatures) {
         int r = sha1(word) % numFeatures;
-        if(r < 0) {
+        if (r < 0) {
             r += numFeatures;
         }
-        return val(r + 1);
+        return new IntWritable(r + 1);
     }
 
     public IntWritable evaluate(List<String> words) {
@@ -68,12 +71,12 @@ public class Sha1UDF extends UDF {
 
     public IntWritable evaluate(List<String> words, int numFeatures) {
         final int wlength = words.size();
-        if(wlength == 0) {
-            return val(1);
+        if (wlength == 0) {
+            return new IntWritable(1);
         }
         final StringBuilder b = new StringBuilder();
         b.append(words.get(0));
-        for(int i = 1; i < wlength; i++) {
+        for (int i = 1; i < wlength; i++) {
             b.append('\t');
             b.append(words.get(i));
         }
@@ -96,7 +99,7 @@ public class Sha1UDF extends UDF {
     private static byte[] getBytes(final String s) {
         final int len = s.length();
         final byte[] b = new byte[len * 2];
-        for(int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             putChar(b, i << 1, s.charAt(i));
         }
         return b;

@@ -18,36 +18,42 @@
  */
 package hivemall.ftvec.hashing;
 
-import static hivemall.utils.hadoop.WritableUtils.val;
 import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
-public class ArrayPrefixedHashValuesUDF extends UDF {
+@Description(name = "prefixed_hash_values",
+        value = "_FUNC_(array<string> values, string prefix [, boolean useIndexAsPrefix])"
+                + " returns array<string> that each element has the specified prefix")
+@UDFType(deterministic = true, stateful = false)
+public final class ArrayPrefixedHashValuesUDF extends UDF {
 
     public List<Text> evaluate(List<String> values, String prefix) {
         return evaluate(values, prefix, false);
     }
 
     public List<Text> evaluate(List<String> values, String prefix, boolean useIndexAsPrefix) {
-        if(values == null) {
+        if (values == null) {
             return null;
         }
-        if(prefix == null) {
+        if (prefix == null) {
             prefix = "";
         }
 
-        List<IntWritable> hashValues = ArrayHashValuesUDF.hashValues(values, null, MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
+        List<IntWritable> hashValues = ArrayHashValuesUDF.hashValues(values, null,
+            MurmurHash3.DEFAULT_NUM_FEATURES, useIndexAsPrefix);
         final int len = hashValues.size();
         final Text[] stringValues = new Text[len];
-        for(int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             IntWritable v = hashValues.get(i);
-            stringValues[i] = val(prefix + v.toString());
+            stringValues[i] = new Text(prefix + v.toString());
         }
         return Arrays.asList(stringValues);
     }
