@@ -244,7 +244,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
   }
 
   test("misc - hivemall_version") {
-    assert(DummyInputData.select(hivemall_version()).collect.toSet === Set(Row("0.4.1-alpha.6")))
+    assert(DummyInputData.select(hivemall_version()).collect.toSet === Set(Row("0.4.2-rc.1")))
     /**
      * TODO: Why a test below does fail?
      *

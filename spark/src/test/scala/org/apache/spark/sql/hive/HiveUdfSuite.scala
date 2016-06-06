@@ -33,7 +33,7 @@ final class HiveUdfSuite extends HivemallQueryTest {
 
     checkAnswer(
       sql(s"SELECT DISTINCT hivemall_version()"),
-      Row("0.4.1-alpha.6")
+      Row("0.4.2-rc.1")
     )
 
     // sql("DROP TEMPORARY FUNCTION IF EXISTS hivemall_version")
