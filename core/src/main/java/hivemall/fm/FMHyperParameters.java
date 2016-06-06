@@ -114,10 +114,6 @@ class FMHyperParameters {
         this.validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"),
             validationThreshold);
         this.parseFeatureAsInt = cl.hasOption("feature_as_integer");
-        if (parseFeatureAsInt && numFeatures == -1) {
-            throw new UDFArgumentException(
-                "`-num_features` MUST be specified when `-feature_as_integer` option is set");
-        }
     }
 
     @Nonnull
