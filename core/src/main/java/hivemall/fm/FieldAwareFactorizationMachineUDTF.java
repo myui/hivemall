@@ -124,10 +124,6 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
         CommandLine cl = super.processOptions(argOIs);
 
         FFMHyperParameters params = (FFMHyperParameters) _params;
-        if (params.parseFeatureAsInt) {
-            throw new UDFArgumentException("int_feature option is not supported yet");
-        }
-
         this._FTRL = params.useFTRL;
         this._globalBias = params.globalBias;
         this._linearCoeff = params.linearCoeff;

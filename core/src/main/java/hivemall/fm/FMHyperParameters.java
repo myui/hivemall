@@ -113,7 +113,7 @@ class FMHyperParameters {
         }
         this.validationThreshold = Primitives.parseInt(cl.getOptionValue("validation_threshold"),
             validationThreshold);
-        this.parseFeatureAsInt = cl.hasOption("feature_as_integer");
+        this.parseFeatureAsInt = cl.hasOption("int_feature");
     }
 
     @Nonnull
@@ -160,6 +160,10 @@ class FMHyperParameters {
         @Override
         void processOptions(@Nonnull CommandLine cl) throws UDFArgumentException {
             super.processOptions(cl);
+
+            if (cl.hasOption("int_feature")) {
+                throw new UDFArgumentException("int_feature option is not supported yet for FFM");
+            }
 
             this.globalBias = cl.hasOption("global_bias");
             this.linearCoeff = !cl.hasOption("no_coeff");
