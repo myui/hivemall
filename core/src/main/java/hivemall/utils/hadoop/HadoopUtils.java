@@ -18,6 +18,8 @@
  */
 package hivemall.utils.hadoop;
 
+import hivemall.utils.lang.RandomUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,7 +30,6 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -169,11 +170,7 @@ public final class HadoopUtils {
                 }
             }
         }
-        return getUUID();
-    }
-
-    public synchronized static String getUUID() {
-        return UUID.randomUUID().toString();
+        return RandomUtils.getUUID();
     }
 
     @Nonnull

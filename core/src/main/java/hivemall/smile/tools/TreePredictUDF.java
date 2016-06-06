@@ -60,13 +60,12 @@ import org.apache.hadoop.mapred.JobConf;
 
 @Description(
         name = "tree_predict",
-        value = "_FUNC_(int modelId, int modelType, string script, array<double> features [, const boolean classification])"
+        value = "_FUNC_(string modelId, int modelType, string script, array<double> features [, const boolean classification])"
                 + " - Returns a prediction result of a random forest")
 @UDFType(deterministic = true, stateful = false)
 public final class TreePredictUDF extends GenericUDF {
 
     private boolean classification;
-    private IntObjectInspector modelIdOI;
     private IntObjectInspector modelTypeOI;
     private StringObjectInspector stringOI;
     private ListObjectInspector featureListOI;
@@ -95,7 +94,6 @@ public final class TreePredictUDF extends GenericUDF {
             throw new UDFArgumentException("_FUNC_ takes 4 or 5 arguments");
         }
 
-        this.modelIdOI = HiveUtils.asIntOI(argOIs[0]);
         this.modelTypeOI = HiveUtils.asIntOI(argOIs[1]);
         this.stringOI = HiveUtils.asStringOI(argOIs[2]);
         ListObjectInspector listOI = HiveUtils.asListOI(argOIs[3]);
@@ -119,7 +117,11 @@ public final class TreePredictUDF extends GenericUDF {
     @Override
     public Writable evaluate(@Nonnull DeferredObject[] arguments) throws HiveException {
         Object arg0 = arguments[0].get();
-        int modelId = modelIdOI.get(arg0);
+        if (arg0 == null) {
+            throw new HiveException("ModelId was null");
+        }
+        // Not using string OI for backward compatibilities
+        String modelId = arg0.toString();
 
         Object arg1 = arguments[1].get();
         int modelTypeId = modelTypeOI.get(arg1);
@@ -178,7 +180,6 @@ public final class TreePredictUDF extends GenericUDF {
 
     @Override
     public void close() throws IOException {
-        this.modelIdOI = null;
         this.modelTypeOI = null;
         this.stringOI = null;
         this.featureElemOI = null;
@@ -195,7 +196,7 @@ public final class TreePredictUDF extends GenericUDF {
     public interface Evaluator extends Closeable {
 
         @Nullable
-        Writable evaluate(int modelId, boolean compressed, @Nonnull final Text script,
+        Writable evaluate(@Nonnull String modelId, boolean compressed, @Nonnull final Text script,
                 @Nonnull final double[] features, final boolean classification)
                 throws HiveException;
 
@@ -203,14 +204,15 @@ public final class TreePredictUDF extends GenericUDF {
 
     static final class JavaSerializationEvaluator implements Evaluator {
 
-        private int prevModelId = -1;
+        @Nullable
+        private String prevModelId = null;
         private DecisionTree.Node cNode = null;
         private RegressionTree.Node rNode = null;
 
         JavaSerializationEvaluator() {}
 
         @Override
-        public Writable evaluate(int modelId, boolean compressed, @Nonnull Text script,
+        public Writable evaluate(@Nonnull String modelId, boolean compressed, @Nonnull Text script,
                 double[] features, boolean classification) throws HiveException {
             if (classification) {
                 return evaluateClassification(modelId, compressed, script, features);
@@ -219,9 +221,9 @@ public final class TreePredictUDF extends GenericUDF {
             }
         }
 
-        private IntWritable evaluateClassification(int modelId, boolean compressed,
+        private IntWritable evaluateClassification(@Nonnull String modelId, boolean compressed,
                 @Nonnull Text script, double[] features) throws HiveException {
-            if (modelId != prevModelId) {
+            if (!modelId.equals(prevModelId)) {
                 this.prevModelId = modelId;
                 int length = script.getLength();
                 byte[] b = script.getBytes();
@@ -233,9 +235,9 @@ public final class TreePredictUDF extends GenericUDF {
             return new IntWritable(result);
         }
 
-        private DoubleWritable evaluteRegression(int modelId, boolean compressed,
+        private DoubleWritable evaluteRegression(@Nonnull String modelId, boolean compressed,
                 @Nonnull Text script, double[] features) throws HiveException {
-            if (modelId != prevModelId) {
+            if (!modelId.equals(prevModelId)) {
                 this.prevModelId = modelId;
                 int length = script.getLength();
                 byte[] b = script.getBytes();
@@ -254,14 +256,14 @@ public final class TreePredictUDF extends GenericUDF {
 
     static final class StackmachineEvaluator implements Evaluator {
 
-        private int prevModelId = -1;
+        private String prevModelId = null;
         private StackMachine prevVM = null;
         private DeflateCodec codec = null;
 
         StackmachineEvaluator() {}
 
         @Override
-        public Writable evaluate(int modelId, boolean compressed, @Nonnull Text script,
+        public Writable evaluate(@Nonnull String modelId, boolean compressed, @Nonnull Text script,
                 double[] features, boolean classification) throws HiveException {
             final String scriptStr;
             if (compressed) {
@@ -282,7 +284,7 @@ public final class TreePredictUDF extends GenericUDF {
             }
 
             final StackMachine vm;
-            if (modelId == prevModelId) {
+            if (modelId.equals(prevModelId)) {
                 vm = prevVM;
             } else {
                 vm = new StackMachine();
@@ -326,7 +328,7 @@ public final class TreePredictUDF extends GenericUDF {
         private final ScriptEngine scriptEngine;
         private final Compilable compilableEngine;
 
-        private int prevModelId = -1;
+        private String prevModelId = null;
         private CompiledScript prevCompiled;
 
         private DeflateCodec codec = null;
@@ -344,7 +346,7 @@ public final class TreePredictUDF extends GenericUDF {
         }
 
         @Override
-        public Writable evaluate(int modelId, boolean compressed, @Nonnull Text script,
+        public Writable evaluate(@Nonnull String modelId, boolean compressed, @Nonnull Text script,
                 double[] features, boolean classification) throws HiveException {
             final String scriptStr;
             if (compressed) {
@@ -365,7 +367,7 @@ public final class TreePredictUDF extends GenericUDF {
             }
 
             final CompiledScript compiled;
-            if (modelId == prevModelId) {
+            if (modelId.equals(prevModelId)) {
                 compiled = prevCompiled;
             } else {
                 try {

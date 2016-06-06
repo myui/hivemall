@@ -32,6 +32,7 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.Primitives;
+import hivemall.utils.lang.RandomUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -206,7 +207,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(6);
 
         fieldNames.add("model_id");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
         fieldNames.add("model_type");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("pred_model");
@@ -236,8 +237,9 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     @Override
     public void close() throws HiveException {
         this._progressReporter = getReporter();
-        this._treeBuildTaskCounter = (_progressReporter == null) ? null : _progressReporter.getCounter(
-            "hivemall.smile.RandomForestClassifier$Counter", "finishedTreeBuildTasks");
+        this._treeBuildTaskCounter = (_progressReporter == null) ? null
+                : _progressReporter.getCounter("hivemall.smile.RandomForestClassifier$Counter",
+                    "finishedTreeBuildTasks");
         reportProgress(_progressReporter);
 
         int numExamples = featuresList.size();
@@ -320,7 +322,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
     /**
      * Synchronized because {@link #forward(Object)} should be called from a single thread.
      */
-    synchronized void forward(final int modelId, @Nonnull final Text model,
+    synchronized void forward(final int taskId, @Nonnull final Text model,
             @Nonnull final double[] importance, final int[] y, final int[][] prediction,
             final boolean lastTask) throws HiveException {
         int oobErrors = 0;
@@ -337,8 +339,10 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
                 }
             }
         }
-        Object[] forwardObjs = new Object[6];
-        forwardObjs[0] = new IntWritable(modelId);
+
+        String modelId = RandomUtils.getUUID();
+        final Object[] forwardObjs = new Object[6];
+        forwardObjs[0] = new Text(modelId);
         forwardObjs[1] = new IntWritable(_outputType.getId());
         forwardObjs[2] = model;
         forwardObjs[3] = WritableUtils.toWritableList(importance);
@@ -349,7 +353,7 @@ public final class RandomForestClassifierUDTF extends UDTFWithOptions {
         reportProgress(_progressReporter);
         incrCounter(_treeBuildTaskCounter, 1);
 
-        logger.info("Forwarded " + modelId + "-th DecisionTree out of " + _numTrees);
+        logger.info("Forwarded " + taskId + "-th DecisionTree out of " + _numTrees);
     }
 
     /**

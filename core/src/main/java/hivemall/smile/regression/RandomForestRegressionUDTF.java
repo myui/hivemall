@@ -32,6 +32,7 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.io.IOUtils;
 import hivemall.utils.lang.Primitives;
+import hivemall.utils.lang.RandomUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -207,7 +208,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(5);
 
         fieldNames.add("model_id");
-        fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+        fieldOIs.add(PrimitiveObjectInspectorFactory.writableStringObjectInspector);
         fieldNames.add("model_type");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         fieldNames.add("pred_model");
@@ -330,7 +331,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
     /**
      * Synchronized because {@link #forward(Object)} should be called from a single thread.
      */
-    synchronized void forward(final int modelId, @Nonnull final Text model,
+    synchronized void forward(final int taskId, @Nonnull final Text model,
             @Nonnull final double[] importance, final double[] y, final double[] prediction,
             final int[] oob, final boolean lastTask) throws HiveException {
         double oobErrors = 0.d;
@@ -345,8 +346,9 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
                 }
             }
         }
-        Object[] forwardObjs = new Object[6];
-        forwardObjs[0] = new IntWritable(modelId);
+        String modelId = RandomUtils.getUUID();
+        final Object[] forwardObjs = new Object[6];
+        forwardObjs[0] = new Text(modelId);
         forwardObjs[1] = new IntWritable(_outputType.getId());
         forwardObjs[2] = model;
         forwardObjs[3] = WritableUtils.toWritableList(importance);
@@ -357,7 +359,7 @@ public final class RandomForestRegressionUDTF extends UDTFWithOptions {
         reportProgress(_progressReporter);
         incrCounter(_treeBuildTaskCounter, 1);
 
-        logger.info("Forwarded " + modelId + "-th RegressionTree out of " + _numTrees);
+        logger.info("Forwarded " + taskId + "-th RegressionTree out of " + _numTrees);
     }
 
     /**

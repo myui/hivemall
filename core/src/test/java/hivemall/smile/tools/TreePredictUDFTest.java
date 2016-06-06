@@ -43,7 +43,7 @@ import smile.validation.CrossValidation;
 import smile.validation.LOOCV;
 import smile.validation.Validation;
 
-public class TreePredictByStackMachineUDFTest {
+public class TreePredictUDFTest {
     private static final boolean DEBUG = false;
 
     /**
@@ -143,7 +143,7 @@ public class TreePredictByStackMachineUDFTest {
     }
 
     private static int evalPredict(DecisionTree tree, double[] x) throws HiveException, IOException {
-        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
+        TreePredictUDF udf = new TreePredictUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
         IntWritable result = (IntWritable) udf.evaluate(opScript, x, true);
@@ -153,7 +153,7 @@ public class TreePredictByStackMachineUDFTest {
 
     private static double evalPredict(RegressionTree tree, double[] x) throws HiveException,
             IOException {
-        TreePredictByStackMachineUDF udf = new TreePredictByStackMachineUDF();
+        TreePredictUDF udf = new TreePredictUDF();
         String opScript = tree.predictOpCodegen(StackMachine.SEP);
         debugPrint(opScript);
         DoubleWritable result = (DoubleWritable) udf.evaluate(opScript, x, false);
