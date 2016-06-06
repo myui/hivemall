@@ -21,13 +21,17 @@ package hivemall.ftvec;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "extract_weight", value = "_FUNC_(feature_vector in array<string>) - Returns the weights of features in array<string>")
+@Description(
+        name = "extract_weight",
+        value = "_FUNC_(feature_vector in array<string>) - Returns the weights of features in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class ExtractWeightUDF extends UDF {
 
@@ -36,28 +40,38 @@ public final class ExtractWeightUDF extends UDF {
     }
 
     public List<DoubleWritable> evaluate(List<String> featureVectors) throws UDFArgumentException {
-        if(featureVectors == null) {
+        if (featureVectors == null) {
             return null;
         }
         final int size = featureVectors.size();
         final DoubleWritable[] output = new DoubleWritable[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             String ftvec = featureVectors.get(i);
             output[i] = extractWeights(ftvec);
         }
         return Arrays.asList(output);
     }
 
-    private static DoubleWritable extractWeights(String ftvec) throws UDFArgumentException {
-        if(ftvec == null) {
+    static DoubleWritable extractWeights(String ftvec) throws UDFArgumentException {
+        if (ftvec == null) {
             return null;
         }
-        final String[] splits = ftvec.split(":");
-        if(splits.length == 2) {
-            double d = Double.parseDouble(splits[1]);
+
+        final int pos = ftvec.lastIndexOf(':');
+        if (pos > 0) {
+            String s = ftvec.substring(pos + 1);
+            double d = parseDouble(s);
             return new DoubleWritable(d);
         } else {
             return new DoubleWritable(1.d);
+        }
+    }
+
+    private static double parseDouble(@Nonnull final String v) throws UDFArgumentException {
+        try {
+            return Double.parseDouble(v);
+        } catch (NumberFormatException nfe) {
+            throw new UDFArgumentException(nfe);
         }
     }
 

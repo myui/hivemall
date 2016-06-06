@@ -18,7 +18,7 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
+import hivemall.fm.FMHyperParameters.FFMHyperParameters;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
 import hivemall.utils.lang.NumberUtils;
@@ -28,25 +28,30 @@ import java.util.Arrays;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+
 public abstract class FieldAwareFactorizationMachineModel extends FactorizationMachineModel {
 
-    protected final boolean useAdaGrad;
-    protected final float eta0_V;
-    protected final float eps;
-    protected final float scaling;
+    @Nonnull
+    protected final FFMHyperParameters _params;
+    protected final float _eta0_V;
+    protected final float _eps;
 
-    public FieldAwareFactorizationMachineModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, EtaEstimator eta,
-            VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
-        this.useAdaGrad = useAdaGrad;
-        this.eta0_V = eta0_V;
-        this.eps = eps;
-        this.scaling = scaling;
+    protected final boolean _useAdaGrad;
+    protected final boolean _useFTRL;
+
+    public FieldAwareFactorizationMachineModel(@Nonnull FFMHyperParameters params) {
+        super(params);
+        this._params = params;
+        this._eta0_V = params.eta0_V;
+        this._eps = params.eps;
+        this._useAdaGrad = params.useAdaGrad;
+        this._useFTRL = params.useFTRL;
     }
 
     public abstract float getV(@Nonnull Feature x, @Nonnull int yField, int f);
 
+    @Deprecated
     protected abstract void setV(@Nonnull Feature x, @Nonnull int yField, int f, float nextVif);
 
     @Override
@@ -60,7 +65,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     }
 
     @Override
-    protected final double predict(@Nonnull final Feature[] x) {
+    protected final double predict(@Nonnull final Feature[] x) throws HiveException {
         // w0
         double ret = getW0();
         // W
@@ -88,7 +93,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
             }
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Detected " + ret
+            throw new HiveException("Detected " + ret
                     + " in predict. We recommend to normalize training examples.\n"
                     + "Dumping variables ...\n" + varDump(x));
         }
@@ -103,7 +108,7 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
         final float lambdaVf = getLambdaV(f);
 
         final Entry theta = getEntry(x, yField);
-        final float currentV = getV(theta, f);
+        final float currentV = theta.getV(f);
         final float eta = etaV(theta, t, gradV);
         final float nextV = currentV - eta * (gradV + 2.f * lambdaVf * currentV);
         if (!NumberUtils.isFinite(nextV)) {
@@ -112,22 +117,14 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
                     + ", gradV=" + gradV + ", lambdaVf=" + lambdaVf + ", dloss=" + dloss
                     + ", sumViX=" + sumViX);
         }
-        setV(theta, f, nextV);
-    }
-
-    private static float getV(@Nonnull final Entry theta, final int f) {
-        return theta.Vf[f];
-    }
-
-    private static float setV(@Nonnull final Entry theta, final int f, final float value) {
-        return theta.Vf[f] = value;
+        theta.setV(f, nextV);
     }
 
     protected final float etaV(@Nonnull final Entry theta, final long t, final float grad) {
-        if (useAdaGrad) {
-            double gg = theta.getSumOfSquaredGradients(scaling);
-            theta.addGradient(grad, scaling);
-            return (float) (eta0_V / Math.sqrt(eps + gg));
+        if (_useAdaGrad) {
+            double gg = theta.getSumOfSquaredGradientsV();
+            theta.addGradientV(grad);
+            return (float) (_eta0_V / Math.sqrt(_eps + gg));
         } else {
             return _eta.eta(t);
         }
@@ -195,50 +192,115 @@ public abstract class FieldAwareFactorizationMachineModel extends FactorizationM
     @Nonnull
     protected abstract Entry getEntry(@Nonnull Feature x, @Nonnull int yField);
 
-    protected final Entry newEntry(final float[] V) {
-        if (useAdaGrad) {
-            return new AdaGradEntry(0.f, V);
-        } else {
-            return new Entry(0.f, V);
+    @Override
+    protected final String varDump(@Nonnull final Feature[] x) {
+        final StringBuilder buf1 = new StringBuilder(1024);
+        final StringBuilder buf2 = new StringBuilder(1024);
+
+        // X
+        for (int i = 0; i < x.length; i++) {
+            Feature e = x[i];
+            String j = e.getFeature();
+            double xj = e.getValue();
+            if (i != 0) {
+                buf1.append(", ");
+            }
+            buf1.append("x[").append(j).append("] = ").append(xj);
         }
-    }
+        buf1.append("\n");
 
-    static class Entry {
-        float W;
-        @Nonnull
-        final float[] Vf;
+        // w0        
+        double ret = getW0();
+        buf1.append("predict(x) = w0");
+        buf2.append("predict(x) = ").append(ret);
 
-        Entry(float W, @Nonnull float[] Vf) {
-            this.W = W;
-            this.Vf = Vf;
+        // W
+        for (Feature e : x) {
+            String i = e.getFeature();
+            double xi = e.getValue();
+            float wi = getW(e);
+
+            buf1.append(" + (w[").append(i).append("] * x[").append(i).append("])");
+            buf2.append(" + (").append(wi).append(" * ").append(xi).append(')');
+
+            double wx = wi * xi;
+            ret += wx;
+
+            if (!NumberUtils.isFinite(ret)) {
+                return buf1.append(" + ... = ")
+                           .append(ret)
+                           .append('\n')
+                           .append(buf2)
+                           .append(" + ... = ")
+                           .append(ret)
+                           .toString();
+            }
         }
 
-        public double getSumOfSquaredGradients(float scaling) {
-            throw new UnsupportedOperationException();
+        // V
+        for (int i = 0; i < x.length; i++) {
+            final Feature ei = x[i];
+            final String fi = ei.getFeature();
+            final double xi = ei.getValue();
+            final int iField = ei.getField();
+            for (int j = i + 1; j < x.length; j++) {
+                final Feature ej = x[j];
+                final String fj = ej.getFeature();
+                final double xj = ej.getValue();
+                final int jField = ej.getField();
+                for (int f = 0, k = _factor; f < k; f++) {
+                    float vijf = getV(ei, jField, f);
+                    float vjif = getV(ej, iField, f);
+
+                    buf1.append(" + (v[i")
+                        .append(fi)
+                        .append("-j")
+                        .append(jField)
+                        .append("-f")
+                        .append(f)
+                        .append("] * v[j")
+                        .append(fj)
+                        .append("-i")
+                        .append(iField)
+                        .append("-f")
+                        .append(f)
+                        .append("] * x[")
+                        .append(fi)
+                        .append("] * x[")
+                        .append(fj)
+                        .append("])");
+
+                    buf2.append(" + (")
+                        .append(vijf)
+                        .append(" * ")
+                        .append(vjif)
+                        .append(" * ")
+                        .append(xi)
+                        .append(" * ")
+                        .append(xj)
+                        .append(')');
+
+                    ret += vijf * vjif * xi * xj;
+
+                    if (!NumberUtils.isFinite(ret)) {
+                        return buf1.append(" + ... = ")
+                                   .append(ret)
+                                   .append('\n')
+                                   .append(buf2)
+                                   .append(" + ... = ")
+                                   .append(ret)
+                                   .toString();
+                    }
+                }
+            }
         }
 
-        public void addGradient(float grad, float scaling) {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    static final class AdaGradEntry extends Entry {
-        double sumOfSqGradients;
-
-        AdaGradEntry(float W, float[] Vf) {
-            super(W, Vf);
-            sumOfSqGradients = 0.d;
-        }
-
-        @Override
-        public double getSumOfSquaredGradients(float scaling) {
-            return sumOfSqGradients * scaling;
-        }
-
-        @Override
-        public void addGradient(float grad, float scaling) {
-            this.sumOfSqGradients += grad * grad / scaling;
-        }
-
+        return buf1.append(" = ")
+                   .append(ret)
+                   .append('\n')
+                   .append(buf2)
+                   .append(" = ")
+                   .append(ret)
+                   .toString();
     }
 }

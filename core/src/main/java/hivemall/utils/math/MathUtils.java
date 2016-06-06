@@ -79,12 +79,25 @@ public final class MathUtils {
     }
 
     public static double sigmoid(final double x) {
-        return 1.d / (1.d + Math.exp(-x));
+        double x2 = Math.max(Math.min(x, 23.d), -23.d);
+        return 1.d / (1.d + Math.exp(-x2));
     }
 
     public static double lnSigmoid(final double x) {
         double ex = Math.exp(-x);
         return ex / (1.d + ex);
+    }
+
+    /**
+     * <a href="https://en.wikipedia.org/wiki/Logit">Logit</a> is the inverse of
+     * {@link #sigmoid(double)} function.
+     */
+    public static double logit(final double p) {
+        return Math.log(p / (1.d - p));
+    }
+
+    public static double logit(final double p, final double hi, final double lo) {
+        return Math.log((p - lo) / (hi - p));
     }
 
     /**
@@ -214,6 +227,10 @@ public final class MathUtils {
         return v < 0 ? -1 : 1;
     }
 
+    public static float sign(final float v) {
+        return v < 0.f ? -1.f : 1.f;
+    }
+
     public static double log(final double n, final int base) {
         return Math.log(n) / Math.log(base);
     }
@@ -236,5 +253,43 @@ public final class MathUtils {
         return r;
     }
 
+    public static boolean equals(@Nonnull final float value, final float expected, final float delta) {
+        if (Math.abs(expected - value) > delta) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean equals(@Nonnull final double value, final double expected,
+            final double delta) {
+        if (Math.abs(expected - value) > delta) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean almostEquals(@Nonnull final float value, final float expected,
+            final float delta) {
+        return equals(value, expected, 1E-15f);
+    }
+
+    public static boolean almostEquals(@Nonnull final double value, final double expected,
+            final double delta) {
+        return equals(value, expected, 1E-15d);
+    }
+
+    public static boolean closeToZero(@Nonnull final float value) {
+        if (Math.abs(value) > 1E-15f) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean closeToZero(@Nonnull final double value) {
+        if (Math.abs(value) > 1E-15d) {
+            return false;
+        }
+        return true;
+    }
 
 }

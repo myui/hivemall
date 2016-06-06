@@ -18,8 +18,6 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
-
 import java.util.Arrays;
 
 import javax.annotation.Nonnull;
@@ -34,13 +32,11 @@ public final class FMArrayModel extends FactorizationMachineModel {
     private final float[] _w;
     private final float[][] _V;
 
-    public FMArrayModel(boolean classification, int factor, float lambda0, double sigma, int p,
-            long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit);
-        this._p = p;
-        this._w = new float[p + 1];
-        this._V = new float[p][factor];
+    public FMArrayModel(@Nonnull FMHyperParameters params) {
+        super(params);
+        this._p = params.numFeatures;
+        this._w = new float[params.numFeatures + 1];
+        this._V = new float[params.numFeatures][params.factors];
     }
 
     @Override

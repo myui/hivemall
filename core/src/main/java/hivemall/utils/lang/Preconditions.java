@@ -37,4 +37,24 @@ public final class Preconditions {
         return reference;
     }
 
+    public static void checkArgument(boolean expression) {
+        if (!expression) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static void checkArgument(boolean expression, @Nullable Object errorMessage) {
+        if (!expression) {
+            throw new IllegalArgumentException(String.valueOf(errorMessage));
+        }
+    }
+
+    public static void checkArgument(boolean expression, @Nullable String errorMessageTemplate,
+            @Nullable Object... errorMessageArgs) {
+        if (!expression) {
+            throw new IllegalArgumentException(StringUtils.format(errorMessageTemplate,
+                errorMessageArgs));
+        }
+    }
+
 }

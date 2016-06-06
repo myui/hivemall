@@ -131,12 +131,14 @@ public final class FFMPredictUDF extends GenericUDF {
         // W
         for (Feature e : x) {
             double xi = e.getValue();
-            float wi = model.getW1(e);
+            float wi = model.getW(e);
             double wx = wi * xi;
             ret += wx;
         }
-        // V
+        // V        
         final int factors = model.getNumFactors();
+        final float[] vij = new float[factors];
+        final float[] vji = new float[factors];
         for (int i = 0; i < x.length; ++i) {
             final Feature ei = x[i];
             final double xi = ei.getValue();
@@ -145,9 +147,10 @@ public final class FFMPredictUDF extends GenericUDF {
                 final Feature ej = x[j];
                 final double xj = ej.getValue();
                 final int jField = ej.getField();
-                final float[] vij = model.getV(ei, jField);
-                final float[] vji = model.getV(ej, iField);
-                if (vij == null || vji == null) {
+                if (!model.getV(ei, jField, vij)) {
+                    continue;
+                }
+                if (!model.getV(ej, iField, vij)) {
                     continue;
                 }
                 for (int f = 0; f < factors; f++) {

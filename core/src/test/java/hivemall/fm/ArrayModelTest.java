@@ -35,7 +35,7 @@ public class ArrayModelTest {
     private static final boolean DEBUG_PRINT = false;
 
     private static void println(String msg) {
-        if(DEBUG_PRINT)
+        if (DEBUG_PRINT)
             System.out.println(msg);
     }
 
@@ -46,31 +46,33 @@ public class ArrayModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-adareg -factor 20 -classification -seed 31 -iters 100 -p "
-                + COL);
-        udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            "-adareg -factors 20 -classification -seed 31 -iters 100 -int_feature -p " + COL);
+        udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMArrayModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(),
+            model instanceof FMArrayModel);
 
         float accuracy = 0.f;
         final Random rnd = new Random(201L);
-        for(int numberOfIteration = 0; numberOfIteration < 10000; numberOfIteration++) {
+        for (int numberOfIteration = 0; numberOfIteration < 10000; numberOfIteration++) {
             ArrayList<IntFeature[]> fArrayList = new ArrayList<IntFeature[]>();
             ArrayList<Double> ans = new ArrayList<Double>();
-            for(int i = 0; i < ROW; i++) {
+            for (int i = 0; i < ROW; i++) {
                 ArrayList<IntFeature> feature = new ArrayList<IntFeature>();
-                for(int j = 1; j <= COL; j++) {
-                    if(i < (0.5f * ROW)) {
-                        if(j == 1) {
+                for (int j = 1; j <= COL; j++) {
+                    if (i < (0.5f * ROW)) {
+                        if (j == 1) {
                             feature.add(new IntFeature(j, 1.d));
-                        } else if(j < 0.5 * COL) {
-                            if(rnd.nextFloat() < 0.2f) {
+                        } else if (j < 0.5 * COL) {
+                            if (rnd.nextFloat() < 0.2f) {
                                 feature.add(new IntFeature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
-                        if(j > 0.5f * COL) {
-                            if(rnd.nextFloat() < 0.2f) {
+                        if (j > 0.5f * COL) {
+                            if (rnd.nextFloat() < 0.2f) {
                                 feature.add(new IntFeature(j, rnd.nextDouble()));
                             }
                         }
@@ -81,27 +83,27 @@ public class ArrayModelTest {
                 fArrayList.add(x);
 
                 final double y;
-                if(i < ROW * 0.5f) {
+                if (i < ROW * 0.5f) {
                     y = -1.0d;
                 } else {
                     y = 1.0d;
                 }
                 ans.add(y);
 
-                udtf.process(new Object[] { toStringArray(x), y });
+                udtf.process(new Object[] {toStringArray(x), y});
             }
             int bingo = 0;
             int total = fArrayList.size();
-            for(int i = 0; i < total; i++) {
+            for (int i = 0; i < total; i++) {
                 double tmpAns = ans.get(i);
-                if(tmpAns < 0) {
+                if (tmpAns < 0) {
                     tmpAns = 0;
                 } else {
                     tmpAns = 1;
                 }
                 double p = model.predict(fArrayList.get(i));
                 int predicted = p > 0.5 ? 1 : 0;
-                if(predicted == tmpAns) {
+                if (predicted == tmpAns) {
                     bingo++;
                 }
             }
@@ -119,31 +121,33 @@ public class ArrayModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1 -p "
-                + COL);
-        udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            "-factors 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1 -int_feature -p " + COL);
+        udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
         FactorizationMachineModel model = udtf.getModel();
-        Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMArrayModel);
+        Assert.assertTrue("Actual class: " + model.getClass().getName(),
+            model instanceof FMArrayModel);
 
         double diff = 0.d;
         final Random rnd = new Random(201L);
-        for(int numberOfIteration = 0; numberOfIteration < 100; numberOfIteration++) {
+        for (int numberOfIteration = 0; numberOfIteration < 100; numberOfIteration++) {
             ArrayList<IntFeature[]> fArrayList = new ArrayList<IntFeature[]>();
             ArrayList<Double> ans = new ArrayList<Double>();
-            for(int i = 0; i < ROW; i++) {
+            for (int i = 0; i < ROW; i++) {
                 ArrayList<IntFeature> feature = new ArrayList<IntFeature>();
-                for(int j = 1; j <= COL; j++) {
-                    if(i < (0.5f * ROW)) {
-                        if(j == 1) {
+                for (int j = 1; j <= COL; j++) {
+                    if (i < (0.5f * ROW)) {
+                        if (j == 1) {
                             feature.add(new IntFeature(j, 1.d));
-                        } else if(j < 0.5 * COL) {
-                            if(rnd.nextFloat() < 0.2f) {
+                        } else if (j < 0.5 * COL) {
+                            if (rnd.nextFloat() < 0.2f) {
                                 feature.add(new IntFeature(j, rnd.nextDouble()));
                             }
                         }
                     } else {
-                        if(j > (0.5f * COL)) {
-                            if(rnd.nextFloat() < 0.2f) {
+                        if (j > (0.5f * COL)) {
+                            if (rnd.nextFloat() < 0.2f) {
                                 feature.add(new IntFeature(j, rnd.nextDouble()));
                             }
                         }
@@ -154,18 +158,18 @@ public class ArrayModelTest {
                 fArrayList.add(x);
 
                 final double y;
-                if(i < ROW * 0.5f) {
+                if (i < ROW * 0.5f) {
                     y = 0.1d;
                 } else {
                     y = 0.4d;
                 }
                 ans.add(y);
 
-                udtf.process(new Object[] { toStringArray(x), y });
+                udtf.process(new Object[] {toStringArray(x), y});
             }
 
             diff = 0.d;
-            for(int i = 0; i < fArrayList.size(); i++) {
+            for (int i = 0; i < fArrayList.size(); i++) {
                 double predicted = model.predict(fArrayList.get(i));
                 double actual = ans.get(i);
                 double tmpDiff = predicted - actual;
@@ -179,7 +183,7 @@ public class ArrayModelTest {
     private static String[] toStringArray(IntFeature[] x) {
         final int size = x.length;
         final String[] ret = new String[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             ret[i] = x[i].toString();
         }
         return ret;

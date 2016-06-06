@@ -18,35 +18,55 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
-import hivemall.utils.collections.IntOpenHashTable;
+import hivemall.fm.Entry.AdaGradEntry;
+import hivemall.fm.Entry.FTRLEntry;
+import hivemall.fm.FMHyperParameters.FFMHyperParameters;
+import hivemall.utils.buffer.HeapBuffer;
+import hivemall.utils.collections.Int2LongOpenHashTable;
 import hivemall.utils.lang.NumberUtils;
+import hivemall.utils.math.MathUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachineModel {
     private static final int DEFAULT_MAPSIZE = 65536;
 
     // LEARNING PARAMS
     private float _w0;
-    private final IntOpenHashTable<Entry> _map;
-    
+    @Nonnull
+    private final Int2LongOpenHashTable _map;
+    private final HeapBuffer _buf;
+
+    // hyperparams
     private final int _numFeatures;
     private final int _numFields;
 
-    public FFMStringFeatureMapModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit, boolean useAdaGrad, float eta0_V, float eps, float scaling, int numFeatures, int numFields) {
-        super(classification, factor, lambda0, sigma, seed, minTarget, maxTarget, eta, vInit, useAdaGrad, eta0_V, eps, scaling);
+    // FTEL
+    private final float _alpha;
+    private final float _beta;
+    private final float _lambda1;
+    private final float _lamdda2;
+
+    private final int _entrySize;
+
+    public FFMStringFeatureMapModel(@Nonnull FFMHyperParameters params) {
+        super(params);
         this._w0 = 0.f;
-        this._map = new IntOpenHashTable<FFMStringFeatureMapModel.Entry>(DEFAULT_MAPSIZE);
-        this._numFeatures = numFeatures;
-        this._numFields = numFields;
+        this._map = new Int2LongOpenHashTable(DEFAULT_MAPSIZE);
+        this._buf = new HeapBuffer(HeapBuffer.DEFAULT_CHUNK_SIZE);
+        this._numFeatures = params.numFeatures;
+        this._numFields = params.numFields;
+        this._alpha = params.alphaFTRL;
+        this._beta = params.betaFTRL;
+        this._lambda1 = params.lambda1;
+        this._lamdda2 = params.lamdda2;
+        this._entrySize = entrySize(_factor, _useFTRL, _useAdaGrad);;
     }
 
     @Nonnull
     FFMPredictionModel toPredictionModel() {
-        return new FFMPredictionModel(_map, _w0, _factor, _numFeatures, _numFields);
+        return new FFMPredictionModel(_map, _buf, _w0, _factor, _numFeatures, _numFields);
     }
 
     @Override
@@ -68,25 +88,25 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     public float getW(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
 
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
             return 0.f;
         }
-        return entry.W;
+        return entry.getW();
     }
 
     @Override
     protected void setW(@Nonnull final Feature x, final float nextWi) {
         final int j = x.getFeatureIndex();
 
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
-            float[] Vf = initV();
-            entry = newEntry(Vf);
-            entry.W = nextWi;
-            _map.put(j, entry);
+            float[] V = initV();
+            entry = newEntry(nextWi, V);
+            long ptr = entry.getOffset();
+            _map.put(j, ptr);
         } else {
-            entry.W = nextWi;
+            entry.setW(nextWi);
         }
     }
 
@@ -96,15 +116,46 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         float gradWi = (float) (dloss * Xi);
 
         final Entry theta = getEntry(x);
-        float wi = theta.W;
+        float wi = theta.getW();
+
         float nextWi = wi - eta * (gradWi + 2.f * _lambdaW * wi);
         if (!NumberUtils.isFinite(nextWi)) {
             throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
                     + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss
                     + ", eta=" + eta);
         }
-        theta.W = nextWi;
+        theta.setW(nextWi);
     }
+
+    /**
+     * Update Wi using Follow-the-Regularized-Leader
+     */
+    boolean updateWiFTRL(final double dloss, @Nonnull final Feature x, final float eta) {
+        final double Xi = x.getValue();
+        float gradWi = (float) (dloss * Xi);
+
+        final Entry theta = getEntry(x);
+        float wi = theta.getW();
+
+        final float z = theta.updateZ(gradWi, _alpha);
+        final double n = theta.updateN(gradWi);
+
+        if (Math.abs(z) <= _lambda1) {
+            removeEntry(x);
+            return wi != 0;
+        }
+
+        final float nextWi = (float) ((MathUtils.sign(z) * _lambda1 - z) / ((_beta + Math.sqrt(n))
+                / _alpha + _lamdda2));
+        if (!NumberUtils.isFinite(nextWi)) {
+            throw new IllegalStateException("Got " + nextWi + " for next W[" + x.getFeature()
+                    + "]\n" + "Xi=" + Xi + ", gradWi=" + gradWi + ", wi=" + wi + ", dloss=" + dloss
+                    + ", eta=" + eta + ", n=" + n + ", z=" + z);
+        }
+        theta.setW(nextWi);
+        return (nextWi != 0) || (wi != 0);
+    }
+
 
     /**
      * @return V_x,yField,f
@@ -113,17 +164,14 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     public float getV(@Nonnull final Feature x, @Nonnull final int yField, final int f) {
         final int j = Feature.toIntFeature(x, yField, _numFields);
 
-        final float[] V;
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
-            V = initV();
+            float[] V = initV();
             entry = newEntry(V);
-            _map.put(j, entry);
-        } else {
-            V = entry.Vf;
-            assert (V != null);
+            long ptr = entry.getOffset();
+            _map.put(j, ptr);
         }
-        return V[f];
+        return entry.getV(f);
     }
 
     @Override
@@ -131,27 +179,26 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
             final float nextVif) {
         final int j = Feature.toIntFeature(x, yField, _numFields);
 
-        final float[] V;
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
-            V = initV();
+            float[] V = initV();
             entry = newEntry(V);
-            _map.put(j, entry);
-        } else {
-            V = entry.Vf;
-            assert (V != null);
+            long ptr = entry.getOffset();
+            _map.put(j, ptr);
         }
-        V[f] = nextVif;
+        entry.setV(f, nextVif);
     }
 
     @Override
     protected Entry getEntry(@Nonnull final Feature x) {
         final int j = x.getFeatureIndex();
-        Entry entry = _map.get(j);
+
+        Entry entry = getEntry(j);
         if (entry == null) {
             float[] V = initV();
             entry = newEntry(V);
-            _map.put(j, entry);
+            long ptr = entry.getOffset();
+            _map.put(j, ptr);
         }
         return entry;
     }
@@ -159,13 +206,79 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
     @Override
     protected Entry getEntry(@Nonnull final Feature x, @Nonnull final int yField) {
         final int j = Feature.toIntFeature(x, yField, _numFields);
-        Entry entry = _map.get(j);
+
+        Entry entry = getEntry(j);
         if (entry == null) {
             float[] V = initV();
             entry = newEntry(V);
-            _map.put(j, entry);
+            long ptr = entry.getOffset();
+            _map.put(j, ptr);
         }
         return entry;
+    }
+
+    protected void removeEntry(@Nonnull final Feature x) {
+        int j = x.getFeatureIndex();
+        _map.remove(j);
+    }
+
+    @Nonnull
+    protected final Entry newEntry(final float W, @Nonnull final float[] V) {
+        Entry entry = newEntry();
+        entry.setW(W);
+        entry.setV(V);
+        return entry;
+    }
+
+    @Nonnull
+    protected final Entry newEntry(@Nonnull final float[] V) {
+        Entry entry = newEntry();
+        entry.setV(V);
+        return entry;
+    }
+
+    @Nonnull
+    private Entry newEntry() {
+        if (_useFTRL) {
+            long ptr = _buf.allocate(_entrySize);
+            return new FTRLEntry(_buf, _factor, ptr);
+        } else if (_useAdaGrad) {
+            long ptr = _buf.allocate(_entrySize);
+            return new AdaGradEntry(_buf, _factor, ptr);
+        } else {
+            long ptr = _buf.allocate(_entrySize);
+            return new Entry(_buf, _factor, ptr);
+        }
+    }
+
+    @Nullable
+    private Entry getEntry(final int key) {
+        final long ptr = _map.get(key);
+        if (ptr == -1L) {
+            return null;
+        }
+        return getEntry(ptr);
+    }
+
+    @Nonnull
+    private Entry getEntry(long ptr) {
+        if (_useFTRL) {
+            return new FTRLEntry(_buf, _factor, ptr);
+        } else if (_useAdaGrad) {
+            return new AdaGradEntry(_buf, _factor, ptr);
+        } else {
+            return new Entry(_buf, _factor, ptr);
+        }
+    }
+
+    private static int entrySize(int factors, boolean ftrl, boolean adagrad) {
+        if (ftrl) {
+            return FTRLEntry.sizeOf(factors);
+        } else if (adagrad) {
+            return AdaGradEntry.sizeOf(factors);
+        } else {
+            return Entry.sizeOf(factors);
+        }
     }
 
 }

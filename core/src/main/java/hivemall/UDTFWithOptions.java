@@ -89,6 +89,7 @@ public abstract class UDTFWithOptions extends GenericUDTF {
 
     protected abstract Options getOptions();
 
+    @Nonnull
     protected final CommandLine parseOptions(String optionValue) throws UDFArgumentException {
         String[] args = optionValue.split("\\s+");
         Options opts = getOptions();

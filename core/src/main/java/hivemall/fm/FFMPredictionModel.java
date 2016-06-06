@@ -18,12 +18,14 @@
  */
 package hivemall.fm;
 
-import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
+import hivemall.utils.buffer.HeapBuffer;
 import hivemall.utils.codec.VariableByteCodec;
 import hivemall.utils.codec.ZigZagLEB128Codec;
+import hivemall.utils.collections.Int2LongOpenHashTable;
 import hivemall.utils.collections.IntOpenHashTable;
 import hivemall.utils.io.CompressionStreamFactory.CompressionAlgorithm;
 import hivemall.utils.io.IOUtils;
+import hivemall.utils.lang.ArrayUtils;
 import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.lang.ObjectUtils;
 
@@ -38,9 +40,23 @@ import java.util.Arrays;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class FFMPredictionModel implements Externalizable {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-    private IntOpenHashTable<Entry> _map;
+public final class FFMPredictionModel implements Externalizable {
+    private static final Log LOG = LogFactory.getLog(FFMPredictionModel.class);
+
+    private static final byte HALF_FLOAT_ENTRY = 1;
+    private static final byte W_ONLY_HALF_FLOAT_ENTRY = 2;
+    private static final byte FLOAT_ENTRY = 3;
+    private static final byte W_ONLY_FLOAT_ENTRY = 4;
+
+    /**
+     * maps feature to feature weight pointer
+     */
+    private Int2LongOpenHashTable _map;
+    private HeapBuffer _buf;
+
     private double _w0;
     private int _factors;
     private int _numFeatures;
@@ -48,9 +64,10 @@ public final class FFMPredictionModel implements Externalizable {
 
     public FFMPredictionModel() {}// for Externalizable
 
-    public FFMPredictionModel(@Nonnull IntOpenHashTable<Entry> map, double w0, int factor,
-            int numFeatures, int numFields) {
+    public FFMPredictionModel(@Nonnull Int2LongOpenHashTable map, @Nonnull HeapBuffer buf,
+            double w0, int factor, int numFeatures, int numFields) {
         this._map = map;
+        this._buf = buf;
         this._w0 = w0;
         this._factors = factor;
         this._numFeatures = numFeatures;
@@ -79,7 +96,8 @@ public final class FFMPredictionModel implements Externalizable {
 
     public long approxBytesConsumed() {
         int size = _map.size();
-        // map
+
+        // [map] size * (|state| + |key| + |entry|) 
         long bytes = size * (1L + 4L + 4L + (4L * _factors));
         int rest = _map.capacity() - size;
         if (rest > 0) {
@@ -90,35 +108,51 @@ public final class FFMPredictionModel implements Externalizable {
         return bytes;
     }
 
-    public float getW1(@Nonnull final Feature x) {
+    @Nullable
+    private Entry getEntry(final int key) {
+        final long ptr = _map.get(key);
+        if (ptr == -1L) {
+            return null;
+        }
+        return new Entry(_buf, _factors, ptr);
+    }
+
+    public float getW(@Nonnull final Feature x) {
         int j = x.getFeatureIndex();
 
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
             return 0.f;
         }
-        return entry.W;
+        return entry.getW();
     }
 
-    @Nullable
-    public float[] getV(@Nonnull final Feature x, @Nonnull final int yField) {
+    /**
+     * @return true if V exists
+     */
+    public boolean getV(@Nonnull final Feature x, @Nonnull final int yField, @Nonnull float[] dst) {
         int j = Feature.toIntFeature(x, yField, _numFields);
 
-        Entry entry = _map.get(j);
+        Entry entry = getEntry(j);
         if (entry == null) {
-            return null;
+            return false;
         }
-        return entry.Vf;
+
+        entry.getV(dst);
+        if (ArrayUtils.equals(dst, 0.f)) {
+            return false; // treat as null
+        }
+        return true;
     }
 
     @Override
     public void writeExternal(@Nonnull ObjectOutput out) throws IOException {
         out.writeDouble(_w0);
-        out.writeInt(_factors);
+        final int factors = _factors;
+        out.writeInt(factors);
         out.writeInt(_numFeatures);
         out.writeInt(_numFields);
 
-        final int factors = _factors;
         int used = _map.size();
         out.writeInt(used);
 
@@ -126,34 +160,49 @@ public final class FFMPredictionModel implements Externalizable {
         final int size = keys.length;
         out.writeInt(size);
 
-        final Object[] values = _map.getValues();
         final byte[] states = _map.getStates();
         writeStates(states, out);
 
+        final long[] values = _map.getValues();
+
+        final HeapBuffer buf = _buf;
+        final Entry e = new Entry(buf, factors);
+        final float[] Vf = new float[factors];
         for (int i = 0; i < size; i++) {
             if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
             ZigZagLEB128Codec.writeSignedInt(keys[i], out);
-            Entry v = (Entry) values[i];
-            writeEntry(v, factors, out);
-            values[i] = null; // help GC
+            e.setOffset(values[i]);
+            writeEntry(e, factors, Vf, out);
         }
-        this._map = null; // help GC        
+
+        // help GC
+        this._map = null;
+        this._buf = null;
     }
 
-    private static void writeEntry(@Nonnull final Entry v, final int factors,
-            @Nonnull final DataOutput out) throws IOException {
-        final float W = v.W;
-        final float[] Vf = v.Vf;
-        if (isRepresentableAsHalfFloat(W, Vf)) {
-            out.writeBoolean(true);
+    private static void writeEntry(@Nonnull final Entry e, final int factors,
+            @Nonnull final float[] Vf, @Nonnull final DataOutput out) throws IOException {
+        final float W = e.getW();
+        e.getV(Vf);
+
+        if (ArrayUtils.almostEquals(Vf, 0.f)) {
+            if (HalfFloat.isRepresentable(W)) {
+                out.writeByte(W_ONLY_HALF_FLOAT_ENTRY);
+                out.writeShort(HalfFloat.floatToHalfFloat(W));
+            } else {
+                out.writeByte(W_ONLY_FLOAT_ENTRY);
+                out.writeFloat(W);
+            }
+        } else if (isRepresentableAsHalfFloat(W, Vf)) {
+            out.writeByte(HALF_FLOAT_ENTRY);
             out.writeShort(HalfFloat.floatToHalfFloat(W));
             for (int i = 0; i < factors; i++) {
                 out.writeShort(HalfFloat.floatToHalfFloat(Vf[i]));
             }
         } else {
-            out.writeBoolean(false);
+            out.writeByte(FLOAT_ENTRY);
             out.writeFloat(W);
             IOUtils.writeFloats(Vf, factors, out);
         }
@@ -206,40 +255,67 @@ public final class FFMPredictionModel implements Externalizable {
         this._numFeatures = in.readInt();
         this._numFields = in.readInt();
 
-        int used = in.readInt();
+        final int used = in.readInt();
         final int size = in.readInt();
         final int[] keys = new int[size];
-        final Entry[] values = new Entry[size];
+        final long[] values = new long[size];
         final byte[] states = new byte[size];
         readStates(in, states);
 
+        final int entrySize = Entry.sizeOf(factors);
+        int numChunks = (entrySize * used) / HeapBuffer.DEFAULT_CHUNK_BYTES + 1;
+        final HeapBuffer buf = new HeapBuffer(HeapBuffer.DEFAULT_CHUNK_SIZE, numChunks);
+        final Entry e = new Entry(buf, factors);
+        final float[] Vf = new float[factors];
         for (int i = 0; i < size; i++) {
             if (states[i] != IntOpenHashTable.FULL) {
                 continue;
             }
             keys[i] = ZigZagLEB128Codec.readSignedInt(in);
-            values[i] = readEntry(in, factors);
+            long ptr = buf.allocate(entrySize);
+            e.setOffset(ptr);
+            readEntry(in, factors, Vf, e);
+            values[i] = ptr;
         }
 
-        this._map = new IntOpenHashTable<Entry>(keys, values, states, used);
+        this._map = new Int2LongOpenHashTable(keys, values, states, used);
+        this._buf = buf;
     }
 
     @Nonnull
-    private static Entry readEntry(@Nonnull final DataInput in, final int factors)
-            throws IOException {
-        final float W;
-        final float[] Vf;
-        if (in.readBoolean()) {// HalfFloat
-            W = HalfFloat.halfFloatToFloat(in.readShort());
-            Vf = new float[factors];
-            for (int i = 0; i < factors; i++) {
-                Vf[i] = HalfFloat.halfFloatToFloat(in.readShort());
+    private static void readEntry(@Nonnull final DataInput in, final int factors,
+            @Nonnull final float[] Vf, @Nonnull Entry dst) throws IOException {
+        final byte type = in.readByte();
+        switch (type) {
+            case HALF_FLOAT_ENTRY: {
+                float W = HalfFloat.halfFloatToFloat(in.readShort());
+                dst.setW(W);
+                for (int i = 0; i < factors; i++) {
+                    Vf[i] = HalfFloat.halfFloatToFloat(in.readShort());
+                }
+                dst.setV(Vf);
+                break;
             }
-        } else {
-            W = in.readFloat();
-            Vf = IOUtils.readFloats(in, factors);
+            case W_ONLY_HALF_FLOAT_ENTRY: {
+                float W = HalfFloat.halfFloatToFloat(in.readShort());
+                dst.setW(W);
+                break;
+            }
+            case FLOAT_ENTRY: {
+                float W = in.readFloat();
+                dst.setW(W);
+                IOUtils.readFloats(in, Vf);
+                dst.setV(Vf);
+                break;
+            }
+            case W_ONLY_FLOAT_ENTRY: {
+                float W = in.readFloat();
+                dst.setW(W);
+                break;
+            }
+            default:
+                throw new IOException("Unexpected Entry type: " + type);
         }
-        return new Entry(W, Vf);
     }
 
     @Nonnull
@@ -257,6 +333,7 @@ public final class FFMPredictionModel implements Externalizable {
     }
 
     public byte[] serialize() throws IOException {
+        LOG.info("FFMPredictionModel#serialize(): " + _buf.toString());
         return ObjectUtils.toCompressedBytes(this, CompressionAlgorithm.lzma2, true);
     }
 
@@ -265,6 +342,7 @@ public final class FFMPredictionModel implements Externalizable {
         FFMPredictionModel model = new FFMPredictionModel();
         ObjectUtils.readCompressedObject(serializedObj, len, model, CompressionAlgorithm.lzma2,
             true);
+        LOG.info("FFMPredictionModel#deserialize(): " + model._buf.toString());
         return model;
     }
 

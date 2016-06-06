@@ -91,4 +91,12 @@ public final class Primitives {
         return casted;
     }
 
+    public static int castToInt(final long value) {
+        final int result = (int) value;
+        if (result != value) {
+            throw new IllegalArgumentException("Out of range: " + value);
+        }
+        return result;
+    }
+
 }

@@ -17,15 +17,10 @@
  */
 package hivemall.fm;
 
-import hivemall.fm.FieldAwareFactorizationMachineModel.Entry;
-import hivemall.utils.collections.IntOpenHashTable;
-import hivemall.utils.io.FastByteArrayInputStream;
-import hivemall.utils.io.FastByteArrayOutputStream;
+import hivemall.utils.buffer.HeapBuffer;
+import hivemall.utils.collections.Int2LongOpenHashTable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,12 +29,29 @@ public class FFMPredictionModelTest {
 
     @Test
     public void testSerialize() throws IOException, ClassNotFoundException {
-        IntOpenHashTable<Entry> map = new IntOpenHashTable<FieldAwareFactorizationMachineModel.Entry>(
-            100);
-        map.put(1, new Entry(1, new float[] {1f, -1f, -1f}));
-        map.put(2, new Entry(2, new float[] {1f, 2f, -1f}));
-        map.put(3, new Entry(3, new float[] {1f, 2f, 3f}));
-        FFMPredictionModel expected = new FFMPredictionModel(map, 0d, 3,
+        final int factors = 3;
+        final int entrySize = Entry.sizeOf(factors);
+
+        HeapBuffer buf = new HeapBuffer(HeapBuffer.DEFAULT_CHUNK_SIZE);
+        Int2LongOpenHashTable map = Int2LongOpenHashTable.newInstance();
+
+        Entry e1 = new Entry(buf, factors, buf.allocate(entrySize));
+        e1.setW(1f);
+        e1.setV(new float[] {1f, -1f, -1f});
+
+        Entry e2 = new Entry(buf, factors, buf.allocate(entrySize));
+        e2.setW(2f);
+        e2.setV(new float[] {1f, 2f, -1f});
+
+        Entry e3 = new Entry(buf, factors, buf.allocate(entrySize));
+        e3.setW(3f);
+        e3.setV(new float[] {1f, 2f, 3f});
+
+        map.put(1, e1.getOffset());
+        map.put(2, e2.getOffset());
+        map.put(3, e3.getOffset());
+
+        FFMPredictionModel expected = new FFMPredictionModel(map, buf, 0.d, 3,
             Feature.DEFAULT_NUM_FEATURES, Feature.DEFAULT_NUM_FIELDS);
         byte[] b = expected.serialize();
 
@@ -47,33 +59,6 @@ public class FFMPredictionModelTest {
         Assert.assertEquals(3, actual.getNumFactors());
         Assert.assertEquals(Feature.DEFAULT_NUM_FEATURES, actual.getNumFeatures());
         Assert.assertEquals(Feature.DEFAULT_NUM_FIELDS, actual.getNumFields());
-    }
-
-    @Test
-    public void testReadWriteStates() throws IOException, ClassNotFoundException {
-        final Random rand = new Random(43);
-        final int size = 100000;
-        final byte[] expected = new byte[size];
-        for (int i = 0; i < size; i++) {
-            final float r = rand.nextFloat();
-            if (r < 0.7f) {
-                expected[i] = IntOpenHashTable.FULL;
-            } else {
-                expected[i] = IntOpenHashTable.FREE;
-            }
-        }
-
-        FastByteArrayOutputStream out = new FastByteArrayOutputStream();
-        FFMPredictionModel.writeStates(expected, new DataOutputStream(out));
-        byte[] serialized = out.toByteArray();
-        Assert.assertTrue("serialized: " + serialized.length + ", original: " + expected.length,
-            serialized.length < (expected.length * 0.31f));
-
-        final byte[] actual = new byte[size];
-        FastByteArrayInputStream in = new FastByteArrayInputStream(serialized);
-        FFMPredictionModel.readStates(new DataInputStream(in), actual);
-
-        Assert.assertArrayEquals(expected, actual);
     }
 
 }

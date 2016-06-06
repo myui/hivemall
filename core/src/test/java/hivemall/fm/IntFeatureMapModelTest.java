@@ -46,7 +46,7 @@ public class IntFeatureMapModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-adareg -int_feature -factor 20 -classification -seed 31 -iters 10");
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-adareg -int_feature -factors 20 -classification -seed 31 -iters 10");
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
         Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMIntFeatureMapModel);
@@ -118,7 +118,7 @@ public class IntFeatureMapModelTest {
         FactorizationMachineUDTF udtf = new FactorizationMachineUDTF();
         ListObjectInspector xOI = ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-int_feature -factor 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
+        ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, "-int_feature -factors 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
         udtf.initialize(new ObjectInspector[] { xOI, yOI, paramOI });
         FactorizationMachineModel model = udtf.getModel();
         Assert.assertTrue("Actual class: " + model.getClass().getName(), model instanceof FMIntFeatureMapModel);

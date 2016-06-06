@@ -49,24 +49,22 @@ public abstract class FactorizationMachineModel {
     protected float _lambdaW;
     protected final float[] _lambdaV;
 
-    public FactorizationMachineModel(boolean classification, int factor, float lambda0,
-            double sigma, long seed, double minTarget, double maxTarget, @Nonnull EtaEstimator eta,
-            @Nonnull VInitScheme vInit) {
-        this._classification = classification;
-        this._factor = factor;
-        this._sigma = sigma;
-        this._eta = eta;
-        this._initScheme = vInit;
-        this._rnd = new Random(seed);
+    public FactorizationMachineModel(@Nonnull FMHyperParameters params) {
+        this._classification = params.classification;
+        this._factor = params.factors;
+        this._sigma = params.sigma;
+        this._eta = params.eta;
+        this._initScheme = params.vInit;
+        this._rnd = new Random(params.seed);
 
-        this._min_target = minTarget;
-        this._max_target = maxTarget;
+        this._min_target = params.minTarget;
+        this._max_target = params.maxTarget;
 
         // Regulation Variables
-        this._lambdaW0 = lambda0;
-        this._lambdaW = lambda0;
-        this._lambdaV = new float[factor];
-        Arrays.fill(_lambdaV, lambda0);
+        this._lambdaW0 = params.lambdaW0;
+        this._lambdaW = params.lambdaW;
+        this._lambdaV = new float[params.factors];
+        Arrays.fill(_lambdaV, params.lambdaV);
 
         initLearningParams();
     }
@@ -117,7 +115,7 @@ public abstract class FactorizationMachineModel {
         return _lambdaV[f];
     }
 
-    final double dloss(@Nonnull final Feature[] x, final double y) {
+    final double dloss(@Nonnull final Feature[] x, final double y) throws HiveException {
         double p = predict(x);
         return dloss(p, y);
     }
@@ -135,7 +133,7 @@ public abstract class FactorizationMachineModel {
         return ret;
     }
 
-    double predict(@Nonnull final Feature[] x) {
+    protected double predict(@Nonnull final Feature[] x) throws HiveException {
         // w0
         double ret = getW0();
 
@@ -163,14 +161,14 @@ public abstract class FactorizationMachineModel {
             assert (!Double.isNaN(ret));
         }
         if (!NumberUtils.isFinite(ret)) {
-            throw new IllegalStateException("Detected " + ret
+            throw new HiveException("Detected " + ret
                     + " in predict. We recommend to normalize training examples.\n"
                     + "Dumping variables ...\n" + varDump(x));
         }
         return ret;
     }
 
-    protected final String varDump(@Nonnull final Feature[] x) {
+    protected String varDump(@Nonnull final Feature[] x) {
         final StringBuilder buf = new StringBuilder(1024);
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
@@ -179,10 +177,10 @@ public abstract class FactorizationMachineModel {
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("x[").append(j).append("] => ").append(xj);
+            buf.append("x[").append(j).append("] = ").append(xj);
         }
-        buf.append("\n\n");
-        buf.append("W0 => ").append(getW0()).append('\n');
+        buf.append("\n");
+        buf.append("W0 = ").append(getW0()).append('\n');
         for (int i = 0; i < x.length; i++) {
             Feature e = x[i];
             String j = e.getFeature();
@@ -190,9 +188,9 @@ public abstract class FactorizationMachineModel {
             if (i != 0) {
                 buf.append(", ");
             }
-            buf.append("W[").append(j).append("] => ").append(wi);
+            buf.append("W[").append(j).append("] = ").append(wi);
         }
-        buf.append("\n\n");
+        buf.append("\n");
         for (int f = 0, k = _factor; f < k; f++) {
             for (int i = 0; i < x.length; i++) {
                 Feature e = x[i];
@@ -201,7 +199,7 @@ public abstract class FactorizationMachineModel {
                 if (i != 0) {
                     buf.append(", ");
                 }
-                buf.append('V').append(f).append('[').append(j).append("] => ").append(vjf);
+                buf.append('V').append(f).append('[').append(j).append("] = ").append(vjf);
             }
             buf.append('\n');
         }
@@ -219,6 +217,9 @@ public abstract class FactorizationMachineModel {
         setW0(nextW0);
     }
 
+    /**
+     * @return whether to update V or not
+     */
     void updateWi(final double dloss, @Nonnull final Feature x, final float eta) {
         final double Xi = x.getValue();
         float gradWi = (float) (dloss * Xi);
@@ -349,14 +350,19 @@ public abstract class FactorizationMachineModel {
 
         @Nonnull
         public static VInitScheme resolve(@Nullable String opt) {
+            return resolve(opt, random);
+        }
+
+        @Nonnull
+        public static VInitScheme resolve(@Nullable String opt, @Nonnull VInitScheme defaultScheme) {
             if (opt == null) {
-                return random;
+                return defaultScheme;
             } else if ("gaussian".equalsIgnoreCase(opt)) {
                 return gaussian;
             } else if ("random".equalsIgnoreCase(opt)) {
                 return random;
             }
-            return random;
+            return defaultScheme;
         }
 
         public void setMaxInitValue(float maxInitValue) {

@@ -30,17 +30,17 @@ public final class LossFunctions {
     }
 
     public static LossFunction getLossFunction(String type) {
-        if("SquaredLoss".equalsIgnoreCase(type)) {
+        if ("SquaredLoss".equalsIgnoreCase(type)) {
             return new SquaredLoss();
-        } else if("LogLoss".equalsIgnoreCase(type)) {
+        } else if ("LogLoss".equalsIgnoreCase(type)) {
             return new LogLoss();
-        } else if("HingeLoss".equalsIgnoreCase(type)) {
+        } else if ("HingeLoss".equalsIgnoreCase(type)) {
             return new HingeLoss();
-        } else if("SquaredHingeLoss".equalsIgnoreCase(type)) {
+        } else if ("SquaredHingeLoss".equalsIgnoreCase(type)) {
             return new SquaredHingeLoss();
-        } else if("QuantileLoss".equalsIgnoreCase(type)) {
+        } else if ("QuantileLoss".equalsIgnoreCase(type)) {
             return new QuantileLoss();
-        } else if("EpsilonInsensitiveLoss".equalsIgnoreCase(type)) {
+        } else if ("EpsilonInsensitiveLoss".equalsIgnoreCase(type)) {
             return new EpsilonInsensitiveLoss();
         }
         throw new IllegalArgumentException("Unsupported type: " + type);
@@ -68,7 +68,7 @@ public final class LossFunctions {
     public interface LossFunction {
 
         /**
-         * Evaluate the loss function. 
+         * Evaluate the loss function.
          * 
          * @param p The prediction, p = w^T x
          * @param y The true value (aka target)
@@ -96,13 +96,13 @@ public final class LossFunctions {
     public static abstract class BinaryLoss implements LossFunction {
 
         protected static void checkTarget(float y) {
-            if(!(y == 1.f || y == -1.f)) {
+            if (!(y == 1.f || y == -1.f)) {
                 throw new IllegalArgumentException("target must be [+1,-1]: " + y);
             }
         }
 
         protected static void checkTarget(double y) {
-            if(!(y == 1.d || y == -1.d)) {
+            if (!(y == 1.d || y == -1.d)) {
                 throw new IllegalArgumentException("target must be [+1,-1]: " + y);
             }
         }
@@ -170,10 +170,10 @@ public final class LossFunctions {
             checkTarget(y);
 
             final float z = y * p;
-            if(z > 18.f) {
+            if (z > 18.f) {
                 return (float) Math.exp(-z);
             }
-            if(z < -18.f) {
+            if (z < -18.f) {
                 return -z;
             }
             return (float) Math.log(1.d + Math.exp(-z));
@@ -184,10 +184,10 @@ public final class LossFunctions {
             checkTarget(y);
 
             final double z = y * p;
-            if(z > 18.d) {
+            if (z > 18.d) {
                 return Math.exp(-z);
             }
-            if(z < -18.d) {
+            if (z < -18.d) {
                 return -z;
             }
             return Math.log(1.d + Math.exp(-z));
@@ -198,10 +198,10 @@ public final class LossFunctions {
             checkTarget(y);
 
             float z = y * p;
-            if(z > 18.f) {
+            if (z > 18.f) {
                 return (float) Math.exp(-z) * -y;
             }
-            if(z < -18.f) {
+            if (z < -18.f) {
                 return -y;
             }
             return -y / ((float) Math.exp(z) + 1.f);
@@ -209,7 +209,7 @@ public final class LossFunctions {
     }
 
     /**
-     * Hinge loss for binary classification tasks with y in {-1,1}.     
+     * Hinge loss for binary classification tasks with y in {-1,1}.
      */
     public static final class HingeLoss extends BinaryLoss {
 
@@ -219,10 +219,9 @@ public final class LossFunctions {
             this(1.f);
         }
 
-        /**         
-         * @param threshold Margin threshold. 
-         *  When threshold=1.0, one gets the loss used by SVM. 
-         *  When threshold=0.0, one gets the loss used by the Perceptron.
+        /**
+         * @param threshold Margin threshold. When threshold=1.0, one gets the loss used by SVM.
+         *        When threshold=0.0, one gets the loss used by the Perceptron.
          */
         public HingeLoss(float threshold) {
             this.threshold = threshold;
@@ -276,9 +275,9 @@ public final class LossFunctions {
 
     }
 
-    /** 
-     * Quantile loss is useful to predict rank/order and you do not mind the mean error to increase 
-     * as long as you get the relative order correct. 
+    /**
+     * Quantile loss is useful to predict rank/order and you do not mind the mean error to increase
+     * as long as you get the relative order correct.
      * 
      * @link http://en.wikipedia.org/wiki/Quantile_regression
      */
@@ -295,7 +294,7 @@ public final class LossFunctions {
         }
 
         public void setTau(float tau) {
-            if(tau <= 0 || tau >= 1.0) {
+            if (tau <= 0 || tau >= 1.0) {
                 throw new IllegalArgumentException("tau must be in range (0, 1): " + tau);
             }
             this.tau = tau;
@@ -304,7 +303,7 @@ public final class LossFunctions {
         @Override
         public float loss(float p, float y) {
             float e = y - p;
-            if(e > 0.f) {
+            if (e > 0.f) {
                 return tau * e;
             } else {
                 return -(1.f - tau) * e;
@@ -314,7 +313,7 @@ public final class LossFunctions {
         @Override
         public double loss(double p, double y) {
             double e = y - p;
-            if(e > 0.d) {
+            if (e > 0.d) {
                 return tau * e;
             } else {
                 return -(1.d - tau) * e;
@@ -324,7 +323,7 @@ public final class LossFunctions {
         @Override
         public float dloss(float p, float y) {
             float e = y - p;
-            if(e == 0.f) {
+            if (e == 0.f) {
                 return 0.f;
             }
             return (e > 0.f) ? -tau : (1.f - tau);
@@ -333,7 +332,7 @@ public final class LossFunctions {
     }
 
     /**
-     * Epsilon-Insensitive loss used by Support Vector Regression (SVR). 
+     * Epsilon-Insensitive loss used by Support Vector Regression (SVR).
      * <code>loss = max(0, |y - p| - epsilon)</code>
      */
     public static final class EpsilonInsensitiveLoss extends RegressionLoss {
@@ -366,10 +365,10 @@ public final class LossFunctions {
 
         @Override
         public float dloss(float p, float y) {
-            if((y - p) > epsilon) {// real value > predicted value - epsilon
+            if ((y - p) > epsilon) {// real value > predicted value - epsilon
                 return -1.f;
             }
-            if((p - y) > epsilon) {// real value < predicted value - epsilon
+            if ((p - y) > epsilon) {// real value < predicted value - epsilon
                 return 1.f;
             }
             return 0.f;
@@ -378,7 +377,7 @@ public final class LossFunctions {
     }
 
     public static float logisticLoss(final float target, final float predicted) {
-        if(-100.d < predicted) {
+        if (predicted > -100.d) {
             return target - (float) MathUtils.sigmoid(predicted);
         } else {
             return target;
@@ -389,10 +388,10 @@ public final class LossFunctions {
         BinaryLoss.checkTarget(y);
 
         final float z = y * p;
-        if(z > 18.f) {
+        if (z > 18.f) {
             return (float) Math.exp(-z);
         }
-        if(z < -18.f) {
+        if (z < -18.f) {
             return -z;
         }
         return (float) Math.log(1.d + Math.exp(-z));
@@ -402,10 +401,10 @@ public final class LossFunctions {
         BinaryLoss.checkTarget(y);
 
         final double z = y * p;
-        if(z > 18.d) {
+        if (z > 18.d) {
             return Math.exp(-z);
         }
-        if(z < -18.d) {
+        if (z < -18.d) {
             return -z;
         }
         return Math.log(1.d + Math.exp(-z));
