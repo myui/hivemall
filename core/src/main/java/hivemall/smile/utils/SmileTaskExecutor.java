@@ -44,11 +44,11 @@ public final class SmileTaskExecutor {
         int nprocs = Runtime.getRuntime().availableProcessors();
         int threads = Math.max(1, nprocs - 1);
 
-        if(mapredContext != null) {
+        if (mapredContext != null) {
             JobConf conf = mapredContext.getJobConf();
-            if(conf != null) {
+            if (conf != null) {
                 String tdJarVersion = conf.get("td.jar.version");
-                if(tdJarVersion == null) {
+                if (tdJarVersion == null) {
                     String hivemallNprocs = conf.get("hivemall.smile.nprocs");
                     threads = Primitives.parseInt(hivemallNprocs, threads);
                 } else {
@@ -59,7 +59,7 @@ public final class SmileTaskExecutor {
             }
         }
 
-        if(threads > 1) {
+        if (threads > 1) {
             logger.info("Initialized FixedThreadPool of " + threads + " threads");
             this.exec = ExecutorFactory.newFixedThreadPool(threads, "Hivemall-SMILE", true);
         } else {
@@ -70,13 +70,13 @@ public final class SmileTaskExecutor {
 
     public <T> List<T> run(Collection<? extends Callable<T>> tasks) throws Exception {
         final List<T> results = new ArrayList<T>(tasks.size());
-        if(exec == null) {
-            for(Callable<T> task : tasks) {
+        if (exec == null) {
+            for (Callable<T> task : tasks) {
                 results.add(task.call());
             }
         } else {
             final List<Future<T>> futures = exec.invokeAll(tasks);
-            for(Future<T> future : futures) {
+            for (Future<T> future : futures) {
                 results.add(future.get());
             }
         }
@@ -84,7 +84,7 @@ public final class SmileTaskExecutor {
     }
 
     public void shotdown() {
-        if(exec != null) {
+        if (exec != null) {
             exec.shutdownNow();
         }
     }

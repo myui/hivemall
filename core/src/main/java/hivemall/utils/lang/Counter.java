@@ -49,7 +49,7 @@ public final class Counter<E> implements Serializable {
 
     public int increment(E key, int amount) {
         Integer count = counts.get(key);
-        if(count == null) {
+        if (count == null) {
             counts.put(key, Integer.valueOf(amount));
             return 0;
         } else {
@@ -61,7 +61,7 @@ public final class Counter<E> implements Serializable {
 
     public int getCount(E key) {
         Integer count = counts.get(key);
-        if(count == null) {
+        if (count == null) {
             return 0;
         } else {
             return count.intValue();
@@ -69,19 +69,19 @@ public final class Counter<E> implements Serializable {
     }
 
     public void addAll(Map<E, Integer> counter) {
-        if(counter == null) {
+        if (counter == null) {
             return;
         }
-        for(Map.Entry<E, Integer> e : counter.entrySet()) {
+        for (Map.Entry<E, Integer> e : counter.entrySet()) {
             increment(e.getKey(), e.getValue().intValue());
         }
     }
 
     public void addAll(Counter<E> counter) {
-        if(counter == null) {
+        if (counter == null) {
             return;
         }
-        for(Map.Entry<E, Integer> e : counter.entrySet()) {
+        for (Map.Entry<E, Integer> e : counter.entrySet()) {
             increment(e.getKey(), e.getValue().intValue());
         }
     }
@@ -94,9 +94,9 @@ public final class Counter<E> implements Serializable {
     public E whichMax() {
         E maxKey = null;
         int maxValue = Integer.MIN_VALUE;
-        for(Map.Entry<E, Integer> e : counts.entrySet()) {
+        for (Map.Entry<E, Integer> e : counts.entrySet()) {
             int v = e.getValue().intValue();
-            if(v >= maxValue) {
+            if (v >= maxValue) {
                 maxValue = v;
                 maxKey = e.getKey();
             }
@@ -108,9 +108,9 @@ public final class Counter<E> implements Serializable {
     public E whichMin() {
         E minKey = null;
         int minValue = Integer.MAX_VALUE;
-        for(Map.Entry<E, Integer> e : counts.entrySet()) {
+        for (Map.Entry<E, Integer> e : counts.entrySet()) {
             int v = e.getValue().intValue();
-            if(v <= minValue) {
+            if (v <= minValue) {
                 minValue = v;
                 minKey = e.getKey();
             }

@@ -18,11 +18,14 @@
  */
 package hivemall.knn.distance;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(name = "kld", value = "_FUNC_(double m1, double sigma1, double mu2, double sigma 2)"
+        + " - Returns KL divergence between two distributions")
 @UDFType(deterministic = true, stateful = false)
 public final class KLDivergenceUDF extends UDF {
 
@@ -36,7 +39,8 @@ public final class KLDivergenceUDF extends UDF {
         return new FloatWritable(f);
     }
 
-    public static double kld(final double mu1, final double sigma1, final double mu2, final double sigma2) {
+    public static double kld(final double mu1, final double sigma1, final double mu2,
+            final double sigma2) {
         return (Math.log(sigma2 / sigma1) + sigma2 / sigma1 + Math.pow(mu1 - mu2, 2) / sigma2 - 1.d) * 0.5d;
     }
 

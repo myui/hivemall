@@ -63,3 +63,9 @@ CREATE FUNCTION js_tree_predict as 'hivemall.smile.tools.TreePredictByJavascript
 
 DROP FUNCTION IF EXISTS train_gbt_classifier;
 CREATE FUNCTION train_gbt_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS train_arowh;
+CREATE FUNCTION train_arowh as 'hivemall.classifier.AROWClassifierUDTF$AROWh' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS normalize;
+CREATE FUNCTION normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';

@@ -35,10 +35,10 @@ public final class BoundedPriorityQueue<E> {
     private final PriorityQueue<E> queue;
 
     public BoundedPriorityQueue(int size, @Nonnull Comparator<E> comparator) {
-        if(size < 1) {
+        if (size < 1) {
             throw new IllegalArgumentException("Illegal queue size: " + size);
         }
-        if(comparator == null) {
+        if (comparator == null) {
             throw new IllegalArgumentException("comparator should not be null");
         }
         this.maxSize = size;
@@ -47,14 +47,14 @@ public final class BoundedPriorityQueue<E> {
     }
 
     public boolean offer(@Nonnull E e) {
-        if(e == null) {
+        if (e == null) {
             throw new IllegalArgumentException("Null argument is not permitted");
         }
         final int numElem = queue.size();
-        if(numElem >= maxSize) {
+        if (numElem >= maxSize) {
             E smallest = queue.peek();
             final int cmp = comparator.compare(e, smallest);
-            if(cmp < 0) {
+            if (cmp < 0) {
                 return false;
             }
             queue.poll();

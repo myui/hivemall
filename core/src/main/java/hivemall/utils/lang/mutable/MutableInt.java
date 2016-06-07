@@ -22,8 +22,8 @@ import hivemall.utils.lang.Copyable;
 
 import java.io.Serializable;
 
-public final class MutableInt extends Number
-        implements Copyable<MutableInt>, Comparable<MutableInt>, Serializable {
+public final class MutableInt extends Number implements Copyable<MutableInt>,
+        Comparable<MutableInt>, Serializable {
     private static final long serialVersionUID = -3289272606407100628L;
 
     private int value;
@@ -99,7 +99,7 @@ public final class MutableInt extends Number
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof MutableInt) {
+        if (obj instanceof MutableInt) {
             return value == ((MutableInt) obj).intValue();
         }
         return false;

@@ -29,25 +29,28 @@ import org.apache.hadoop.io.Text;
 
 /**
  * Adding feature indices to a dense feature.
+ * 
  * <pre>
  * Usage: select add_feature_index(array(3,4.0,5)) from dual;
  * > ["1:3.0","2:4.0","3:5.0"]
  * </pre>
  */
-@Description(name = "add_feature_index", value = "_FUNC_(ARRAY[DOUBLE]: dense feature vector) - Returns a feature vector with feature indicies")
+@Description(
+        name = "add_feature_index",
+        value = "_FUNC_(ARRAY[DOUBLE]: dense feature vector) - Returns a feature vector with feature indicies")
 @UDFType(deterministic = true, stateful = false)
 public final class AddFeatureIndexUDF extends UDF {
 
     public List<Text> evaluate(List<Double> ftvec) {
-        if(ftvec == null) {
+        if (ftvec == null) {
             return null;
         }
         int size = ftvec.size();
-        if(size == 0) {
+        if (size == 0) {
             return Collections.emptyList();
         }
         final Text[] array = new Text[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Double v = ftvec.get(i);
             array[i] = new Text(String.valueOf(i + 1) + ':' + v);
         }

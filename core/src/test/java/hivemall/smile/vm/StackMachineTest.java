@@ -59,7 +59,8 @@ public class StackMachineTest {
     @Test
     public void testLargeOpcodes() throws IOException, ParseException, HiveException,
             VMRuntimeException {
-        URL url = new URL("https://gist.githubusercontent.com/myui/b1a8e588f5750e3b658c/raw/a4074d37400dab2b13a2f43d81f5166188d3461a/vmtest01.txt");
+        URL url = new URL(
+            "https://gist.githubusercontent.com/myui/b1a8e588f5750e3b658c/raw/a4074d37400dab2b13a2f43d81f5166188d3461a/vmtest01.txt");
         InputStream is = new BufferedInputStream(url.openStream());
         String opScript = IOUtils.toString(is);
 

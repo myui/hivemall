@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 public final class Primes {
 
-    private static final int[] PRIMES = { 3, 5, 7, 13, 19, 31, 43, 61, 73, 89, 103, 109, 139, 151,
+    private static final int[] PRIMES = {3, 5, 7, 13, 19, 31, 43, 61, 73, 89, 103, 109, 139, 151,
             181, 193, 199, 229, 241, 271, 283, 313, 349, 421, 433, 463, 523, 571, 601, 619, 661,
             823, 859, 883, 1021, 1063, 1093, 1153, 1231, 1321, 1429, 1489, 1621, 1699, 1789, 1873,
             1951, 2029, 2131, 2143, 2311, 2383, 2593, 2731, 2803, 3001, 3121, 3259, 3391, 3583,
@@ -59,20 +59,20 @@ public final class Primes {
             942880663, 984625531, 1028218189, 1073741719, 1121280091, 1170923713, 1222764841,
             1276901371, 1333434301, 1392470281, 1454120779, 1518500173, 1585729993, 1655935399,
             1729249999, 1805811253, 1885761133, 1969251079, 2056437379, 2147482951,
-            Integer.MAX_VALUE };
+            Integer.MAX_VALUE};
 
     private Primes() {}
 
     /**
-     * Returns from a static prime table the least prime that is greater 
-     * than or equal to a specified value.
+     * Returns from a static prime table the least prime that is greater than or equal to a
+     * specified value.
      */
     public static int findLeastPrimeNumber(final int n) {
         assert (n >= 0) : n;
         int idx = Arrays.binarySearch(PRIMES, n);
-        if(idx < 0) {
+        if (idx < 0) {
             idx = -idx - 1;
-            if(idx >= PRIMES.length) {
+            if (idx >= PRIMES.length) {
                 idx = PRIMES.length - 1;
             }
             return PRIMES[idx]; // if not found, use max prime (in this case 9973).

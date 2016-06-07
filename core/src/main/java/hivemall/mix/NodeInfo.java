@@ -28,7 +28,7 @@ public final class NodeInfo {
     private final int port;
 
     public NodeInfo(InetAddress addr, int port) {
-        if(addr == null) {
+        if (addr == null) {
             throw new IllegalArgumentException("addr is null");
         }
         this.addr = addr;
@@ -59,10 +59,10 @@ public final class NodeInfo {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == this) {
+        if (obj == this) {
             return true;
         }
-        if(obj instanceof NodeInfo) {
+        if (obj instanceof NodeInfo) {
             NodeInfo other = (NodeInfo) obj;
             return addr.equals(other.addr) && (port == other.port);
         }

@@ -26,17 +26,23 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+@Description(name = "train_pa",
+        value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                + " - Returns a relation consists of <string|int|bigint feature, float weight>",
+        extended = "Build a prediction model by Passive-Aggressive (PA) binary classifier")
 public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("PassiveAggressiveUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
         }
 
         return super.initialize(argOIs);
@@ -50,7 +56,7 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
         float p = margin.getScore();
         float loss = LossFunctions.hingeLoss(p, y); // 1.0 - y * p
 
-        if(loss > 0.f) { // y * p < 1
+        if (loss > 0.f) { // y * p < 1
             float eta = eta(loss, margin);
             float coeff = eta * y;
             update(features, coeff);
@@ -62,6 +68,11 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
         return loss / margin.getSquaredNorm();
     }
 
+    @Description(
+            name = "train_pa1",
+            value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                    + " - Returns a relation consists of <string|int|bigint feature, float weight>",
+            extended = "Build a prediction model by Passive-Aggressive 1 (PA-1) binary classifier")
     public static class PA1 extends PassiveAggressiveUDTF {
 
         /** Aggressiveness parameter */
@@ -79,11 +90,11 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
             final CommandLine cl = super.processOptions(argOIs);
 
             float c = 1.f;
-            if(cl != null) {
+            if (cl != null) {
                 String c_str = cl.getOptionValue("c");
-                if(c_str != null) {
+                if (c_str != null) {
                     c = Float.parseFloat(c_str);
-                    if(!(c > 0.f)) {
+                    if (!(c > 0.f)) {
                         throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
                                 + c);
                     }
@@ -103,6 +114,11 @@ public class PassiveAggressiveUDTF extends BinaryOnlineClassifierUDTF {
 
     }
 
+    @Description(
+            name = "train_pa2",
+            value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                    + " - Returns a relation consists of <string|int|bigint feature, float weight>",
+            extended = "Build a prediction model by Passive-Aggressive 2 (PA-2) binary classifier")
     public static class PA2 extends PA1 {
 
         @Override

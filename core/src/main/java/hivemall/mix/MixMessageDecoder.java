@@ -44,7 +44,7 @@ public final class MixMessageDecoder extends LengthFieldBasedFrameDecoder {
     @Override
     protected MixMessage decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         ByteBuf frame = (ByteBuf) super.decode(ctx, in);
-        if(frame == null) {
+        if (frame == null) {
             return null;
         }
 
@@ -58,14 +58,15 @@ public final class MixMessageDecoder extends LengthFieldBasedFrameDecoder {
         boolean cancelRequest = frame.readBoolean();
         String groupID = readString(frame);
 
-        MixMessage msg = new MixMessage(event, feature, weight, covariance, clock, deltaUpdates, cancelRequest);
+        MixMessage msg = new MixMessage(event, feature, weight, covariance, clock, deltaUpdates,
+            cancelRequest);
         msg.setGroupID(groupID);
         return msg;
     }
 
     private static Object decodeObject(final ByteBuf in) throws IOException {
         final byte type = in.readByte();
-        switch(type) {
+        switch (type) {
             case INTEGER_TYPE: {
                 int i = in.readInt();
                 return Integer.valueOf(i);
@@ -96,7 +97,7 @@ public final class MixMessageDecoder extends LengthFieldBasedFrameDecoder {
 
     private static String readString(final ByteBuf in) {
         int length = in.readInt();
-        if(length == -1) {
+        if (length == -1) {
             return null;
         }
         byte[] b = new byte[length];

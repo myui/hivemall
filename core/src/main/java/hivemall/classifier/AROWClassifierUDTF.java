@@ -28,17 +28,24 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
  * Adaptive Regularization of Weight Vectors (AROW) binary classifier.
+ * 
  * <pre>
  * [1] K. Crammer, A. Kulesza, and M. Dredze, "Adaptive Regularization of Weight Vectors",
  *     In Proc. NIPS, 2009.
  * </pre>
  */
+@Description(
+        name = "train_arow",
+        value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                + " - Returns a relation consists of <string|int|bigint feature, float weight, float covar>",
+        extended = "Build a prediction model by Adaptive Regularization of Weight Vectors (AROW) binary classifier")
 public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
 
     /** Regularization parameter r */
@@ -47,8 +54,9 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("AROWClassifierUDTF takes 2 or 3 arguments: List<String|Int|BitInt> features, Int label [, constant String options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes 2 or 3 arguments: List<String|Int|BitInt> features, Int label [, constant String options]");
         }
 
         return super.initialize(argOIs);
@@ -62,7 +70,8 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("r", "regularization", true, "Regularization parameter for some r > 0 [default 0.1]");
+        opts.addOption("r", "regularization", true,
+            "Regularization parameter for some r > 0 [default 0.1]");
         return opts;
     }
 
@@ -71,13 +80,13 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         final CommandLine cl = super.processOptions(argOIs);
 
         float r = 0.1f;
-        if(cl != null) {
+        if (cl != null) {
             String r_str = cl.getOptionValue("r");
-            if(r_str != null) {
+            if (r_str != null) {
                 r = Float.parseFloat(r_str);
-                if(!(r > 0)) {
-                    throw new UDFArgumentException("Regularization parameter must be greater than 0: "
-                            + r_str);
+                if (!(r > 0)) {
+                    throw new UDFArgumentException(
+                        "Regularization parameter must be greater than 0: " + r_str);
                 }
             }
         }
@@ -93,7 +102,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         PredictionResult margin = calcScoreAndVariance(features);
         float m = margin.getScore() * y;
 
-        if(m < 1.f) {
+        if (m < 1.f) {
             float var = margin.getVariance();
             float beta = 1.f / (var + r);
             float alpha = (1.f - m) * beta;
@@ -106,9 +115,10 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         return m < 0.f ? 1.f : 0.f; // suffer loss = 1 if sign(t) != y
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, final float y, final float alpha, final float beta) {
-        for(FeatureValue f : features) {
-            if(f == null) {
+    protected void update(@Nonnull final FeatureValue[] features, final float y, final float alpha,
+            final float beta) {
+        for (FeatureValue f : features) {
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
@@ -120,10 +130,11 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         }
     }
 
-    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float y, final float alpha, final float beta) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float y,
+            final float alpha, final float beta) {
         final float old_w;
         final float old_cov;
-        if(old == null) {
+        if (old == null) {
             old_w = 0.f;
             old_cov = 1.f;
         } else {
@@ -138,6 +149,11 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
         return new WeightValueWithCovar(new_w, new_cov);
     }
 
+    @Description(
+            name = "train_arowh",
+            value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                    + " - Returns a relation consists of <string|int|bigint feature, float weight, float covar>",
+            extended = "Build a prediction model by AROW binary classifier using hinge loss")
     public static class AROWh extends AROWClassifierUDTF {
 
         /** Aggressiveness parameter */
@@ -155,11 +171,11 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             final CommandLine cl = super.processOptions(argOIs);
 
             float c = 1.f;
-            if(cl != null) {
+            if (cl != null) {
                 String c_str = cl.getOptionValue("c");
-                if(c_str != null) {
+                if (c_str != null) {
                     c = Float.parseFloat(c_str);
-                    if(!(c > 0.f)) {
+                    if (!(c > 0.f)) {
                         throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
                                 + c);
                     }
@@ -178,7 +194,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             float p = margin.getScore();
             float loss = loss(p, y); // C - m (m = y * p)
 
-            if(loss > 0.f) {// m < 1.0 || 1.0 - m > 0 
+            if (loss > 0.f) {// m < 1.0 || 1.0 - m > 0 
                 float var = margin.getVariance();
                 float beta = 1.f / (var + r);
                 float alpha = loss * beta; // (1.f - m) * beta
@@ -186,7 +202,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
             }
         }
 
-        /** 
+        /**
          * @return C - y * p
          */
         protected float loss(final float p, final float y) {

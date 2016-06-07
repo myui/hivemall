@@ -24,16 +24,18 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "convert_label", value = "_FUNC_(const int|const float) - Convert from -1|1 to 0.0f|1.0f, or from 0.0f|1.0f to -1|1")
+@Description(
+        name = "convert_label",
+        value = "_FUNC_(const int|const float) - Convert from -1|1 to 0.0f|1.0f, or from 0.0f|1.0f to -1|1")
 @UDFType(deterministic = true, stateful = false)
 public final class ConvertLabelUDF extends UDF {
 
     public IntWritable evaluate(int label) throws UDFArgumentException {
-        if(label == 0) {
+        if (label == 0) {
             return new IntWritable(-1);
-        } else if(label == -1) {
+        } else if (label == -1) {
             return new IntWritable(0);
-        } else if(label == 1) {
+        } else if (label == 1) {
             return new IntWritable(1);
         } else {
             throw new UDFArgumentException("-1 or 1 or 0 is expected. Unexpected label: " + label);
@@ -41,11 +43,11 @@ public final class ConvertLabelUDF extends UDF {
     }
 
     public IntWritable evaluate(float label) throws UDFArgumentException {
-        if(label == 0.f) {
+        if (label == 0.f) {
             return new IntWritable(-1);
-        } else if(label == -1.f) {
+        } else if (label == -1.f) {
             return new IntWritable(0);
-        } else if(label == 1.f) {
+        } else if (label == 1.f) {
             return new IntWritable(1);
         } else {
             throw new UDFArgumentException("-1 or 1 or 0 is expected. Unexpected label: " + label);
@@ -53,11 +55,11 @@ public final class ConvertLabelUDF extends UDF {
     }
 
     public IntWritable evaluate(double label) throws UDFArgumentException {
-        if(label == 0.d) {
+        if (label == 0.d) {
             return new IntWritable(-1);
-        } else if(label == -1.d) {
+        } else if (label == -1.d) {
             return new IntWritable(0);
-        } else if(label == 1.d) {
+        } else if (label == 1.d) {
             return new IntWritable(1);
         } else {
             throw new UDFArgumentException("-1 or 1 or 0 is expected. Unexpected label: " + label);

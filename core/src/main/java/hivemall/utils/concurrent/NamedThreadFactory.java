@@ -34,7 +34,7 @@ public final class NamedThreadFactory implements ThreadFactory {
     }
 
     public NamedThreadFactory(String threadName, boolean daemon) {
-        if(threadName == null) {
+        if (threadName == null) {
             throw new IllegalArgumentException();
         }
         SecurityManager s = System.getSecurityManager();
@@ -44,10 +44,10 @@ public final class NamedThreadFactory implements ThreadFactory {
     }
 
     public NamedThreadFactory(String threadName, ThreadGroup threadGroup) {
-        if(threadName == null) {
+        if (threadName == null) {
             throw new IllegalArgumentException();
         }
-        if(threadGroup == null) {
+        if (threadGroup == null) {
             throw new IllegalArgumentException();
         }
         this.group = threadGroup;
@@ -64,10 +64,10 @@ public final class NamedThreadFactory implements ThreadFactory {
 
     public Thread newThread(Runnable r) {
         final Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-        if(t.isDaemon() != daemon) {
+        if (t.isDaemon() != daemon) {
             t.setDaemon(daemon);
         }
-        if(t.getPriority() != threadPriority) {
+        if (t.getPriority() != threadPriority) {
             t.setPriority(threadPriority);
         }
         return t;

@@ -28,12 +28,14 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
  * Confidence-weighted linear classification.
+ * 
  * <pre>
  * [1] Mark Dredze, Koby Crammer and Fernando Pereira. "Confidence-weighted linear classification",
  *     In Proc. ICML, pp.264-271, 2008.
@@ -41,7 +43,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
  * 
  * @link http://dl.acm.org/citation.cfm?id=1390190
  */
-public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
+@Description(
+        name = "train_cw",
+        value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                + " - Returns a relation consists of <string|int|bigint feature, float weight, float covar>",
+        extended = "Build a prediction model by Confidence-Weighted (CW) binary classifier")
+public final class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
 
     /** confidence parameter phi */
     protected float phi;
@@ -49,8 +56,9 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("ConfidenceWeightedUDTF takes 2 or 3 arguments: List<String|Int|BitInt> features, Int label [, constant String options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "ConfidenceWeightedUDTF takes 2 or 3 arguments: List<String|Int|BitInt> features, Int label [, constant String options]");
         }
 
         return super.initialize(argOIs);
@@ -65,7 +73,8 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
     protected Options getOptions() {
         Options opts = super.getOptions();
         opts.addOption("phi", "confidence", true, "Confidence parameter [default 1.0]");
-        opts.addOption("eta", "hyper_c", true, "Confidence hyperparameter eta in range (0.5, 1] [default 0.85]");
+        opts.addOption("eta", "hyper_c", true,
+            "Confidence hyperparameter eta in range (0.5, 1] [default 0.85]");
         return opts;
     }
 
@@ -74,15 +83,15 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         final CommandLine cl = super.processOptions(argOIs);
 
         float phi = 1.f;
-        if(cl != null) {
+        if (cl != null) {
             String phi_str = cl.getOptionValue("phi");
-            if(phi_str == null) {
+            if (phi_str == null) {
                 String eta_str = cl.getOptionValue("eta");
-                if(eta_str != null) {
+                if (eta_str != null) {
                     double eta = Double.parseDouble(eta_str);
-                    if(eta <= 0.5 || eta > 1) {
-                        throw new UDFArgumentException("Confidence hyperparameter eta must be in range (0.5, 1]: "
-                                + eta_str);
+                    if (eta <= 0.5 || eta > 1) {
+                        throw new UDFArgumentException(
+                            "Confidence hyperparameter eta must be in range (0.5, 1]: " + eta_str);
                     }
                     phi = (float) StatsUtils.probit(eta, 5d);
                 }
@@ -102,7 +111,7 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         PredictionResult margin = calcScoreAndVariance(features);
         float gamma = getGamma(margin, y);
 
-        if(gamma > 0.f) {// alpha = max(0, gamma)
+        if (gamma > 0.f) {// alpha = max(0, gamma)
             float coeff = gamma * y;
             update(features, coeff, gamma);
         }
@@ -115,16 +124,17 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         float b = 1.f + 2.f * phi * score;
         float gamma_numer = -b + (float) Math.sqrt(b * b - 8.f * phi * (score - phi * var));
         float gamma_denom = 4.f * phi * var;
-        if(gamma_denom == 0.f) {// avoid divide-by-zero
+        if (gamma_denom == 0.f) {// avoid divide-by-zero
             return 0.f;
         }
         return gamma_numer / gamma_denom;
     }
 
     @Override
-    protected void update(@Nonnull final FeatureValue[] features, final float coeff, final float alpha) {
-        for(FeatureValue f : features) {
-            if(f == null) {
+    protected void update(@Nonnull final FeatureValue[] features, final float coeff,
+            final float alpha) {
+        for (FeatureValue f : features) {
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
@@ -136,9 +146,10 @@ public class ConfidenceWeightedUDTF extends BinaryOnlineClassifierUDTF {
         }
     }
 
-    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float coeff, final float alpha, final float phi) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x,
+            final float coeff, final float alpha, final float phi) {
         final float old_w, old_cov;
-        if(old == null) {
+        if (old == null) {
             old_w = 0.f;
             old_cov = 1.f;
         } else {

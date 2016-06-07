@@ -34,11 +34,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import hivemall.UDTFWithOptions;
 
 /**
- * A wrapper of [[hivemall.dataset.LogisticRegressionDataGeneratorUDTF]].
- * This wrapper is needed because Spark cannot handle
- * HadoopUtils#getTaskId() correctly.
+ * A wrapper of [[hivemall.dataset.LogisticRegressionDataGeneratorUDTF]]. This wrapper is needed
+ * because Spark cannot handle HadoopUtils#getTaskId() correctly.
  */
-@Description(name = "lr_datagen", value = "_FUNC_(options string) - Generates a logistic regression dataset")
+@Description(name = "lr_datagen",
+        value = "_FUNC_(options string) - Generates a logistic regression dataset")
 public final class LogisticRegressionDataGeneratorUDTFWrapper extends UDTFWithOptions {
     private transient LogisticRegressionDataGeneratorUDTF udtf = new LogisticRegressionDataGeneratorUDTF();
 
@@ -56,7 +56,8 @@ public final class LogisticRegressionDataGeneratorUDTFWrapper extends UDTFWithOp
     }
 
     @Override
-    protected CommandLine processOptions(ObjectInspector[] objectInspectors) throws UDFArgumentException {
+    protected CommandLine processOptions(ObjectInspector[] objectInspectors)
+            throws UDFArgumentException {
         CommandLine commands = null;
         try {
             Method m = udtf.getClass().getDeclaredMethod("processOptions");
@@ -82,7 +83,7 @@ public final class LogisticRegressionDataGeneratorUDTFWrapper extends UDTFWithOp
             Field rnd2 = clazz.getDeclaredField("rnd2");
             Field r_seed = clazz.getDeclaredField("r_seed");
             r_seed.setAccessible(true);
-            final int seed = r_seed.getInt(udtf) + (int) Thread.currentThread().getId();
+            final long seed = r_seed.getLong(udtf) + (int) Thread.currentThread().getId();
             rnd1.setAccessible(true);
             rnd2.setAccessible(true);
             rnd1.set(udtf, new Random(seed));

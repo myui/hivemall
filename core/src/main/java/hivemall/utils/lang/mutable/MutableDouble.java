@@ -24,8 +24,8 @@ import java.io.Serializable;
 
 import javax.annotation.Nonnull;
 
-public final class MutableDouble extends Number
-        implements Copyable<MutableDouble>, Comparable<MutableDouble>, Serializable {
+public final class MutableDouble extends Number implements Copyable<MutableDouble>,
+        Comparable<MutableDouble>, Serializable {
     private static final long serialVersionUID = 3275291486084936953L;
 
     private double value;
@@ -115,7 +115,7 @@ public final class MutableDouble extends Number
     @Nonnull
     public static MutableDouble[] initArray(int size, double defaultValue) {
         final MutableDouble[] array = new MutableDouble[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             array[i] = new MutableDouble(defaultValue);
         }
         return array;

@@ -47,8 +47,10 @@ import org.apache.lucene.analysis.ja.JapaneseTokenizer.Mode;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 
-@Description(name = "tokenize_ja", value = "_FUNC_(String line [, const string mode = \"normal\", const list<string> stopWords, const list<string> stopTags])"
-        + " - returns tokenized strings in array<string>")
+@Description(
+        name = "tokenize_ja",
+        value = "_FUNC_(String line [, const string mode = \"normal\", const list<string> stopWords, const list<string> stopTags])"
+                + " - returns tokenized strings in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class KuromojiUDF extends GenericUDF {
 
@@ -62,7 +64,7 @@ public final class KuromojiUDF extends GenericUDF {
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
         final int arglen = arguments.length;
-        if(arglen < 1 || arglen > 4) {
+        if (arglen < 1 || arglen > 4) {
             throw new UDFArgumentException("Invalid number of arguments for `tokenize_ja`: "
                     + arglen);
         }
@@ -79,14 +81,14 @@ public final class KuromojiUDF extends GenericUDF {
     @Override
     public List<Text> evaluate(DeferredObject[] arguments) throws HiveException {
         JapaneseAnalyzer analyzer = _analyzer;
-        if(analyzer == null) {
+        if (analyzer == null) {
             CharArraySet stopwords = stopWords(_stopWordsArray);
             analyzer = new JapaneseAnalyzer(null, _mode, stopwords, _stoptags);
             this._analyzer = analyzer;
         }
 
         Object arg0 = arguments[0].get();
-        if(arg0 == null) {
+        if (arg0 == null) {
             return null;
         }
         String line = arg0.toString();
@@ -95,7 +97,7 @@ public final class KuromojiUDF extends GenericUDF {
         TokenStream stream = null;
         try {
             stream = analyzer.tokenStream("", line);
-            if(stream != null) {
+            if (stream != null) {
                 analyzeTokens(stream, results);
             }
         } catch (IOException e) {
@@ -115,21 +117,21 @@ public final class KuromojiUDF extends GenericUDF {
     @Nonnull
     private static Mode tokenizationMode(@Nonnull ObjectInspector oi) throws UDFArgumentException {
         final String arg = HiveUtils.getConstString(oi);
-        if(arg == null) {
+        if (arg == null) {
             return Mode.NORMAL;
         }
         final Mode mode;
-        if("NORMAL".equalsIgnoreCase(arg)) {
+        if ("NORMAL".equalsIgnoreCase(arg)) {
             mode = Mode.NORMAL;
-        } else if("SEARCH".equalsIgnoreCase(arg)) {
+        } else if ("SEARCH".equalsIgnoreCase(arg)) {
             mode = Mode.SEARCH;
-        } else if("EXTENDED".equalsIgnoreCase(arg)) {
+        } else if ("EXTENDED".equalsIgnoreCase(arg)) {
             mode = Mode.EXTENDED;
-        } else if("DEFAULT".equalsIgnoreCase(arg)) {
+        } else if ("DEFAULT".equalsIgnoreCase(arg)) {
             mode = JapaneseTokenizer.DEFAULT_MODE;
         } else {
-            throw new UDFArgumentException("Expected NORMAL|SEARCH|EXTENDED|DEFAULT but got an unexpected mode: "
-                    + arg);
+            throw new UDFArgumentException(
+                "Expected NORMAL|SEARCH|EXTENDED|DEFAULT but got an unexpected mode: " + arg);
         }
         return mode;
     }
@@ -137,10 +139,10 @@ public final class KuromojiUDF extends GenericUDF {
     @Nonnull
     private static CharArraySet stopWords(@Nonnull final String[] array)
             throws UDFArgumentException {
-        if(array == null) {
+        if (array == null) {
             return JapaneseAnalyzer.getDefaultStopSet();
         }
-        if(array.length == 0) {
+        if (array.length == 0) {
             return CharArraySet.EMPTY_SET;
         }
         CharArraySet results = new CharArraySet(Arrays.asList(array), /* ignoreCase */true);
@@ -151,17 +153,17 @@ public final class KuromojiUDF extends GenericUDF {
     private static Set<String> stopTags(@Nonnull final ObjectInspector oi)
             throws UDFArgumentException {
         final String[] array = HiveUtils.getConstStringArray(oi);
-        if(array == null) {
+        if (array == null) {
             return JapaneseAnalyzer.getDefaultStopTags();
         }
         final int length = array.length;
-        if(length == 0) {
+        if (length == 0) {
             return Collections.emptySet();
         }
         final Set<String> results = new HashSet<String>(length);
-        for(int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             String s = array[i];
-            if(s != null) {
+            if (s != null) {
                 results.add(s);
             }
         }
@@ -174,7 +176,7 @@ public final class KuromojiUDF extends GenericUDF {
         CharTermAttribute termAttr = stream.getAttribute(CharTermAttribute.class);
         stream.reset();
 
-        while(stream.incrementToken()) {
+        while (stream.incrementToken()) {
             String term = termAttr.toString();
             results.add(new Text(term));
         }

@@ -26,8 +26,10 @@ public final class ExecutorFactory {
 
     private ExecutorFactory() {}
 
-    public static ThreadPoolExecutor newFixedThreadPool(int nThreads, String threadName, boolean daemon) {
-        return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new NamedThreadFactory(threadName, daemon));
+    public static ThreadPoolExecutor newFixedThreadPool(int nThreads, String threadName,
+            boolean daemon) {
+        return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<Runnable>(), new NamedThreadFactory(threadName, daemon));
     }
 
     public static Executor newDirectExecutor() {

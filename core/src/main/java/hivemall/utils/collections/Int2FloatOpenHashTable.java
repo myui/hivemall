@@ -51,8 +51,9 @@ public class Int2FloatOpenHashTable implements Externalizable {
     protected float[] _values;
     protected byte[] _states;
 
-    protected Int2FloatOpenHashTable(int size, float loadFactor, float growFactor, boolean forcePrime) {
-        if(size < 1) {
+    protected Int2FloatOpenHashTable(int size, float loadFactor, float growFactor,
+            boolean forcePrime) {
+        if (size < 1) {
             throw new IllegalArgumentException();
         }
         this._loadFactor = loadFactor;
@@ -90,7 +91,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
      */
     public float get(int key) {
         int i = findKey(key);
-        if(i < 0) {
+        if (i < 0) {
             return defaultReturnValue;
         }
         return _values[i];
@@ -102,7 +103,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
         int keyIdx = hash % keyLength;
 
         boolean expanded = preAddEntry(keyIdx);
-        if(expanded) {
+        if (expanded) {
             keyLength = _keys.length;
             keyIdx = hash % keyLength;
         }
@@ -111,23 +112,23 @@ public class Int2FloatOpenHashTable implements Externalizable {
         float[] values = _values;
         byte[] states = _states;
 
-        if(states[keyIdx] == FULL) {// double hashing
-            if(keys[keyIdx] == key) {
+        if (states[keyIdx] == FULL) {// double hashing
+            if (keys[keyIdx] == key) {
                 float old = values[keyIdx];
                 values[keyIdx] = value;
                 return old;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     break;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     float old = values[keyIdx];
                     values[keyIdx] = value;
                     return old;
@@ -144,10 +145,10 @@ public class Int2FloatOpenHashTable implements Externalizable {
     /** Return weather the required slot is free for new entry */
     protected boolean isFree(int index, int key) {
         byte stat = _states[index];
-        if(stat == FREE) {
+        if (stat == FREE) {
             return true;
         }
-        if(stat == REMOVED && _keys[index] == key) {
+        if (stat == REMOVED && _keys[index] == key) {
             return true;
         }
         return false;
@@ -155,7 +156,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
     /** @return expanded or not */
     protected boolean preAddEntry(int index) {
-        if((_used + 1) >= _threshold) {// too filled
+        if ((_used + 1) >= _threshold) {// too filled
             int newCapacity = Math.round(_keys.length * _growFactor);
             ensureCapacity(newCapacity);
             return true;
@@ -170,21 +171,21 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                 return keyIdx;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     return -1;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     return keyIdx;
                 }
             }
@@ -200,8 +201,8 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                 float old = values[keyIdx];
                 states[keyIdx] = REMOVED;
                 --_used;
@@ -209,15 +210,15 @@ public class Int2FloatOpenHashTable implements Externalizable {
             }
             //  second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(states[keyIdx] == FREE) {
+                if (states[keyIdx] == FREE) {
                     return defaultReturnValue;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     float old = values[keyIdx];
                     states[keyIdx] = REMOVED;
                     --_used;
@@ -247,11 +248,11 @@ public class Int2FloatOpenHashTable implements Externalizable {
         StringBuilder buf = new StringBuilder(len);
         buf.append('{');
         IMapIterator i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             buf.append(i.getKey());
             buf.append('=');
             buf.append(i.getValue());
-            if(i.hasNext()) {
+            if (i.hasNext()) {
                 buf.append(',');
             }
         }
@@ -267,25 +268,25 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
     private void rehash(int newCapacity) {
         int oldCapacity = _keys.length;
-        if(newCapacity <= oldCapacity) {
+        if (newCapacity <= oldCapacity) {
             throw new IllegalArgumentException("new: " + newCapacity + ", old: " + oldCapacity);
         }
         int[] newkeys = new int[newCapacity];
         float[] newValues = new float[newCapacity];
         byte[] newStates = new byte[newCapacity];
         int used = 0;
-        for(int i = 0; i < oldCapacity; i++) {
-            if(_states[i] == FULL) {
+        for (int i = 0; i < oldCapacity; i++) {
+            if (_states[i] == FULL) {
                 used++;
                 int k = _keys[i];
                 float v = _values[i];
                 int hash = keyHash(k);
                 int keyIdx = hash % newCapacity;
-                if(newStates[keyIdx] == FULL) {// second hashing
+                if (newStates[keyIdx] == FULL) {// second hashing
                     int decr = 1 + (hash % (newCapacity - 2));
-                    while(newStates[keyIdx] != FREE) {
+                    while (newStates[keyIdx] != FREE) {
                         keyIdx -= decr;
-                        if(keyIdx < 0) {
+                        if (keyIdx < 0) {
                             keyIdx += newCapacity;
                         }
                     }
@@ -311,7 +312,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
         out.writeInt(_keys.length);
         IMapIterator i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             out.writeInt(i.getKey());
             out.writeFloat(i.getValue());
         }
@@ -325,19 +326,19 @@ public class Int2FloatOpenHashTable implements Externalizable {
         int[] keys = new int[keylen];
         float[] values = new float[keylen];
         byte[] states = new byte[keylen];
-        for(int i = 0; i < _used; i++) {
+        for (int i = 0; i < _used; i++) {
             int k = in.readInt();
             float v = in.readFloat();
             int hash = keyHash(k);
             int keyIdx = hash % keylen;
-            if(states[keyIdx] != FREE) {// second hash
+            if (states[keyIdx] != FREE) {// second hash
                 int decr = 1 + (hash % (keylen - 2));
-                for(;;) {
+                for (;;) {
                     keyIdx -= decr;
-                    if(keyIdx < 0) {
+                    if (keyIdx < 0) {
                         keyIdx += keylen;
                     }
-                    if(states[keyIdx] == FREE) {
+                    if (states[keyIdx] == FREE) {
                         break;
                     }
                 }
@@ -377,7 +378,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
 
         /** find the index of next full entry */
         int nextEntry(int index) {
-            while(index < _keys.length && _states[index] != FULL) {
+            while (index < _keys.length && _states[index] != FULL) {
                 index++;
             }
             return index;
@@ -388,7 +389,7 @@ public class Int2FloatOpenHashTable implements Externalizable {
         }
 
         public int next() {
-            if(!hasNext()) {
+            if (!hasNext()) {
                 return -1;
             }
             int curEntry = nextEntry;
@@ -398,14 +399,14 @@ public class Int2FloatOpenHashTable implements Externalizable {
         }
 
         public int getKey() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _keys[lastEntry];
         }
 
         public float getValue() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _values[lastEntry];

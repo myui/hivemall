@@ -79,14 +79,15 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length < 2) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 arguments: List<Int|BigInt|Text> features, {Int|BitInt|Text} label [, constant text options]");
+        if (argOIs.length < 2) {
+            throw new UDFArgumentException(
+                getClass().getSimpleName()
+                        + " takes 2 arguments: List<Int|BigInt|Text> features, {Int|BitInt|Text} label [, constant text options]");
         }
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
         this.labelInputOI = HiveUtils.asPrimitiveObjectInspector(argOIs[1]);
         String labelTypeName = labelInputOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)
+        if (!STRING_TYPE_NAME.equals(labelTypeName) && !INT_TYPE_NAME.equals(labelTypeName)
                 && !BIGINT_TYPE_NAME.equals(labelTypeName)) {
             throw new UDFArgumentTypeException(0, "label must be a type [Int|BigInt|Text]: "
                     + labelTypeName);
@@ -94,10 +95,10 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
         processOptions(argOIs);
 
-        PrimitiveObjectInspector featureOutputOI = dense_model
-                ? PrimitiveObjectInspectorFactory.javaIntObjectInspector : featureInputOI;
+        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
+                : featureInputOI;
         this.label2model = new HashMap<Object, PredictionModel>(64);
-        if(preloadedModelFile != null) {
+        if (preloadedModelFile != null) {
             loadPredictionModel(label2model, preloadedModelFile, labelInputOI, featureOutputOI);
         }
 
@@ -115,16 +116,17 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+        if (!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
                 && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
-            throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
-                    + keyTypeName);
+            throw new UDFArgumentTypeException(0,
+                "1st argument must be Map of key type [Int|BitInt|Text]: " + keyTypeName);
         }
         this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 
-    protected StructObjectInspector getReturnOI(ObjectInspector labelRawOI, ObjectInspector featureRawOI) {
+    protected StructObjectInspector getReturnOI(ObjectInspector labelRawOI,
+            ObjectInspector featureRawOI) {
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
@@ -136,7 +138,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(useCovariance()) {
+        if (useCovariance()) {
             fieldNames.add("covar");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
@@ -148,11 +150,11 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         FeatureValue[] featureVector = parseFeatures(features);
-        if(featureVector == null) {
+        if (featureVector == null) {
             return;
         }
         Object label = ObjectInspectorUtils.copyToStandardObject(args[1], labelInputOI);
-        if(label == null) {
+        if (label == null) {
             throw new UDFArgumentException("label value must not be NULL");
         }
 
@@ -163,19 +165,19 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Nullable
     protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
         final int size = features.size();
-        if(size == 0) {
+        if (size == 0) {
             return null;
         }
 
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final FeatureValue[] featureVector = new FeatureValue[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Object f = features.get(i);
-            if(f == null) {
+            if (f == null) {
                 continue;
             }
             final FeatureValue fv;
-            if(parseFeature) {
+            if (parseFeature) {
                 fv = FeatureValue.parse(f);
             } else {
                 Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
@@ -186,17 +188,18 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return featureVector;
     }
 
-    protected abstract void train(@Nonnull final FeatureValue[] features, @Nonnull final Object actual_label);
+    protected abstract void train(@Nonnull final FeatureValue[] features,
+            @Nonnull final Object actual_label);
 
     protected final PredictionResult classify(@Nonnull final FeatureValue[] features) {
         float maxScore = Float.MIN_VALUE;
         Object maxScoredLabel = null;
 
-        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
+        for (Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
             PredictionModel model = label2map.getValue();
             float score = calcScore(model, features);
-            if(maxScoredLabel == null || score > maxScore) {
+            if (maxScoredLabel == null || score > maxScore) {
                 maxScore = score;
                 maxScoredLabel = label;
             }
@@ -210,14 +213,14 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
 
-        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
+        for (Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
             PredictionModel model = label2map.getValue();
             float score = calcScore(model, features);
-            if(label.equals(actual_label)) {
+            if (label.equals(actual_label)) {
                 correctScore = score;
             } else {
-                if(maxAnotherLabel == null || score > maxAnotherScore) {
+                if (maxAnotherLabel == null || score > maxAnotherScore) {
                     maxAnotherLabel = label;
                     maxAnotherScore = score;
                 }
@@ -226,33 +229,35 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new Margin(correctScore, maxAnotherLabel, maxAnotherScore);
     }
 
-    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features, final Object actual_label) {
+    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features,
+            final Object actual_label) {
         return getMarginAndVariance(features, actual_label, false);
     }
 
-    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features, final Object actual_label, boolean nonZeroVariance) {
+    protected Margin getMarginAndVariance(@Nonnull final FeatureValue[] features,
+            final Object actual_label, boolean nonZeroVariance) {
         float correctScore = 0.f;
         float correctVariance = 0.f;
         Object maxAnotherLabel = null;
         float maxAnotherScore = 0.f;
         float maxAnotherVariance = 0.f;
 
-        if(nonZeroVariance && label2model.isEmpty()) {// for initial call
+        if (nonZeroVariance && label2model.isEmpty()) {// for initial call
             float var = 2.f * calcVariance(features);
             return new Margin(correctScore, maxAnotherLabel, maxAnotherScore).variance(var);
         }
 
-        for(Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
+        for (Map.Entry<Object, PredictionModel> label2map : label2model.entrySet()) {// for each class
             Object label = label2map.getKey();
             PredictionModel model = label2map.getValue();
             PredictionResult predicted = calcScoreAndVariance(model, features);
             float score = predicted.getScore();
 
-            if(label.equals(actual_label)) {
+            if (label.equals(actual_label)) {
                 correctScore = score;
                 correctVariance = predicted.getVariance();
             } else {
-                if(maxAnotherLabel == null || score > maxAnotherScore) {
+                if (maxAnotherLabel == null || score > maxAnotherScore) {
                     maxAnotherLabel = label;
                     maxAnotherScore = score;
                     maxAnotherVariance = predicted.getVariance();
@@ -266,8 +271,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected final float squaredNorm(@Nonnull final FeatureValue[] features) {
         float squared_norm = 0.f;
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final float v = f.getValueAsFloat();
@@ -276,17 +281,18 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return squared_norm;
     }
 
-    protected final float calcScore(@Nonnull final PredictionModel model, @Nonnull final FeatureValue[] features) {
+    protected final float calcScore(@Nonnull final PredictionModel model,
+            @Nonnull final FeatureValue[] features) {
         float score = 0.f;
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
-            if(old_w != 0f) {
+            if (old_w != 0f) {
                 score += (old_w * v);
             }
         }
@@ -295,8 +301,8 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
 
     protected final float calcVariance(@Nonnull final FeatureValue[] features) {
         float variance = 0.f;
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             float v = f.getValueAsFloat();
@@ -305,19 +311,20 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return variance;
     }
 
-    protected final PredictionResult calcScoreAndVariance(@Nonnull final PredictionModel model, @Nonnull final FeatureValue[] features) {
+    protected final PredictionResult calcScoreAndVariance(@Nonnull final PredictionModel model,
+            @Nonnull final FeatureValue[] features) {
         float score = 0.f;
         float variance = 0.f;
 
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
-            if(old_w == null) {
+            if (old_w == null) {
                 variance += (1.f * v * v);
             } else {
                 score += (old_w.get() * v);
@@ -328,29 +335,30 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return new PredictionResult(score).variance(variance);
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, float coeff, Object actual_label, Object missed_label) {
+    protected void update(@Nonnull final FeatureValue[] features, float coeff, Object actual_label,
+            Object missed_label) {
         assert (actual_label != null);
-        if(actual_label.equals(missed_label)) {
+        if (actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
                     + actual_label);
         }
 
         PredictionModel model2add = label2model.get(actual_label);
-        if(model2add == null) {
+        if (model2add == null) {
             model2add = createModel();
             label2model.put(actual_label, model2add);
         }
         PredictionModel model2sub = null;
-        if(missed_label != null) {
+        if (missed_label != null) {
             model2sub = label2model.get(missed_label);
-            if(model2sub == null) {
+            if (model2sub == null) {
                 model2sub = createModel();
                 label2model.put(missed_label, model2sub);
             }
         }
 
-        for(FeatureValue f : features) {// w[f] += y * x[f]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[f] += y * x[f]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
@@ -360,7 +368,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
             float add_w = old_trueclass_w + (coeff * v);
             model2add.set(k, new WeightValue(add_w));
 
-            if(model2sub != null) {
+            if (model2sub != null) {
                 float old_falseclass_w = model2sub.getWeight(k);
                 float sub_w = old_falseclass_w - (coeff * v);
                 model2sub.set(k, new WeightValue(sub_w));
@@ -371,23 +379,23 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public final void close() throws HiveException {
         super.close();
-        if(label2model != null) {
+        if (label2model != null) {
             long numForwarded = 0L;
             long numMixed = 0L;
-            if(useCovariance()) {
+            if (useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[4];
                 final FloatWritable fv = new FloatWritable();
                 final FloatWritable cov = new FloatWritable();
-                for(Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
+                for (Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
                     numMixed += model.getNumMixed();
                     IMapIterator<Object, IWeightValue> itor = model.entries();
-                    while(itor.next() != -1) {
+                    while (itor.next() != -1) {
                         itor.getValue(probe);
-                        if(!probe.isTouched()) {
+                        if (!probe.isTouched()) {
                             continue; // skip outputting untouched weights
                         }
                         Object k = itor.getKey();
@@ -404,15 +412,15 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 final WeightValue probe = new WeightValue();
                 final Object[] forwardMapObj = new Object[3];
                 final FloatWritable fv = new FloatWritable();
-                for(Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
+                for (Map.Entry<Object, PredictionModel> entry : label2model.entrySet()) {
                     Object label = entry.getKey();
                     forwardMapObj[0] = label;
                     PredictionModel model = entry.getValue();
                     numMixed += model.getNumMixed();
                     IMapIterator<Object, IWeightValue> itor = model.entries();
-                    while(itor.next() != -1) {
+                    while (itor.next() != -1) {
                         itor.getValue(probe);
-                        if(!probe.isTouched()) {
+                        if (!probe.isTouched()) {
                             continue; // skip outputting untouched weights
                         }
                         Object k = itor.getKey();
@@ -431,27 +439,34 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
     }
 
-    protected void loadPredictionModel(Map<Object, PredictionModel> label2model, String filename, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
+    protected void loadPredictionModel(Map<Object, PredictionModel> label2model, String filename,
+            PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI) {
         final StopWatch elapsed = new StopWatch();
         final long lines;
         try {
-            if(useCovariance()) {
-                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector, writableFloatObjectInspector);
+            if (useCovariance()) {
+                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI,
+                    writableFloatObjectInspector, writableFloatObjectInspector);
             } else {
-                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI, writableFloatObjectInspector);
+                lines = loadPredictionModel(label2model, new File(filename), labelOI, featureOI,
+                    writableFloatObjectInspector);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         } catch (SerDeException e) {
             throw new RuntimeException("Failed to load a model: " + filename, e);
         }
-        if(!label2model.isEmpty()) {
+        if (!label2model.isEmpty()) {
             long totalFeatures = 0L;
             StringBuilder statsBuf = new StringBuilder(256);
-            for(Map.Entry<Object, PredictionModel> e : label2model.entrySet()) {
+            for (Map.Entry<Object, PredictionModel> e : label2model.entrySet()) {
                 Object label = e.getKey();
                 int numFeatures = e.getValue().size();
-                statsBuf.append('\n').append("Label: ").append(label).append(", Number of Features: ").append(numFeatures);
+                statsBuf.append('\n')
+                        .append("Label: ")
+                        .append(label)
+                        .append(", Number of Features: ")
+                        .append(numFeatures);
                 totalFeatures += numFeatures;
             }
             logger.info("Loaded total " + totalFeatures + " features from distributed cache '"
@@ -459,15 +474,16 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         }
     }
 
-    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI)
-            throws IOException, SerDeException {
+    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file,
+            PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI,
+            WritableFloatObjectInspector weightOI) throws IOException, SerDeException {
         long count = 0L;
-        if(!file.exists()) {
+        if (!file.exists()) {
             return count;
         }
-        if(!file.getName().endsWith(".crc")) {
-            if(file.isDirectory()) {
-                for(File f : file.listFiles()) {
+        if (!file.getName().endsWith(".crc")) {
+            if (file.isDirectory()) {
+                for (File f : file.listFiles()) {
                     count += loadPredictionModel(label2model, f, labelOI, featureOI, weightOI);
                 }
             } else {
@@ -484,7 +500,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 try {
                     reader = HadoopUtils.getBufferedReader(file);
                     String line;
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
@@ -492,12 +508,12 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         Object f0 = fields.get(0);
                         Object f1 = fields.get(1);
                         Object f2 = fields.get(2);
-                        if(f0 == null || f1 == null || f2 == null) {
+                        if (f0 == null || f1 == null || f2 == null) {
                             continue; // avoid the case that key or value is null
                         }
                         Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
                         PredictionModel model = label2model.get(label);
-                        if(model == null) {
+                        if (model == null) {
                             model = createModel();
                             label2model.put(label, model);
                         }
@@ -513,19 +529,23 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
         return count;
     }
 
-    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file, PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI, WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
+    private long loadPredictionModel(Map<Object, PredictionModel> label2model, File file,
+            PrimitiveObjectInspector labelOI, PrimitiveObjectInspector featureOI,
+            WritableFloatObjectInspector weightOI, WritableFloatObjectInspector covarOI)
             throws IOException, SerDeException {
         long count = 0L;
-        if(!file.exists()) {
+        if (!file.exists()) {
             return count;
         }
-        if(!file.getName().endsWith(".crc")) {
-            if(file.isDirectory()) {
-                for(File f : file.listFiles()) {
-                    count += loadPredictionModel(label2model, f, labelOI, featureOI, weightOI, covarOI);
+        if (!file.getName().endsWith(".crc")) {
+            if (file.isDirectory()) {
+                for (File f : file.listFiles()) {
+                    count += loadPredictionModel(label2model, f, labelOI, featureOI, weightOI,
+                        covarOI);
                 }
             } else {
-                LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI, covarOI);
+                LazySimpleSerDe serde = HiveUtils.getLineSerde(labelOI, featureOI, weightOI,
+                    covarOI);
                 StructObjectInspector lineOI = (StructObjectInspector) serde.getObjectInspector();
                 StructField c1ref = lineOI.getStructFieldRef("c1");
                 StructField c2ref = lineOI.getStructFieldRef("c2");
@@ -540,7 +560,7 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                 try {
                     reader = HadoopUtils.getBufferedReader(file);
                     String line;
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         count++;
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
@@ -549,12 +569,12 @@ public abstract class MulticlassOnlineClassifierUDTF extends LearnerBaseUDTF {
                         Object f1 = fields.get(1);
                         Object f2 = fields.get(2);
                         Object f3 = fields.get(3);
-                        if(f0 == null || f1 == null || f2 == null) {
+                        if (f0 == null || f1 == null || f2 == null) {
                             continue; // avoid unexpected case
                         }
                         Object label = c1refOI.getPrimitiveWritableObject(c1refOI.copyObject(f0));
                         PredictionModel model = label2model.get(label);
-                        if(model == null) {
+                        if (model == null) {
                             model = createModel();
                             label2model.put(label, model);
                         }

@@ -27,7 +27,8 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "sort_by_feature", value = "_FUNC_(map in map<int,float>) - Returns a sorted map")
+@Description(name = "sort_by_feature",
+        value = "_FUNC_(map in map<int,float>) - Returns a sorted map")
 @UDFType(deterministic = true, stateful = false)
 public final class SortByFeatureUDF extends UDF {
 

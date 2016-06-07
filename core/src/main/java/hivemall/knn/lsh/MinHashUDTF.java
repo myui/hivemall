@@ -33,6 +33,7 @@ import java.util.PriorityQueue;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -46,6 +47,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 /**
  * A Minhash implementation that outputs n different k-depth Signatures.
  */
+@Description(
+        name = "minhash",
+        value = "_FUNC_(ANY item, array<int|bigint|string> features [, constant string options])"
+                + " - Returns n differnce k-depth signatures (i.e., clusteid) for each item <clusteid, item>")
 @UDFType(deterministic = true, stateful = false)
 public final class MinHashUDTF extends UDTFWithOptions {
 
@@ -60,19 +65,19 @@ public final class MinHashUDTF extends UDTFWithOptions {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length < 2) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes more than 2 arguments: ANY item, Array<Int|BigInt|Text> features [, constant String options]");
+        if (argOIs.length < 2) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes more than 2 arguments: ANY item, Array<Int|BigInt|Text> features [, constant String options]");
         }
         this.itemOI = argOIs[0];
 
         this.featureListOI = (ListObjectInspector) argOIs[1];
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
+        if (!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
                 && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
-            throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
-                    + keyTypeName);
+            throw new UDFArgumentTypeException(0,
+                "1st argument must be Map of key type [Int|BitInt|Text]: " + keyTypeName);
         }
         this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         this.forwardObjs = new Object[2];
@@ -93,7 +98,8 @@ public final class MinHashUDTF extends UDTFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("n", "hashes", true, "Generate N sets of minhash values for each row (DEFAULT: 5)");
+        opts.addOption("n", "hashes", true,
+            "Generate N sets of minhash values for each row (DEFAULT: 5)");
         opts.addOption("k", "keygroups", true, "Use K minhash value (DEFAULT: 2)");
         return opts;
     }
@@ -101,17 +107,17 @@ public final class MinHashUDTF extends UDTFWithOptions {
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = null;
-        if(argOIs.length >= 3) {
+        if (argOIs.length >= 3) {
             String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = parseOptions(rawArgs);
 
             String numHashes = cl.getOptionValue("hashes");
-            if(numHashes != null) {
+            if (numHashes != null) {
                 this.num_hashes = Integer.parseInt(numHashes);
             }
 
             String numKeygroups = cl.getOptionValue("keygroups");
-            if(numKeygroups != null) {
+            if (numKeygroups != null) {
                 this.num_keygroups = Integer.parseInt(numKeygroups);
             }
         }
@@ -136,15 +142,15 @@ public final class MinHashUDTF extends UDTFWithOptions {
             throws HiveException {
         final PriorityQueue<Integer> minhashes = new PriorityQueue<Integer>();
         // Compute N sets K minhash values
-        for(int i = 0; i < num_hashes; i++) {
+        for (int i = 0; i < num_hashes; i++) {
             float weightedMinHashValues = Float.MAX_VALUE;
 
-            for(FeatureValue fv : features) {
+            for (FeatureValue fv : features) {
                 Object f = fv.getFeature();
                 int hashIndex = Math.abs(hashFuncs[i].hash(f));
                 float w = fv.getValueAsFloat();
                 float hashValue = calcWeightedHashValue(hashIndex, w);
-                if(hashValue < weightedMinHashValues) {
+                if (hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;
                     minhashes.offer(hashIndex);
                 }
@@ -158,14 +164,14 @@ public final class MinHashUDTF extends UDTFWithOptions {
     }
 
     /**
-     * For a larger w, hash value tends to be smaller and tends to be selected as minhash. 
+     * For a larger w, hash value tends to be smaller and tends to be selected as minhash.
      */
     private static float calcWeightedHashValue(final int hashIndex, final float w)
             throws HiveException {
-        if(w < 0.f) {
+        if (w < 0.f) {
             throw new HiveException("Non-negative value is not accepted for a feature weight");
         }
-        if(w == 0.f) {
+        if (w == 0.f) {
             return Float.MAX_VALUE;
         } else {
             return hashIndex / w;
@@ -174,13 +180,13 @@ public final class MinHashUDTF extends UDTFWithOptions {
 
     private static int getSignature(PriorityQueue<Integer> candidates, int keyGroups) {
         final int numCandidates = candidates.size();
-        if(numCandidates == 0) {
+        if (numCandidates == 0) {
             return 0;
         }
 
         final int size = Math.min(numCandidates, keyGroups);
         int result = 1;
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             int nextmin = candidates.poll();
             result = (31 * result) + nextmin;
         }

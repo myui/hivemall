@@ -31,7 +31,7 @@ public final class MixClientHandler extends SimpleChannelInboundHandler<MixMessa
 
     public MixClientHandler(MixedModel model) {
         super();
-        if(model == null) {
+        if (model == null) {
             throw new IllegalArgumentException("model is null");
         }
         this.model = model;

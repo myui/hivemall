@@ -35,32 +35,32 @@ public class HalfFloatTest {
     @Test
     public void testIntegers() {
         // Integers between 0 and 2048 can be exactly represented
-        for(int i = 0; i <= 2048; i++) {
+        for (int i = 0; i <= 2048; i++) {
             exactCheck((float) i);
             exactCheck((float) -i);
         }
         // Integers between 2049 and 4096 round to a multiple of 2 (even number)
-        for(int i = 2049; i <= 4096; i++) {
+        for (int i = 2049; i <= 4096; i++) {
             nonExactCheck((float) i, 1f);
             nonExactCheck((float) -i, 1f);
         }
         // Integers between 4097 and 8192 round to a multiple of 4
-        for(int i = 4097; i <= 8192; i++) {
+        for (int i = 4097; i <= 8192; i++) {
             nonExactCheck((float) i, 3f);
             nonExactCheck((float) -i, 3f);
         }
         // Integers between 8193 and 16384 round to a multiple of 8
-        for(int i = 8193; i <= 16384; i++) {
+        for (int i = 8193; i <= 16384; i++) {
             nonExactCheck((float) i, 7f);
             nonExactCheck((float) -i, 7f);
         }
         // Integers between 16385 and 32768 round to a multiple of 16
-        for(int i = 16385; i <= 32768; i++) {
+        for (int i = 16385; i <= 32768; i++) {
             nonExactCheck((float) i, 15f);
             nonExactCheck((float) -i, 15f);
         }
         // Integers between 32769 and 65519 round to a multiple of 32
-        for(int i = 32769; i <= 65519; i++) {
+        for (int i = 32769; i <= 65519; i++) {
             nonExactCheck((float) i, 31f);
             nonExactCheck((float) -i, 31f);
         }
@@ -74,7 +74,7 @@ public class HalfFloatTest {
 
         final Random rand = new Random();
         final int range = Integer.MAX_VALUE - 65521;
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             int r = rand.nextInt(range);
             exactCheck(65521 + r, Float.POSITIVE_INFINITY);
             exactCheck(-(65521 + r), Float.NEGATIVE_INFINITY);
@@ -83,17 +83,17 @@ public class HalfFloatTest {
 
     @Test
     public void testFiniteValues() {
-        for(int i = 0x0000; i < 0x7c00; i++) {
+        for (int i = 0x0000; i < 0x7c00; i++) {
             exactCheck((short) i);
         }
-        for(int i = 0x8001; i < 0xfc00; i++) {
+        for (int i = 0x8001; i < 0xfc00; i++) {
             exactCheck((short) i);
         }
     }
 
     @Test
     public void testSpotcheck() {
-        final float test[] = { 1, 5.960464E-8f, 3, 1.788139E-7f, 8, 4.768372E-7f, 16, 9.536743E-7f,
+        final float test[] = {1, 5.960464E-8f, 3, 1.788139E-7f, 8, 4.768372E-7f, 16, 9.536743E-7f,
                 33, 1.966953E-6f, 83, 4.947186E-6f, 167, 9.953976E-6f, 335, 1.996756E-5f, 838,
                 4.994869E-5f, 1677, 9.995699E-05f, 2701, 0.000199914f, 4120, 0.0004997253f, 5144,
                 0.0009994507f, 6168, 0.001998901f, 7454, 0.004997253f, 8478, 0.009994507f, 9502,
@@ -108,8 +108,8 @@ public class HalfFloatTest {
                 -0.009994507f, 42270, -0.01998901f, 43622, -0.04998779f, 44646, -0.09997559f,
                 45670, -0.1999512f, 47104, -0.5f, 48128, -1f, 49152, -2f, 50432, -5f, 51456, -10f,
                 52480, -20f, 53824, -50f, 54848, -100f, 55872, -200f, 57296, -500f, 58320, -1000f,
-                59344, -2000f, 60642, -5000f, 61666, -10000f, 62690, -20000f, 64026, -49984f };
-        for(int i = 0; i < test.length; i += 2) {
+                59344, -2000f, 60642, -5000f, 61666, -10000f, 62690, -20000f, 64026, -49984f};
+        for (int i = 0; i < test.length; i += 2) {
             nonExactCheck((short) test[i], test[i + 1]);
         }
     }

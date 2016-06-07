@@ -31,7 +31,7 @@ public class BitUtilsTest {
     @Test
     public void test() {
         final Random rand = new Random(31);
-        for(int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 10000; i++) {
             int r = rand.nextInt(Integer.MAX_VALUE);
             String expected = Integer.toBinaryString(r);
             BitSet b = BitUtils.toBitSet(expected);

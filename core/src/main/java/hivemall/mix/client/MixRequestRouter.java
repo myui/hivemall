@@ -31,18 +31,19 @@ public final class MixRequestRouter {
     private final NodeInfo[] nodes;
 
     public MixRequestRouter(String connectInfo) {
-        if(connectInfo == null) {
+        if (connectInfo == null) {
             throw new IllegalArgumentException();
         }
         String[] endpoints = connectInfo.split("\\s*,\\s*");
         final int numEndpoints = endpoints.length;
-        if(numEndpoints < 1) {
+        if (numEndpoints < 1) {
             throw new IllegalArgumentException("Invalid connectInfo: " + connectInfo);
         }
         this.numNodes = numEndpoints;
         NodeInfo[] nodes = new NodeInfo[numEndpoints];
-        for(int i = 0; i < numEndpoints; i++) {
-            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i], MixEnv.MIXSERV_DEFAULT_PORT);
+        for (int i = 0; i < numEndpoints; i++) {
+            InetSocketAddress addr = NetUtils.getInetSocketAddress(endpoints[i],
+                MixEnv.MIXSERV_DEFAULT_PORT);
             nodes[i] = new NodeInfo(addr);
         }
         this.nodes = nodes;

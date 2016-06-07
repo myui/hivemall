@@ -26,12 +26,13 @@ import org.apache.hadoop.io.FloatWritable;
 /**
  * @see <a href="http://en.wikipedia.org/wiki/Standard_score">Standard_score</a>
  */
-@Description(name = "zscore", value = "_FUNC_(value, mean, stddev) - Returns a standard score (zscore)")
+@Description(name = "zscore",
+        value = "_FUNC_(value, mean, stddev) - Returns a standard score (zscore)")
 @UDFType(deterministic = true, stateful = false)
 public final class ZScoreUDF extends UDF {
 
     public FloatWritable evaluate(double value, double mean, double stddev) {
-        if(stddev == 0.d) {
+        if (stddev == 0.d) {
             return new FloatWritable(0.f);
         }
         float v = (float) ((value - mean) / stddev);
@@ -39,7 +40,7 @@ public final class ZScoreUDF extends UDF {
     }
 
     public FloatWritable evaluate(float value, float mean, float stddev) {
-        if(stddev == 0.f) {
+        if (stddev == 0.f) {
             return new FloatWritable(0.f);
         }
         float v = (value - mean) / stddev;

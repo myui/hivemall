@@ -18,10 +18,13 @@
  */
 package hivemall.ensemble.bagging;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@Description(name = "voted_avg",
+        value = "_FUNC_(double value) - Returns an averaged value by bagging for classification")
 public final class VotedAvgUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {

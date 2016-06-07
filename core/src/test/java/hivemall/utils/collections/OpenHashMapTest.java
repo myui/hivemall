@@ -31,11 +31,11 @@ public class OpenHashMapTest {
     public void testPutAndGet() {
         Map<Object, Object> map = new OpenHashMap<Object, Object>(16384);
         final int numEntries = 5000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             map.put(Integer.toString(i), i);
         }
         Assert.assertEquals(numEntries, map.size());
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Object v = map.get(Integer.toString(i));
             Assert.assertEquals(i, v);
         }
@@ -51,13 +51,13 @@ public class OpenHashMapTest {
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             map.put(Integer.toString(i), i);
         }
 
         itor = map.entries();
         Assert.assertTrue(itor.hasNext());
-        while(itor.hasNext()) {
+        while (itor.hasNext()) {
             Assert.assertFalse(itor.next() == -1);
             String k = itor.getKey();
             Integer v = itor.getValue();
@@ -73,14 +73,14 @@ public class OpenHashMapTest {
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             map.put(Integer.toString(i), new MutableInt(i));
         }
 
         final MutableInt probe = new MutableInt();
         itor = map.entries();
         Assert.assertTrue(itor.hasNext());
-        while(itor.hasNext()) {
+        while (itor.hasNext()) {
             Assert.assertFalse(itor.next() == -1);
             String k = itor.getKey();
             itor.getValue(probe);

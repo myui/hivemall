@@ -86,7 +86,7 @@ public final class ObjectUtils {
         FastMultiByteArrayOutputStream bos = new FastMultiByteArrayOutputStream();
         OutputStream out = null;
         FinishableOutputStream dos = null;
-        try {            
+        try {
             out = bin2txt ? new Base91OutputStream(bos) : bos;
             dos = CompressionStreamFactory.createOutputStream(out, algo);
             toStream(obj, dos);

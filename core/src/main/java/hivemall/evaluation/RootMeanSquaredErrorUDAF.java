@@ -24,7 +24,8 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "rmse", value = "_FUNC_(predicted, actual) - Return a Root Mean Squared Error")
+@Description(name = "rmse",
+        value = "_FUNC_(double predicted, double actual) - Return a Root Mean Squared Error")
 public final class RootMeanSquaredErrorUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
@@ -40,10 +41,10 @@ public final class RootMeanSquaredErrorUDAF extends UDAF {
 
         public boolean iterate(DoubleWritable predicted, DoubleWritable actual)
                 throws HiveException {
-            if(predicted == null || actual == null) {// skip
+            if (predicted == null || actual == null) {// skip
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.iterate(predicted.get(), actual.get());
@@ -55,10 +56,10 @@ public final class RootMeanSquaredErrorUDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) throws HiveException {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.merge(other);
@@ -66,7 +67,7 @@ public final class RootMeanSquaredErrorUDAF extends UDAF {
         }
 
         public double terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return 0.d;
             }
             return partial.getRMSE();

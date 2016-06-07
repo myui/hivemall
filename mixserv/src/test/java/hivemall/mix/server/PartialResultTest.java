@@ -76,9 +76,12 @@ public class PartialResultTest {
         Assert.assertEquals(0, value.diffClock((short) 12));
         Assert.assertEquals(7, value.diffClock((short) 5));
         Assert.assertEquals(6, value.diffClock((short) 18));
-        Assert.assertEquals(32767, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
-        Assert.assertEquals(32768, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 13))); // -32756
-        Assert.assertEquals(32767, value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 14))); // -32755
+        Assert.assertEquals(32767,
+            value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 12))); // -32757
+        Assert.assertEquals(32768,
+            value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 13))); // -32756
+        Assert.assertEquals(32767,
+            value.diffClock(addWithUnderOverflow(Short.MAX_VALUE, (short) 14))); // -32755
 
         // Overflow test
         value.add(0.f, 0.f, Short.MAX_VALUE, 1.f);

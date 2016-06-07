@@ -38,10 +38,10 @@ public final class RandomizedAmplifier<T> {
 
     @SuppressWarnings("unchecked")
     public RandomizedAmplifier(int numBuffers, int xtimes) {
-        if(numBuffers < 1) {
+        if (numBuffers < 1) {
             throw new IllegalArgumentException("numBuffers must be greater than 0: " + numBuffers);
         }
-        if(xtimes < 1) {
+        if (xtimes < 1) {
             throw new IllegalArgumentException("xtime must be greater than 0: " + xtimes);
         }
         this.numBuffers = numBuffers;
@@ -49,17 +49,17 @@ public final class RandomizedAmplifier<T> {
         this.slots = new AgedObject[xtimes][numBuffers];
         this.position = 0;
         this.randoms = new Random[xtimes];
-        for(int i = 0; i < xtimes; i++) {
+        for (int i = 0; i < xtimes; i++) {
             randoms[i] = new Random();
         }
     }
 
     @SuppressWarnings("unchecked")
     public RandomizedAmplifier(int numBuffers, int xtimes, long seed) {
-        if(numBuffers < 1) {
+        if (numBuffers < 1) {
             throw new IllegalArgumentException("numBuffers must be greater than 0: " + numBuffers);
         }
-        if(xtimes < 1) {
+        if (xtimes < 1) {
             throw new IllegalArgumentException("xtime must be greater than 0: " + xtimes);
         }
         this.numBuffers = numBuffers;
@@ -67,7 +67,7 @@ public final class RandomizedAmplifier<T> {
         this.slots = new AgedObject[xtimes][numBuffers];
         this.position = 0;
         this.randoms = new Random[xtimes];
-        for(int i = 0; i < xtimes; i++) {
+        for (int i = 0; i < xtimes; i++) {
             randoms[i] = new Random(seed + i);
         }
     }
@@ -77,18 +77,18 @@ public final class RandomizedAmplifier<T> {
     }
 
     public void add(T storedObj) throws HiveException {
-        if(position < numBuffers) {
-            for(int x = 0; x < xtimes; x++) {
+        if (position < numBuffers) {
+            for (int x = 0; x < xtimes; x++) {
                 slots[x][position] = new AgedObject<T>(storedObj);
             }
             position++;
-            if(position == numBuffers) {
-                for(int x = 0; x < xtimes; x++) {
+            if (position == numBuffers) {
+                for (int x = 0; x < xtimes; x++) {
                     ArrayUtils.shuffle(slots[x], randoms[x]);
                 }
             }
         } else {
-            for(int x = 0; x < xtimes; x++) {
+            for (int x = 0; x < xtimes; x++) {
                 AgedObject<T>[] slot = slots[x];
                 Random rnd = randoms[x];
                 int rindex1 = rnd.nextInt(numBuffers);
@@ -97,7 +97,7 @@ public final class RandomizedAmplifier<T> {
                 AgedObject<T> replaced2 = slot[rindex2];
                 assert (replaced1 != null);
                 assert (replaced2 != null);
-                if(replaced1.timestamp >= replaced2.timestamp) {// bias to hold old entry
+                if (replaced1.timestamp >= replaced2.timestamp) {// bias to hold old entry
                     dropout(replaced1.object);
                     replaced1.set(storedObj);
                 } else {
@@ -109,16 +109,16 @@ public final class RandomizedAmplifier<T> {
     }
 
     public void sweepAll() throws HiveException {
-        if(position < numBuffers && position > 1) {// shuffle an unfilled buffer
-            for(int x = 0; x < xtimes; x++) {
+        if (position < numBuffers && position > 1) {// shuffle an unfilled buffer
+            for (int x = 0; x < xtimes; x++) {
                 ArrayUtils.shuffle(slots[x], position, randoms[x]);
             }
         }
-        for(int i = 0; i < numBuffers; i++) {
-            for(int x = 0; x < xtimes; x++) {
+        for (int i = 0; i < numBuffers; i++) {
+            for (int x = 0; x < xtimes; x++) {
                 AgedObject<T>[] slot = slots[x];
                 AgedObject<T> sweepedObj = slot[i];
-                if(sweepedObj != null) {
+                if (sweepedObj != null) {
                     dropout(sweepedObj.object);
                     slot[i] = null;
                 }
@@ -127,10 +127,10 @@ public final class RandomizedAmplifier<T> {
     }
 
     protected void dropout(T droppped) throws HiveException {
-        if(droppped == null) {
+        if (droppped == null) {
             throw new IllegalStateException("Illegal condition that dropped object is null");
         }
-        if(listener != null) {
+        if (listener != null) {
             listener.onDrop(droppped);
         }
     }

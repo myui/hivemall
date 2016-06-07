@@ -35,13 +35,13 @@ public final class HivemallUtils {
     @Nonnull
     public static List<FeatureValue> parseTextFeaturesAsString(@Nonnull final List<Text> args) {
         final int size = args.size();
-        if(size == 0) {
+        if (size == 0) {
             return Collections.emptyList();
         }
         final FeatureValue[] array = new FeatureValue[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Text t = args.get(i);
-            if(t == null) {
+            if (t == null) {
                 continue;
             }
             FeatureValue fv = FeatureValue.parseFeatureAsString(t);

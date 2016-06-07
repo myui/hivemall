@@ -28,17 +28,24 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
  * Multi-class Adaptive Regularization of Weight Vectors (AROW) classifier.
+ * 
  * <pre>
  * [1] K. Crammer, A. Kulesza, and M. Dredze, "Adaptive Regularization of Weight Vectors",
  *     In Proc. NIPS, 2009.
  * </pre>
  */
+@Description(
+        name = "train_multiclass_arow",
+        value = "_FUNC_(list<string|int|bigint> features, {int|string} label [, const string options])"
+                + " - Returns a relation consists of <{int|string} label, {string|int|bigint} feature, float weight, float covar>",
+        extended = "Build a prediction model by Adaptive Regularization of Weight Vectors (AROW) multiclass classifier")
 public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF {
 
     /** Regularization parameter r */
@@ -47,8 +54,9 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("MulticlassAROWClassifierUDTF takes 2 or 3 arguments: List<String|Int|BitInt> features, {Int|String} label [, constant String options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes 2 or 3 arguments: List<String|Int|BitInt> features, {Int|String} label [, constant String options]");
         }
 
         return super.initialize(argOIs);
@@ -62,7 +70,8 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("r", "regularization", true, "Regularization parameter for some r > 0 [default 0.1]");
+        opts.addOption("r", "regularization", true,
+            "Regularization parameter for some r > 0 [default 0.1]");
         return opts;
     }
 
@@ -71,13 +80,13 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         final CommandLine cl = super.processOptions(argOIs);
 
         float r = 0.1f;
-        if(cl != null) {
+        if (cl != null) {
             String r_str = cl.getOptionValue("r");
-            if(r_str != null) {
+            if (r_str != null) {
                 r = Float.parseFloat(r_str);
-                if(!(r > 0)) {
-                    throw new UDFArgumentException("Regularization parameter must be greater than 0: "
-                            + r_str);
+                if (!(r > 0)) {
+                    throw new UDFArgumentException(
+                        "Regularization parameter must be greater than 0: " + r_str);
                 }
             }
         }
@@ -91,7 +100,7 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         Margin margin = getMarginAndVariance(features, actual_label);
         float m = margin.get();
 
-        if(m >= 1.f) {
+        if (m >= 1.f) {
             return;
         }
 
@@ -103,29 +112,30 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         update(features, actual_label, missed_label, alpha, beta);
     }
 
-    protected void update(@Nonnull final FeatureValue[] features, final Object actual_label, final Object missed_label, final float alpha, final float beta) {
+    protected void update(@Nonnull final FeatureValue[] features, final Object actual_label,
+            final Object missed_label, final float alpha, final float beta) {
         assert (actual_label != null);
-        if(actual_label.equals(missed_label)) {
+        if (actual_label.equals(missed_label)) {
             throw new IllegalArgumentException("Actual label equals to missed label: "
                     + actual_label);
         }
 
         PredictionModel model2add = label2model.get(actual_label);
-        if(model2add == null) {
+        if (model2add == null) {
             model2add = createModel();
             label2model.put(actual_label, model2add);
         }
         PredictionModel model2sub = null;
-        if(missed_label != null) {
+        if (missed_label != null) {
             model2sub = label2model.get(missed_label);
-            if(model2sub == null) {
+            if (model2sub == null) {
                 model2sub = createModel();
                 label2model.put(missed_label, model2sub);
             }
         }
 
-        for(FeatureValue f : features) {// w[f] += y * x[f]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[f] += y * x[f]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
@@ -135,18 +145,20 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
             IWeightValue new_correctclass_w = getNewWeight(old_correctclass_w, v, alpha, beta, true);
             model2add.set(k, new_correctclass_w);
 
-            if(model2sub != null) {
+            if (model2sub != null) {
                 IWeightValue old_wrongclass_w = model2sub.get(k);
-                IWeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, beta, false);
+                IWeightValue new_wrongclass_w = getNewWeight(old_wrongclass_w, v, alpha, beta,
+                    false);
                 model2sub.set(k, new_wrongclass_w);
             }
         }
     }
 
-    private static IWeightValue getNewWeight(final IWeightValue old, final float v, final float alpha, final float beta, final boolean positive) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float v,
+            final float alpha, final float beta, final boolean positive) {
         final float old_v;
         final float old_cov;
-        if(old == null) {
+        if (old == null) {
             old_v = 0.f;
             old_cov = 1.f;
         } else {
@@ -161,7 +173,12 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
         return new WeightValueWithCovar(new_w, new_cov);
     }
 
-    public static class AROWh extends MulticlassAROWClassifierUDTF {
+    @Description(
+            name = "train_multiclass_arowh",
+            value = "_FUNC_(list<string|int|bigint> features, int|string label [, const string options])"
+                    + " - Returns a relation consists of <int|string label, string|int|bigint feature, float weight, float covar>",
+            extended = "Build a prediction model by Adaptive Regularization of Weight Vectors (AROW) multiclass classifier using hinge loss")
+    public static final class AROWh extends MulticlassAROWClassifierUDTF {
 
         /** Aggressiveness parameter */
         protected float c;
@@ -178,11 +195,11 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
             final CommandLine cl = super.processOptions(argOIs);
 
             float c = 1.f;
-            if(cl != null) {
+            if (cl != null) {
                 String c_str = cl.getOptionValue("c");
-                if(c_str != null) {
+                if (c_str != null) {
                     c = Float.parseFloat(c_str);
-                    if(!(c > 0.f)) {
+                    if (!(c > 0.f)) {
                         throw new UDFArgumentException("Aggressiveness parameter C must be C > 0: "
                                 + c);
                     }
@@ -198,7 +215,7 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
             Margin margin = getMarginAndVariance(features, actual_label);
 
             float loss = loss(margin);
-            if(loss > 0.f) {
+            if (loss > 0.f) {
                 float var = margin.getVariance();
                 float beta = 1.f / (var + r);
                 float alpha = loss * beta;
@@ -208,7 +225,7 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
             }
         }
 
-        /** 
+        /**
          * @return C - m
          */
         protected float loss(Margin margin) {

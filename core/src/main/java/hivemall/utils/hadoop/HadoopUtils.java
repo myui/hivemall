@@ -156,6 +156,25 @@ public final class HadoopUtils {
         return taskid;
     }
 
+    public static int getTaskId(final int defaultValue) {
+        MapredContext ctx = MapredContextAccessor.get();
+        if (ctx == null) {
+            return defaultValue;
+        }
+        JobConf jobconf = ctx.getJobConf();
+        if (jobconf == null) {
+            return defaultValue;
+        }
+        int taskid = jobconf.getInt("mapred.task.partition", -1);
+        if (taskid == -1) {
+            taskid = jobconf.getInt("mapreduce.task.partition", -1);
+            if (taskid == -1) {
+                return defaultValue;
+            }
+        }
+        return taskid;
+    }
+
     public static String getUniqueTaskIdString() {
         MapredContext ctx = MapredContextAccessor.get();
         if (ctx != null) {

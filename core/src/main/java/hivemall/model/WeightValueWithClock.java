@@ -34,7 +34,7 @@ public class WeightValueWithClock implements IWeightValue {
 
     public WeightValueWithClock(IWeightValue src) {
         this.value = src.get();
-        if(src.isTouched()) {
+        if (src.isTouched()) {
             this.clock = 1;
             this.deltaUpdates = 1;
         } else {
@@ -88,7 +88,7 @@ public class WeightValueWithClock implements IWeightValue {
         return 0.f;
     }
 
-    /** 
+    /**
      * @return whether touched in training or not
      */
     public final boolean isTouched() {
@@ -97,7 +97,8 @@ public class WeightValueWithClock implements IWeightValue {
 
     @Override
     public void setTouched(boolean touched) {
-        throw new UnsupportedOperationException("WeightValueWithClock#setTouched should not be called");
+        throw new UnsupportedOperationException(
+            "WeightValueWithClock#setTouched should not be called");
     }
 
     public final short getClock() {
@@ -113,7 +114,7 @@ public class WeightValueWithClock implements IWeightValue {
     }
 
     public final void setDeltaUpdates(byte deltaUpdates) {
-        if(deltaUpdates < 0) {
+        if (deltaUpdates < 0) {
             throw new IllegalArgumentException("deltaUpdates is less than 0: " + deltaUpdates);
         }
         this.deltaUpdates = deltaUpdates;
@@ -162,7 +163,7 @@ public class WeightValueWithClock implements IWeightValue {
 
         @Override
         public float getFloatParams(@Nonnegative final int i) {
-            if(i == 1) {
+            if (i == 1) {
                 return f1;
             }
             throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");
@@ -198,9 +199,9 @@ public class WeightValueWithClock implements IWeightValue {
 
         @Override
         public float getFloatParams(@Nonnegative final int i) {
-            if(i == 1) {
+            if (i == 1) {
                 return f1;
-            } else if(i == 2) {
+            } else if (i == 2) {
                 return f2;
             }
             throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");

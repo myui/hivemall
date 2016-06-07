@@ -78,8 +78,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length < 2) {
             throw new UDFArgumentException(
-                getClass().getSimpleName()
-                        + " takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
+                "_FUNC_ takes 2 arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
         this.featureInputOI = processFeaturesOI(argOIs[0]);
         this.targetOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);

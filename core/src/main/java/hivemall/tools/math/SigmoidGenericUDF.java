@@ -46,7 +46,7 @@ public final class SigmoidGenericUDF extends GenericUDF {
     @Override
     public ObjectInspector initialize(@Nonnull ObjectInspector[] argOIs)
             throws UDFArgumentException {
-        if(argOIs.length != 1) {
+        if (argOIs.length != 1) {
             throw new UDFArgumentException("_FUNC_ takes 1 argument");
         }
         this.argOI = HiveUtils.asDoubleCompatibleOI(argOIs[0]);
@@ -60,7 +60,7 @@ public final class SigmoidGenericUDF extends GenericUDF {
         DeferredObject arg0 = arguments[0];
         assert (arg0 != null);
         Object obj0 = arg0.get();
-        if(obj0 == null) {
+        if (obj0 == null) {
             return null;
         }
         double x = PrimitiveObjectInspectorUtils.getDouble(obj0, argOI);

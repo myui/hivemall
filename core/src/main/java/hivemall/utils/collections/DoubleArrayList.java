@@ -43,7 +43,7 @@ public final class DoubleArrayList implements Serializable {
     }
 
     public void add(double value) {
-        if(used >= data.length) {
+        if (used >= data.length) {
             expand(used + 1);
         }
         data[used++] = value;
@@ -51,7 +51,7 @@ public final class DoubleArrayList implements Serializable {
 
     public void add(double[] values) {
         final int needs = used + values.length;
-        if(needs >= data.length) {
+        if (needs >= data.length) {
             expand(needs);
         }
         System.arraycopy(values, 0, data, used, values.length);
@@ -62,7 +62,7 @@ public final class DoubleArrayList implements Serializable {
      * dynamic expansion.
      */
     private void expand(int max) {
-        while(data.length < max) {
+        while (data.length < max) {
             final int len = data.length;
             double[] newArray = new double[len * 2];
             System.arraycopy(data, 0, newArray, 0, len);
@@ -76,9 +76,9 @@ public final class DoubleArrayList implements Serializable {
 
     public double remove(int index) {
         final double ret;
-        if(index > used) {
+        if (index > used) {
             throw new IndexOutOfBoundsException();
-        } else if(index == used) {
+        } else if (index == used) {
             ret = data[--used];
         } else { // index < used
             // removed value
@@ -95,16 +95,16 @@ public final class DoubleArrayList implements Serializable {
     }
 
     public void set(int index, double value) {
-        if(index > used) {
+        if (index > used) {
             throw new IllegalArgumentException("Index MUST be less than \"size()\".");
-        } else if(index == used) {
+        } else if (index == used) {
             ++used;
         }
         data[index] = value;
     }
 
     public double get(int index) {
-        if(index >= used)
+        if (index >= used)
             throw new IndexOutOfBoundsException();
         return data[index];
     }
@@ -139,8 +139,8 @@ public final class DoubleArrayList implements Serializable {
     public String toString() {
         final StringBuilder buf = new StringBuilder();
         buf.append('[');
-        for(int i = 0; i < used; i++) {
-            if(i != 0) {
+        for (int i = 0; i < used; i++) {
+            if (i != 0) {
                 buf.append(", ");
             }
             buf.append(data[i]);

@@ -20,10 +20,13 @@ package hivemall.ensemble;
 
 import hivemall.utils.hadoop.WritableUtils;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.Text;
 
+@Description(name = "max_label",
+        value = "_FUNC_(double value, string label) - Returns a label that has the maximum value")
 public final class MaxValueLabelUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
@@ -51,11 +54,11 @@ public final class MaxValueLabelUDAF extends UDAF {
         }
 
         public boolean iterate(double v, String label) {
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
                 partial.init();
             }
-            if(v >= partial.maxValue) {
+            if (v >= partial.maxValue) {
                 partial.maxValue = v;
                 partial.label = label;
             }
@@ -67,14 +70,14 @@ public final class MaxValueLabelUDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
                 partial.init();
             }
-            if(other.maxValue < partial.maxValue) {
+            if (other.maxValue < partial.maxValue) {
                 return true;
             }
             partial.maxValue = other.maxValue;
@@ -83,7 +86,7 @@ public final class MaxValueLabelUDAF extends UDAF {
         }
 
         public Text terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }
             return WritableUtils.val(partial.label);

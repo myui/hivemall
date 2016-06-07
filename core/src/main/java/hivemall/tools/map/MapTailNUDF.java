@@ -44,14 +44,15 @@ public class MapTailNUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 2) {
-            throw new UDFArgumentLengthException("map_tail_n only takes 2 arguments: map<object, object>, int");
+        if (arguments.length != 2) {
+            throw new UDFArgumentLengthException(
+                "map_tail_n only takes 2 arguments: map<object, object>, int");
         }
-        if(!(arguments[0] instanceof MapObjectInspector)) {
+        if (!(arguments[0] instanceof MapObjectInspector)) {
             throw new UDFArgumentException("The first argument must be a map");
         }
         this.mapObjectInspector = (MapObjectInspector) arguments[0];
-        if(!(arguments[1] instanceof IntObjectInspector)) {
+        if (!(arguments[1] instanceof IntObjectInspector)) {
             throw new UDFArgumentException("The second argument must be an int");
         }
         this.intObjectInspector = (IntObjectInspector) arguments[1];
@@ -80,16 +81,16 @@ public class MapTailNUDF extends GenericUDF {
         final ObjectInspector keyInspector = mapObjectInspector.getMapKeyObjectInspector();
 
         final TreeMap<Object, Object> tail = new TreeMap<Object, Object>();
-        for(Map.Entry<?, ?> e : m.entrySet()) {
+        for (Map.Entry<?, ?> e : m.entrySet()) {
             Object k = ObjectInspectorUtils.copyToStandardObject(e.getKey(), keyInspector);
             Object v = e.getValue();
             tail.put(k, v);
         }
-        if(tail.size() <= n) {
+        if (tail.size() <= n) {
             return tail;
         }
         TreeMap<Object, Object> ret = new TreeMap<Object, Object>();
-        for(int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             Object k = tail.lastKey();
             Object v = tail.remove(k);
             ret.put(k, v);

@@ -79,26 +79,26 @@ public final class MixMessageEncoder extends MessageToByteEncoder<MixMessage> {
 
     private static void encodeObject(final Object obj, final ByteBuf buf) throws IOException {
         assert (obj != null);
-        if(obj instanceof Integer) {
+        if (obj instanceof Integer) {
             Integer i = (Integer) obj;
             buf.writeByte(INTEGER_TYPE);
             buf.writeInt(i.intValue());
-        } else if(obj instanceof Text) {
+        } else if (obj instanceof Text) {
             Text t = (Text) obj;
             byte[] b = t.getBytes();
             int length = t.getLength();
             buf.writeByte(TEXT_TYPE);
             buf.writeInt(length);
             buf.writeBytes(b, 0, length);
-        } else if(obj instanceof String) {
+        } else if (obj instanceof String) {
             String s = (String) obj;
             buf.writeByte(STRING_TYPE);
             writeString(s, buf);
-        } else if(obj instanceof IntWritable) {
+        } else if (obj instanceof IntWritable) {
             IntWritable i = (IntWritable) obj;
             buf.writeByte(INT_WRITABLE_TYPE);
             buf.writeInt(i.get());
-        } else if(obj instanceof LongWritable) {
+        } else if (obj instanceof LongWritable) {
             LongWritable l = (LongWritable) obj;
             buf.writeByte(LONG_WRITABLE_TYPE);
             buf.writeLong(l.get());
@@ -108,7 +108,7 @@ public final class MixMessageEncoder extends MessageToByteEncoder<MixMessage> {
     }
 
     private static void writeString(final String s, final ByteBuf buf) {
-        if(s == null) {
+        if (s == null) {
             buf.writeInt(-1);
             return;
         }

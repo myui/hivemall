@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -36,6 +37,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 /**
  * ADADELTA: AN ADAPTIVE LEARNING RATE METHOD.
  */
+@Description(
+        name = "train_adadelta_regr",
+        value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"
+                + " - Returns a relation consists of <{int|bigint|string} feature, float weight>")
 public final class AdaDeltaUDTF extends RegressionBaseUDTF {
 
     private float decay;
@@ -45,8 +50,9 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("AdaDeltaUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, float target [, constant string options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "AdaDeltaUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, float target [, constant string options]");
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
@@ -59,14 +65,15 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
         Options opts = super.getOptions();
         opts.addOption("rho", "decay", true, "Decay rate [default 0.95]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1e-6]");
-        opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [100]");
+        opts.addOption("scale", true,
+            "Internal scaling/descaling factor for cumulative weights [100]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        if(cl == null) {
+        if (cl == null) {
             this.decay = 0.95f;
             this.eps = 1e-6f;
             this.scaling = 100f;
@@ -80,7 +87,7 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
 
     @Override
     protected final void checkTargetValue(final float target) throws UDFArgumentException {
-        if(target < 0.f || target > 1.f) {
+        if (target < 0.f || target > 1.f) {
             throw new UDFArgumentException("target must be in range 0 to 1: " + target);
         }
     }
@@ -95,8 +102,8 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
     protected void onlineUpdate(@Nonnull final FeatureValue[] features, float gradient) {
         final float g_g = gradient * (gradient / scaling);
 
-        for(FeatureValue f : features) {// w[i] += y * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[i] += y * x[i]
+            if (f == null) {
                 continue;
             }
             Object x = f.getFeature();
@@ -109,11 +116,12 @@ public final class AdaDeltaUDTF extends RegressionBaseUDTF {
     }
 
     @Nonnull
-    protected IWeightValue getNewWeight(@Nullable final IWeightValue old, final float xi, final float gradient, final float g_g) {
+    protected IWeightValue getNewWeight(@Nullable final IWeightValue old, final float xi,
+            final float gradient, final float g_g) {
         float old_w = 0.f;
         float old_scaled_sum_sqgrad = 0.f;
         float old_sum_squared_delta_x = 0.f;
-        if(old != null) {
+        if (old != null) {
             old_w = old.get();
             old_scaled_sum_sqgrad = old.getSumOfSquaredGradients();
             old_sum_squared_delta_x = old.getSumOfSquaredDeltaX();

@@ -30,7 +30,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     public static final byte BYTE0 = 0;
 
     protected ModelUpdateHandler handler;
-    
+
     private long numMixed;
     private boolean cancelMixRequest;
 
@@ -53,8 +53,8 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     public void configureMix(ModelUpdateHandler handler, boolean cancelMixRequest) {
         this.handler = handler;
         this.cancelMixRequest = cancelMixRequest;
-        if(cancelMixRequest) {
-            if(isDenseModel()) {
+        if (cancelMixRequest) {
+            if (isDenseModel()) {
                 this.mixedRequests_i = new IntOpenHashMap<MixedWeight>(327680);
             } else {
                 this.mixedRequests_o = new OpenHashMap<Object, MixedWeight>(327680);
@@ -72,9 +72,10 @@ public abstract class AbstractPredictionModel implements PredictionModel {
         throw new UnsupportedOperationException();
     }
 
-    protected final void onUpdate(final int feature, final float weight, final float covar, final short clock, final int deltaUpdates, final boolean hasCovar) {
-        if(handler != null) {
-            if(deltaUpdates < 1) {
+    protected final void onUpdate(final int feature, final float weight, final float covar,
+            final short clock, final int deltaUpdates, final boolean hasCovar) {
+        if (handler != null) {
+            if (deltaUpdates < 1) {
                 return;
             }
             final boolean requestSent;
@@ -83,11 +84,11 @@ public abstract class AbstractPredictionModel implements PredictionModel {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            if(requestSent) {
-                if(cancelMixRequest) {
-                    if(hasCovar) {
+            if (requestSent) {
+                if (cancelMixRequest) {
+                    if (hasCovar) {
                         MixedWeight prevMixed = mixedRequests_i.get(feature);
-                        if(prevMixed == null) {
+                        if (prevMixed == null) {
                             prevMixed = new WeightWithCovar(weight, covar);
                             mixedRequests_i.put(feature, prevMixed);
                         } else {
@@ -101,7 +102,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                         }
                     } else {
                         MixedWeight prevMixed = mixedRequests_i.get(feature);
-                        if(prevMixed == null) {
+                        if (prevMixed == null) {
                             prevMixed = new WeightWithDelta(weight, deltaUpdates);
                             mixedRequests_i.put(feature, prevMixed);
                         } else {
@@ -121,14 +122,14 @@ public abstract class AbstractPredictionModel implements PredictionModel {
     }
 
     protected final void onUpdate(final Object feature, final IWeightValue value) {
-        if(handler != null) {
-            if(!value.isTouched()) {
+        if (handler != null) {
+            if (!value.isTouched()) {
                 return;
             }
             final float weight = value.get();
             final short clock = value.getClock();
             final int deltaUpdates = value.getDeltaUpdates();
-            if(value.hasCovariance()) {
+            if (value.hasCovariance()) {
                 final float covar = value.getCovariance();
                 final boolean requestSent;
                 try {
@@ -136,10 +137,10 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                if(requestSent) {
-                    if(cancelMixRequest) {
+                if (requestSent) {
+                    if (cancelMixRequest) {
                         MixedWeight prevMixed = mixedRequests_o.get(feature);
-                        if(prevMixed == null) {
+                        if (prevMixed == null) {
                             prevMixed = new WeightWithCovar(weight, covar);
                             mixedRequests_o.put(feature, prevMixed);
                         } else {
@@ -161,10 +162,10 @@ public abstract class AbstractPredictionModel implements PredictionModel {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                if(requestSent) {
-                    if(cancelMixRequest) {
+                if (requestSent) {
+                    if (cancelMixRequest) {
                         MixedWeight prevMixed = mixedRequests_o.get(feature);
-                        if(prevMixed == null) {
+                        if (prevMixed == null) {
                             prevMixed = new WeightWithDelta(weight, deltaUpdates);
                             mixedRequests_o.put(feature, prevMixed);
                         } else {
@@ -188,7 +189,7 @@ public abstract class AbstractPredictionModel implements PredictionModel {
      */
     @Override
     public void set(@Nonnull Object feature, float weight, float covar, short clock) {
-        if(hasCovariance()) {
+        if (hasCovariance()) {
             _set(feature, weight, covar, clock);
         } else {
             _set(feature, weight, clock);

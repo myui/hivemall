@@ -30,7 +30,7 @@ public final class HashFunctionFactory {
     public static HashFunction[] create(int numFunctions, long seed) {
         final Random rand = new Random(seed);
         final HashFunction[] funcs = new HashFunction[numFunctions];
-        for(int i = 0; i < numFunctions; i++) {
+        for (int i = 0; i < numFunctions; i++) {
             funcs[i] = new MurmurHash3Function(rand.nextInt());
         }
         return funcs;

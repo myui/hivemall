@@ -52,7 +52,7 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
     }
 
     public byte[][] toMultiByteArray() {
-        if(buffers == null) {
+        if (buffers == null) {
             final byte[][] mb = new byte[1][];
             mb[0] = buffer;
             return mb;
@@ -69,8 +69,8 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
         final byte[] data = new byte[size()];
         // check if we have a list of buffers
         int pos = 0;
-        if(buffers != null) {
-            for(byte[] bytes : buffers) {
+        if (buffers != null) {
+            for (byte[] bytes : buffers) {
                 System.arraycopy(bytes, 0, data, pos, blockSize);
                 pos += blockSize;
             }
@@ -85,8 +85,8 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
         final byte[] data = new byte[size];
         // check if we have a list of buffers
         int pos = 0;
-        if(buffers != null) {
-            while(!buffers.isEmpty()) {
+        if (buffers != null) {
+            while (!buffers.isEmpty()) {
                 byte[] bytes = buffers.removeFirst();
                 System.arraycopy(bytes, 0, data, pos, blockSize);
                 pos += blockSize;
@@ -108,7 +108,7 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
 
     @Override
     public void write(int datum) {
-        if(index >= blockSize) {
+        if (index >= blockSize) {
             // Create new buffer and store current in linked list
             addBuffer();
         }
@@ -118,26 +118,26 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] data, int offset, int length) {
-        if(data == null) {
+        if (data == null) {
             throw new NullPointerException();
-        } else if((offset < 0) || (offset + length > data.length) || (length < 0)) {
+        } else if ((offset < 0) || (offset + length > data.length) || (length < 0)) {
             throw new IndexOutOfBoundsException();
         } else {
-            if(index + length >= blockSize) {// Write byte by byte
+            if (index + length >= blockSize) {// Write byte by byte
                 int copyLength;
                 do {
-                    if(index == blockSize) {
+                    if (index == blockSize) {
                         addBuffer();
                     }
                     copyLength = blockSize - index;
-                    if(length < copyLength) {
+                    if (length < copyLength) {
                         copyLength = length;
                     }
                     System.arraycopy(data, offset, buffer, index, copyLength);
                     offset += copyLength;
                     index += copyLength;
                     length -= copyLength;
-                } while(length > 0);
+                } while (length > 0);
             } else {// copy in the subarray
                 System.arraycopy(data, offset, buffer, index, length);
                 index += length;
@@ -146,7 +146,7 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
     }
 
     public void writeInt(int v) throws IOException {
-        if((index + 3) >= blockSize) {
+        if ((index + 3) >= blockSize) {
             // Create new buffer and store current in linked list
             addBuffer();
         }
@@ -157,7 +157,7 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
     }
 
     public void writeLong(long v) throws IOException {
-        if((index + 7) >= blockSize) {
+        if ((index + 7) >= blockSize) {
             // Create new buffer and store current in linked list
             addBuffer();
         }
@@ -173,14 +173,14 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
 
     public void writeInts(int[] v, int off, int len) throws IOException {
         int endoff = off + len;
-        for(int i = off; i < endoff; i++) {
+        for (int i = off; i < endoff; i++) {
             writeInt(v[i]);
         }
     }
 
     public void writeLongs(long[] v, int off, int len) throws IOException {
         int endoff = off + len;
-        for(int i = off; i < endoff; i++) {
+        for (int i = off; i < endoff; i++) {
             writeLong(v[i]);
         }
     }
@@ -194,8 +194,8 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
 
     public void writeTo(OutputStream out) throws IOException {
         // check if we have a list of buffers
-        if(buffers != null) {
-            for(byte[] bytes : buffers) {
+        if (buffers != null) {
+            for (byte[] bytes : buffers) {
                 out.write(bytes, 0, blockSize);
             }
         }
@@ -211,7 +211,7 @@ public final class FastMultiByteArrayOutputStream extends OutputStream {
      * Create a new buffer and store the current one in linked list.
      */
     private void addBuffer() {
-        if(buffers == null) {
+        if (buffers == null) {
             buffers = new LinkedList<byte[]>();
         }
         buffers.addLast(buffer);

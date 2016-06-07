@@ -61,6 +61,9 @@ create temporary function train_multiclass_cw as 'hivemall.classifier.multiclass
 drop temporary function train_multiclass_arow;
 create temporary function train_multiclass_arow as 'hivemall.classifier.multiclass.MulticlassAROWClassifierUDTF';
 
+drop temporary function train_multiclass_arowh;
+create temporary function train_multiclass_arowh as 'hivemall.classifier.multiclass.MulticlassAROWClassifierUDTF$AROWh';
+
 drop temporary function train_multiclass_scw;
 create temporary function train_multiclass_scw as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1';
 
@@ -196,8 +199,8 @@ create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF';
 drop temporary function zscore;
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 
-drop temporary function normalize;
-create temporary function normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
+drop temporary function l2_normalize;
+create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 
 -----------------------------------
 -- Feature engineering functions --
@@ -335,8 +338,8 @@ create temporary function train_arowe_regr as 'hivemall.regression.AROWRegressio
 drop temporary function train_arowe2_regr;
 create temporary function train_arowe2_regr as 'hivemall.regression.AROWRegressionUDTF$AROWe2';
 
-drop temporary function train_adagrad;
-create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';
+drop temporary function train_adagrad_regr;
+create temporary function train_adagrad_regr as 'hivemall.regression.AdaGradUDTF';
 
 drop temporary function train_adadelta_regr;
 create temporary function train_adadelta_regr as 'hivemall.regression.AdaDeltaUDTF';

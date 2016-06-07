@@ -23,11 +23,14 @@ import static hivemall.utils.hadoop.WritableUtils.val;
 import java.math.BigInteger;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 
+@Description(name = "hamming_distance",
+        value = "_FUNC_(A, B [,int k]) - Returns Hamming distance between A and B")
 @UDFType(deterministic = true, stateful = false)
 public class HammingDistanceUDF extends UDF {
 
@@ -47,7 +50,7 @@ public class HammingDistanceUDF extends UDF {
 
         final int min, max;
         final List<LongWritable> r;
-        if(alen < blen) {
+        if (alen < blen) {
             min = alen;
             max = blen;
             r = b;
@@ -58,10 +61,10 @@ public class HammingDistanceUDF extends UDF {
         }
 
         int result = 0;
-        for(int i = 0; i < min; i++) {
+        for (int i = 0; i < min; i++) {
             result += hammingDistance(a.get(i).get(), b.get(i).get());
         }
-        for(int j = min; j < max; j++) {
+        for (int j = min; j < max; j++) {
             result += hammingDistance(0L, r.get(j).get());
         }
         return val(result);

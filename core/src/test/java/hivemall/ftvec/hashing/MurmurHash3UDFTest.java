@@ -51,9 +51,9 @@ public class MurmurHash3UDFTest {
 
     @Test
     public void testEvaluateArray() throws UDFArgumentException {
-        final String[] words = { "hive", "mall" };
+        final String[] words = {"hive", "mall"};
         final String[] noWords = {};
-        final String[] oneWord = { "hivemall" };
+        final String[] oneWord = {"hivemall"};
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
         assertEquals(udf.evaluate("hive\tmall"), udf.evaluate(Arrays.asList(words)));
@@ -64,14 +64,16 @@ public class MurmurHash3UDFTest {
     @Test
     public void testEvaluateArrayWithNumFeatures() throws UDFArgumentException {
         final int numFeatures = 1 << 24;
-        final String[] words = { "hive", "mall" };
+        final String[] words = {"hive", "mall"};
         final String[] noWords = {};
-        final String[] oneWord = { "hivemall" };
+        final String[] oneWord = {"hivemall"};
         MurmurHash3UDF udf = new MurmurHash3UDF();
 
-        assertEquals(udf.evaluate("hive\tmall", numFeatures), udf.evaluate(Arrays.asList(words), numFeatures));
+        assertEquals(udf.evaluate("hive\tmall", numFeatures),
+            udf.evaluate(Arrays.asList(words), numFeatures));
         assertEquals(1, udf.evaluate(Arrays.asList(noWords), numFeatures).get());
-        assertEquals(udf.evaluate("hivemall", numFeatures), udf.evaluate(Arrays.asList(oneWord), numFeatures));
+        assertEquals(udf.evaluate("hivemall", numFeatures),
+            udf.evaluate(Arrays.asList(oneWord), numFeatures));
     }
 
 }

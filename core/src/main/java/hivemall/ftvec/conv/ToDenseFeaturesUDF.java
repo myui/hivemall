@@ -30,14 +30,15 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 
-@Description(name = "to_dense_features", value = "_FUNC_(array<string> feature_vector, int dimensions)"
-        + " - Returns a dense feature in array<float>")
+@Description(name = "to_dense_features",
+        value = "_FUNC_(array<string> feature_vector, int dimensions)"
+                + " - Returns a dense feature in array<float>")
 @UDFType(deterministic = true, stateful = false)
 public final class ToDenseFeaturesUDF extends UDF {
 
     @Nullable
     public List<Float> evaluate(@Nullable final List<String> features) throws HiveException {
-        if(features == null) {
+        if (features == null) {
             return null;
         }
         int size = features.size();
@@ -45,19 +46,19 @@ public final class ToDenseFeaturesUDF extends UDF {
     }
 
     @Nullable
-    public List<Float> evaluate(@Nullable final List<String> features, @Nonnegative final int dimensions)
-            throws HiveException {
-        if(features == null) {
+    public List<Float> evaluate(@Nullable final List<String> features,
+            @Nonnegative final int dimensions) throws HiveException {
+        if (features == null) {
             return null;
         }
 
         final FeatureValue probe = new FeatureValue();
         final Float[] fv = new Float[dimensions + 1];
-        for(String ft : features) {
+        for (String ft : features) {
             FeatureValue.parseFeatureAsString(ft, probe);
             String f = probe.getFeature();
             int i = Integer.parseInt(f);
-            if(i > dimensions) {
+            if (i > dimensions) {
                 throw new HiveException("IndexOutOfBounds: " + i);
             }
             float v = probe.getValueAsFloat();

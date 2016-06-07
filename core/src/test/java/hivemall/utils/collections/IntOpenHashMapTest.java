@@ -37,11 +37,11 @@ public class IntOpenHashMapTest {
     public void testPutAndGet() {
         IntOpenHashMap<Integer> map = new IntOpenHashMap<Integer>(16384);
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Assert.assertNull(map.put(i, i));
         }
         Assert.assertEquals(numEntries, map.size());
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Integer v = map.get(i);
             Assert.assertEquals(i, v.intValue());
         }
@@ -54,14 +54,14 @@ public class IntOpenHashMapTest {
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Assert.assertNull(map.put(i, i));
         }
         Assert.assertEquals(numEntries, map.size());
 
         itor = map.entries();
         Assert.assertTrue(itor.hasNext());
-        while(itor.hasNext()) {
+        while (itor.hasNext()) {
             Assert.assertFalse(itor.next() == -1);
             int k = itor.getKey();
             Integer v = itor.getValue();

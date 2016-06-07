@@ -27,33 +27,35 @@ import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
 /**
- * @see <a href="http://mathworld.wolfram.com/NormalizedVector.html>http://mathworld.wolfram.com/NormalizedVector.html</a>
+ * @see <a href=
+ *      "http://mathworld.wolfram.com/NormalizedVector.html>http://mathworld.wolfram.com/NormalizedVector.html
+ *      < / a >
  */
-@Description(name = "normalize", value = "_FUNC_(ftvec string) - Returned a L2 normalized value")
+@Description(name = "l2_normalize", value = "_FUNC_(ftvec string) - Returned a L2 normalized value")
 @UDFType(deterministic = true, stateful = false)
 public final class L2NormalizationUDF extends UDF {
 
     public List<Text> evaluate(final List<Text> ftvecs) {
-        if(ftvecs == null) {
+        if (ftvecs == null) {
             return null;
         }
         double squaredSum = 0.d;
         final int numFeatures = ftvecs.size();
         final String[] features = new String[numFeatures];
         final float[] weights = new float[numFeatures];
-        for(int i = 0; i < numFeatures; i++) {
+        for (int i = 0; i < numFeatures; i++) {
             Text ftvec = ftvecs.get(i);
-            if(ftvec == null) {
+            if (ftvec == null) {
                 continue;
             }
             String s = ftvec.toString();
             final String[] ft = s.split(":");
             final int ftlen = ft.length;
-            if(ftlen == 1) {
+            if (ftlen == 1) {
                 features[i] = ft[0];
                 weights[i] = 1.f;
                 squaredSum += 1.d;
-            } else if(ftlen == 2) {
+            } else if (ftlen == 2) {
                 features[i] = ft[0];
                 float v = Float.parseFloat(ft[1]);
                 weights[i] = v;
@@ -64,13 +66,13 @@ public final class L2NormalizationUDF extends UDF {
         }
         final float norm = (float) Math.sqrt(squaredSum);
         final Text[] t = new Text[numFeatures];
-        if(norm == 0.f) {
-            for(int i = 0; i < numFeatures; i++) {
+        if (norm == 0.f) {
+            for (int i = 0; i < numFeatures; i++) {
                 String f = features[i];
                 t[i] = new Text(f + ':' + 0.f);
             }
         } else {
-            for(int i = 0; i < numFeatures; i++) {
+            for (int i = 0; i < numFeatures; i++) {
                 String f = features[i];
                 float v = weights[i] / norm;
                 t[i] = new Text(f + ':' + v);

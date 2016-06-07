@@ -22,6 +22,7 @@ import hivemall.utils.hadoop.HiveUtils;
 
 import java.util.ArrayList;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
@@ -29,18 +30,20 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-public class AmplifierUDTF extends GenericUDTF {
+@Description(name = "amplify",
+        value = "_FUNC_(const int xtimes, *) - amplify the input records x-times")
+public final class AmplifierUDTF extends GenericUDTF {
 
     private int xtimes;
     private Object[] forwardObjs;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(!(argOIs.length >= 2)) {
-            throw new UDFArgumentException("amplifier(int xtimes, *) takes at least two arguments");
+        if (!(argOIs.length >= 2)) {
+            throw new UDFArgumentException("_FUNC_(int xtimes, *) takes at least two arguments");
         }
         this.xtimes = HiveUtils.getAsConstInt(argOIs[0]);
-        if(!(xtimes >= 1)) {
+        if (!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         this.forwardObjs = new Object[argOIs.length - 1];
@@ -48,7 +51,7 @@ public class AmplifierUDTF extends GenericUDTF {
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
 
-        for(int i = 1; i < argOIs.length; i++) {
+        for (int i = 1; i < argOIs.length; i++) {
             fieldNames.add("c" + i);
             fieldOIs.add(argOIs[i]);
         }
@@ -59,10 +62,10 @@ public class AmplifierUDTF extends GenericUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         final Object[] forwardObjs = this.forwardObjs;
-        for(int i = 1; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             forwardObjs[i - 1] = args[i];
         }
-        for(int x = 0; x < xtimes; x++) {
+        for (int x = 0; x < xtimes; x++) {
             forward(forwardObjs);
         }
     }

@@ -35,8 +35,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 
 /** A wrapper of [[hivemall.knn.lsh.MinHashesUDF]]. */
 @Description(
-    name = "minhashes",
-    value = "_FUNC_(features in array<string>, noWeight in boolean) - Returns hashed features as array<int>")
+        name = "minhashes",
+        value = "_FUNC_(features in array<string>, noWeight in boolean) - Returns hashed features as array<int>")
 @UDFType(deterministic = true, stateful = false)
 public class MinHashesUDFWrapper extends GenericUDF {
     private MinHashesUDF udf = new MinHashesUDF();
@@ -45,19 +45,18 @@ public class MinHashesUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 2) {
+        if (arguments.length != 2) {
             throw new UDFArgumentLengthException(
                 "minhashes() has 2 arguments: array<string> features, boolean noWeight");
         }
 
         // Check argument types
-        switch(arguments[0].getCategory()) {
+        switch (arguments[0].getCategory()) {
             case LIST:
                 featuresOI = (ListObjectInspector) arguments[0];
                 ObjectInspector elmOI = featuresOI.getListElementObjectInspector();
-                if(elmOI.getCategory().equals(Category.PRIMITIVE)) {
-                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory()
-                            == PrimitiveCategory.STRING) {
+                if (elmOI.getCategory().equals(Category.PRIMITIVE)) {
+                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory() == PrimitiveCategory.STRING) {
                         break;
                     }
                 }
@@ -70,16 +69,16 @@ public class MinHashesUDFWrapper extends GenericUDF {
             throw new UDFArgumentException("Type mismatch: noWeight");
         }
 
-        return ObjectInspectorFactory.getStandardListObjectInspector(
-            PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(PrimitiveCategory.INT));
+        return ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(PrimitiveCategory.INT));
     }
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 2);
+        assert (arguments.length == 2);
         @SuppressWarnings("unchecked")
         final List<String> features = (List<String>) featuresOI.getList(arguments[0].get());
-        final Boolean noWeight = PrimitiveObjectInspectorUtils.getBoolean(arguments[1].get(), noWeightOI);
+        final Boolean noWeight = PrimitiveObjectInspectorUtils.getBoolean(arguments[1].get(),
+            noWeightOI);
         return udf.evaluate(features, noWeight);
     }
 

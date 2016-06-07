@@ -29,12 +29,12 @@ public class ArrayUtilsTest {
 
     @Test
     public void test() {
-        String[] shuffled = new String[] { "1, 2, 3", "4, 5, 6", "7, 8, 9", "10, 11, 12" };
-        String[] outcome = new String[] { "10, 11, 12", "1, 2, 3", "4, 5, 6", "7, 8, 9" };
+        String[] shuffled = new String[] {"1, 2, 3", "4, 5, 6", "7, 8, 9", "10, 11, 12"};
+        String[] outcome = new String[] {"10, 11, 12", "1, 2, 3", "4, 5, 6", "7, 8, 9"};
 
         ArrayUtils.shuffle(shuffled, new Random(0L));
 
-        for(int i = 0; i < shuffled.length; i++) {
+        for (int i = 0; i < shuffled.length; i++) {
             Assert.assertEquals(outcome[i], shuffled[i]);
         }
     }

@@ -86,7 +86,7 @@ public class WeightValue implements IWeightValue {
         return 0.f;
     }
 
-    /** 
+    /**
      * @return whether touched in training or not
      */
     @Override
@@ -151,7 +151,7 @@ public class WeightValue implements IWeightValue {
 
         @Override
         public float getFloatParams(@Nonnegative final int i) {
-            if(i == 1) {
+            if (i == 1) {
                 return f1;
             }
             throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");
@@ -184,9 +184,9 @@ public class WeightValue implements IWeightValue {
 
         @Override
         public float getFloatParams(@Nonnegative final int i) {
-            if(i == 1) {
+            if (i == 1) {
                 return f1;
-            } else if(i == 2) {
+            } else if (i == 2) {
                 return f2;
             }
             throw new IllegalArgumentException("getFloatParams(" + i + ") should not be called");

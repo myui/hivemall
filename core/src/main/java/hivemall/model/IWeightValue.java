@@ -48,7 +48,7 @@ public interface IWeightValue extends Copyable<IWeightValue> {
 
     float getSumOfGradients();
 
-    /** 
+    /**
      * @return whether touched in training or not
      */
     boolean isTouched();

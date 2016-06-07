@@ -34,7 +34,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInsp
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "quantify", value = "_FUNC_(boolean outout, col1, col2, ...) - Returns an identified features")
+@Description(name = "quantify",
+        value = "_FUNC_(boolean outout, col1, col2, ...) - Returns an identified features")
 public final class QuantifyColumnsUDTF extends GenericUDTF {
 
     private BooleanObjectInspector boolOI;
@@ -46,7 +47,7 @@ public final class QuantifyColumnsUDTF extends GenericUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         int size = argOIs.length;
-        if(size < 2) {
+        if (size < 2) {
             throw new UDFArgumentException("quantified_features takes at least two arguments: "
                     + size);
         }
@@ -60,10 +61,10 @@ public final class QuantifyColumnsUDTF extends GenericUDTF {
         final ArrayList<String> fieldNames = new ArrayList<String>(outputSize);
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(outputSize);
 
-        for(int i = 0; i < outputSize; i++) {
+        for (int i = 0; i < outputSize; i++) {
             fieldNames.add("c" + i);
             ObjectInspector argOI = argOIs[i + 1];
-            if(HiveUtils.isNumberOI(argOI)) {
+            if (HiveUtils.isNumberOI(argOI)) {
                 fieldOIs.add(argOI);
             } else {
                 identifiers[i] = new Identifier<String>();
@@ -78,15 +79,15 @@ public final class QuantifyColumnsUDTF extends GenericUDTF {
     @Override
     public void process(Object[] args) throws HiveException {
         boolean outputRow = boolOI.get(args[0]);
-        if(outputRow) {
+        if (outputRow) {
             final Object[] forwardObjs = this.forwardObjs;
-            for(int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
+            for (int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
                 Object arg = args[i + 1];
                 Identifier<String> identifier = identifiers[i];
-                if(identifier == null) {
+                if (identifier == null) {
                     forwardObjs[i] = arg;
                 } else {
-                    if(arg == null) {
+                    if (arg == null) {
                         forwardObjs[i] = null;
                     } else {
                         String k = arg.toString();
@@ -99,11 +100,11 @@ public final class QuantifyColumnsUDTF extends GenericUDTF {
             }
             forward(forwardObjs);
         } else {// load only  
-            for(int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
+            for (int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
                 Identifier<String> identifier = identifiers[i];
-                if(identifier != null) {
+                if (identifier != null) {
                     Object arg = args[i + 1];
-                    if(arg != null) {
+                    if (arg != null) {
                         String k = arg.toString();
                         identifier.valueOf(k);
                     }

@@ -40,7 +40,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "vectorize_features", value = "_FUNC_(array<string> featureNames, ...) - Returns a feature vector array<string>")
+@Description(name = "vectorize_features",
+        value = "_FUNC_(array<string> featureNames, ...) - Returns a feature vector array<string>")
 @UDFType(deterministic = true, stateful = false)
 public final class VectorizeFeaturesUDF extends GenericUDF {
 
@@ -52,27 +53,27 @@ public final class VectorizeFeaturesUDF extends GenericUDF {
     public ObjectInspector initialize(@Nonnull final ObjectInspector[] argOIs)
             throws UDFArgumentException {
         final int numArgOIs = argOIs.length;
-        if(numArgOIs < 2) {
+        if (numArgOIs < 2) {
             throw new UDFArgumentException("argOIs.length must be greater that or equals to 2: "
                     + numArgOIs);
         }
         this.featureNames = HiveUtils.getConstStringArray(argOIs[0]);
-        if(featureNames == null) {
+        if (featureNames == null) {
             throw new UDFArgumentException("#featureNames should not be null");
         }
         int numFeatureNames = featureNames.length;
-        if(numFeatureNames < 1) {
+        if (numFeatureNames < 1) {
             throw new UDFArgumentException("#featureNames must be greater than or equals to 1: "
                     + numFeatureNames);
         }
         int numFeatures = numArgOIs - 1;
-        if(numFeatureNames != numFeatures) {
+        if (numFeatureNames != numFeatures) {
             throw new UDFArgumentException("#featureNames '" + numFeatureNames
                     + "' != #arguments '" + numFeatures + "'");
         }
 
         this.inputOIs = new PrimitiveObjectInspector[numFeatures];
-        for(int i = 0; i < numFeatures; i++) {
+        for (int i = 0; i < numFeatures; i++) {
             ObjectInspector oi = argOIs[i + 1];
             inputOIs[i] = HiveUtils.asPrimitiveObjectInspector(oi);
         }
@@ -86,19 +87,19 @@ public final class VectorizeFeaturesUDF extends GenericUDF {
         result.clear();
 
         final int size = arguments.length - 1;
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Object argument = arguments[i + 1].get();
-            if(argument == null) {
+            if (argument == null) {
                 continue;
             }
 
             PrimitiveObjectInspector oi = inputOIs[i];
-            if(oi.getPrimitiveCategory() == PrimitiveCategory.STRING) {
+            if (oi.getPrimitiveCategory() == PrimitiveCategory.STRING) {
                 String s = PrimitiveObjectInspectorUtils.getString(argument, oi);
-                if(s.isEmpty()) {
+                if (s.isEmpty()) {
                     continue;
-                }                
-                if(StringUtils.isNumber(s) == false) {// categorical feature representation                    
+                }
+                if (StringUtils.isNumber(s) == false) {// categorical feature representation                    
                     String featureName = featureNames[i];
                     Text f = new Text(featureName + '#' + s);
                     result.add(f);
@@ -106,7 +107,7 @@ public final class VectorizeFeaturesUDF extends GenericUDF {
                 }
             }
             float v = PrimitiveObjectInspectorUtils.getFloat(argument, oi);
-            if(v != 0.f) {
+            if (v != 0.f) {
                 String featureName = featureNames[i];
                 Text f = new Text(featureName + ':' + v);
                 result.add(f);

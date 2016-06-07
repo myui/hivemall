@@ -18,10 +18,14 @@
  */
 package hivemall.ensemble.bagging;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@Description(
+        name = "weight_voted_avg",
+        value = "_FUNC_(expr) - Returns an averaged value by considering sum of positive/negative weights")
 public final class WeightVotedAvgUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {

@@ -34,10 +34,9 @@ public final class TTASLock implements Lock {
 
     @Override
     public void lock() {
-        while(true) {
-            while(state.get())
-                ; // wait until the lock free            
-            if(!state.getAndSet(true)) { // now try to acquire the lock
+        while (true) {
+            while (state.get()); // wait until the lock free            
+            if (!state.getAndSet(true)) { // now try to acquire the lock
                 return;
             }
         }
@@ -45,7 +44,7 @@ public final class TTASLock implements Lock {
 
     @Override
     public boolean tryLock() {
-        if(state.get()) {
+        if (state.get()) {
             return false;
         }
         return !state.getAndSet(true);

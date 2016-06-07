@@ -42,7 +42,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b", "c");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
@@ -55,7 +56,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[2];
         List<String> featureNames = Arrays.asList("a");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         udf.initialize(argOIs);
 
@@ -64,7 +66,7 @@ public class VectorizeFeaturesUDFTest {
 
         List<Text> actuals = udf.evaluate(arguments);
         //System.out.println(actuals);
-        List<Text> expected = WritableUtils.val(new String[] { "a:0.1" });
+        List<Text> expected = WritableUtils.val(new String[] {"a:0.1"});
         Assert.assertEquals(expected, actuals);
 
         udf.close();
@@ -75,7 +77,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
@@ -97,7 +100,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
@@ -108,7 +112,7 @@ public class VectorizeFeaturesUDFTest {
 
         List<Text> actuals = udf.evaluate(arguments);
         //System.out.println(actuals);        
-        List<Text> expected = WritableUtils.val(new String[] { "a:0.1" });
+        List<Text> expected = WritableUtils.val(new String[] {"a:0.1"});
         Assert.assertEquals(expected, actuals);
 
         udf.close();
@@ -119,7 +123,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaBooleanObjectInspector;
         udf.initialize(argOIs);
@@ -130,7 +135,7 @@ public class VectorizeFeaturesUDFTest {
 
         List<Text> actuals = udf.evaluate(arguments);
         //System.out.println(actuals);        
-        List<Text> expected = WritableUtils.val(new String[] { "a:0.1" });
+        List<Text> expected = WritableUtils.val(new String[] {"a:0.1"});
         Assert.assertEquals(expected, actuals);
 
         arguments[2] = new DeferredJavaObject(new Boolean(true));
@@ -147,7 +152,8 @@ public class VectorizeFeaturesUDFTest {
         VectorizeFeaturesUDF udf = new VectorizeFeaturesUDF();
         ObjectInspector[] argOIs = new ObjectInspector[3];
         List<String> featureNames = Arrays.asList("a", "b");
-        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
+        argOIs[0] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, featureNames);
         argOIs[1] = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         argOIs[2] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         udf.initialize(argOIs);
@@ -176,7 +182,7 @@ public class VectorizeFeaturesUDFTest {
         arguments[2] = new DeferredJavaObject("0");
         actuals = udf.evaluate(arguments);
         //System.out.println(actuals);
-        expected = WritableUtils.val(new String[] { "a:0.1" });
+        expected = WritableUtils.val(new String[] {"a:0.1"});
         Assert.assertEquals(expected, actuals);
 
         udf.close();

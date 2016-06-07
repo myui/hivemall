@@ -56,7 +56,8 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
-        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(PrimitiveCategory.STRING, null);
+        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            PrimitiveCategory.STRING, null);
         udf.initialize(argOIs);
         udf.close();
     }
@@ -67,7 +68,8 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
-        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(PrimitiveCategory.STRING, new Text("normal"));
+        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            PrimitiveCategory.STRING, new Text("normal"));
         udf.initialize(argOIs);
         udf.close();
     }
@@ -79,7 +81,8 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
-        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(PrimitiveCategory.STRING, new Text("unsupported mode"));
+        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            PrimitiveCategory.STRING, new Text("unsupported mode"));
         udf.initialize(argOIs);
         udf.close();
     }
@@ -91,9 +94,11 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
-        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(PrimitiveCategory.STRING, null);
+        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            PrimitiveCategory.STRING, null);
         // stopWords
-        argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
+        argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
         udf.initialize(argOIs);
         udf.close();
     }
@@ -105,11 +110,14 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
-        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(PrimitiveCategory.STRING, null);
+        argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+            PrimitiveCategory.STRING, null);
         // stopWords
-        argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
+        argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
         // stopTags
-        argOIs[3] = ObjectInspectorFactory.getStandardConstantListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
+        argOIs[3] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
         udf.initialize(argOIs);
         udf.close();
     }

@@ -54,7 +54,8 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x, boolean sum_of_gradients) {}
+    public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x,
+            boolean sum_of_gradients) {}
 
     @Override
     public void configureClock() {
@@ -79,9 +80,9 @@ public final class SparseModel extends AbstractPredictionModel {
 
         final IWeightValue wrapperValue = wrapIfRequired(value);
 
-        if(clockEnabled && value.isTouched()) {
+        if (clockEnabled && value.isTouched()) {
             IWeightValue old = weights.get(feature);
-            if(old != null) {
+            if (old != null) {
                 short newclock = (short) (old.getClock() + (short) 1);
                 wrapperValue.setClock(newclock);
                 int newDelta = old.getDeltaUpdates() + 1;
@@ -100,8 +101,8 @@ public final class SparseModel extends AbstractPredictionModel {
 
     private IWeightValue wrapIfRequired(final IWeightValue value) {
         final IWeightValue wrapper;
-        if(clockEnabled) {
-            switch(value.getType()) {
+        if (clockEnabled) {
+            switch (value.getType()) {
                 case NoParams:
                     wrapper = new WeightValueWithClock(value);
                     break;
@@ -138,7 +139,7 @@ public final class SparseModel extends AbstractPredictionModel {
     @Override
     protected void _set(final Object feature, final float weight, final short clock) {
         final IWeightValue w = weights.get(feature);
-        if(w == null) {
+        if (w == null) {
             logger.warn("Previous weight not found: " + feature);
             throw new IllegalStateException("Previous weight not found " + feature);
         }
@@ -148,9 +149,10 @@ public final class SparseModel extends AbstractPredictionModel {
     }
 
     @Override
-    protected void _set(final Object feature, final float weight, final float covar, final short clock) {
+    protected void _set(final Object feature, final float weight, final float covar,
+            final short clock) {
         final IWeightValue w = weights.get(feature);
-        if(w == null) {
+        if (w == null) {
             logger.warn("Previous weight not found: " + feature);
             throw new IllegalStateException("Previous weight not found: " + feature);
         }
