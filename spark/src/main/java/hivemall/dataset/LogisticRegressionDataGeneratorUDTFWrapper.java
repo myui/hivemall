@@ -83,7 +83,7 @@ public final class LogisticRegressionDataGeneratorUDTFWrapper extends UDTFWithOp
             Field rnd2 = clazz.getDeclaredField("rnd2");
             Field r_seed = clazz.getDeclaredField("r_seed");
             r_seed.setAccessible(true);
-            final int seed = r_seed.getInt(udtf) + (int) Thread.currentThread().getId();
+            final long seed = r_seed.getLong(udtf) + (int) Thread.currentThread().getId();
             rnd1.setAccessible(true);
             rnd2.setAccessible(true);
             rnd1.set(udtf, new Random(seed));
