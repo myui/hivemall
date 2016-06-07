@@ -63,3 +63,12 @@ create temporary function js_tree_predict as 'hivemall.smile.tools.TreePredictBy
 
 drop temporary function train_gbt_classifier;
 create temporary function train_gbt_classifier as 'hivemall.smile.classification.GradientTreeBoostingClassifierUDTF';
+
+drop temporary function train_arowh;
+create temporary function train_arowh as 'hivemall.classifier.AROWClassifierUDTF$AROWh';
+
+drop temporary function normalize;
+create temporary function normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
+
+drop temporary function train_adagrad;
+create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';

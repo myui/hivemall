@@ -65,6 +65,9 @@ CREATE FUNCTION train_multiclass_cw as 'hivemall.classifier.multiclass.Multiclas
 DROP FUNCTION IF EXISTS train_multiclass_arow;
 CREATE FUNCTION train_multiclass_arow as 'hivemall.classifier.multiclass.MulticlassAROWClassifierUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS train_multiclass_arowh;
+CREATE FUNCTION train_multiclass_arowh as 'hivemall.classifier.multiclass.MulticlassAROWClassifierUDTF$AROWh' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS train_multiclass_scw;
 CREATE FUNCTION train_multiclass_scw as 'hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1' USING JAR '${hivemall_jar}';
 
@@ -200,8 +203,8 @@ CREATE FUNCTION rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF' USING JAR '${h
 DROP FUNCTION IF EXISTS zscore;
 CREATE FUNCTION zscore as 'hivemall.ftvec.scaling.ZScoreUDF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS normalize;
-CREATE FUNCTION normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS l2_normalize;
+CREATE FUNCTION l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';
 
 --------------------
 -- misc functions --
