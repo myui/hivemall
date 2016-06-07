@@ -150,7 +150,7 @@ public class AROWClassifierUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     @Description(
-            name = "train_arow_h",
+            name = "train_arowh",
             value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
                     + " - Returns a relation consists of <string|int|bigint feature, float weight, float covar>",
             extended = "Build a prediction model by AROW binary classifier using hinge loss")

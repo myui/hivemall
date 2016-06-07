@@ -174,7 +174,7 @@ public class MulticlassAROWClassifierUDTF extends MulticlassOnlineClassifierUDTF
     }
 
     @Description(
-            name = "train_multiclass_arow_h",
+            name = "train_multiclass_arowh",
             value = "_FUNC_(list<string|int|bigint> features, int|string label [, const string options])"
                     + " - Returns a relation consists of <int|string label, string|int|bigint feature, float weight, float covar>",
             extended = "Build a prediction model by Adaptive Regularization of Weight Vectors (AROW) multiclass classifier using hinge loss")
