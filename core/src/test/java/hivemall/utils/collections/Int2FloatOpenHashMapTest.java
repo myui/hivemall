@@ -47,11 +47,11 @@ public class Int2FloatOpenHashMapTest {
     public void testPutAndGet() {
         Int2FloatOpenHashTable map = new Int2FloatOpenHashTable(16384);
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Assert.assertEquals(-1.f, map.put(i, Float.valueOf(i + 0.1f)), 0.d);
         }
         Assert.assertEquals(numEntries, map.size());
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Float v = map.get(i);
             Assert.assertEquals(i + 0.1f, v.floatValue(), 0.d);
         }
@@ -64,14 +64,14 @@ public class Int2FloatOpenHashMapTest {
         Assert.assertFalse(itor.hasNext());
 
         final int numEntries = 1000000;
-        for(int i = 0; i < numEntries; i++) {
+        for (int i = 0; i < numEntries; i++) {
             Assert.assertEquals(-1.f, map.put(i, Float.valueOf(i + 0.1f)), 0.d);
         }
         Assert.assertEquals(numEntries, map.size());
 
         itor = map.entries();
         Assert.assertTrue(itor.hasNext());
-        while(itor.hasNext()) {
+        while (itor.hasNext()) {
             Assert.assertFalse(itor.next() == -1);
             int k = itor.getKey();
             Float v = itor.getValue();

@@ -46,7 +46,8 @@ public class PoweredFeaturesUDFTest {
         Assert.assertEquals(expected, actuals);
 
         actuals = udf.evaluate(args, 3);
-        expected = WritableUtils.val("a:0.5", "a^2:0.25", "a^3:0.125", "b:0.3", "b^2:0.09", "b^3:0.027000003");
+        expected = WritableUtils.val("a:0.5", "a^2:0.25", "a^3:0.125", "b:0.3", "b^2:0.09",
+            "b^3:0.027000003");
         //System.out.println(actuals);
         Assert.assertEquals(expected, actuals);
     }

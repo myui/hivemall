@@ -30,8 +30,9 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "powered_features", value = "_FUNC_(feature_vector in array<string>, int degree [, boolean truncate])"
-        + " - Returns a feature vector having a powered feature space")
+@Description(name = "powered_features",
+        value = "_FUNC_(feature_vector in array<string>, int degree [, boolean truncate])"
+                + " - Returns a feature vector having a powered feature space")
 @UDFType(deterministic = true, stateful = false)
 public final class PoweredFeaturesUDF extends UDF {
 
@@ -41,35 +42,35 @@ public final class PoweredFeaturesUDF extends UDF {
 
     public List<Text> evaluate(final List<Text> ftvec, final int degree, final boolean truncate)
             throws HiveException {
-        if(ftvec == null) {
+        if (ftvec == null) {
             return null;
         }
-        if(degree < 2) {
+        if (degree < 2) {
             throw new HiveException("degree must be greater than or equals to 2: " + degree);
         }
         final int origSize = ftvec.size();
-        if(origSize == 0) {
+        if (origSize == 0) {
             return Collections.emptyList();
         }
 
         final FeatureValue probe = new FeatureValue();
         final List<Text> dstVec = new ArrayList<Text>(origSize * degree);
-        for(int i = 0; i < origSize; i++) {
+        for (int i = 0; i < origSize; i++) {
             Text t = ftvec.get(i);
-            if(t == null) {
+            if (t == null) {
                 continue;
             }
             dstVec.add(t); // x^1
 
             FeatureValue.parseFeatureAsString(t, probe);
             final float v = probe.getValueAsFloat();
-            if(truncate && (v == 0.f || v == 1.f)) {
+            if (truncate && (v == 0.f || v == 1.f)) {
                 continue;
             }
 
             final String f = probe.getFeature();
             float baseV = v;
-            for(int d = 2; d <= degree; d++) {
+            for (int d = 2; d <= degree; d++) {
                 String f2 = f + '^' + d;
                 baseV = baseV * v;
                 Text t2 = new Text(f2 + ':' + baseV);

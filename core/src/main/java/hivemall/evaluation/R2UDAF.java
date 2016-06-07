@@ -27,8 +27,9 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "r2",
-        value = "_FUNC_(predicted, actual) - Return R Squared (coefficient of determination)")
+@Description(
+        name = "r2",
+        value = "_FUNC_(double predicted, double actual) - Return R Squared (coefficient of determination)")
 public final class R2UDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {

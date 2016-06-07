@@ -27,7 +27,9 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "split_words", value = "_FUNC_(string query [, string regex]) - Returns an array<text> containing splitted strings")
+@Description(
+        name = "split_words",
+        value = "_FUNC_(string query [, string regex]) - Returns an array<text> containing splitted strings")
 @UDFType(deterministic = true, stateful = false)
 public final class SplitWordsUDF extends UDF {
 
@@ -36,7 +38,7 @@ public final class SplitWordsUDF extends UDF {
     }
 
     public List<Text> evaluate(String query, String regex) {
-        if(query == null) {
+        if (query == null) {
             return null;
         }
         String[] words = query.split(regex, -1);

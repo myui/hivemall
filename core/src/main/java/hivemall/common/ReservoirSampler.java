@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Vitter's reservoir sampling implementation that randomly chooses k items from a list containing n items.
+ * Vitter's reservoir sampling implementation that randomly chooses k items from a list containing n
+ * items.
  * 
  * @link http://en.wikipedia.org/wiki/Reservoir_sampling
  * @link http://portal.acm.org/citation.cfm?id=3165
@@ -38,7 +39,7 @@ public final class ReservoirSampler<T> {
 
     @SuppressWarnings("unchecked")
     public ReservoirSampler(int sampleSize) {
-        if(sampleSize <= 0) {
+        if (sampleSize <= 0) {
             throw new IllegalArgumentException("sampleSize must be greater than 1: " + sampleSize);
         }
         this.samples = (T[]) new Object[sampleSize];
@@ -78,14 +79,14 @@ public final class ReservoirSampler<T> {
     }
 
     public void add(T item) {
-        if(item == null) {
+        if (item == null) {
             return;
         }
-        if(position < numSamples) {// reservoir not yet full, just append
+        if (position < numSamples) {// reservoir not yet full, just append
             samples[position] = item;
         } else {// find a item to replace
             int replaceIndex = rand.nextInt(position + 1);
-            if(replaceIndex < numSamples) {
+            if (replaceIndex < numSamples) {
                 samples[replaceIndex] = item;
             }
         }

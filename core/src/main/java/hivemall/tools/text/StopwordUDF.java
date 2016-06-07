@@ -27,13 +27,14 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.BooleanWritable;
 
-@Description(name = "is_stopword", value = "_FUNC_(string word) - Returns whether English stopword or not")
+@Description(name = "is_stopword",
+        value = "_FUNC_(string word) - Returns whether English stopword or not")
 @UDFType(deterministic = true, stateful = false)
 public final class StopwordUDF extends UDF {
 
     private static final String[] stopwords;
     static {
-        stopwords = new String[] { "i", "me", "my", "myself", "we", "our", "ours", "ourselves",
+        stopwords = new String[] {"i", "me", "my", "myself", "we", "our", "ours", "ourselves",
                 "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself",
                 "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their",
                 "theirs", "themselves", "what", "which", "who", "whom", "this", "that", "these",
@@ -45,7 +46,7 @@ public final class StopwordUDF extends UDF {
                 "under", "again", "further", "then", "once", "here", "there", "when", "where",
                 "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some",
                 "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very",
-                "s", "t", "can", "will", "just", "don", "should", "now" };
+                "s", "t", "can", "will", "just", "don", "should", "now"};
         Arrays.sort(stopwords);
     }
 

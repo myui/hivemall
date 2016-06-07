@@ -32,13 +32,14 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
-@Description(name = "collect_all", value = "_FUNC_(x) - Retrurns a set of objects with duplicate elements eliminated")
+@Description(name = "collect_all",
+        value = "_FUNC_(x) - Retrurns a set of objects with duplicate elements eliminated")
 @Deprecated
 public class CollectAllUDAF extends AbstractGenericUDAFResolver {
 
     @Override
     public GenericUDAFEvaluator getEvaluator(TypeInfo[] tis) throws SemanticException {
-        if(tis.length != 1) {
+        if (tis.length != 1) {
             throw new UDFArgumentTypeException(tis.length - 1, "Exactly one argument is expected.");
         }
         return new CollectAllEvaluator();
@@ -52,11 +53,11 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
         @Override
         public ObjectInspector init(Mode m, ObjectInspector[] parameters) throws HiveException {
             super.init(m, parameters);
-            if(m == Mode.PARTIAL1) {
+            if (m == Mode.PARTIAL1) {
                 inputOI = parameters[0];
                 return ObjectInspectorFactory.getStandardListObjectInspector(ObjectInspectorUtils.getStandardObjectInspector(inputOI));
             } else {
-                if(!(parameters[0] instanceof StandardListObjectInspector)) {
+                if (!(parameters[0] instanceof StandardListObjectInspector)) {
                     inputOI = ObjectInspectorUtils.getStandardObjectInspector(parameters[0]);
                     return (StandardListObjectInspector) ObjectInspectorFactory.getStandardListObjectInspector(inputOI);
                 } else {
@@ -88,7 +89,7 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
         public void iterate(AggregationBuffer ab, Object[] parameters) throws HiveException {
             assert (parameters.length == 1);
             Object p = parameters[0];
-            if(p != null) {
+            if (p != null) {
                 ArrayAggregationBuffer agg = (ArrayAggregationBuffer) ab;
                 agg.container.add(ObjectInspectorUtils.copyToStandardObject(p, this.inputOI));
             }
@@ -107,7 +108,7 @@ public class CollectAllUDAF extends AbstractGenericUDAFResolver {
             ArrayAggregationBuffer agg = (ArrayAggregationBuffer) ab;
             @SuppressWarnings("unchecked")
             ArrayList<Object> partial = (ArrayList<Object>) internalMergeOI.getList(o);
-            for(Object i : partial) {
+            for (Object i : partial) {
                 agg.container.add(ObjectInspectorUtils.copyToStandardObject(i, this.inputOI));
             }
         }

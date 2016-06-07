@@ -31,7 +31,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "jaccard_similarity", value = "_FUNC_(A, B [,int k]) - Returns Jaccard similarity coefficient of A and B")
+@Description(name = "jaccard_similarity",
+        value = "_FUNC_(A, B [,int k]) - Returns Jaccard similarity coefficient of A and B")
 @UDFType(deterministic = true, stateful = false)
 public final class JaccardIndexUDF extends UDF {
 
@@ -61,16 +62,16 @@ public final class JaccardIndexUDF extends UDF {
     }
 
     public FloatWritable evaluate(final List<String> a, final List<String> b) {
-        if(a == null && b == null) {
+        if (a == null && b == null) {
             return new FloatWritable(1.f);
-        } else if(a == null || b == null) {
+        } else if (a == null || b == null) {
             return new FloatWritable(0.f);
         }
         final int asize = a.size();
         final int bsize = b.size();
-        if(asize == 0 && bsize == 0) {
+        if (asize == 0 && bsize == 0) {
             return new FloatWritable(1.f);
-        } else if(asize == 0 || bsize == 0) {
+        } else if (asize == 0 || bsize == 0) {
             return new FloatWritable(0.f);
         }
 

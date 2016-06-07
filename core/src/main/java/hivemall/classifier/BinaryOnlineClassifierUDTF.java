@@ -63,22 +63,21 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     protected int count;
 
     @Override
-    public StructObjectInspector initialize(ObjectInspector[] argOIs)
-            throws UDFArgumentException {
-        if(argOIs.length < 2) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
+    public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+        if (argOIs.length < 2) {
+            throw new UDFArgumentException(
+                getClass().getSimpleName()
+                        + " takes 2 arguments: List<Int|BigInt|Text> features, int label [, constant string options]");
         }
         PrimitiveObjectInspector featureInputOI = processFeaturesOI(argOIs[0]);
         this.labelOI = HiveUtils.asIntCompatibleOI(argOIs[1]);
 
         processOptions(argOIs);
 
-        PrimitiveObjectInspector featureOutputOI = dense_model
-                ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
+        PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
                 : featureInputOI;
         this.model = createModel();
-        if(preloadedModelFile != null) {
+        if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
 
@@ -91,11 +90,10 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
         String keyTypeName = featureRawOI.getTypeName();
-        if(!STRING_TYPE_NAME.equals(keyTypeName)
-                && !INT_TYPE_NAME.equals(keyTypeName)
+        if (!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
                 && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
-            throw new UDFArgumentTypeException(0, "1st argument must be Map of key type [Int|BitInt|Text]: "
-                    + keyTypeName);
+            throw new UDFArgumentTypeException(0,
+                "1st argument must be Map of key type [Int|BitInt|Text]: " + keyTypeName);
         }
         this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
@@ -110,7 +108,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         fieldOIs.add(featureOI);
         fieldNames.add("weight");
         fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
-        if(useCovariance()) {
+        if (useCovariance()) {
             fieldNames.add("covar");
             fieldOIs.add(PrimitiveObjectInspectorFactory.writableFloatObjectInspector);
         }
@@ -122,7 +120,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     public void process(Object[] args) throws HiveException {
         List<?> features = (List<?>) featureListOI.getList(args[0]);
         FeatureValue[] featureVector = parseFeatures(features);
-        if(featureVector == null) {
+        if (featureVector == null) {
             return;
         }
         int label = PrimitiveObjectInspectorUtils.getInt(args[1], labelOI);
@@ -135,19 +133,19 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Nullable
     protected final FeatureValue[] parseFeatures(@Nonnull final List<?> features) {
         final int size = features.size();
-        if(size == 0) {
+        if (size == 0) {
             return null;
         }
 
         final ObjectInspector featureInspector = featureListOI.getListElementObjectInspector();
         final FeatureValue[] featureVector = new FeatureValue[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Object f = features.get(i);
-            if(f == null) {
+            if (f == null) {
                 continue;
             }
             final FeatureValue fv;
-            if(parseFeature) {
+            if (parseFeature) {
                 fv = FeatureValue.parse(f);
             } else {
                 Object k = ObjectInspectorUtils.copyToStandardObject(f, featureInspector);
@@ -172,20 +170,20 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
 
         final float p = predict(features);
         final float z = p * y;
-        if(z <= 0.f) { // miss labeled
+        if (z <= 0.f) { // miss labeled
             update(features, y, p);
         }
     }
 
     protected float predict(@Nonnull final FeatureValue[] features) {
         float score = 0.f;
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             Object k = f.getFeature();
             float old_w = model.getWeight(k);
-            if(old_w != 0.f) {
+            if (old_w != 0.f) {
                 float v = f.getValueAsFloat();
                 score += (old_w * v);
             }
@@ -198,15 +196,15 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         float score = 0.f;
         float squared_norm = 0.f;
 
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             float old_w = model.getWeight(k);
-            if(old_w != 0f) {
+            if (old_w != 0f) {
                 score += (old_w * v);
             }
             squared_norm += (v * v);
@@ -220,15 +218,15 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         float score = 0.f;
         float variance = 0.f;
 
-        for(FeatureValue f : features) {// a += w[i] * x[i]
-            if(f == null) {
+        for (FeatureValue f : features) {// a += w[i] * x[i]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
             final float v = f.getValueAsFloat();
 
             IWeightValue old_w = model.get(k);
-            if(old_w == null) {
+            if (old_w == null) {
                 variance += (1.f * v * v);
             } else {
                 score += (old_w.get() * v);
@@ -244,8 +242,8 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     }
 
     protected void update(@Nonnull final FeatureValue[] features, final float coeff) {
-        for(FeatureValue f : features) {// w[f] += y * x[f]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[f] += y * x[f]
+            if (f == null) {
                 continue;
             }
             final Object k = f.getFeature();
@@ -260,17 +258,17 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     @Override
     public final void close() throws HiveException {
         super.close();
-        if(model != null) {
+        if (model != null) {
             int numForwarded = 0;
-            if(useCovariance()) {
+            if (useCovariance()) {
                 final WeightValueWithCovar probe = new WeightValueWithCovar();
                 final Object[] forwardMapObj = new Object[3];
                 final FloatWritable fv = new FloatWritable();
                 final FloatWritable cov = new FloatWritable();
                 final IMapIterator<Object, IWeightValue> itor = model.entries();
-                while(itor.next() != -1) {
+                while (itor.next() != -1) {
                     itor.getValue(probe);
-                    if(!probe.isTouched()) {
+                    if (!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();
@@ -287,9 +285,9 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
                 final Object[] forwardMapObj = new Object[2];
                 final FloatWritable fv = new FloatWritable();
                 final IMapIterator<Object, IWeightValue> itor = model.entries();
-                while(itor.next() != -1) {
+                while (itor.next() != -1) {
                     itor.getValue(probe);
-                    if(!probe.isTouched()) {
+                    if (!probe.isTouched()) {
                         continue; // skip outputting untouched weights
                     }
                     Object k = itor.getKey();
@@ -302,11 +300,9 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             }
             long numMixed = model.getNumMixed();
             this.model = null;
-            logger.info("Trained a prediction model using " + count
-                    + " training examples"
+            logger.info("Trained a prediction model using " + count + " training examples"
                     + (numMixed > 0 ? "( numMixed: " + numMixed + " )" : ""));
-            logger.info("Forwarded the prediction model of " + numForwarded
-                    + " rows");
+            logger.info("Forwarded the prediction model of " + numForwarded + " rows");
         }
     }
 

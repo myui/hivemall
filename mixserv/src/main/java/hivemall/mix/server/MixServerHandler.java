@@ -42,7 +42,8 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
     private final int syncThreshold;
     private final float scale;
 
-    public MixServerHandler(@Nonnull SessionStore sessionStore, @Nonnegative int syncThreshold, @Nonnegative float scale) {
+    public MixServerHandler(@Nonnull SessionStore sessionStore, @Nonnegative int syncThreshold,
+            @Nonnegative float scale) {
         super();
         this.sessionStore = sessionStore;
         this.syncThreshold = syncThreshold;
@@ -71,7 +72,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
 
     private void closeGroup(@Nonnull MixMessage msg) {
         String groupId = msg.getGroupID();
-        if(groupId == null) {
+        if (groupId == null) {
             return;
         }
         sessionStore.remove(groupId);
@@ -80,7 +81,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
     @Nonnull
     private SessionObject getSession(@Nonnull MixMessage msg) {
         String groupID = msg.getGroupID();
-        if(groupID == null) {
+        if (groupID == null) {
             throw new IllegalStateException("JobID is not set in the request message");
         }
         SessionObject session = sessionStore.get(groupID);
@@ -94,7 +95,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
 
         Object feature = msg.getFeature();
         PartialResult partial = map.get(feature);
-        if(partial == null) {
+        if (partial == null) {
             final MixEventName event = msg.getEvent();
             switch (event) {
                 case average:
@@ -107,14 +108,15 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
                     throw new IllegalStateException("Unexpected event: " + event);
             }
             PartialResult existing = map.putIfAbsent(feature, partial);
-            if(existing != null) {
+            if (existing != null) {
                 partial = existing;
             }
         }
         return partial;
     }
 
-    private void mix(final ChannelHandlerContext ctx, final MixMessage requestMsg, final PartialResult partial, final SessionObject session) {
+    private void mix(final ChannelHandlerContext ctx, final MixMessage requestMsg,
+            final PartialResult partial, final SessionObject session) {
         final MixEventName event = requestMsg.getEvent();
         final Object feature = requestMsg.getFeature();
         final float weight = requestMsg.getWeight();
@@ -123,7 +125,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         final int deltaUpdates = requestMsg.getDeltaUpdates();
         final boolean cancelRequest = requestMsg.isCancelRequest();
 
-        if(deltaUpdates <= 0) {
+        if (deltaUpdates <= 0) {
             throw new IllegalArgumentException("Illegal deltaUpdates received: " + deltaUpdates);
         }
 
@@ -131,17 +133,18 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
         try {
             partial.lock();
 
-            if(cancelRequest) {
+            if (cancelRequest) {
                 partial.subtract(weight, covar, deltaUpdates, scale);
             } else {
                 int diffClock = partial.diffClock(localClock);
                 partial.add(weight, covar, deltaUpdates, scale);
 
-                if(diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
+                if (diffClock >= syncThreshold) {// sync model if clock DIFF is above threshold
                     float averagedWeight = partial.getWeight(scale);
                     float meanCovar = partial.getCovariance(scale);
                     short globalClock = partial.getClock();
-                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar, globalClock, 0 /* deltaUpdates */);
+                    responseMsg = new MixMessage(event, feature, averagedWeight, meanCovar,
+                        globalClock, 0 /* deltaUpdates */);
                 }
             }
 
@@ -149,7 +152,7 @@ public final class MixServerHandler extends SimpleChannelInboundHandler<MixMessa
             partial.unlock();
         }
 
-        if(responseMsg != null) {
+        if (responseMsg != null) {
             session.incrResponse();
             ctx.writeAndFlush(responseMsg);
         }

@@ -37,11 +37,9 @@ import org.apache.hadoop.io.Text;
 /**
  * A wrapper of [[hivemall.ftvec.scaling.L2NormalizationUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark-1.3 cannot handle List<> as a return type in Hive UDF.
- * The type must be passed via ObjectInspector.
- * This issues has been reported in SPARK-6747, so a future
- * release of Spark makes the wrapper obsolete.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark-1.3 cannot handle
+ * List<> as a return type in Hive UDF. The type must be passed via ObjectInspector. This issues has
+ * been reported in SPARK-6747, so a future release of Spark makes the wrapper obsolete.
  */
 public class L2NormalizationUDFWrapper extends GenericUDF {
     private L2NormalizationUDF udf = new L2NormalizationUDF();
@@ -51,32 +49,28 @@ public class L2NormalizationUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
-            throw new UDFArgumentLengthException(
-                    "normalize() has an only single argument.");
+        if (arguments.length != 1) {
+            throw new UDFArgumentLengthException("normalize() has an only single argument.");
         }
 
-        switch(arguments[0].getCategory()) {
+        switch (arguments[0].getCategory()) {
             case LIST:
                 ObjectInspector elmOI = ((ListObjectInspector) arguments[0]).getListElementObjectInspector();
-                if(elmOI.getCategory().equals(Category.PRIMITIVE)) {
-                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory()
-                            == PrimitiveCategory.STRING) {
+                if (elmOI.getCategory().equals(Category.PRIMITIVE)) {
+                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory() == PrimitiveCategory.STRING) {
                         break;
                     }
                 }
             default:
                 throw new UDFArgumentTypeException(0,
                     "normalize() must have List[String] as an argument, but "
-                        + arguments[0].getTypeName() + " was found.");
+                            + arguments[0].getTypeName() + " was found.");
         }
 
         // Create a ObjectInspector converter for arguments
-        ObjectInspector outputElemOI =
-                ObjectInspectorFactory.getReflectionObjectInspector(
-                        Text.class, ObjectInspectorOptions.JAVA);
-        ObjectInspector outputOI =
-                ObjectInspectorFactory.getStandardListObjectInspector(outputElemOI);
+        ObjectInspector outputElemOI = ObjectInspectorFactory.getReflectionObjectInspector(
+            Text.class, ObjectInspectorOptions.JAVA);
+        ObjectInspector outputOI = ObjectInspectorFactory.getStandardListObjectInspector(outputElemOI);
         toListText = ObjectInspectorConverters.getConverter(arguments[0], outputOI);
 
         ObjectInspector listElemOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
@@ -86,7 +80,7 @@ public class L2NormalizationUDFWrapper extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         @SuppressWarnings("unchecked")
         final List<Text> input = (List<Text>) toListText.convert(arguments[0].get());
         retValue = udf.evaluate(input);

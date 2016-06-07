@@ -35,7 +35,7 @@ public final class SessionObject {
     private final AtomicLong num_responses;
 
     public SessionObject(@Nonnull ConcurrentMap<Object, PartialResult> obj) {
-        if(obj == null) {
+        if (obj == null) {
             throw new IllegalArgumentException("obj is null");
         }
         this.object = obj;
@@ -48,7 +48,7 @@ public final class SessionObject {
         return object;
     }
 
-    /**    
+    /**
      * @return last accessed time in msec
      */
     public long getLastAccessed() {

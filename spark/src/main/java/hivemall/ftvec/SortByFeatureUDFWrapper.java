@@ -36,11 +36,11 @@ import org.apache.hadoop.io.IntWritable;
 /**
  * A wrapper of [[hivemall.ftvec.SortByFeatureUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark cannot handle Map<> as a return type in Hive UDF.
- * Therefore, the type must be passed via ObjectInspector.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark cannot handle Map<>
+ * as a return type in Hive UDF. Therefore, the type must be passed via ObjectInspector.
  */
-@Description(name = "sort_by_feature", value = "_FUNC_(map in map<int,float>) - Returns a sorted map")
+@Description(name = "sort_by_feature",
+        value = "_FUNC_(map in map<int,float>) - Returns a sorted map")
 @UDFType(deterministic = true, stateful = false)
 public class SortByFeatureUDFWrapper extends GenericUDF {
     private SortByFeatureUDF udf = new SortByFeatureUDF();
@@ -48,17 +48,17 @@ public class SortByFeatureUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
+        if (arguments.length != 1) {
             throw new UDFArgumentLengthException(
                 "sorted_by_feature() has an single arguments: map<int, float> map");
         }
 
-        switch(arguments[0].getCategory()) {
+        switch (arguments[0].getCategory()) {
             case MAP:
                 argumentOI = (MapObjectInspector) arguments[0];
                 ObjectInspector keyOI = argumentOI.getMapKeyObjectInspector();
                 ObjectInspector valueOI = argumentOI.getMapValueObjectInspector();
-                if(keyOI.getCategory().equals(Category.PRIMITIVE)
+                if (keyOI.getCategory().equals(Category.PRIMITIVE)
                         && valueOI.getCategory().equals(Category.PRIMITIVE)) {
                     final PrimitiveCategory keyCategory = ((PrimitiveObjectInspector) keyOI).getPrimitiveCategory();
                     final PrimitiveCategory valueCategory = ((PrimitiveObjectInspector) valueOI).getPrimitiveCategory();
@@ -73,18 +73,16 @@ public class SortByFeatureUDFWrapper extends GenericUDF {
 
 
         return ObjectInspectorFactory.getStandardMapObjectInspector(
-                argumentOI.getMapKeyObjectInspector(),
-                argumentOI.getMapValueObjectInspector());
+            argumentOI.getMapKeyObjectInspector(), argumentOI.getMapValueObjectInspector());
     }
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         final Object arrayObject = arguments[0].get();
         final MapObjectInspector arrayOI = argumentOI;
         @SuppressWarnings("unchecked")
-        final Map<IntWritable, FloatWritable> input =
-            (Map<IntWritable, FloatWritable>) argumentOI.getMap(arguments[0].get());
+        final Map<IntWritable, FloatWritable> input = (Map<IntWritable, FloatWritable>) argumentOI.getMap(arguments[0].get());
         return udf.evaluate(input);
     }
 

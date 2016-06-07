@@ -35,13 +35,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 /**
  * A wrapper of [[hivemall.ftvec.AddFeatureIndexUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark cannot handle List<> as a return type in Hive UDF.
- * Therefore, the type must be passed via ObjectInspector.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark cannot handle List<>
+ * as a return type in Hive UDF. Therefore, the type must be passed via ObjectInspector.
  */
 @Description(
-    name = "add_feature_index",
-    value = "_FUNC_(dense features in array<double>) - Returns a feature vector with feature indicies")
+        name = "add_feature_index",
+        value = "_FUNC_(dense features in array<double>) - Returns a feature vector with feature indicies")
 @UDFType(deterministic = true, stateful = false)
 public class AddFeatureIndexUDFWrapper extends GenericUDF {
     private AddFeatureIndexUDF udf = new AddFeatureIndexUDF();
@@ -49,18 +48,17 @@ public class AddFeatureIndexUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
+        if (arguments.length != 1) {
             throw new UDFArgumentLengthException(
                 "add_feature_index() has an single arguments: array<double> features");
         }
 
-        switch(arguments[0].getCategory()) {
+        switch (arguments[0].getCategory()) {
             case LIST:
                 argumentOI = (ListObjectInspector) arguments[0];
                 ObjectInspector elmOI = argumentOI.getListElementObjectInspector();
-                if(elmOI.getCategory().equals(Category.PRIMITIVE)) {
-                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory()
-                            == PrimitiveCategory.DOUBLE) {
+                if (elmOI.getCategory().equals(Category.PRIMITIVE)) {
+                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory() == PrimitiveCategory.DOUBLE) {
                         break;
                     }
                 }
@@ -68,13 +66,12 @@ public class AddFeatureIndexUDFWrapper extends GenericUDF {
                 throw new UDFArgumentTypeException(0, "Type mismatch: features");
         }
 
-        return ObjectInspectorFactory.getStandardListObjectInspector(
-                PrimitiveObjectInspectorFactory.javaStringObjectInspector);
+        return ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
     }
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         @SuppressWarnings("unchecked")
         final List<Double> input = (List<Double>) argumentOI.getList(arguments[0].get());
         return udf.evaluate(input);

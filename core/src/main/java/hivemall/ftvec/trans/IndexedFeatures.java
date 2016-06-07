@@ -33,7 +33,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-@Description(name = "indexed_features", value = "_FUNC_(double v1, double v2, ...) - Returns a list of features as array<string>: [1:v1, 2:v2, ..]")
+@Description(
+        name = "indexed_features",
+        value = "_FUNC_(double v1, double v2, ...) - Returns a list of features as array<string>: [1:v1, 2:v2, ..]")
 @UDFType(deterministic = true, stateful = false)
 public final class IndexedFeatures extends GenericUDF {
 
@@ -44,9 +46,9 @@ public final class IndexedFeatures extends GenericUDF {
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         int numArgs = argOIs.length;
-        if(numArgs < 1) {
-            throw new UDFArgumentLengthException("features(v1, ..) requires at least 1 arguments, got "
-                    + argOIs.length);
+        if (numArgs < 1) {
+            throw new UDFArgumentLengthException(
+                "features(v1, ..) requires at least 1 arguments, got " + argOIs.length);
         }
 
         this.list = null;
@@ -56,20 +58,20 @@ public final class IndexedFeatures extends GenericUDF {
     @Override
     public List<String> evaluate(DeferredObject[] arguments) throws HiveException {
         final int size = arguments.length;
-        if(list == null) {
+        if (list == null) {
             this.list = new ArrayList<String>(size);
         } else {
             list.clear();
         }
 
         final StringBuilder buf = new StringBuilder(64);
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             Object o = arguments[i].get();
-            if(o == null) {
+            if (o == null) {
                 continue;
             }
             String s1 = o.toString();
-            if(s1.isEmpty()) {
+            if (s1.isEmpty()) {
                 continue;
             }
             String s2 = buf.append(i + 1).append(':').append(s1).toString();

@@ -52,7 +52,8 @@ public final class MixServerHandlerTest extends HivemallTestBase {
         SessionStore session = new SessionStore();
         MixServerHandler handler = new MixServerHandler(session, 4, 1.0f);
 
-        Method mixMethod = MixServerHandler.class.getDeclaredMethod("mix", ChannelHandlerContext.class, MixMessage.class, PartialResult.class, SessionObject.class);
+        Method mixMethod = MixServerHandler.class.getDeclaredMethod("mix",
+            ChannelHandlerContext.class, MixMessage.class, PartialResult.class, SessionObject.class);
         mixMethod.setAccessible(true);
 
         SessionObject sessionObj = session.get("dummy");
@@ -76,7 +77,8 @@ public final class MixServerHandlerTest extends HivemallTestBase {
         Assert.assertEquals(5.0, acc.getWeight(1.0f), 0.001);
 
         // Check expected exceptions
-        exception.expectCause(new CauseMatcher(IllegalArgumentException.class, "Illegal deltaUpdates received: 0"));
+        exception.expectCause(new CauseMatcher(IllegalArgumentException.class,
+            "Illegal deltaUpdates received: 0"));
         MixMessage msg4 = new MixMessage(MixEventName.average, dummyFeature, 0.0f, (short) 0, 0);
         mixMethod.invoke(handler, ctx, msg4, acc, sessionObj);
     }
@@ -99,7 +101,10 @@ public final class MixServerHandlerTest extends HivemallTestBase {
 
         @Override
         public void describeTo(Description description) {
-            description.appendText("expects type ").appendValue(type).appendText(" and a message ").appendValue(expectedMessage);
+            description.appendText("expects type ")
+                       .appendValue(type)
+                       .appendText(" and a message ")
+                       .appendValue(expectedMessage);
         }
     }
 

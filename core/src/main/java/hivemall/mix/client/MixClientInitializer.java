@@ -31,7 +31,7 @@ public final class MixClientInitializer extends ChannelInitializer<SocketChannel
     private final SslContext sslCtx;
 
     public MixClientInitializer(MixClientHandler msgHandler, SslContext sslCtx) {
-        if(msgHandler == null) {
+        if (msgHandler == null) {
             throw new IllegalArgumentException();
         }
         this.responseHandler = msgHandler;
@@ -41,7 +41,7 @@ public final class MixClientInitializer extends ChannelInitializer<SocketChannel
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
-        if(sslCtx != null) {
+        if (sslCtx != null) {
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
 

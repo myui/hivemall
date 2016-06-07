@@ -45,10 +45,10 @@ public final class OnlineVariance {
     }
 
     public void unhandle(double x) {
-        if(n == 0L) {
+        if (n == 0L) {
             return; // nop
         }
-        if(n == 1L) {
+        if (n == 1L) {
             reset();
             return;
         }

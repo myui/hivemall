@@ -44,7 +44,8 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
     private long lastReads;
     private long lastWrites;
 
-    public ThroughputCounter(@Nonnull ScheduledExecutorService executor, long checkInterval, @Nonnull MixServerMetrics metrics) {
+    public ThroughputCounter(@Nonnull ScheduledExecutorService executor, long checkInterval,
+            @Nonnull MixServerMetrics metrics) {
         super(executor, checkInterval);
         this.metrics = metrics;
     }
@@ -66,7 +67,7 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
     protected void doAccounting(TrafficCounter counter) {
         long currentTime = System.currentTimeMillis();
         long interval = currentTime - lastChacked.getAndSet(currentTime);
-        if(interval == 0) {
+        if (interval == 0) {
             return;
         }
         this.lastReads = currentReads.getAndSet(0L);
@@ -83,8 +84,8 @@ public final class ThroughputCounter extends GlobalTrafficShapingHandler {
         metrics.setReadThroughput(readThroughput);
         metrics.setWriteThroughput(writeThroughput);
 
-        if(logger.isInfoEnabled()) {
-            if(lastReads > 0 || lastWrites > 0) {
+        if (logger.isInfoEnabled()) {
+            if (lastReads > 0 || lastWrites > 0) {
                 logger.info(toString());
             }
         }

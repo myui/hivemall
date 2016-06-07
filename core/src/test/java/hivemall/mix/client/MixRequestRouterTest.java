@@ -27,7 +27,8 @@ public class MixRequestRouterTest {
 
     @Test
     public void test() {
-        MixRequestRouter router = new MixRequestRouter("dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
+        MixRequestRouter router = new MixRequestRouter(
+            "dm01.hpcc.jp:11212,yahoo.co.jp:11212,google.com");
         NodeInfo[] nodes = router.getAllNodes();
         Assert.assertEquals(3, nodes.length);
     }

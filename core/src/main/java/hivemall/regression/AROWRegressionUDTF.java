@@ -29,10 +29,15 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+@Description(
+        name = "train_arow_regr",
+        value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"
+                + " - Returns a relation consists of <{int|bigint|string} feature, float weight, float covar>")
 public class AROWRegressionUDTF extends RegressionBaseUDTF {
 
     /** Regularization parameter r */
@@ -41,9 +46,9 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException(getClass().getSimpleName()
-                    + " takes arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes arguments: List<Int|BigInt|Text> features, float target [, constant string options]");
         }
 
         return super.initialize(argOIs);
@@ -57,7 +62,8 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
     @Override
     protected Options getOptions() {
         Options opts = super.getOptions();
-        opts.addOption("r", "regularization", true, "Regularization parameter for some r > 0 [default 0.1]");
+        opts.addOption("r", "regularization", true,
+            "Regularization parameter for some r > 0 [default 0.1]");
         return opts;
     }
 
@@ -66,13 +72,13 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
         final CommandLine cl = super.processOptions(argOIs);
 
         float r = 0.1f;
-        if(cl != null) {
+        if (cl != null) {
             String r_str = cl.getOptionValue("r");
-            if(r_str != null) {
+            if (r_str != null) {
                 r = Float.parseFloat(r_str);
-                if(!(r > 0)) {
-                    throw new UDFArgumentException("Regularization parameter must be greater than 0: "
-                            + r_str);
+                if (!(r > 0)) {
+                    throw new UDFArgumentException(
+                        "Regularization parameter must be greater than 0: " + r_str);
                 }
             }
         }
@@ -102,9 +108,10 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
     }
 
     @Override
-    protected void update(@Nonnull final FeatureValue[] features, final float coeff, final float beta) {
-        for(FeatureValue f : features) {
-            if(f == null) {
+    protected void update(@Nonnull final FeatureValue[] features, final float coeff,
+            final float beta) {
+        for (FeatureValue f : features) {
+            if (f == null) {
                 continue;
             }
             Object k = f.getFeature();
@@ -116,10 +123,11 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
         }
     }
 
-    private static IWeightValue getNewWeight(final IWeightValue old, final float x, final float coeff, final float beta) {
+    private static IWeightValue getNewWeight(final IWeightValue old, final float x,
+            final float coeff, final float beta) {
         final float old_w;
         final float old_cov;
-        if(old == null) {
+        if (old == null) {
             old_w = 0.f;
             old_cov = 1.f;
         } else {
@@ -134,6 +142,10 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
         return new WeightValueWithCovar(new_w, new_cov);
     }
 
+    @Description(
+            name = "train_arowe_regr",
+            value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"
+                    + " - Returns a relation consists of <{int|bigint|string} feature, float weight, float covar>")
     public static class AROWe extends AROWRegressionUDTF {
 
         /** Sensitivity to prediction mistakes */
@@ -151,9 +163,9 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
             CommandLine cl = super.processOptions(argOIs);
 
             float epsilon = 0.1f;
-            if(cl != null) {
+            if (cl != null) {
                 String opt_epsilon = cl.getOptionValue("epsilon");
-                if(opt_epsilon != null) {
+                if (opt_epsilon != null) {
                     epsilon = Float.parseFloat(opt_epsilon);
                 }
             }
@@ -170,7 +182,7 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
             float predicted = margin.getScore();
 
             float loss = loss(target, predicted);
-            if(loss > 0.f) {
+            if (loss > 0.f) {
                 float coeff = (target - predicted) > 0.f ? loss : -loss;
                 float var = margin.getVariance();
                 float beta = 1.f / (var + r);
@@ -180,14 +192,18 @@ public class AROWRegressionUDTF extends RegressionBaseUDTF {
 
         protected void preTrain(float target) {}
 
-        /** 
-         * |w^t - y| - epsilon 
+        /**
+         * |w^t - y| - epsilon
          */
         protected float loss(float target, float predicted) {
             return LossFunctions.epsilonInsensitiveLoss(predicted, target, epsilon);
         }
     }
 
+    @Description(
+            name = "train_arowe2_regr",
+            value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"
+                    + " - Returns a relation consists of <{int|bigint|string} feature, float weight, float covar>")
     public static class AROWe2 extends AROWe {
 
         private OnlineVariance targetStdDev;

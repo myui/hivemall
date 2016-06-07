@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.junit.Test;
 import org.junit.Assert;
@@ -35,7 +34,7 @@ public class RandomizedAmplifierTest {
     public void test() throws HiveException {
         int size = 10000;
         Integer[] numlist = new Integer[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             numlist[i] = i;
         }
 
@@ -43,7 +42,7 @@ public class RandomizedAmplifierTest {
         RandomizedAmplifier<Integer> amplifier = new RandomizedAmplifier<Integer>(1000, xtimes);
         DropoutCollector collector = new DropoutCollector();
         amplifier.setDropoutListener(collector);
-        for(Integer obj : numlist) {
+        for (Integer obj : numlist) {
             amplifier.add(obj);
         }
         amplifier.sweepAll();

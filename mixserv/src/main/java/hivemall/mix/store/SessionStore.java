@@ -50,11 +50,12 @@ public final class SessionStore {
     @Nonnull
     public SessionObject get(@Nonnull String groupID) {
         SessionObject sessionObj = sessions.get(groupID);
-        if(sessionObj == null) {
-            ConcurrentMap<Object, PartialResult> map = new ConcurrentHashMap<Object, PartialResult>(EXPECTED_MODEL_SIZE);
+        if (sessionObj == null) {
+            ConcurrentMap<Object, PartialResult> map = new ConcurrentHashMap<Object, PartialResult>(
+                EXPECTED_MODEL_SIZE);
             sessionObj = new SessionObject(map);
             SessionObject existing = sessions.putIfAbsent(groupID, sessionObj);
-            if(existing != null) {
+            if (existing != null) {
                 sessionObj = existing;
             }
         }
@@ -63,7 +64,7 @@ public final class SessionStore {
 
     public void remove(@Nonnull String groupID) {
         SessionObject removedSession = sessions.remove(groupID);
-        if(removedSession != null) {
+        if (removedSession != null) {
             logger.info("Removed an idle session group: " + groupID + "\t"
                     + removedSession.getSessionInfo());
         }
@@ -83,14 +84,14 @@ public final class SessionStore {
         public void run() {
             final Set<Map.Entry<String, SessionObject>> entries = sessions.entrySet();
             final Iterator<Map.Entry<String, SessionObject>> itor = entries.iterator();
-            while(itor.hasNext()) {
+            while (itor.hasNext()) {
                 Map.Entry<String, SessionObject> e = itor.next();
                 SessionObject sessionObj = e.getValue();
                 long lastAccessed = sessionObj.getLastAccessed();
                 long elapsedTime = System.currentTimeMillis() - lastAccessed;
-                if(elapsedTime > ttl) {
+                if (elapsedTime > ttl) {
                     itor.remove();
-                    if(logger.isInfoEnabled()) {
+                    if (logger.isInfoEnabled()) {
                         logger.info("Removed an idle session group: " + e.getKey() + "\t"
                                 + sessionObj.getSessionInfo());
                     }

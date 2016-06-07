@@ -240,7 +240,7 @@ public final class IntOpenHashTable<V> implements Externalizable {
     public int size() {
         return _used;
     }
-    
+
     public int capacity() {
         return _keys.length;
     }

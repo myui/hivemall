@@ -45,7 +45,7 @@ public final class NormalizeUnicodeUDF extends UDF {
         }
         if (form == null) {
             return Normalizer.normalize(str, Normalizer.Form.NFC);
-        } else if ("NFC".equals(form)) { 
+        } else if ("NFC".equals(form)) {
             return Normalizer.normalize(str, Normalizer.Form.NFC);
         } else if ("NFD".equals(form)) {
             return Normalizer.normalize(str, Normalizer.Form.NFD);

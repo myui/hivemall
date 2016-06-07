@@ -26,6 +26,7 @@ import hivemall.utils.hadoop.HiveUtils;
 import java.util.ArrayList;
 
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -37,7 +38,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.Object
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.mapred.JobConf;
 
-public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
+@Description(name = "rand_amplify", value = "_FUNC_(const int xtimes, const int num_buffers, *)"
+        + " - amplify the input records x-times in map-side")
+public final class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<Object[]> {
 
     private boolean useSeed;
     private long seed;
@@ -50,7 +53,7 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
         JobConf jobconf = mapredContext.getJobConf();
         String seed = jobconf.get(HivemallConstants.CONFKEY_RAND_AMPLIFY_SEED);
         this.useSeed = (seed != null);
-        if(useSeed) {
+        if (useSeed) {
             this.seed = Long.parseLong(seed);
         }
     }
@@ -58,17 +61,18 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs < 3) {
-            throw new UDFArgumentException("rand_amplify(int xtimes, int num_buffers, *) takes at least three arguments");
+        if (numArgs < 3) {
+            throw new UDFArgumentException(
+                "_FUNC_(int xtimes, int num_buffers, *) takes at least three arguments");
         }
         // xtimes
         int xtimes = HiveUtils.getAsConstInt(argOIs[0]);
-        if(!(xtimes >= 1)) {
+        if (!(xtimes >= 1)) {
             throw new UDFArgumentException("Illegal xtimes value: " + xtimes);
         }
         // num_buffers
         int numBuffers = HiveUtils.getAsConstInt(argOIs[1]);
-        if(numBuffers < 2) {
+        if (numBuffers < 2) {
             throw new UDFArgumentException("num_buffers must be greater than 2: " + numBuffers);
         }
         this.argOIs = argOIs;
@@ -77,16 +81,17 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
                 : new RandomizedAmplifier<Object[]>(numBuffers, xtimes);
         amplifier.setDropoutListener(this);
 
-        if(useSeed) {
+        if (useSeed) {
             LogFactory.getLog(RandomAmplifierUDTF.class).info("rand_amplify() using seed: " + seed);
         }
 
         final ArrayList<String> fieldNames = new ArrayList<String>();
         final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-        for(int i = 2; i < numArgs; i++) {
+        for (int i = 2; i < numArgs; i++) {
             fieldNames.add("c" + (i - 1));
             ObjectInspector rawOI = argOIs[i];
-            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI, ObjectInspectorCopyOption.DEFAULT);
+            ObjectInspector retOI = ObjectInspectorUtils.getStandardObjectInspector(rawOI,
+                ObjectInspectorCopyOption.DEFAULT);
             fieldOIs.add(retOI);
         }
         return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
@@ -95,10 +100,11 @@ public class RandomAmplifierUDTF extends GenericUDTF implements DropoutListener<
     @Override
     public void process(Object[] args) throws HiveException {
         final Object[] row = new Object[args.length - 2];
-        for(int i = 2; i < args.length; i++) {
+        for (int i = 2; i < args.length; i++) {
             Object arg = args[i];
             ObjectInspector argOI = argOIs[i];
-            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI, ObjectInspectorCopyOption.DEFAULT);
+            row[i - 2] = ObjectInspectorUtils.copyToStandardObject(arg, argOI,
+                ObjectInspectorCopyOption.DEFAULT);
         }
         amplifier.add(row);
     }

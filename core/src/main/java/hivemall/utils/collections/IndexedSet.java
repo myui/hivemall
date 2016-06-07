@@ -48,7 +48,7 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Externalizabl
     @SuppressWarnings("unchecked")
     public void ensureSize(int expectedSize) {
         int actualSize = _list.size();
-        if(actualSize < expectedSize) {
+        if (actualSize < expectedSize) {
             _list.ensureCapacity(expectedSize);
             int delta = expectedSize - actualSize;
             E[] ary = (E[]) new Object[delta];
@@ -64,7 +64,7 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Externalizabl
 
     public int addIndexOf(E e) {
         final Integer v = _map.get(e);
-        if(v == null) {
+        if (v == null) {
             int i = _list.size();
             _list.add(e);
             _map.put(e, i);
@@ -75,7 +75,7 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Externalizabl
 
     @Override
     public boolean add(E e) {
-        if(_map.containsKey(e)) {
+        if (_map.containsKey(e)) {
             return true;
         } else {
             int i = _list.size();
@@ -110,7 +110,7 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Externalizabl
         final int size = in.readInt();
         final Map<E, Integer> map = new HashMap<E, Integer>(size);
         final ArrayList<E> list = new ArrayList<E>(size);
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             E e = (E) in.readObject();
             list.add(e);
             map.put(e, i);
@@ -122,8 +122,8 @@ public final class IndexedSet<E> extends AbstractSet<E> implements Externalizabl
     public void writeExternal(ObjectOutput out) throws IOException {
         final int size = _list.size();
         out.writeInt(size);
-        if(size > 0) {
-            for(int i = 0; i < size; i++) {
+        if (size > 0) {
+            for (int i = 0; i < size; i++) {
                 E v = _list.get(i);
                 out.writeObject(v);
             }

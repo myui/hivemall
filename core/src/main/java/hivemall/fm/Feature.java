@@ -128,8 +128,8 @@ public abstract class Feature {
     }
 
     public static Feature[] parseFFMFeatures(@Nonnull final Object arg,
-            @Nonnull final ListObjectInspector listOI, @Nullable final Feature[] probes, final int numFeatures, final int numFields)
-            throws HiveException {
+            @Nonnull final ListObjectInspector listOI, @Nullable final Feature[] probes,
+            final int numFeatures, final int numFields) throws HiveException {
         if (arg == null) {
             return null;
         }
@@ -191,14 +191,15 @@ public abstract class Feature {
             }
         }
     }
-    
+
     @Nonnull
     static IntFeature parseFFMFeature(@Nonnull final String fv) throws HiveException {
         return parseFFMFeature(fv, DEFAULT_NUM_FEATURES, DEFAULT_NUM_FIELDS);
     }
 
     @Nonnull
-    static IntFeature parseFFMFeature(@Nonnull final String fv, final int numFeatures, final int numFields) throws HiveException {
+    static IntFeature parseFFMFeature(@Nonnull final String fv, final int numFeatures,
+            final int numFields) throws HiveException {
         final int pos1 = fv.indexOf(':');
         if (pos1 == -1) {
             throw new HiveException("Invalid FFM feature format: " + fv);
@@ -266,15 +267,16 @@ public abstract class Feature {
                 probe.setFeature(indexStr);
                 probe.value = parseFeatureValue(valueStr);
             }
-        }        
+        }
     }
-    
-    static void parseFFMFeature(@Nonnull final String fv, @Nonnull final Feature probe) throws HiveException {
+
+    static void parseFFMFeature(@Nonnull final String fv, @Nonnull final Feature probe)
+            throws HiveException {
         parseFFMFeature(fv, probe, DEFAULT_NUM_FEATURES, DEFAULT_NUM_FIELDS);
     }
 
-    static void parseFFMFeature(@Nonnull final String fv, @Nonnull final Feature probe, final int numFeatures, final int numFields)
-            throws HiveException {
+    static void parseFFMFeature(@Nonnull final String fv, @Nonnull final Feature probe,
+            final int numFeatures, final int numFields) throws HiveException {
         final int pos1 = fv.indexOf(":");
         if (pos1 == -1) {
             throw new HiveException("Invalid FFM feature format: " + fv);
@@ -345,7 +347,8 @@ public abstract class Feature {
         }
     }
 
-    private static short parseField(@Nonnull final String fieldStr, final int numFields) throws HiveException {
+    private static short parseField(@Nonnull final String fieldStr, final int numFields)
+            throws HiveException {
         final short field;
         try {
             field = Short.parseShort(fieldStr);

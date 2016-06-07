@@ -23,7 +23,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "hivemall_version", value = "_FUNC_() - Returns the version of Hivemall")
+@Description(name = "hivemall_version", value = "_FUNC_() - Returns the version of Hivemall",
+        extended = "Usage: SELECT hivemall_version();")
 @UDFType(deterministic = true, stateful = false)
 public final class HivemallVersionUDF extends UDF {
 

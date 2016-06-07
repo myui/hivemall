@@ -33,13 +33,13 @@ public abstract class HivemallTestBase {
 
     @Before
     public void beforeEachTest() {
-        logger.info("\n\n===== TEST OUTPUT FOR " + packageName + ": '"
-                + testName.getMethodName() + "' =====\n");
+        logger.info("\n\n===== TEST OUTPUT FOR " + packageName + ": '" + testName.getMethodName()
+                + "' =====\n");
     }
 
     @Before
     public void afterEachTest() {
-        logger.info("\n\n===== FINISHED " + packageName + ": '"
-                + testName.getMethodName() + "' =====\n");
+        logger.info("\n\n===== FINISHED " + packageName + ": '" + testName.getMethodName()
+                + "' =====\n");
     }
 }

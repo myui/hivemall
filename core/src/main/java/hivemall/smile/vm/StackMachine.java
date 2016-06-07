@@ -82,9 +82,9 @@ public final class StackMachine {
     }
 
     public void compile(@Nonnull List<String> opslist) throws VMRuntimeException {
-        for(String line : opslist) {
+        for (String line : opslist) {
             String[] ops = line.split(" ", -1);
-            if(ops.length == 2) {
+            if (ops.length == 2) {
                 Operation.OperationEnum o = Operation.OperationEnum.valueOfLowerCase(ops[0]);
                 code.add(new Operation(o, ops[1]));
             } else {
@@ -115,7 +115,7 @@ public final class StackMachine {
 
     private void bind(final double[] features) {
         final StringBuilder buf = new StringBuilder();
-        for(int i = 0; i < features.length; i++) {
+        for (int i = 0; i < features.length; i++) {
             String bindKey = buf.append("x[").append(i).append("]").toString();
             valuesMap.put(bindKey, features[i]);
             StringUtils.clear(buf);
@@ -128,13 +128,13 @@ public final class StackMachine {
 
         IP = entryPoint;
 
-        while(IP < code.size()) {
-            if(done[IP]) {
+        while (IP < code.size()) {
+            if (done[IP]) {
                 throw new VMRuntimeException("There is a infinite loop in the Machine code.");
             }
             done[IP] = true;
             Operation currentOperation = code.get(IP);
-            if(!executeOperation(currentOperation)) {
+            if (!executeOperation(currentOperation)) {
                 return;
             }
         }
@@ -157,12 +157,12 @@ public final class StackMachine {
     }
 
     private boolean executeOperation(Operation currentOperation) throws VMRuntimeException {
-        if(IP < 0) {
+        if (IP < 0) {
             return false;
         }
         switch (currentOperation.op) {
             case GOTO: {
-                if(StringUtils.isInt(currentOperation.operand)) {
+                if (StringUtils.isInt(currentOperation.operand)) {
                     IP = Integer.parseInt(currentOperation.operand);
                 } else {
                     IP = jumpMap.get(currentOperation.operand);
@@ -171,7 +171,7 @@ public final class StackMachine {
             }
             case CALL: {
                 double candidateIP = valuesMap.get(currentOperation.operand);
-                if(candidateIP < 0) {
+                if (candidateIP < 0) {
                     evaluateBuiltinByName(currentOperation.operand);
                     IP++;
                 }
@@ -180,10 +180,10 @@ public final class StackMachine {
             case IFEQ: {
                 double a = pop();
                 double b = pop();
-                if(a == b) {
+                if (a == b) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -194,10 +194,10 @@ public final class StackMachine {
             case IFEQ2: {// follow the rule of smile's Math class.
                 double a = pop();
                 double b = pop();
-                if(smile.math.Math.equals(a, b)) {
+                if (smile.math.Math.equals(a, b)) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -208,10 +208,10 @@ public final class StackMachine {
             case IFGE: {
                 double lower = pop();
                 double upper = pop();
-                if(upper >= lower) {
+                if (upper >= lower) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -222,10 +222,10 @@ public final class StackMachine {
             case IFGT: {
                 double lower = pop();
                 double upper = pop();
-                if(upper > lower) {
+                if (upper > lower) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -236,10 +236,10 @@ public final class StackMachine {
             case IFLE: {
                 double lower = pop();
                 double upper = pop();
-                if(upper <= lower) {
+                if (upper <= lower) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -250,10 +250,10 @@ public final class StackMachine {
             case IFLT: {
                 double lower = pop();
                 double upper = pop();
-                if(upper < lower) {
+                if (upper < lower) {
                     IP++;
                 } else {
-                    if(StringUtils.isInt(currentOperation.operand)) {
+                    if (StringUtils.isInt(currentOperation.operand)) {
                         IP = Integer.parseInt(currentOperation.operand);
                     } else {
                         IP = jumpMap.get(currentOperation.operand);
@@ -267,11 +267,11 @@ public final class StackMachine {
                 break;
             }
             case PUSH: {
-                if(StringUtils.isDouble(currentOperation.operand)) {
+                if (StringUtils.isDouble(currentOperation.operand)) {
                     push(Double.parseDouble(currentOperation.operand));
                 } else {
                     Double v = valuesMap.get(currentOperation.operand);
-                    if(v == null) {
+                    if (v == null) {
                         throw new VMRuntimeException("value is not binded: "
                                 + currentOperation.operand);
                     }
@@ -289,7 +289,7 @@ public final class StackMachine {
     }
 
     private void evaluateBuiltinByName(String name) throws VMRuntimeException {
-        if(name.equals("end")) {
+        if (name.equals("end")) {
             this.result = pop();
         } else {
             throw new VMRuntimeException("Machine code has wrong builin function :" + name);

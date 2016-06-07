@@ -31,7 +31,7 @@ public final class NetUtils {
 
     public static InetSocketAddress getInetSocketAddress(String endpointURI, int defaultPort) {
         final int pos = endpointURI.indexOf(':');
-        if(pos == -1) {
+        if (pos == -1) {
             InetAddress addr = getInetAddress(endpointURI);
             return new InetSocketAddress(addr, defaultPort);
         } else {
@@ -67,14 +67,14 @@ public final class NetUtils {
     }
 
     public static int getAvailablePort(final int basePort) {
-        if(basePort == 0) {
+        if (basePort == 0) {
             return getAvailablePort();
         }
-        if(basePort < 0 || basePort > 65535) {
+        if (basePort < 0 || basePort > 65535) {
             throw new IllegalArgumentException("Illegal port number: " + basePort);
         }
-        for(int i = basePort; i <= 65535; i++) {
-            if(isPortAvailable(i)) {
+        for (int i = basePort; i <= 65535; i++) {
+            if (isPortAvailable(i)) {
                 return i;
             }
         }
@@ -91,7 +91,7 @@ public final class NetUtils {
         } catch (IOException e) {
             return false;
         } finally {
-            if(s != null) {
+            if (s != null) {
                 try {
                     s.close();
                 } catch (IOException e) {

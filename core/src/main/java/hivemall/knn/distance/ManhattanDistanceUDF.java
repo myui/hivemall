@@ -44,7 +44,7 @@ public final class ManhattanDistanceUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("manhattan_distance takes 2 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);
@@ -64,8 +64,8 @@ public final class ManhattanDistanceUDF extends GenericUDF {
     public static double manhattanDistance(final List<String> ftvec1, final List<String> ftvec2) {
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
-        for(String ft : ftvec1) {
-            if(ft == null) {
+        for (String ft : ftvec1) {
+            if (ft == null) {
                 continue;
             }
             FeatureValue.parseFeatureAsString(ft, probe);
@@ -74,15 +74,15 @@ public final class ManhattanDistanceUDF extends GenericUDF {
             map.put(f1, v1);
         }
         double d = 0.d;
-        for(String ft : ftvec2) {
-            if(ft == null) {
+        for (String ft : ftvec2) {
+            if (ft == null) {
                 continue;
             }
             FeatureValue.parseFeatureAsString(ft, probe);
             String f2 = probe.getFeature();
             float v2f = probe.getValueAsFloat();
             Float v1 = map.remove(f2);
-            if(v1 == null) {
+            if (v1 == null) {
                 d += Math.abs(v2f);
             } else {
                 float v1f = v1.floatValue();
@@ -90,7 +90,7 @@ public final class ManhattanDistanceUDF extends GenericUDF {
                 d += Math.abs(diff);
             }
         }
-        for(Map.Entry<String, Float> e : map.entrySet()) {
+        for (Map.Entry<String, Float> e : map.entrySet()) {
             float v1f = e.getValue();
             d += Math.abs(v1f);
         }

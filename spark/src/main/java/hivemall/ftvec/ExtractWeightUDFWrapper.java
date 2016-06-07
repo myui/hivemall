@@ -33,13 +33,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 /**
  * A wrapper of [[hivemall.ftvec.ExtractWeightUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark cannot handle List<> as a return type in Hive UDF.
- * Therefore, the type must be passed via ObjectInspector.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark cannot handle List<>
+ * as a return type in Hive UDF. Therefore, the type must be passed via ObjectInspector.
  */
-@Description(
-    name = "extract_weight",
-    value = "_FUNC_(feature in string) - Returns the weight of a feature as string")
+@Description(name = "extract_weight",
+        value = "_FUNC_(feature in string) - Returns the weight of a feature as string")
 @UDFType(deterministic = true, stateful = false)
 public class ExtractWeightUDFWrapper extends GenericUDF {
     private ExtractWeightUDF udf = new ExtractWeightUDF();
@@ -47,7 +45,7 @@ public class ExtractWeightUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
+        if (arguments.length != 1) {
             throw new UDFArgumentLengthException(
                 "extract_weight() has an single arguments: string feature");
         }
@@ -57,13 +55,12 @@ public class ExtractWeightUDFWrapper extends GenericUDF {
             throw new UDFArgumentTypeException(0, "Type mismatch: feature");
         }
 
-        return PrimitiveObjectInspectorFactory
-            .getPrimitiveWritableObjectInspector(PrimitiveCategory.DOUBLE);
+        return PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(PrimitiveCategory.DOUBLE);
     }
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         final String input = (String) argumentOI.getPrimitiveJavaObject(arguments[0].get());
         return udf.evaluate(input);
     }

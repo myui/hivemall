@@ -25,54 +25,54 @@ public final class DateTimeFormatter {
     private DateTimeFormatter() {}
 
     public static String formatTime(long t) {
-        if(t == 0L) {
+        if (t == 0L) {
             return "0ms";
         }
         final StringBuilder buf = new StringBuilder();
         final long hour = t / 3600000;
-        if(hour > 0) {
+        if (hour > 0) {
             buf.append(hour + "h ");
             t = t % 3600000;
         }
         final long min = t / 60000;
-        if(min > 0) {
+        if (min > 0) {
             buf.append(min + "m ");
             t = t % 60000;
         }
         final long sec = t / 1000;
-        if(sec > 0) {
+        if (sec > 0) {
             buf.append(sec + "s ");
             t = t % 1000;
         }
-        if(t > 0) {
+        if (t > 0) {
             buf.append(t + "ms");
         }
         return buf.length() == 0 ? "0ms" : buf.toString();
     }
 
     public static String formatTime(double timeInMills) {
-        if(timeInMills == 0d) {
+        if (timeInMills == 0d) {
             return "0ms";
         }
         final StringBuilder buf = new StringBuilder();
         long t = (long) timeInMills;
         float diff = (float) (timeInMills - t);
         final long hour = t / 3600000;
-        if(hour > 0) {
+        if (hour > 0) {
             buf.append(hour + "h ");
             t = t % 3600000;
         }
         final long min = t / 60000;
-        if(min > 0) {
+        if (min > 0) {
             buf.append(min + "m ");
             t = t % 60000;
         }
         final long sec = t / 1000;
-        if(sec > 0) {
+        if (sec > 0) {
             buf.append(sec + "s ");
             t = t % 1000;
         }
-        if(t > 0 || diff > 0f) {
+        if (t > 0 || diff > 0f) {
             buf.append(String.format("%.2f", (diff + t)));
             buf.append("ms");
         }

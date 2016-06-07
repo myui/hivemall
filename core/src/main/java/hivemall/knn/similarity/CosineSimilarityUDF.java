@@ -36,7 +36,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "cosine_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns a cosine similarity of the given two vectors")
+@Description(name = "cosine_similarity",
+        value = "_FUNC_(ftvec1, ftvec2) - Returns a cosine similarity of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class CosineSimilarityUDF extends GenericUDF {
 
@@ -44,7 +45,7 @@ public final class CosineSimilarityUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("cosine_similarity takes 2 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);
@@ -62,14 +63,14 @@ public final class CosineSimilarityUDF extends GenericUDF {
     }
 
     public static float cosineSimilarity(final List<String> ftvec1, final List<String> ftvec2) {
-        if(ftvec1 == null || ftvec2 == null) {
+        if (ftvec1 == null || ftvec2 == null) {
             return 0.f;
         }
 
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map1 = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
         double score1 = 0.d;
-        for(String ft : ftvec1) {
+        for (String ft : ftvec1) {
             FeatureValue.parseFeatureAsString(ft, probe);
             float v = probe.getValueAsFloat();
             score1 += (v * v);
@@ -80,20 +81,20 @@ public final class CosineSimilarityUDF extends GenericUDF {
 
         float dotp = 0.f;
         double score2 = 0.d;
-        for(String ft : ftvec2) {
+        for (String ft : ftvec2) {
             FeatureValue.parseFeatureAsString(ft, probe);
             float v2 = probe.getValueAsFloat();
             score2 += (v2 * v2);
             String f2 = probe.getFeature();
             Float v1 = map1.get(f2);
-            if(v1 != null) {
+            if (v1 != null) {
                 dotp += (v1.floatValue() * v2);
             }
         }
         double l1norm2 = Math.sqrt(score2);
 
         final double denom = l1norm1 * l1norm2;
-        if(denom <= 0.f) {
+        if (denom <= 0.f) {
             return 0.f;
         } else {
             return (float) (dotp / denom);

@@ -30,8 +30,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 
 /** An alternative implementation of [[hivemall.tools.mapred.RowIdUDF]]. */
 @Description(
-    name = "rowid",
-    value = "_FUNC_() - Returns a generated row id of a form {TASK_ID}-{UUID}-{SEQUENCE_NUMBER}")
+        name = "rowid",
+        value = "_FUNC_() - Returns a generated row id of a form {TASK_ID}-{UUID}-{SEQUENCE_NUMBER}")
 @UDFType(deterministic = false, stateful = true)
 public class RowIdUDFWrapper extends GenericUDF {
     // RowIdUDF is directly used because spark cannot
@@ -47,7 +47,7 @@ public class RowIdUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 0) {
+        if (arguments.length != 0) {
             throw new UDFArgumentLengthException("row_number() has no argument.");
         }
 
@@ -56,11 +56,10 @@ public class RowIdUDFWrapper extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 0);
+        assert (arguments.length == 0);
         sequence++;
         /**
-         * TODO: Check if it is unique over all tasks
-         * in executors of Spark.
+         * TODO: Check if it is unique over all tasks in executors of Spark.
          */
         return taskId + "-" + UUID.randomUUID() + "-" + sequence;
     }

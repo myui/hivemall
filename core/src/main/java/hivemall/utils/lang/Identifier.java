@@ -38,7 +38,7 @@ public final class Identifier<E> implements Serializable {
 
     public int valueOf(E key) {
         Integer count = counts.get(key);
-        if(count == null) {
+        if (count == null) {
             ++sequence;
             counts.put(key, Integer.valueOf(sequence));
             return sequence;

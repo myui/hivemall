@@ -24,6 +24,7 @@ public final class StatsUtils {
 
     /**
      * probit(p)=sqrt(2)erf^-1(2p-1)
+     * 
      * <pre>
      * probit(1)=INF, probit(0)=-INF, probit(0.5)=0
      * </pre>
@@ -32,24 +33,24 @@ public final class StatsUtils {
      * @link http://en.wikipedia.org/wiki/Probit
      */
     public static double probit(double p) {
-        if(p < 0 || p > 1) {
+        if (p < 0 || p > 1) {
             throw new IllegalArgumentException("p must be in [0,1]");
         }
         return Math.sqrt(2.d) * MathUtils.inverseErf(2.d * p - 1.d);
     }
 
     public static double probit(double p, double range) {
-        if(range <= 0) {
+        if (range <= 0) {
             throw new IllegalArgumentException("range must be > 0: " + range);
         }
-        if(p == 0) {
+        if (p == 0) {
             return -range;
         }
-        if(p == 1) {
+        if (p == 1) {
             return range;
         }
         double v = probit(p);
-        if(v < 0) {
+        if (v < 0) {
             return Math.max(v, -range);
         } else {
             return Math.min(v, range);

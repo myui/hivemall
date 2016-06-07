@@ -42,8 +42,8 @@ public final class MetricsRegistry {
             return;
         }
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName name = makeMBeanName("hivemall", MixServerMetricsMBean.class.getSimpleName(), "port="
-                + port);
+        final ObjectName name = makeMBeanName("hivemall",
+            MixServerMetricsMBean.class.getSimpleName(), "port=" + port);
         try {
             server.registerMBean(mbean, name);
             logger.info("Registered MBean: " + name);
@@ -54,8 +54,8 @@ public final class MetricsRegistry {
 
     public static void unregisterMBeans(int port) {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName name = makeMBeanName("hivemall", MixServerMetricsMBean.class.getSimpleName(), "port="
-                + port);
+        final ObjectName name = makeMBeanName("hivemall",
+            MixServerMetricsMBean.class.getSimpleName(), "port=" + port);
         try {
             server.unregisterMBean(name);
             logger.info("Unregistered MBean: " + name);
@@ -64,7 +64,8 @@ public final class MetricsRegistry {
         }
     }
 
-    private static ObjectName makeMBeanName(@Nonnull final String domain, @Nonnull final String type, @Nonnull final String channelName) {
+    private static ObjectName makeMBeanName(@Nonnull final String domain,
+            @Nonnull final String type, @Nonnull final String channelName) {
         final String mbeanName = makeMBeanNameString(domain, type, channelName);
         try {
             return new ObjectName(mbeanName);
@@ -75,7 +76,8 @@ public final class MetricsRegistry {
         }
     }
 
-    private static String makeMBeanNameString(@Nonnull final String domain, @Nonnull final String type, @Nonnull final String channelName) {
+    private static String makeMBeanNameString(@Nonnull final String domain,
+            @Nonnull final String type, @Nonnull final String channelName) {
         return domain + ":type=" + type + ',' + channelName;
     }
 }

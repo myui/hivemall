@@ -36,7 +36,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "minkowski_distance", value = "_FUNC_(list x, list y, double p) - Returns sum(|x - y|^p)^(1/p)")
+@Description(name = "minkowski_distance",
+        value = "_FUNC_(list x, list y, double p) - Returns sum(|x - y|^p)^(1/p)")
 @UDFType(deterministic = true, stateful = false)
 public final class MinkowskiDistanceUDF extends GenericUDF {
 
@@ -45,7 +46,7 @@ public final class MinkowskiDistanceUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 3) {
+        if (argOIs.length != 3) {
             throw new UDFArgumentException("minkowski_distance takes 3 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);
@@ -63,11 +64,12 @@ public final class MinkowskiDistanceUDF extends GenericUDF {
         return new FloatWritable(d);
     }
 
-    public static double minkowskiDistance(final List<String> ftvec1, final List<String> ftvec2, final double orderP) {
+    public static double minkowskiDistance(final List<String> ftvec1, final List<String> ftvec2,
+            final double orderP) {
         final FeatureValue probe = new FeatureValue();
         final Map<String, Float> map = new HashMap<String, Float>(ftvec1.size() * 2 + 1);
-        for(String ft : ftvec1) {
-            if(ft == null) {
+        for (String ft : ftvec1) {
+            if (ft == null) {
                 continue;
             }
             FeatureValue.parseFeatureAsString(ft, probe);
@@ -76,22 +78,22 @@ public final class MinkowskiDistanceUDF extends GenericUDF {
             map.put(f1, v1);
         }
         double d = 0.d;
-        for(String ft : ftvec2) {
-            if(ft == null) {
+        for (String ft : ftvec2) {
+            if (ft == null) {
                 continue;
             }
             FeatureValue.parseFeatureAsString(ft, probe);
             String f2 = probe.getFeature();
             float v2f = probe.getValueAsFloat();
             Float v1 = map.remove(f2);
-            if(v1 == null) {
+            if (v1 == null) {
                 d += Math.abs(v2f);
             } else {
                 float v1f = v1.floatValue();
                 d += Math.pow(Math.abs(v1f - v2f), orderP);
             }
         }
-        for(Map.Entry<String, Float> e : map.entrySet()) {
+        for (Map.Entry<String, Float> e : map.entrySet()) {
             float v1f = e.getValue();
             d += Math.pow(Math.abs(v1f), orderP);
         }

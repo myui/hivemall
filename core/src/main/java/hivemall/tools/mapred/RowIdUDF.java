@@ -26,7 +26,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "rowid", value = "_FUNC_() - Returns a generated row id of a form {TASK_ID}-{SEQUENCE_NUMBER}")
+@Description(name = "rowid",
+        value = "_FUNC_() - Returns a generated row id of a form {TASK_ID}-{SEQUENCE_NUMBER}")
 @UDFType(deterministic = false, stateful = true)
 public class RowIdUDF extends UDF {
 
@@ -39,7 +40,7 @@ public class RowIdUDF extends UDF {
     }
 
     public Text evaluate() {
-        if(taskId == -1) {
+        if (taskId == -1) {
             this.taskId = HadoopUtils.getTaskId() + 1;
         }
         sequence++;

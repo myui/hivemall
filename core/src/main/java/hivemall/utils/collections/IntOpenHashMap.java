@@ -53,7 +53,7 @@ public class IntOpenHashMap<V> implements Externalizable {
 
     @SuppressWarnings("unchecked")
     protected IntOpenHashMap(int size, float loadFactor, float growFactor, boolean forcePrime) {
-        if(size < 1) {
+        if (size < 1) {
             throw new IllegalArgumentException();
         }
         this._loadFactor = loadFactor;
@@ -84,7 +84,7 @@ public class IntOpenHashMap<V> implements Externalizable {
 
     public final V get(final int key) {
         final int i = findKey(key);
-        if(i < 0) {
+        if (i < 0) {
             return null;
         }
         recordAccess(i);
@@ -97,7 +97,7 @@ public class IntOpenHashMap<V> implements Externalizable {
         int keyIdx = hash % keyLength;
 
         final boolean expanded = preAddEntry(keyIdx);
-        if(expanded) {
+        if (expanded) {
             keyLength = _keys.length;
             keyIdx = hash % keyLength;
         }
@@ -106,8 +106,8 @@ public class IntOpenHashMap<V> implements Externalizable {
         final V[] values = _values;
         final byte[] states = _states;
 
-        if(states[keyIdx] == FULL) {// double hashing
-            if(keys[keyIdx] == key) {
+        if (states[keyIdx] == FULL) {// double hashing
+            if (keys[keyIdx] == key) {
                 V old = values[keyIdx];
                 values[keyIdx] = value;
                 recordAccess(keyIdx);
@@ -115,15 +115,15 @@ public class IntOpenHashMap<V> implements Externalizable {
             }
             // try second hash
             final int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     break;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     V old = values[keyIdx];
                     values[keyIdx] = value;
                     recordAccess(keyIdx);
@@ -145,7 +145,7 @@ public class IntOpenHashMap<V> implements Externalizable {
         int keyIdx = hash % keyLength;
 
         final boolean expanded = preAddEntry(keyIdx);
-        if(expanded) {
+        if (expanded) {
             keyLength = _keys.length;
             keyIdx = hash % keyLength;
         }
@@ -154,21 +154,21 @@ public class IntOpenHashMap<V> implements Externalizable {
         final V[] values = _values;
         final byte[] states = _states;
 
-        if(states[keyIdx] == FULL) {// second hashing
-            if(keys[keyIdx] == key) {
+        if (states[keyIdx] == FULL) {// second hashing
+            if (keys[keyIdx] == key) {
                 return values[keyIdx];
             }
             // try second hash
             final int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     break;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     return values[keyIdx];
                 }
             }
@@ -184,10 +184,10 @@ public class IntOpenHashMap<V> implements Externalizable {
     /** Return weather the required slot is free for new entry */
     protected boolean isFree(int index, int key) {
         byte stat = _states[index];
-        if(stat == FREE) {
+        if (stat == FREE) {
             return true;
         }
-        if(stat == REMOVED && _keys[index] == key) {
+        if (stat == REMOVED && _keys[index] == key) {
             return true;
         }
         return false;
@@ -195,7 +195,7 @@ public class IntOpenHashMap<V> implements Externalizable {
 
     /** @return expanded or not */
     protected boolean preAddEntry(int index) {
-        if((_used + 1) >= _threshold) {// too filled
+        if ((_used + 1) >= _threshold) {// too filled
             int newCapacity = Math.round(_keys.length * _growFactor);
             ensureCapacity(newCapacity);
             return true;
@@ -212,21 +212,21 @@ public class IntOpenHashMap<V> implements Externalizable {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                 return keyIdx;
             }
             // try second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(isFree(keyIdx, key)) {
+                if (isFree(keyIdx, key)) {
                     return -1;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     return keyIdx;
                 }
             }
@@ -242,8 +242,8 @@ public class IntOpenHashMap<V> implements Externalizable {
 
         int hash = keyHash(key);
         int keyIdx = hash % keyLength;
-        if(states[keyIdx] != FREE) {
-            if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+        if (states[keyIdx] != FREE) {
+            if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                 V old = values[keyIdx];
                 states[keyIdx] = REMOVED;
                 --_used;
@@ -252,15 +252,15 @@ public class IntOpenHashMap<V> implements Externalizable {
             }
             //  second hash
             int decr = 1 + (hash % (keyLength - 2));
-            for(;;) {
+            for (;;) {
                 keyIdx -= decr;
-                if(keyIdx < 0) {
+                if (keyIdx < 0) {
                     keyIdx += keyLength;
                 }
-                if(states[keyIdx] == FREE) {
+                if (states[keyIdx] == FREE) {
                     return null;
                 }
-                if(states[keyIdx] == FULL && keys[keyIdx] == key) {
+                if (states[keyIdx] == FULL && keys[keyIdx] == key) {
                     V old = values[keyIdx];
                     states[keyIdx] = REMOVED;
                     --_used;
@@ -292,11 +292,11 @@ public class IntOpenHashMap<V> implements Externalizable {
         StringBuilder buf = new StringBuilder(len);
         buf.append('{');
         IMapIterator<V> i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             buf.append(i.getKey());
             buf.append('=');
             buf.append(i.getValue());
-            if(i.hasNext()) {
+            if (i.hasNext()) {
                 buf.append(',');
             }
         }
@@ -313,7 +313,7 @@ public class IntOpenHashMap<V> implements Externalizable {
     @SuppressWarnings("unchecked")
     protected void rehash(int newCapacity) {
         int oldCapacity = _keys.length;
-        if(newCapacity <= oldCapacity) {
+        if (newCapacity <= oldCapacity) {
             throw new IllegalArgumentException("new: " + newCapacity + ", old: " + oldCapacity);
         }
         final int[] oldKeys = _keys;
@@ -323,18 +323,18 @@ public class IntOpenHashMap<V> implements Externalizable {
         V[] newValues = (V[]) new Object[newCapacity];
         byte[] newStates = new byte[newCapacity];
         int used = 0;
-        for(int i = 0; i < oldCapacity; i++) {
-            if(oldStates[i] == FULL) {
+        for (int i = 0; i < oldCapacity; i++) {
+            if (oldStates[i] == FULL) {
                 used++;
                 int k = oldKeys[i];
                 V v = oldValues[i];
                 int hash = keyHash(k);
                 int keyIdx = hash % newCapacity;
-                if(newStates[keyIdx] == FULL) {// second hashing
+                if (newStates[keyIdx] == FULL) {// second hashing
                     int decr = 1 + (hash % (newCapacity - 2));
-                    while(newStates[keyIdx] != FREE) {
+                    while (newStates[keyIdx] != FREE) {
                         keyIdx -= decr;
-                        if(keyIdx < 0) {
+                        if (keyIdx < 0) {
                             keyIdx += newCapacity;
                         }
                     }
@@ -364,7 +364,7 @@ public class IntOpenHashMap<V> implements Externalizable {
 
         out.writeInt(_keys.length);
         IMapIterator<V> i = entries();
-        while(i.next() != -1) {
+        while (i.next() != -1) {
             out.writeInt(i.getKey());
             out.writeObject(i.getValue());
         }
@@ -379,19 +379,19 @@ public class IntOpenHashMap<V> implements Externalizable {
         int[] keys = new int[keylen];
         V[] values = (V[]) new Object[keylen];
         byte[] states = new byte[keylen];
-        for(int i = 0; i < _used; i++) {
+        for (int i = 0; i < _used; i++) {
             int k = in.readInt();
             V v = (V) in.readObject();
             int hash = keyHash(k);
             int keyIdx = hash % keylen;
-            if(states[keyIdx] != FREE) {// second hash
+            if (states[keyIdx] != FREE) {// second hash
                 int decr = 1 + (hash % (keylen - 2));
-                for(;;) {
+                for (;;) {
                     keyIdx -= decr;
-                    if(keyIdx < 0) {
+                    if (keyIdx < 0) {
                         keyIdx += keylen;
                     }
-                    if(states[keyIdx] == FREE) {
+                    if (states[keyIdx] == FREE) {
                         break;
                     }
                 }
@@ -429,7 +429,7 @@ public class IntOpenHashMap<V> implements Externalizable {
 
         /** find the index of next full entry */
         int nextEntry(int index) {
-            while(index < _keys.length && _states[index] != FULL) {
+            while (index < _keys.length && _states[index] != FULL) {
                 index++;
             }
             return index;
@@ -440,7 +440,7 @@ public class IntOpenHashMap<V> implements Externalizable {
         }
 
         public int next() {
-            if(!hasNext()) {
+            if (!hasNext()) {
                 return -1;
             }
             int curEntry = nextEntry;
@@ -450,14 +450,14 @@ public class IntOpenHashMap<V> implements Externalizable {
         }
 
         public int getKey() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _keys[lastEntry];
         }
 
         public V getValue() {
-            if(lastEntry == -1) {
+            if (lastEntry == -1) {
                 throw new IllegalStateException();
             }
             return _values[lastEntry];

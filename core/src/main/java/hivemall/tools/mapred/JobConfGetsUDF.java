@@ -45,11 +45,11 @@ public class JobConfGetsUDF extends UDF {
 
     public Text evaluate(@Nullable final String regexKey) throws HiveException {
         MapredContext ctx = MapredContextAccessor.get();
-        if(ctx == null) {
+        if (ctx == null) {
             throw new HiveException("MapredContext is not set");
         }
         JobConf jobconf = ctx.getJobConf();
-        if(jobconf == null) {
+        if (jobconf == null) {
             throw new HiveException("JobConf is not set");
         }
 

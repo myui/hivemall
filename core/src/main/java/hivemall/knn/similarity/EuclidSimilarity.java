@@ -34,8 +34,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.FloatWritable;
 
-@Description(name = "euclid_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns a euclid distance based similarity"
-        + ", which is `1.0 / (1.0 + distance)`, of the given two vectors")
+@Description(name = "euclid_similarity",
+        value = "_FUNC_(ftvec1, ftvec2) - Returns a euclid distance based similarity"
+                + ", which is `1.0 / (1.0 + distance)`, of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class EuclidSimilarity extends GenericUDF {
 
@@ -43,7 +44,7 @@ public final class EuclidSimilarity extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("euclid_similarity takes 2 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);

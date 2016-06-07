@@ -23,9 +23,14 @@ import hivemall.utils.lang.Primitives;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 
+@Description(
+        name = "train_mf_adagrad",
+        value = "_FUNC_(INT user, INT item, FLOAT rating [, CONSTANT STRING options])"
+                + " - Returns a relation consists of <int idx, array<float> Pu, array<float> Qi [, float Bu, float Bi [, float mu]]>")
 public final class MatrixFactorizationAdaGradUDTF extends OnlineMatrixFactorizationUDTF {
 
     private float eta;
@@ -41,7 +46,8 @@ public final class MatrixFactorizationAdaGradUDTF extends OnlineMatrixFactorizat
         Options opts = super.getOptions();
         opts.addOption("eta", "eta0", true, "The initial learning rate [default 1.0]");
         opts.addOption("eps", true, "A constant used in the denominator of AdaGrad [default 1.0]");
-        opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [100]");
+        opts.addOption("scale", true,
+            "Internal scaling/descaling factor for cumulative weights [100]");
         return opts;
     }
 
@@ -53,7 +59,7 @@ public final class MatrixFactorizationAdaGradUDTF extends OnlineMatrixFactorizat
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        if(cl == null) {
+        if (cl == null) {
             this.eta = 1.f;
             this.eps = 1.f;
             this.scaling = 100f;

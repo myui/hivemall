@@ -51,33 +51,36 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDoubleObj
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
-@Description(name = "fm_predict", value = "_FUNC_(Float Wj, array<float> Vjf, float Xj) - Returns a prediction value in Double")
+@Description(
+        name = "fm_predict",
+        value = "_FUNC_(Float Wj, array<float> Vjf, float Xj) - Returns a prediction value in Double")
 public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
     private FMPredictGenericUDAF() {}
 
     @Override
     public Evaluator getEvaluator(TypeInfo[] typeInfo) throws SemanticException {
-        if(typeInfo.length != 3) {
-            throw new UDFArgumentLengthException("Expected argument length is 3 but given argument length was "
-                    + typeInfo.length);
+        if (typeInfo.length != 3) {
+            throw new UDFArgumentLengthException(
+                "Expected argument length is 3 but given argument length was " + typeInfo.length);
         }
-        if(!HiveUtils.isNumberTypeInfo(typeInfo[0])) {
-            throw new UDFArgumentTypeException(0, "Number type is expected for the first argument Wj: "
-                    + typeInfo[0].getTypeName());
+        if (!HiveUtils.isNumberTypeInfo(typeInfo[0])) {
+            throw new UDFArgumentTypeException(0,
+                "Number type is expected for the first argument Wj: " + typeInfo[0].getTypeName());
         }
-        if(typeInfo[1].getCategory() != Category.LIST) {
-            throw new UDFArgumentTypeException(1, "List type is expected for the second argument Vjf: "
-                    + typeInfo[1].getTypeName());
+        if (typeInfo[1].getCategory() != Category.LIST) {
+            throw new UDFArgumentTypeException(1,
+                "List type is expected for the second argument Vjf: " + typeInfo[1].getTypeName());
         }
         ListTypeInfo typeInfo1 = (ListTypeInfo) typeInfo[1];
-        if(!HiveUtils.isNumberTypeInfo(typeInfo1.getListElementTypeInfo())) {
-            throw new UDFArgumentTypeException(1, "Number type is expected for the element type of list Vjf: "
-                    + typeInfo1.getTypeName());
+        if (!HiveUtils.isNumberTypeInfo(typeInfo1.getListElementTypeInfo())) {
+            throw new UDFArgumentTypeException(1,
+                "Number type is expected for the element type of list Vjf: "
+                        + typeInfo1.getTypeName());
         }
-        if(!HiveUtils.isNumberTypeInfo(typeInfo[2])) {
-            throw new UDFArgumentTypeException(2, "Number type is expected for the third argument Xj: "
-                    + typeInfo[2].getTypeName());
+        if (!HiveUtils.isNumberTypeInfo(typeInfo[2])) {
+            throw new UDFArgumentTypeException(2,
+                "Number type is expected for the third argument Xj: " + typeInfo[2].getTypeName());
         }
         return new Evaluator();
     }
@@ -104,7 +107,7 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
             super.init(mode, parameters);
 
             // initialize input
-            if(mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
+            if (mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
                 this.wOI = HiveUtils.asDoubleCompatibleOI(parameters[0]);
                 this.vOI = HiveUtils.asListOI(parameters[1]);
                 this.vElemOI = HiveUtils.asDoubleCompatibleOI(vOI.getListElementObjectInspector());
@@ -122,7 +125,7 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
             // initialize output
             final ObjectInspector outputOI;
-            if(mode == Mode.PARTIAL1 || mode == Mode.PARTIAL2) {// terminatePartial
+            if (mode == Mode.PARTIAL1 || mode == Mode.PARTIAL2) {// terminatePartial
                 outputOI = internalMergeOI();
             } else {
                 outputOI = PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
@@ -159,16 +162,16 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
-            if(parameters[0] == null) {
+            if (parameters[0] == null) {
                 return;
             }
             FMPredictAggregationBuffer buf = (FMPredictAggregationBuffer) agg;
 
             double w = PrimitiveObjectInspectorUtils.getDouble(parameters[0], wOI);
-            if(parameters[1] == null || /* for TD */vOI.getListLength(parameters[1]) == 0) {// Vif was null
+            if (parameters[1] == null || /* for TD */vOI.getListLength(parameters[1]) == 0) {// Vif was null
                 buf.iterate(w);
             } else {
-                if(parameters[2] == null) {
+                if (parameters[2] == null) {
                     throw new UDFArgumentException("The third argument Xj must not be null");
                 }
                 double x = PrimitiveObjectInspectorUtils.getDouble(parameters[2], xOI);
@@ -182,7 +185,7 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
             final Object[] partialResult = new Object[3];
             partialResult[0] = new DoubleWritable(buf.ret);
-            if(buf.sumVjXj != null) {
+            if (buf.sumVjXj != null) {
                 partialResult[1] = WritableUtils.toWritableList(buf.sumVjXj);
                 partialResult[2] = WritableUtils.toWritableList(buf.sumV2X2);
             }
@@ -191,7 +194,7 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public void merge(AggregationBuffer agg, Object partial) throws HiveException {
-            if(partial == null) {
+            if (partial == null) {
                 return;
             }
             FMPredictAggregationBuffer buf = (FMPredictAggregationBuffer) agg;
@@ -206,10 +209,10 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
             // [workaround]
             // java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray
             // cannot be cast to [Ljava.lang.Object;
-            if(sumVjXj instanceof LazyBinaryArray) {
+            if (sumVjXj instanceof LazyBinaryArray) {
                 sumVjXj = ((LazyBinaryArray) sumVjXj).getList();
             }
-            if(sumV2X2 instanceof LazyBinaryArray) {
+            if (sumV2X2 instanceof LazyBinaryArray) {
                 sumV2X2 = ((LazyBinaryArray) sumV2X2).getList();
             }
             // --------------------------------------------------------------
@@ -244,25 +247,26 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
             this.ret += Wj;
         }
 
-        void iterate(final double Wj, final double Xj, @Nonnull final Object Vif, @Nonnull final ListObjectInspector vOI, @Nonnull final PrimitiveObjectInspector vElemOI)
-                throws HiveException {
+        void iterate(final double Wj, final double Xj, @Nonnull final Object Vif,
+                @Nonnull final ListObjectInspector vOI,
+                @Nonnull final PrimitiveObjectInspector vElemOI) throws HiveException {
             this.ret += (Wj * Xj);
 
             final int factors = vOI.getListLength(Vif);
-            if(factors < 1) {
+            if (factors < 1) {
                 throw new HiveException("# of Factor should be more than 0: " + factors);
             }
 
-            if(sumVjXj == null) {
+            if (sumVjXj == null) {
                 this.sumVjXj = new double[factors];
                 this.sumV2X2 = new double[factors];
-            } else if(sumVjXj.length != factors) {
+            } else if (sumVjXj.length != factors) {
                 throw new HiveException("Mismatch in the number of factors");
             }
 
-            for(int f = 0; f < factors; f++) {
+            for (int f = 0; f < factors; f++) {
                 Object o = vOI.getListElement(Vif, f);
-                if(o == null) {
+                if (o == null) {
                     throw new HiveException("Vj" + f + " should not be null");
                 }
                 double v = PrimitiveObjectInspectorUtils.getDouble(o, vElemOI);
@@ -273,27 +277,29 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
             }
         }
 
-        void merge(final double o_ret, @Nullable final Object o_sumVjXj, @Nullable final Object o_sumV2X2, @Nonnull final StandardListObjectInspector sumVjXjOI, @Nonnull final StandardListObjectInspector sumV2X2OI)
-                throws HiveException {
+        void merge(final double o_ret, @Nullable final Object o_sumVjXj,
+                @Nullable final Object o_sumV2X2,
+                @Nonnull final StandardListObjectInspector sumVjXjOI,
+                @Nonnull final StandardListObjectInspector sumV2X2OI) throws HiveException {
             this.ret += o_ret;
-            if(o_sumVjXj == null) {
+            if (o_sumVjXj == null) {
                 return;
             }
 
-            if(o_sumV2X2 == null) {//sanity check
+            if (o_sumV2X2 == null) {//sanity check
                 throw new HiveException("o_sumV2X2 should not be null");
             }
 
             final int factors = sumVjXjOI.getListLength(o_sumVjXj);
-            if(sumVjXj == null) {
+            if (sumVjXj == null) {
                 this.sumVjXj = new double[factors];
                 this.sumV2X2 = new double[factors];
-            } else if(sumVjXj.length != factors) {//sanity check
+            } else if (sumVjXj.length != factors) {//sanity check
                 throw new HiveException("Mismatch in the number of factors");
             }
 
             final WritableDoubleObjectInspector doubleOI = PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
-            for(int f = 0; f < factors; f++) {
+            for (int f = 0; f < factors; f++) {
                 Object o1 = sumVjXjOI.getListElement(o_sumVjXj, f);
                 Object o2 = sumV2X2OI.getListElement(o_sumV2X2, f);
                 double d1 = doubleOI.get(o1);
@@ -305,9 +311,9 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
         double getPrediction() {
             double predict = this.ret;
-            if(sumVjXj != null) {
+            if (sumVjXj != null) {
                 final int factors = sumVjXj.length;
-                for(int f = 0; f < factors; f++) {
+                for (int f = 0; f < factors; f++) {
                     double d1 = sumVjXj[f];
                     double d2 = sumV2X2[f];
                     predict += 0.5d * (d1 * d1 - d2);

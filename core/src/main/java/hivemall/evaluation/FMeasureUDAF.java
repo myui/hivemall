@@ -28,7 +28,8 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "f1score", value = "_FUNC_(array[int], array[int]) - Return a F-measure/F1 score")
+@Description(name = "f1score",
+        value = "_FUNC_(array[int], array[int]) - Return a F-measure/F1 score")
 public final class FMeasureUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
@@ -50,9 +51,9 @@ public final class FMeasureUDAF extends UDAF {
                 final int numActual = actual.size();
                 final int numPredicted = predicted.size();
                 int countTp = 0;
-                for(int i = 0; i < numPredicted; i++) {
+                for (int i = 0; i < numPredicted; i++) {
                     IntWritable p = predicted.get(i);
-                    if(actual.contains(p)) {
+                    if (actual.contains(p)) {
                         countTp++;
                     }
                 }
@@ -76,7 +77,7 @@ public final class FMeasureUDAF extends UDAF {
         }
 
         public boolean iterate(List<IntWritable> actual, List<IntWritable> predicted) {
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.updateScore(actual, predicted);
@@ -88,10 +89,10 @@ public final class FMeasureUDAF extends UDAF {
         }
 
         public boolean merge(PartialResult other) {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new PartialResult();
             }
             partial.merge(other);
@@ -99,7 +100,7 @@ public final class FMeasureUDAF extends UDAF {
         }
 
         public DoubleWritable terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null;
             }
             double score = f1Score(partial);
@@ -113,7 +114,7 @@ public final class FMeasureUDAF extends UDAF {
             double precision = precision(partial);
             double recall = recall(partial);
             double divisor = precision + recall;
-            if(divisor > 0) {
+            if (divisor > 0) {
                 return (2.d * precision * recall) / divisor;
             } else {
                 return -1d;

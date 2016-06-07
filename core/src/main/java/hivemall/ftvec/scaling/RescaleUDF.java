@@ -29,10 +29,10 @@ import org.apache.hadoop.io.Text;
 /**
  * Min-Max normalization
  * 
- * @see <a
- *      href="http://en.wikipedia.org/wiki/Feature_scaling">Feature_scaling</a>
+ * @see <a href="http://en.wikipedia.org/wiki/Feature_scaling">Feature_scaling</a>
  */
-@Description(name = "rescale", value = "_FUNC_(value, min, max) - Returns rescaled value by min-max normalization")
+@Description(name = "rescale",
+        value = "_FUNC_(value, min, max) - Returns rescaled value by min-max normalization")
 @UDFType(deterministic = true, stateful = false)
 public final class RescaleUDF extends UDF {
 
@@ -46,7 +46,7 @@ public final class RescaleUDF extends UDF {
 
     public Text evaluate(final String s, final double min, final double max) {
         String[] fv = s.split(":");
-        if(fv.length != 2) {
+        if (fv.length != 2) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
         double v = Float.parseFloat(fv[1]);
@@ -57,7 +57,7 @@ public final class RescaleUDF extends UDF {
 
     public Text evaluate(final String s, final float min, final float max) {
         String[] fv = s.split(":");
-        if(fv.length != 2) {
+        if (fv.length != 2) {
             throw new IllegalArgumentException("Invalid feature value representation: " + s);
         }
         float v = Float.parseFloat(fv[1]);
@@ -67,14 +67,15 @@ public final class RescaleUDF extends UDF {
     }
 
     private static float min_max_normalization(final float value, final float min, final float max) {
-        if(min == max) {
+        if (min == max) {
             return 0.5f;
         }
         return (value - min) / (max - min);
     }
 
-    private static float min_max_normalization(final double value, final double min, final double max) {
-        if(min == max) {
+    private static float min_max_normalization(final double value, final double min,
+            final double max) {
+        if (min == max) {
             return 0.5f;
         }
         return (float) ((value - min) / (max - min));

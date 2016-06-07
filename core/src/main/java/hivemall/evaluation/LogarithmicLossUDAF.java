@@ -23,7 +23,8 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
-@Description(name = "logloss", value = "_FUNC_(predicted, actual) - Return a Logrithmic Loss")
+@Description(name = "logloss",
+        value = "_FUNC_(double predicted, double actual) - Return a Logrithmic Loss")
 public final class LogarithmicLossUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {

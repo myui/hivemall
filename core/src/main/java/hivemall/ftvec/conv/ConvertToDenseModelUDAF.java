@@ -22,10 +22,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 
+@Description(
+        name = "conv2dense",
+        value = "_FUNC_(int feature, float weight, int nDims) - Return a dense model in array<float>")
 public class ConvertToDenseModelUDAF extends UDAF {
 
     public static class Evaluator implements UDAFEvaluator {
@@ -38,7 +42,7 @@ public class ConvertToDenseModelUDAF extends UDAF {
         }
 
         public boolean iterate(int feature, float weight, int nDims) {
-            if(partial == null) {
+            if (partial == null) {
                 FloatWritable[] array = new FloatWritable[nDims];
                 this.partial = Arrays.asList(array);
             }
@@ -51,17 +55,17 @@ public class ConvertToDenseModelUDAF extends UDAF {
         }
 
         public boolean merge(List<FloatWritable> other) {
-            if(other == null) {
+            if (other == null) {
                 return true;
             }
-            if(partial == null) {
+            if (partial == null) {
                 this.partial = new ArrayList<FloatWritable>(other);
                 return true;
             }
             final int nDims = other.size();
-            for(int i = 0; i < nDims; i++) {
+            for (int i = 0; i < nDims; i++) {
                 FloatWritable x = other.set(i, null);
-                if(x != null) {
+                if (x != null) {
                     partial.set(i, x);
                 }
             }
@@ -69,7 +73,7 @@ public class ConvertToDenseModelUDAF extends UDAF {
         }
 
         public List<FloatWritable> terminate() {
-            if(partial == null) {
+            if (partial == null) {
                 return null; // null to indicate that no values have been aggregated yet
             }
             return partial;

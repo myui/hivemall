@@ -89,22 +89,28 @@ public final class MixServer implements Runnable {
     static Options getOptions() {
         Options opts = new Options();
         opts.addOption("p", "port", true, "port number of the mix server [default: 11212]");
-        opts.addOption("workers", "num_workers", true, "The number of MIX workers [default: max(1, round(procs * 1.5))] ");
+        opts.addOption("workers", "num_workers", true,
+            "The number of MIX workers [default: max(1, round(procs * 1.5))] ");
         opts.addOption("ssl", false, "Use SSL for the mix communication [default: false]");
-        opts.addOption("scale", "scalemodel", true, "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
-        opts.addOption("sync", "sync_threshold", true, "Synchronization threshold using clock difference [default: 30]");
-        opts.addOption("ttl", "session_ttl", true, "The TTL in sec that an idle session lives [default: 120 sec]");
-        opts.addOption("sweep", "session_sweep_interval", true, "The interval in sec that the session expiry thread runs [default: 60 sec]");
-        opts.addOption("jmx", "metrics", false, "Toggle this option to enable monitoring metrics using JMX [default: false]");
+        opts.addOption("scale", "scalemodel", true,
+            "Scale values of prediction models to avoid overflow [default: 1.0 (no-scale)]");
+        opts.addOption("sync", "sync_threshold", true,
+            "Synchronization threshold using clock difference [default: 30]");
+        opts.addOption("ttl", "session_ttl", true,
+            "The TTL in sec that an idle session lives [default: 120 sec]");
+        opts.addOption("sweep", "session_sweep_interval", true,
+            "The interval in sec that the session expiry thread runs [default: 60 sec]");
+        opts.addOption("jmx", "metrics", false,
+            "Toggle this option to enable monitoring metrics using JMX [default: false]");
         return opts;
     }
 
     @Override
     public String toString() {
-        return "[port=" + port + ", numWorkers=" + numWorkers
-                + ", ssl=" + ssl + ", scale=" + scale + ", syncThreshold=" + syncThreshold
-                + ", sessionTTLinSec=" + sessionTTLinSec + ", sweepIntervalInSec="
-                + sweepIntervalInSec + ", jmx=" + jmx + ", state=" + state + "]";
+        return "[port=" + port + ", numWorkers=" + numWorkers + ", ssl=" + ssl + ", scale=" + scale
+                + ", syncThreshold=" + syncThreshold + ", sessionTTLinSec=" + sessionTTLinSec
+                + ", sweepIntervalInSec=" + sweepIntervalInSec + ", jmx=" + jmx + ", state="
+                + state + "]";
     }
 
     public ServerState getState() {
@@ -127,7 +133,7 @@ public final class MixServer implements Runnable {
     public void start() throws CertificateException, SSLException, InterruptedException {
         // Configure SSL.
         final SslContext sslCtx;
-        if(ssl) {
+        if (ssl) {
             SelfSignedCertificate ssc = new SelfSignedCertificate();
             sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
         } else {
@@ -138,34 +144,36 @@ public final class MixServer implements Runnable {
         ScheduledExecutorService metricCollector = Executors.newScheduledThreadPool(1);
         MixServerMetrics metrics = new MixServerMetrics();
         ThroughputCounter throughputCounter = new ThroughputCounter(metricCollector, 5000L, metrics);
-        if(jmx) {// register mbean
+        if (jmx) {// register mbean
             MetricsRegistry.registerMBeans(metrics, port);
         }
 
         // configure initializer
         SessionStore sessionStore = new SessionStore();
         MixServerHandler msgHandler = new MixServerHandler(sessionStore, syncThreshold, scale);
-        MixServerInitializer initializer = new MixServerInitializer(msgHandler, throughputCounter, sslCtx);
+        MixServerInitializer initializer = new MixServerInitializer(msgHandler, throughputCounter,
+            sslCtx);
 
         Runnable cleanSessionTask = new IdleSessionSweeper(sessionStore, sessionTTLinSec * 1000L);
         ScheduledExecutorService idleSessionChecker = Executors.newScheduledThreadPool(1);
         try {
             // start idle session sweeper
-            idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L, sweepIntervalInSec, TimeUnit.SECONDS);
+            idleSessionChecker.scheduleAtFixedRate(cleanSessionTask, sessionTTLinSec + 10L,
+                sweepIntervalInSec, TimeUnit.SECONDS);
             // accept connections
             acceptConnections(initializer, port, numWorkers);
         } finally {
             // release threads
             idleSessionChecker.shutdownNow();
-            if(jmx) {
+            if (jmx) {
                 MetricsRegistry.unregisterMBeans(port);
             }
             metricCollector.shutdownNow();
         }
     }
 
-    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port, @Nonnegative int numWorkers)
-            throws InterruptedException {
+    private void acceptConnections(@Nonnull MixServerInitializer initializer, int port,
+            @Nonnegative int numWorkers) throws InterruptedException {
         final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         final EventLoopGroup workerGroup = new NioEventLoopGroup(numWorkers);
         try {

@@ -38,7 +38,8 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
     @Nullable
     private final SslContext sslCtx;
 
-    public MixServerInitializer(@Nonnull MixServerHandler msgHandler, @Nullable ThroughputCounter throughputCounter, @Nullable SslContext sslCtx) {
+    public MixServerInitializer(@Nonnull MixServerHandler msgHandler,
+            @Nullable ThroughputCounter throughputCounter, @Nullable SslContext sslCtx) {
         this.requestHandler = msgHandler;
         this.throughputCounter = throughputCounter;
         this.sslCtx = sslCtx;
@@ -47,14 +48,14 @@ public final class MixServerInitializer extends ChannelInitializer<SocketChannel
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
-        if(sslCtx != null) {
+        if (sslCtx != null) {
             pipeline.addLast(sslCtx.newHandler(ch.alloc()));
         }
 
         MixMessageEncoder encoder = new MixMessageEncoder();
         MixMessageDecoder decoder = new MixMessageDecoder();
 
-        if(throughputCounter != null) {
+        if (throughputCounter != null) {
             pipeline.addLast(throughputCounter, decoder, encoder, requestHandler);
         } else {
             pipeline.addLast(decoder, encoder, requestHandler);

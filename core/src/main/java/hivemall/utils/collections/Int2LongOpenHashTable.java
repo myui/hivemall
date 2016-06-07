@@ -57,7 +57,7 @@ public class Int2LongOpenHashTable implements Externalizable {
     protected int _used;
     protected int _threshold;
     protected long defaultReturnValue = -1L;
-    
+
     /**
      * Constructor for Externalizable. Should not be called otherwise.
      */
@@ -87,9 +87,9 @@ public class Int2LongOpenHashTable implements Externalizable {
         this._used = 0;
         this._threshold = (int) (actualSize * _loadFactor);
     }
-    
-    public Int2LongOpenHashTable(@Nonnull int[] keys, @Nonnull long[] values, @Nonnull byte[] states,
-            int used) {
+
+    public Int2LongOpenHashTable(@Nonnull int[] keys, @Nonnull long[] values,
+            @Nonnull byte[] states, int used) {
         this._loadFactor = DEFAULT_LOAD_FACTOR;
         this._growFactor = DEFAULT_GROW_FACTOR;
         this._keys = keys;
@@ -98,7 +98,7 @@ public class Int2LongOpenHashTable implements Externalizable {
         this._used = used;
         this._threshold = keys.length;
     }
-    
+
     @Nonnull
     public static Int2LongOpenHashTable newInstance() {
         return new Int2LongOpenHashTable(DEFAULT_SIZE);

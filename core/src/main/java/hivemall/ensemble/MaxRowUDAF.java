@@ -53,14 +53,17 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
-@Description(name = "maxrow", value = "_FUNC_(expr) - Returns the maximum value of expr and values of associated columns as a struct")
+@Description(
+        name = "maxrow",
+        value = "_FUNC_(ANY compare, ...) - Returns a row that has maximum value in the 1st argument")
 public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
 
     @Override
     public GenericUDAFEvaluator getEvaluator(TypeInfo[] parameters) throws SemanticException {
         ObjectInspector oi = TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(parameters[0]);
-        if(!ObjectInspectorUtils.compareSupported(oi)) {
-            throw new UDFArgumentTypeException(0, "Cannot support comparison of map<> type or complex type containing map<>.");
+        if (!ObjectInspectorUtils.compareSupported(oi)) {
+            throw new UDFArgumentTypeException(0,
+                "Cannot support comparison of map<> type or complex type containing map<>.");
         }
         return new GenericUDAFMaxRowEvaluator();
     }
@@ -76,7 +79,7 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
         public ObjectInspector init(Mode mode, ObjectInspector[] parameters) throws HiveException {
             super.init(mode, parameters);
 
-            if(parameters.length == 1 && parameters[0] instanceof StructObjectInspector) {
+            if (parameters.length == 1 && parameters[0] instanceof StructObjectInspector) {
                 return initReduceSide((StructObjectInspector) parameters[0]);
             } else {
                 return initMapSide(parameters);
@@ -90,7 +93,7 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
 
             List<String> fieldNames = new ArrayList<String>(length);
             List<ObjectInspector> fieldOIs = Arrays.asList(outputOIs);
-            for(int i = 0; i < length; i++) {
+            for (int i = 0; i < length; i++) {
                 fieldNames.add("col" + i);
                 outputOIs[i] = ObjectInspectorUtils.getStandardObjectInspector(parameters[i]);
             }
@@ -106,7 +109,7 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
             this.inputOIs = new ObjectInspector[length];
             this.outputOIs = new ObjectInspector[length];
 
-            for(int i = 0; i < length; i++) {
+            for (int i = 0; i < length; i++) {
                 StructField field = fields.get(i);
                 ObjectInspector oi = field.getFieldObjectInspector();
                 inputOIs[i] = oi;
@@ -149,38 +152,40 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public void merge(AggregationBuffer agg, Object partial) throws HiveException {
-            if(partial == null) {
+            if (partial == null) {
                 return;
             }
 
             final MaxAgg maxagg = (MaxAgg) agg;
 
             final List<Object> otherObjects;
-            if(partial instanceof Object[]) {
+            if (partial instanceof Object[]) {
                 otherObjects = Arrays.asList((Object[]) partial);
-            } else if(partial instanceof LazyBinaryStruct) {
+            } else if (partial instanceof LazyBinaryStruct) {
                 otherObjects = ((LazyBinaryStruct) partial).getFieldsAsList();
-            } else if(inputStructOI != null) {
+            } else if (inputStructOI != null) {
                 otherObjects = inputStructOI.getStructFieldsDataAsList(partial);
             } else {
                 throw new HiveException("Invalid type: " + partial.getClass().getName());
             }
 
             boolean isMax = false;
-            if(maxagg.objects == null) {
+            if (maxagg.objects == null) {
                 isMax = true;
             } else {
-                int cmp = ObjectInspectorUtils.compare(maxagg.objects[0], outputOIs[0], otherObjects.get(0), inputOIs[0]);
-                if(cmp < 0) {
+                int cmp = ObjectInspectorUtils.compare(maxagg.objects[0], outputOIs[0],
+                    otherObjects.get(0), inputOIs[0]);
+                if (cmp < 0) {
                     isMax = true;
                 }
             }
 
-            if(isMax) {
+            if (isMax) {
                 int length = otherObjects.size();
                 maxagg.objects = new Object[length];
-                for(int i = 0; i < length; i++) {
-                    maxagg.objects[i] = ObjectInspectorUtils.copyToStandardObject(otherObjects.get(i), inputOIs[i]);
+                for (int i = 0; i < length; i++) {
+                    maxagg.objects[i] = ObjectInspectorUtils.copyToStandardObject(
+                        otherObjects.get(i), inputOIs[i]);
                 }
             }
         }

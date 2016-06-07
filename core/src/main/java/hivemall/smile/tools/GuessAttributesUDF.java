@@ -42,18 +42,19 @@ public final class GuessAttributesUDF extends GenericUDF {
         final StringBuilder buf = new StringBuilder(128);
         final int numArgs = argOIs.length;
         final int last = numArgs - 1;
-        for(int i = 0; i < numArgs; i++) {
-            if(HiveUtils.isNumberOI(argOIs[i])) {
+        for (int i = 0; i < numArgs; i++) {
+            if (HiveUtils.isNumberOI(argOIs[i])) {
                 buf.append('Q'); // quantitative
             } else {
                 buf.append('C'); // categorical            
             }
-            if(i != last) {
+            if (i != last) {
                 buf.append(',');
             }
         }
         String value = buf.toString();
-        return ObjectInspectorUtils.getConstantObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector, value);
+        return ObjectInspectorUtils.getConstantObjectInspector(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector, value);
     }
 
     @Override

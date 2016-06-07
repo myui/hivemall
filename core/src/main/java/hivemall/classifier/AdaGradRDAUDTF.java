@@ -28,10 +28,15 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+@Description(name = "train_adagrad_rda",
+        value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                + " - Returns a relation consists of <string|int|bigint feature, float weight>",
+        extended = "Build a prediction model by Adagrad+RDA regularization binary classifier")
 public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
 
     private float eta;
@@ -41,8 +46,9 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("AdaGradRDAUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
         }
 
         StructObjectInspector oi = super.initialize(argOIs);
@@ -55,14 +61,15 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         Options opts = super.getOptions();
         opts.addOption("eta", "eta0", true, "The learning rate \\eta [default 0.1]");
         opts.addOption("lambda", true, "lambda constant of RDA [default: 1E-6f]");
-        opts.addOption("scale", true, "Internal scaling/descaling factor for cumulative weights [default: 100]");
+        opts.addOption("scale", true,
+            "Internal scaling/descaling factor for cumulative weights [default: 100]");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = super.processOptions(argOIs);
-        if(cl == null) {
+        if (cl == null) {
             this.eta = 0.1f;
             this.lambda = 1E-6f;
             this.scaling = 100f;
@@ -80,7 +87,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
 
         float p = predict(features);
         float loss = LossFunctions.hingeLoss(p, y); // 1.0 - y * p        
-        if(loss <= 0.f) { // max(0, 1 - y * p)
+        if (loss <= 0.f) { // max(0, 1 - y * p)
             return;
         }
         // subgradient => -y * W dot xi
@@ -88,8 +95,8 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
     }
 
     protected void update(@Nonnull final FeatureValue[] features, final float y, final int t) {
-        for(FeatureValue f : features) {// w[f] += y * x[f]
-            if(f == null) {
+        for (FeatureValue f : features) {// w[f] += y * x[f]
+            if (f == null) {
                 continue;
             }
             Object x = f.getFeature();
@@ -99,14 +106,15 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         }
     }
 
-    protected void updateWeight(@Nonnull final Object x, final float xi, final float y, final float t) {
+    protected void updateWeight(@Nonnull final Object x, final float xi, final float y,
+            final float t) {
         final float gradient = -y * xi;
         final float scaled_gradient = gradient * scaling;
 
         float scaled_sum_sqgrad = 0.f;
         float scaled_sum_grad = 0.f;
         IWeightValue old = model.get(x);
-        if(old != null) {
+        if (old != null) {
             scaled_sum_sqgrad = old.getSumOfSquaredGradients();
             scaled_sum_grad = old.getSumOfGradients();
         }
@@ -120,7 +128,7 @@ public final class AdaGradRDAUDTF extends BinaryOnlineClassifierUDTF {
         float sign = (sum_grad > 0.f) ? 1.f : -1.f;
         // |u_{t,i}|/t - \lambda
         float meansOfGradients = sign * sum_grad / t - lambda;
-        if(meansOfGradients < 0.f) {
+        if (meansOfGradients < 0.f) {
             // x_{t,i} = 0
             model.delete(x);
         } else {

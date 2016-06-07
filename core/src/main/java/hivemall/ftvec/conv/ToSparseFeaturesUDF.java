@@ -41,23 +41,24 @@ public final class ToSparseFeaturesUDF extends UDF {
     }
 
     @Nullable
-    public List<String> evaluate(@Nullable final List<FloatWritable> features, @Nullable String biasName) {
-        if(features == null) {
+    public List<String> evaluate(@Nullable final List<FloatWritable> features,
+            @Nullable String biasName) {
+        if (features == null) {
             return null;
         }
         final int size = features.size();
-        if(size == 0) {
+        if (size == 0) {
             return Collections.emptyList();
         }
 
         final StringBuilder buf = new StringBuilder(64);
         final ArrayList<String> list = new ArrayList<String>(size);
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             final FloatWritable o = features.get(i);
-            if(o != null) {
+            if (o != null) {
                 final String s;
                 final float v = o.get();
-                if(biasName != null) {
+                if (biasName != null) {
                     s = buf.append(biasName).append(':').append(v).toString();
                 } else {
                     s = buf.append(i).append(':').append(v).toString();

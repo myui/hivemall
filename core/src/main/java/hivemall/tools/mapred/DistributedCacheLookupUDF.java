@@ -50,7 +50,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "distcache_gets", value = "_FUNC_(filepath, key, default_value [, parseKey]) - Returns map<key_type, value_type>|value_type")
+@Description(
+        name = "distcache_gets",
+        value = "_FUNC_(filepath, key, default_value [, parseKey]) - Returns map<key_type, value_type>|value_type")
 @UDFType(deterministic = false, stateful = false)
 public final class DistributedCacheLookupUDF extends GenericUDF {
 
@@ -68,15 +70,17 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 3 && argOIs.length != 4) {
-            throw new UDFArgumentException("Invalid number of arguments for distcache_gets(FILEPATH, KEYS, DEFAULT_VAL, PARSE_KEY): "
-                    + argOIs.length + getUsage());
+        if (argOIs.length != 3 && argOIs.length != 4) {
+            throw new UDFArgumentException(
+                "Invalid number of arguments for distcache_gets(FILEPATH, KEYS, DEFAULT_VAL, PARSE_KEY): "
+                        + argOIs.length + getUsage());
         }
-        if(!ObjectInspectorUtils.isConstantObjectInspector(argOIs[2])) {
-            throw new UDFArgumentException("Third argument DEFAULT_VALUE must be a constant value: "
-                    + TypeInfoUtils.getTypeInfoFromObjectInspector(argOIs[2]));
+        if (!ObjectInspectorUtils.isConstantObjectInspector(argOIs[2])) {
+            throw new UDFArgumentException(
+                "Third argument DEFAULT_VALUE must be a constant value: "
+                        + TypeInfoUtils.getTypeInfoFromObjectInspector(argOIs[2]));
         }
-        if(argOIs.length == 4) {
+        if (argOIs.length == 4) {
             this.parseKey = HiveUtils.getConstBoolean(argOIs[3]);
         } else {
             this.parseKey = false;
@@ -86,7 +90,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
 
         ObjectInspector argOI2 = argOIs[2];
         this.multipleDefaultValues = (argOI2.getCategory() == Category.LIST);
-        if(multipleDefaultValues) {
+        if (multipleDefaultValues) {
             this.valuesInputOI = (ListObjectInspector) argOI2;
             ObjectInspector valuesElemOI = valuesInputOI.getListElementObjectInspector();
             valueInputOI = HiveUtils.asPrimitiveObjectInspector(valuesElemOI);
@@ -94,7 +98,8 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
             this.defaultValue = HiveUtils.getConstValue(argOI2);
             valueInputOI = HiveUtils.asPrimitiveObjectInspector(argOI2);
         }
-        ObjectInspector valueOutputOI = ObjectInspectorUtils.getStandardObjectInspector(valueInputOI, ObjectInspectorCopyOption.WRITABLE);
+        ObjectInspector valueOutputOI = ObjectInspectorUtils.getStandardObjectInspector(
+            valueInputOI, ObjectInspectorCopyOption.WRITABLE);
 
         final ObjectInspector outputOI;
         switch (argOIs[1].getCategory()) {
@@ -108,14 +113,16 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 this.keysInputOI = (ListObjectInspector) argOIs[1];
                 ObjectInspector keysElemOI = keysInputOI.getListElementObjectInspector();
                 this.keyInputOI = HiveUtils.asPrimitiveObjectInspector(keysElemOI);
-                outputOI = ObjectInspectorFactory.getStandardMapObjectInspector(keyInputOI, valueOutputOI);
+                outputOI = ObjectInspectorFactory.getStandardMapObjectInspector(keyInputOI,
+                    valueOutputOI);
                 break;
             default:
                 throw new UDFArgumentException("Unexpected key type: " + argOIs[1].getTypeName());
         }
 
-        if(parseKey && !HiveUtils.isStringOI(keyInputOI)) {
-            throw new UDFArgumentException("parseKey=true is only available for string typed key(s)");
+        if (parseKey && !HiveUtils.isStringOI(keyInputOI)) {
+            throw new UDFArgumentException(
+                "parseKey=true is only available for string typed key(s)");
         }
 
         final OpenHashMap<Object, Object> map = new OpenHashMap<Object, Object>(8192);
@@ -131,13 +138,15 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         return outputOI;
     }
 
-    private static void loadValues(OpenHashMap<Object, Object> map, File file, PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI) throws IOException, SerDeException {
-        if(!file.exists()) {
+    private static void loadValues(OpenHashMap<Object, Object> map, File file,
+            PrimitiveObjectInspector keyOI, PrimitiveObjectInspector valueOI) throws IOException,
+            SerDeException {
+        if (!file.exists()) {
             return;
         }
-        if(!file.getName().endsWith(".crc")) {
-            if(file.isDirectory()) {
-                for(File f : file.listFiles()) {
+        if (!file.getName().endsWith(".crc")) {
+            if (file.isDirectory()) {
+                for (File f : file.listFiles()) {
                     loadValues(map, f, keyOI, valueOI);
                 }
             } else {
@@ -152,7 +161,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
                 try {
                     reader = HadoopUtils.getBufferedReader(file);
                     String line;
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         Text lineText = new Text(line);
                         Object lineObj = serde.deserialize(lineText);
                         List<Object> fields = lineOI.getStructFieldsDataAsList(lineObj);
@@ -172,8 +181,8 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
     @Override
     public Object evaluate(DeferredObject[] args) throws HiveException {
         final Object arg1 = args[1].get();
-        if(multipleKeyLookup) {
-            if(multipleDefaultValues) {
+        if (multipleKeyLookup) {
+            if (multipleDefaultValues) {
                 Object arg2 = args[2].get();
                 return gets(arg1, arg2);
             } else {
@@ -194,13 +203,13 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         List<?> keys = keysInputOI.getList(arg);
 
         final Map<Object, Object> map = new HashMap<Object, Object>();
-        for(Object k : keys) {
-            if(k == null) {
+        for (Object k : keys) {
+            if (k == null) {
                 continue;
             }
             Object kj = keyInputOI.getPrimitiveJavaObject(k);
             final Object v = cache.get(lookupKey(kj));
-            if(v == null) {
+            if (v == null) {
                 map.put(k, defaultValue);
             } else {
                 map.put(k, v);
@@ -213,22 +222,22 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
         final List<?> keys = keysInputOI.getList(argKeys);
         final List<?> defaultValues = valuesInputOI.getList(argValues);
         final int numKeys = keys.size();
-        if(numKeys != defaultValues.size()) {
+        if (numKeys != defaultValues.size()) {
             throw new HiveException("# of default values != # of lookup keys: keys " + argKeys
                     + ", values: " + argValues);
         }
 
         final Map<Object, Object> map = new HashMap<Object, Object>();
-        for(int i = 0; i < numKeys; i++) {
+        for (int i = 0; i < numKeys; i++) {
             Object k = keys.get(i);
-            if(k == null) {
+            if (k == null) {
                 continue;
             }
             Object kj = keyInputOI.getPrimitiveJavaObject(k);
             Object v = cache.get(lookupKey(kj));
-            if(v == null) {
+            if (v == null) {
                 v = defaultValues.get(i);
-                if(v != null) {
+                if (v != null) {
                     v = valueInputOI.getPrimitiveWritableObject(valueInputOI.copyObject(v));
                 }
             }
@@ -238,7 +247,7 @@ public final class DistributedCacheLookupUDF extends GenericUDF {
     }
 
     private Object lookupKey(final Object key) {
-        if(parseKey) {
+        if (parseKey) {
             String keyStr = key.toString();
             return ExtractFeatureUDF.extractFeature(keyStr);
         } else {

@@ -28,26 +28,27 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "extract_feature", value = "_FUNC_(feature_vector in array<string>) - Returns features in array<string>")
+@Description(name = "extract_feature",
+        value = "_FUNC_(feature_vector in array<string>) - Returns features in array<string>")
 @UDFType(deterministic = true, stateful = false)
 public class ExtractFeatureUDF extends UDF {
 
     public Text evaluate(String featureVector) {
-        if(featureVector == null) {
+        if (featureVector == null) {
             return null;
         }
         return val(extractFeature(featureVector));
     }
 
     public List<Text> evaluate(List<String> featureVectors) {
-        if(featureVectors == null) {
+        if (featureVectors == null) {
             return null;
         }
         final int size = featureVectors.size();
         final Text[] output = new Text[size];
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             String fv = featureVectors.get(i);
-            if(fv != null) {
+            if (fv != null) {
                 output[i] = new Text(extractFeature(fv));
             }
         }
@@ -56,7 +57,7 @@ public class ExtractFeatureUDF extends UDF {
 
     public static String extractFeature(final String ftvec) {
         int pos = ftvec.indexOf(":");
-        if(pos > 0) {
+        if (pos > 0) {
             return ftvec.substring(0, pos);
         } else {
             return ftvec;

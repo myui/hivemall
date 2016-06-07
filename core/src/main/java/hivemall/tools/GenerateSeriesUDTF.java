@@ -31,8 +31,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-@Description(name = "generate_series", value = "_FUNC_(const int|bigint start, const int|bigint end) - "
-        + "Generate a series of values, from start to end")
+@Description(name = "generate_series",
+        value = "_FUNC_(const int|bigint start, const int|bigint end) - "
+                + "Generate a series of values, from start to end")
 public final class GenerateSeriesUDTF extends GenericUDTF {
 
     private long start, end;
@@ -40,7 +41,7 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("Expected number of arguments is 2: " + argOIs.length);
         }
 
@@ -49,7 +50,7 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>(1);
 
         this.useBigInt = HiveUtils.isBigIntOI(argOIs[1]);
-        if(useBigInt) {
+        if (useBigInt) {
             fieldOIs.add(PrimitiveObjectInspectorFactory.javaLongObjectInspector);
         } else {
             fieldOIs.add(PrimitiveObjectInspectorFactory.javaIntObjectInspector);
@@ -57,7 +58,7 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
 
         this.start = HiveUtils.getAsConstLong(argOIs[0]);
         this.end = HiveUtils.getAsConstLong(argOIs[1]);
-        if(start > end) {
+        if (start > end) {
             throw new UDFArgumentException("start '" + start
                     + "' must be less than or equlas to end '" + end + "'");
         }
@@ -68,12 +69,12 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
     @Override
     public void process(Object[] argOIs) throws HiveException {
         final Object[] forwardObjs = new Object[1];
-        if(useBigInt) {
-            if(start == end) {
+        if (useBigInt) {
+            if (start == end) {
                 forwardObjs[0] = start;
                 forward(forwardObjs);
             } else {
-                for(long i = start; i <= end; i++) {
+                for (long i = start; i <= end; i++) {
                     forwardObjs[0] = i;
                     forward(forwardObjs);
                 }
@@ -81,11 +82,11 @@ public final class GenerateSeriesUDTF extends GenericUDTF {
         } else {
             int starti = (int) start;
             int endi = (int) end;
-            if(starti == endi) {
+            if (starti == endi) {
                 forwardObjs[0] = starti;
                 forward(forwardObjs);
             } else {
-                for(int i = starti; i <= endi; i++) {
+                for (int i = starti; i <= endi; i++) {
                     forwardObjs[0] = i;
                     forward(forwardObjs);
                 }

@@ -19,6 +19,8 @@
 package hivemall;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.writableFloatObjectInspector;
+import hivemall.mix.MixMessage.MixEventName;
+import hivemall.mix.client.MixClient;
 import hivemall.model.DenseModel;
 import hivemall.model.PredictionModel;
 import hivemall.model.SpaceEfficientDenseModel;
@@ -26,8 +28,6 @@ import hivemall.model.SparseModel;
 import hivemall.model.SynchronizedModelWrapper;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
-import hivemall.mix.MixMessage.MixEventName;
-import hivemall.mix.client.MixClient;
 import hivemall.utils.datetime.StopWatch;
 import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;

@@ -37,23 +37,27 @@ public final class MixMessage implements Externalizable {
 
     public MixMessage() {} // for Externalizable
 
-    public MixMessage(MixEventName event, Object feature, float weight, short clock, int deltaUpdates) {
+    public MixMessage(MixEventName event, Object feature, float weight, short clock,
+            int deltaUpdates) {
         this(event, feature, weight, 0.f, clock, deltaUpdates, false);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates) {
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance,
+            short clock, int deltaUpdates) {
         this(event, feature, weight, covariance, clock, deltaUpdates, false);
     }
 
-    public MixMessage(MixEventName event, Object feature, float weight, float covariance, int deltaUpdates, boolean cancelRequest) {
+    public MixMessage(MixEventName event, Object feature, float weight, float covariance,
+            int deltaUpdates, boolean cancelRequest) {
         this(event, feature, weight, covariance, (short) 0 /* dummy clock */, deltaUpdates, cancelRequest);
     }
 
-    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock, int deltaUpdates, boolean cancelRequest) {
-        if(feature == null) {
+    MixMessage(MixEventName event, Object feature, float weight, float covariance, short clock,
+            int deltaUpdates, boolean cancelRequest) {
+        if (feature == null) {
             throw new IllegalArgumentException("feature is null");
         }
-        if(deltaUpdates < 0 || deltaUpdates > Byte.MAX_VALUE) {
+        if (deltaUpdates < 0 || deltaUpdates > Byte.MAX_VALUE) {
             throw new IllegalArgumentException("Illegal deletaUpdates: " + deltaUpdates);
         }
         this.event = event;
@@ -79,7 +83,7 @@ public final class MixMessage implements Externalizable {
         }
 
         public static MixEventName resolve(int b) {
-            switch(b) {
+            switch (b) {
                 case 1:
                     return average;
                 case 2:
@@ -135,7 +139,7 @@ public final class MixMessage implements Externalizable {
         out.writeShort(clock);
         out.writeInt(deltaUpdates);
         out.writeBoolean(cancelRequest);
-        if(groupID == null) {
+        if (groupID == null) {
             out.writeBoolean(false);
         } else {
             out.writeBoolean(true);
@@ -154,7 +158,7 @@ public final class MixMessage implements Externalizable {
         this.deltaUpdates = in.readInt();
         this.cancelRequest = in.readBoolean();
         boolean hasGroupID = in.readBoolean();
-        if(hasGroupID) {
+        if (hasGroupID) {
             this.groupID = in.readUTF();
         }
     }

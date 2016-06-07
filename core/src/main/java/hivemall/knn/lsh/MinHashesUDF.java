@@ -28,11 +28,15 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "minhashes",
+        value = "_FUNC_(array<> features [, int numHashes, int keyGroup [, boolean noWeight]])"
+                + " - Returns minhash values")
 @UDFType(deterministic = true, stateful = false)
 public final class MinHashesUDF extends UDF {
 
@@ -40,10 +44,10 @@ public final class MinHashesUDF extends UDF {
 
     private int[] prepareSeeds(final int numHashes) {
         int[] seeds = this._seeds;
-        if(seeds == null || seeds.length != numHashes) {
+        if (seeds == null || seeds.length != numHashes) {
             seeds = new int[numHashes];
             final Random rand = new Random(31L);
-            for(int i = 0; i < numHashes; i++) {
+            for (int i = 0; i < numHashes; i++) {
                 seeds[i] = rand.nextInt();
             }
             this._seeds = seeds;
@@ -66,8 +70,8 @@ public final class MinHashesUDF extends UDF {
         return evaluate(features, 5, 2, noWeight);
     }
 
-    public List<IntWritable> evaluate(List<String> features, int numHashes, int keyGroups, boolean noWeight)
-            throws HiveException {
+    public List<IntWritable> evaluate(List<String> features, int numHashes, int keyGroups,
+            boolean noWeight) throws HiveException {
         int[] seeds = prepareSeeds(numHashes);
         List<FeatureValue> featureList = parseFeatures(features, noWeight);
         return computeSignatures(featureList, numHashes, keyGroups, seeds);
@@ -75,8 +79,8 @@ public final class MinHashesUDF extends UDF {
 
     private static List<FeatureValue> parseFeatures(final List<Integer> features) {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
-        for(Integer f : features) {
-            if(f != null) {
+        for (Integer f : features) {
+            if (f != null) {
                 FeatureValue fv = new FeatureValue(f, 1.f);
                 ftvec.add(fv);
             }
@@ -84,14 +88,15 @@ public final class MinHashesUDF extends UDF {
         return ftvec;
     }
 
-    private static List<FeatureValue> parseFeatures(final List<String> features, final boolean noWeight) {
+    private static List<FeatureValue> parseFeatures(final List<String> features,
+            final boolean noWeight) {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
-        for(String f : features) {
-            if(f == null) {
+        for (String f : features) {
+            if (f == null) {
                 continue;
             }
             final FeatureValue fv;
-            if(noWeight) {
+            if (noWeight) {
                 fv = new FeatureValue(f, 1.f);
             } else {
                 fv = FeatureValue.parse(f);
@@ -101,21 +106,21 @@ public final class MinHashesUDF extends UDF {
         return ftvec;
     }
 
-    private static List<IntWritable> computeSignatures(final List<FeatureValue> features, final int numHashes, final int keyGroups, final int[] seeds)
-            throws HiveException {
+    private static List<IntWritable> computeSignatures(final List<FeatureValue> features,
+            final int numHashes, final int keyGroups, final int[] seeds) throws HiveException {
         final IntWritable[] hashes = new IntWritable[numHashes];
         final PriorityQueue<Integer> minhashes = new PriorityQueue<Integer>();
         // Compute N sets K minhash values
-        for(int i = 0; i < numHashes; i++) {
+        for (int i = 0; i < numHashes; i++) {
             float weightedMinHashValues = Float.MAX_VALUE;
-            for(FeatureValue fv : features) {
+            for (FeatureValue fv : features) {
                 Object f = fv.getFeature();
                 assert (f != null);
                 String fs = f.toString();
                 int hashIndex = Math.abs(MurmurHash3.murmurhash3_x86_32(fs, seeds[i]));
                 float w = fv.getValueAsFloat();
                 float hashValue = calcWeightedHashValue(hashIndex, w);
-                if(hashValue < weightedMinHashValues) {
+                if (hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;
                     minhashes.offer(hashIndex);
                 }
@@ -129,14 +134,14 @@ public final class MinHashesUDF extends UDF {
     }
 
     /**
-     * For a larger w, hash value tends to be smaller and tends to be selected as minhash. 
+     * For a larger w, hash value tends to be smaller and tends to be selected as minhash.
      */
     private static float calcWeightedHashValue(final int hashIndex, final float w)
             throws HiveException {
-        if(w < 0.f) {
+        if (w < 0.f) {
             throw new HiveException("Non-negative value is not accepted for a feature weight");
         }
-        if(w == 0.f) {
+        if (w == 0.f) {
             return Float.MAX_VALUE;
         } else {
             return hashIndex / w;
@@ -145,13 +150,13 @@ public final class MinHashesUDF extends UDF {
 
     private static int getSignature(PriorityQueue<Integer> candidates, int keyGroups) {
         final int numCandidates = candidates.size();
-        if(numCandidates == 0) {
+        if (numCandidates == 0) {
             return 0;
         }
 
         final int size = Math.min(numCandidates, keyGroups);
         int result = 1;
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             int nextmin = candidates.poll();
             result = (31 * result) + nextmin;
         }

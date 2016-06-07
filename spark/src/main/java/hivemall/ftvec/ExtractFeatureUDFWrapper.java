@@ -33,13 +33,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 /**
  * A wrapper of [[hivemall.ftvec.ExtractFeatureUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark cannot handle List<> as a return type in Hive UDF.
- * Therefore, the type must be passed via ObjectInspector.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark cannot handle List<>
+ * as a return type in Hive UDF. Therefore, the type must be passed via ObjectInspector.
  */
-@Description(
-    name = "extract_feature",
-    value = "_FUNC_(feature in string) - Returns a parsed feature as string")
+@Description(name = "extract_feature",
+        value = "_FUNC_(feature in string) - Returns a parsed feature as string")
 @UDFType(deterministic = true, stateful = false)
 public class ExtractFeatureUDFWrapper extends GenericUDF {
     private ExtractFeatureUDF udf = new ExtractFeatureUDF();
@@ -47,7 +45,7 @@ public class ExtractFeatureUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
+        if (arguments.length != 1) {
             throw new UDFArgumentLengthException(
                 "extract_feature() has an single arguments: string feature");
         }
@@ -62,7 +60,7 @@ public class ExtractFeatureUDFWrapper extends GenericUDF {
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         final String input = (String) argumentOI.getPrimitiveJavaObject(arguments[0].get());
         return udf.evaluate(input);
     }

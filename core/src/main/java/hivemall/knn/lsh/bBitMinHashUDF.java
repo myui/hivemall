@@ -27,11 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.Text;
 
+@Description(name = "bbit_minhash", value = "_FUNC_(array<> features [, int numHashes])"
+        + " - Returns a b-bits minhash value")
 @UDFType(deterministic = true, stateful = false)
 public final class bBitMinHashUDF extends UDF {
 
@@ -39,10 +42,10 @@ public final class bBitMinHashUDF extends UDF {
 
     private int[] prepareSeeds(final int numHashes) {
         int[] seeds = this._seeds;
-        if(seeds == null || seeds.length != numHashes) {
+        if (seeds == null || seeds.length != numHashes) {
             seeds = new int[numHashes];
             final Random rand = new Random(31L);
-            for(int i = 0; i < numHashes; i++) {
+            for (int i = 0; i < numHashes; i++) {
                 seeds[i] = rand.nextInt();
             }
             this._seeds = seeds;
@@ -73,8 +76,8 @@ public final class bBitMinHashUDF extends UDF {
 
     private static List<FeatureValue> parseFeatures(final List<Integer> features) {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
-        for(Integer f : features) {
-            if(f != null) {
+        for (Integer f : features) {
+            if (f != null) {
                 FeatureValue fv = new FeatureValue(f, 1.f);
                 ftvec.add(fv);
             }
@@ -82,14 +85,15 @@ public final class bBitMinHashUDF extends UDF {
         return ftvec;
     }
 
-    private static List<FeatureValue> parseFeatures(final List<String> features, final boolean noWeight) {
+    private static List<FeatureValue> parseFeatures(final List<String> features,
+            final boolean noWeight) {
         final List<FeatureValue> ftvec = new ArrayList<FeatureValue>(features.size());
-        for(String f : features) {
-            if(f == null) {
+        for (String f : features) {
+            if (f == null) {
                 continue;
             }
             final FeatureValue fv;
-            if(noWeight) {
+            if (noWeight) {
                 fv = new FeatureValue(f, 1.f);
             } else {
                 fv = FeatureValue.parse(f);
@@ -99,32 +103,32 @@ public final class bBitMinHashUDF extends UDF {
         return ftvec;
     }
 
-    private static String computeSignatures(final List<FeatureValue> features, final int numHashes, final int[] seeds)
-            throws HiveException {
-        if(numHashes <= 0 || numHashes > 512) {
+    private static String computeSignatures(final List<FeatureValue> features, final int numHashes,
+            final int[] seeds) throws HiveException {
+        if (numHashes <= 0 || numHashes > 512) {
             throw new HiveException("The number of hash function must be in range (0,512]: "
                     + numHashes);
         }
         final int[] hashes = new int[numHashes];
         // Compute N sets K minhash values
-        for(int i = 0; i < numHashes; i++) {
+        for (int i = 0; i < numHashes; i++) {
             float weightedMinHashValues = Float.MAX_VALUE;
-            for(FeatureValue fv : features) {
+            for (FeatureValue fv : features) {
                 Object f = fv.getFeature();
                 assert (f != null);
                 String fs = f.toString();
                 int hashIndex = Math.abs(MurmurHash3.murmurhash3_x86_32(fs, seeds[i]));
                 float w = fv.getValueAsFloat();
                 float hashValue = calcWeightedHashValue(hashIndex, w);
-                if(hashValue < weightedMinHashValues) {
+                if (hashValue < weightedMinHashValues) {
                     weightedMinHashValues = hashValue;
                     hashes[i] = hashIndex;
                 }
             }
         }
         BigInteger value = BigInteger.valueOf(0L);
-        for(int i = 0; i < numHashes; i++) {
-            if((hashes[i] & 1) == 1) {
+        for (int i = 0; i < numHashes; i++) {
+            if ((hashes[i] & 1) == 1) {
                 value = value.setBit(i);
             }
         }
@@ -132,14 +136,14 @@ public final class bBitMinHashUDF extends UDF {
     }
 
     /**
-     * For a larger w, hash value tends to be smaller and tends to be selected as minhash. 
+     * For a larger w, hash value tends to be smaller and tends to be selected as minhash.
      */
     private static float calcWeightedHashValue(final int hashIndex, final float w)
             throws HiveException {
-        if(w < 0.f) {
+        if (w < 0.f) {
             throw new HiveException("Non-negative value is not accepted for a feature weight");
         }
-        if(w == 0.f) {
+        if (w == 0.f) {
             return Float.MAX_VALUE;
         } else {
             return hashIndex / w;

@@ -22,17 +22,23 @@ import hivemall.model.FeatureValue;
 
 import javax.annotation.Nonnull;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
-public class PerceptronUDTF extends BinaryOnlineClassifierUDTF {
+@Description(name = "train_perceptron",
+        value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
+                + " - Returns a relation consists of <string|int|bigint feature, float weight>",
+        extended = "Build a prediction model by Perceptron binary classifier")
+public final class PerceptronUDTF extends BinaryOnlineClassifierUDTF {
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         final int numArgs = argOIs.length;
-        if(numArgs != 2 && numArgs != 3) {
-            throw new UDFArgumentException("PerceptronUDTF takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
+        if (numArgs != 2 && numArgs != 3) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes 2 or 3 arguments: List<Text|Int|BitInt> features, int label [, constant string options]");
         }
 
         return super.initialize(argOIs);

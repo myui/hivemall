@@ -26,7 +26,8 @@ import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.LongWritable;
 
-@Description(name = "x_rank", value = "_FUNC_(KEY) - Generates a pseudo sequence number starting from 1 for each key")
+@Description(name = "x_rank",
+        value = "_FUNC_(KEY) - Generates a pseudo sequence number starting from 1 for each key")
 @UDFType(deterministic = false, stateful = true)
 public final class RankSequenceUDF extends UDF {
 
@@ -36,15 +37,15 @@ public final class RankSequenceUDF extends UDF {
 
     @Nonnull
     public LongWritable evaluate(@Nullable final String key) {
-        if(key == null) {
-            if(lastNull) {
+        if (key == null) {
+            if (lastNull) {
                 counter.set(counter.get() + 1L);
             } else {
                 counter.set(1L);
                 this.lastNull = true;
             }
         } else {
-            if(key.equals(lastKey)) {
+            if (key.equals(lastKey)) {
                 counter.set(counter.get() + 1L);
             } else {
                 counter.set(1L);

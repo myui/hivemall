@@ -37,7 +37,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInsp
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
-@Description(name = "quantified_features", value = "_FUNC_(boolean output, col1, col2, ...) - Returns an identified features in a dence array<double>")
+@Description(
+        name = "quantified_features",
+        value = "_FUNC_(boolean output, col1, col2, ...) - Returns an identified features in a dence array<double>")
 public final class QuantifiedFeaturesUDTF extends GenericUDTF {
 
     private BooleanObjectInspector boolOI;
@@ -52,7 +54,7 @@ public final class QuantifiedFeaturesUDTF extends GenericUDTF {
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         int size = argOIs.length;
-        if(size < 2) {
+        if (size < 2) {
             throw new UDFArgumentException("quantified_features takes at least two arguments: "
                     + size);
         }
@@ -64,10 +66,10 @@ public final class QuantifiedFeaturesUDTF extends GenericUDTF {
         this.identifiers = new Identifier[outputSize];
         this.fowardObjs = null;
 
-        for(int i = 0; i < outputSize; i++) {
+        for (int i = 0; i < outputSize; i++) {
             columnValues[i] = new DoubleWritable(Double.NaN);
             ObjectInspector argOI = argOIs[i + 1];
-            if(HiveUtils.isNumberOI(argOI)) {
+            if (HiveUtils.isNumberOI(argOI)) {
                 doubleOIs[i] = HiveUtils.asDoubleCompatibleOI(argOI);
             } else {
                 identifiers[i] = new Identifier<String>();
@@ -84,21 +86,21 @@ public final class QuantifiedFeaturesUDTF extends GenericUDTF {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        if(fowardObjs == null) {
-            this.fowardObjs = new Object[] { Arrays.asList(columnValues) };
+        if (fowardObjs == null) {
+            this.fowardObjs = new Object[] {Arrays.asList(columnValues)};
         }
 
         boolean outputRow = boolOI.get(args[0]);
-        if(outputRow) {
+        if (outputRow) {
             final DoubleWritable[] values = this.columnValues;
-            for(int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
+            for (int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
                 Object arg = args[i + 1];
                 Identifier<String> identifier = identifiers[i];
-                if(identifier == null) {
+                if (identifier == null) {
                     double v = PrimitiveObjectInspectorUtils.getDouble(arg, doubleOIs[i]);
                     values[i].set(v);
                 } else {
-                    if(arg == null) {
+                    if (arg == null) {
                         throw new HiveException("Found Null in the input: " + Arrays.toString(args));
                     } else {
                         String k = arg.toString();
@@ -109,11 +111,11 @@ public final class QuantifiedFeaturesUDTF extends GenericUDTF {
             }
             forward(fowardObjs);
         } else {// load only            
-            for(int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
+            for (int i = 0, outputSize = args.length - 1; i < outputSize; i++) {
                 Identifier<String> identifier = identifiers[i];
-                if(identifier != null) {
+                if (identifier != null) {
                     Object arg = args[i + 1];
-                    if(arg != null) {
+                    if (arg != null) {
                         String k = arg.toString();
                         identifier.valueOf(k);
                     }

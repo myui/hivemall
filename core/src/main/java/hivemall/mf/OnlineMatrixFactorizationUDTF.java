@@ -170,8 +170,7 @@ public abstract class OnlineMatrixFactorizationUDTF extends UDTFWithOptions impl
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length < 3) {
             throw new UDFArgumentException(
-                getClass().getSimpleName()
-                        + " takes 3 arguments: INT user, INT item, FLOAT rating [, CONSTANT STRING options]");
+                "_FUNC_ takes 3 arguments: INT user, INT item, FLOAT rating [, CONSTANT STRING options]");
         }
         this.userOI = HiveUtils.asIntCompatibleOI(argOIs[0]);
         this.itemOI = HiveUtils.asIntCompatibleOI(argOIs[1]);

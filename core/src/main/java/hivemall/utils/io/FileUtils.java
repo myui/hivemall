@@ -29,14 +29,14 @@ public final class FileUtils {
     private FileUtils() {}
 
     public static long getFileSize(@Nonnull File file) {
-        if(!file.exists()) {
+        if (!file.exists()) {
             return -1L;
         }
         long size = 0;
-        if(file.isDirectory()) {
+        if (file.isDirectory()) {
             File[] files = file.listFiles();
-            if(files != null && files.length > 0) {
-                for(File f : files) {
+            if (files != null && files.length > 0) {
+                for (File f : files) {
                     size += getFileSize(f);
                 }
             }

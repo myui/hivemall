@@ -23,10 +23,12 @@ import static hivemall.utils.hadoop.WritableUtils.val;
 import java.math.BigInteger;
 import java.util.List;
 
+import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
+@Description(name = "popcnt", value = "_FUNC_(a [, b]) - Returns a popcount value")
 @UDFType(deterministic = true, stateful = false)
 public final class PopcountUDF extends UDF {
 
@@ -41,7 +43,7 @@ public final class PopcountUDF extends UDF {
 
     public IntWritable evaluate(List<Long> a) {
         int result = 0;
-        for(int i = 0; i < a.size(); i++) {
+        for (int i = 0; i < a.size(); i++) {
             long x = a.get(i).longValue();
             result += Long.bitCount(x);
         }
@@ -72,7 +74,7 @@ public final class PopcountUDF extends UDF {
     public IntWritable evaluate(List<Long> a, List<Long> b) {
         final int min = Math.min(a.size(), b.size());
         int result = 0;
-        for(int i = 0; i < min; i++) {
+        for (int i = 0; i < min; i++) {
             long innerProduct = a.get(i).longValue() & b.get(i).longValue();
             result += Long.bitCount(innerProduct);
         }

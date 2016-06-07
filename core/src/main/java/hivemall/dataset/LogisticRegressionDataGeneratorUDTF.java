@@ -40,7 +40,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-@Description(name = "lr_datagen", value = "_FUNC_(options string) - Generates a logistic regression dataset")
+@Description(
+        name = "lr_datagen",
+        value = "_FUNC_(options string) - Generates a logistic regression dataset",
+        extended = "WITH dual AS (SELECT 1) SELECT lr_datagen('-n_examples 1k -n_features 10') FROM dual;")
 public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private static final int N_BUFFERS = 1000;
@@ -56,7 +59,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
     private int n_dimensions;
     private float eps;
     private float prob_one;
-    private int r_seed;
+    private long r_seed;
     private boolean dense;
     private boolean sort;
     private boolean classification;
@@ -66,22 +69,30 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
     @Override
     protected Options getOptions() {
         Options opts = new Options();
-        opts.addOption("ne", "n_examples", true, "Number of training examples created for each task [DEFAULT: 1000]");
-        opts.addOption("nf", "n_features", true, "Number of features contained for each example [DEFAULT: 10]");
+        opts.addOption("ne", "n_examples", true,
+            "Number of training examples created for each task [DEFAULT: 1000]");
+        opts.addOption("nf", "n_features", true,
+            "Number of features contained for each example [DEFAULT: 10]");
         opts.addOption("nd", "n_dims", true, "The size of feature dimensions [DEFAULT: 200]");
-        opts.addOption("eps", true, "eps Epsilon factor by which positive examples are scaled [DEFAULT: 3.0]");
-        opts.addOption("p1", "prob_one", true, " Probability in [0, 1.0) that a label is 1 [DEFAULT: 0.6]");
-        opts.addOption("seed", true, "The seed value for random number generator [DEFAULT: 43]");
-        opts.addOption("dense", false, "Make a dense dataset or not. If not specified, a sparse dataset is generated.\n"
-                + "For sparse, n_dims should be much larger than n_features. When disabled, n_features must be equals to n_dims ");
+        opts.addOption("eps", true,
+            "eps Epsilon factor by which positive examples are scaled [DEFAULT: 3.0]");
+        opts.addOption("p1", "prob_one", true,
+            " Probability in [0, 1.0) that a label is 1 [DEFAULT: 0.6]");
+        opts.addOption("seed", true, "The seed value for random number generator [DEFAULT: 43L]");
+        opts.addOption(
+            "dense",
+            false,
+            "Make a dense dataset or not. If not specified, a sparse dataset is generated.\n"
+                    + "For sparse, n_dims should be much larger than n_features. When disabled, n_features must be equals to n_dims ");
         opts.addOption("sort", false, "Sort features if specified (used only for sparse dataset)");
-        opts.addOption("cl", "classification", false, "Toggle this option on to generate a classification dataset");
+        opts.addOption("cl", "classification", false,
+            "Toggle this option on to generate a classification dataset");
         return opts;
     }
 
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 1) {
+        if (argOIs.length != 1) {
             throw new UDFArgumentException("Expected number of arguments is 1: " + argOIs.length);
         }
         String opts = HiveUtils.getConstString(argOIs[0]);
@@ -92,17 +103,17 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         this.n_dimensions = NumberUtils.parseInt(cl.getOptionValue("n_dims"), 200);
         this.eps = Primitives.parseFloat(cl.getOptionValue("eps"), 3.f);
         this.prob_one = Primitives.parseFloat(cl.getOptionValue("prob_one"), 0.6f);
-        this.r_seed = Primitives.parseInt(cl.getOptionValue("seed"), 43);
+        this.r_seed = Primitives.parseLong(cl.getOptionValue("seed"), 43L);
         this.dense = cl.hasOption("dense");
         this.sort = cl.hasOption("sort");
         this.classification = cl.hasOption("classification");
 
-        if(n_features > n_dimensions) {
+        if (n_features > n_dimensions) {
             throw new UDFArgumentException("n_features '" + n_features
                     + "' should be greater than or equals to n_dimensions '" + n_dimensions + "'");
         }
-        if(dense) {
-            if(n_features != n_dimensions) {
+        if (dense) {
+            if (n_features != n_dimensions) {
                 throw new UDFArgumentException("n_features '" + n_features
                         + "' must be equlas to n_dimensions '" + n_dimensions
                         + "' when making a dense dataset");
@@ -123,7 +134,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         fieldNames.add("label");
         fieldOIs.add(PrimitiveObjectInspectorFactory.javaFloatObjectInspector);
         fieldNames.add("features");
-        if(dense) {
+        if (dense) {
             fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaFloatObjectInspector));
         } else {
             fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector));
@@ -133,7 +144,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private void init() {
         this.labels = new float[N_BUFFERS];
-        if(dense) {
+        if (dense) {
             this.featuresFloatArray = new Float[N_BUFFERS][n_features];
         } else {
             this.featuresArray = new String[N_BUFFERS][n_features];
@@ -143,21 +154,26 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] argOIs) throws HiveException {
-        if(rnd1 == null) {
+        if (rnd1 == null) {
             assert (rnd2 == null);
-            int taskid = HadoopUtils.getTaskId();
-            int seed = r_seed + taskid;
+            final int taskid = HadoopUtils.getTaskId(-1);
+            final long seed;
+            if (taskid == -1) {
+                seed = r_seed; // Non-MR local task
+            } else {
+                seed = r_seed + taskid;
+            }
             this.rnd1 = new Random(seed);
             this.rnd2 = new Random(seed + 1);
         }
-        for(int i = 0; i < n_examples; i++) {
-            if(dense) {
+        for (int i = 0; i < n_examples; i++) {
+            if (dense) {
                 generateDenseData();
             } else {
                 generateSparseData();
             }
             position++;
-            if(position == N_BUFFERS) {
+            if (position == N_BUFFERS) {
                 flushBuffered(position);
                 this.position = 0;
             }
@@ -172,10 +188,10 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         assert (features != null);
         final BitSet used = new BitSet(n_dimensions);
         int searchClearBitsFrom = 0;
-        for(int i = 0, retry = 0; i < n_features; i++) {
+        for (int i = 0, retry = 0; i < n_features; i++) {
             int f = rnd2.nextInt(n_dimensions);
-            if(used.get(f)) {
-                if(retry < 3) {
+            if (used.get(f)) {
+                if (retry < 3) {
                     --i;
                     ++retry;
                     continue;
@@ -189,7 +205,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
             features[i] = y;
             retry = 0;
         }
-        if(sort) {
+        if (sort) {
             Arrays.sort(features, new Comparator<String>() {
                 @Override
                 public int compare(String o1, String o2) {
@@ -207,7 +223,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
         labels[position] = classification ? sign : label;
         Float[] features = featuresFloatArray[position];
         assert (features != null);
-        for(int i = 0; i < n_features; i++) {
+        for (int i = 0; i < n_features; i++) {
             float w = (float) rnd2.nextGaussian() + (sign * eps);
             features[i] = Float.valueOf(w);
         }
@@ -215,14 +231,14 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     private void flushBuffered(int position) throws HiveException {
         final Object[] forwardObjs = new Object[2];
-        if(dense) {
-            for(int i = 0; i < position; i++) {
+        if (dense) {
+            for (int i = 0; i < position; i++) {
                 forwardObjs[0] = Float.valueOf(labels[i]);
                 forwardObjs[1] = Arrays.asList(featuresFloatArray[i]);
                 forward(forwardObjs);
             }
         } else {
-            for(int i = 0; i < position; i++) {
+            for (int i = 0; i < position; i++) {
                 forwardObjs[0] = Float.valueOf(labels[i]);
                 forwardObjs[1] = Arrays.asList(featuresArray[i]);
                 forward(forwardObjs);
@@ -232,7 +248,7 @@ public final class LogisticRegressionDataGeneratorUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        if(position > 0) {
+        if (position > 0) {
             flushBuffered(position);
         }
         // release resources to help GCs

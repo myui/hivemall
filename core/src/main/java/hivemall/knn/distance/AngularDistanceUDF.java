@@ -37,7 +37,8 @@ import org.apache.hadoop.io.FloatWritable;
 /**
  * @see http://en.wikipedia.org/wiki/Cosine_similarity#Angular_similarity
  */
-@Description(name = "angular_distance", value = "_FUNC_(ftvec1, ftvec2) - Returns an angular distance of the given two vectors")
+@Description(name = "angular_distance",
+        value = "_FUNC_(ftvec1, ftvec2) - Returns an angular distance of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class AngularDistanceUDF extends GenericUDF {
 
@@ -45,7 +46,7 @@ public final class AngularDistanceUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("angular_distance takes 2 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);

@@ -18,7 +18,8 @@ import org.apache.hadoop.io.FloatWritable;
 /**
  * @see http://en.wikipedia.org/wiki/Cosine_similarity#Angular_similarity
  */
-@Description(name = "angular_similarity", value = "_FUNC_(ftvec1, ftvec2) - Returns an angular similarity of the given two vectors")
+@Description(name = "angular_similarity",
+        value = "_FUNC_(ftvec1, ftvec2) - Returns an angular similarity of the given two vectors")
 @UDFType(deterministic = true, stateful = false)
 public final class AngularSimilarityUDF extends GenericUDF {
 
@@ -26,7 +27,7 @@ public final class AngularSimilarityUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 2) {
+        if (argOIs.length != 2) {
             throw new UDFArgumentException("angular_similarity takes 2 arguments");
         }
         this.arg0ListOI = HiveUtils.asListOI(argOIs[0]);

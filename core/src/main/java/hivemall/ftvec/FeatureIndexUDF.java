@@ -30,13 +30,15 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.io.IntWritable;
 
-@Description(name = "feature_index", value = "_FUNC_(feature_vector in array<string>) - Returns feature indicies in array<index>")
+@Description(
+        name = "feature_index",
+        value = "_FUNC_(feature_vector in array<string>) - Returns feature indicies in array<index>")
 @UDFType(deterministic = true, stateful = false)
 public final class FeatureIndexUDF extends UDF {
 
     @Nullable
     public IntWritable evaluate(@Nullable String feature) throws HiveException {
-        if(feature == null) {
+        if (feature == null) {
             return null;
         }
         int idx = featureIndex(feature);
@@ -45,13 +47,13 @@ public final class FeatureIndexUDF extends UDF {
 
     @Nullable
     public List<IntWritable> evaluate(@Nullable List<String> featureVector) throws HiveException {
-        if(featureVector == null) {
+        if (featureVector == null) {
             return null;
         }
         final int size = featureVector.size();
         final List<IntWritable> list = new ArrayList<IntWritable>(size);
-        for(String f : featureVector) {
-            if(f != null) {
+        for (String f : featureVector) {
+            if (f != null) {
                 int fi = featureIndex(f);
                 list.add(new IntWritable(fi));
             }
@@ -71,7 +73,7 @@ public final class FeatureIndexUDF extends UDF {
     @Nonnull
     private static String extractFeature(@Nonnull final String feature) {
         final int pos = feature.indexOf(":");
-        if(pos > 0) {
+        if (pos > 0) {
             return feature.substring(0, pos);
         } else {
             return feature;

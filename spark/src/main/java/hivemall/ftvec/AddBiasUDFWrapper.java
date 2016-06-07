@@ -34,11 +34,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.Pr
 /**
  * A wrapper of [[hivemall.ftvec.AddBiasUDF]].
  *
- * NOTE: This is needed to avoid the issue of Spark reflection.
- * That is, spark cannot handle List<> as a return type in Hive UDF.
- * Therefore, the type must be passed via ObjectInspector.
+ * NOTE: This is needed to avoid the issue of Spark reflection. That is, spark cannot handle List<>
+ * as a return type in Hive UDF. Therefore, the type must be passed via ObjectInspector.
  */
-@Description(name = "add_bias", value = "_FUNC_(features in array<string>) - Returns features with a bias as array<string>")
+@Description(name = "add_bias",
+        value = "_FUNC_(features in array<string>) - Returns features with a bias as array<string>")
 @UDFType(deterministic = true, stateful = false)
 public class AddBiasUDFWrapper extends GenericUDF {
     private AddBiasUDF udf = new AddBiasUDF();
@@ -46,18 +46,17 @@ public class AddBiasUDFWrapper extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
-        if(arguments.length != 1) {
+        if (arguments.length != 1) {
             throw new UDFArgumentLengthException(
                 "add_bias() has an single arguments: array<string> features");
         }
 
-        switch(arguments[0].getCategory()) {
+        switch (arguments[0].getCategory()) {
             case LIST:
                 argumentOI = (ListObjectInspector) arguments[0];
                 ObjectInspector elmOI = argumentOI.getListElementObjectInspector();
-                if(elmOI.getCategory().equals(Category.PRIMITIVE)) {
-                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory()
-                            == PrimitiveCategory.STRING) {
+                if (elmOI.getCategory().equals(Category.PRIMITIVE)) {
+                    if (((PrimitiveObjectInspector) elmOI).getPrimitiveCategory() == PrimitiveCategory.STRING) {
                         break;
                     }
                 }
@@ -65,13 +64,12 @@ public class AddBiasUDFWrapper extends GenericUDF {
                 throw new UDFArgumentTypeException(0, "Type mismatch: features");
         }
 
-        return ObjectInspectorFactory.getStandardListObjectInspector(
-                argumentOI.getListElementObjectInspector());
+        return ObjectInspectorFactory.getStandardListObjectInspector(argumentOI.getListElementObjectInspector());
     }
 
     @Override
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
-        assert(arguments.length == 1);
+        assert (arguments.length == 1);
         @SuppressWarnings("unchecked")
         final List<String> input = (List<String>) argumentOI.getList(arguments[0].get());
         return udf.evaluate(input);

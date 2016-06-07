@@ -41,7 +41,7 @@ public final class Distance2SimilarityUDF extends GenericUDF {
 
     @Override
     public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 1) {
+        if (argOIs.length != 1) {
             throw new UDFArgumentException("distance2similarity takes 1 argument");
         }
         this.distanceOI = HiveUtils.asDoubleCompatibleOI(argOIs[0]);
