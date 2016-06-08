@@ -196,10 +196,6 @@ CREATE FUNCTION powered_features as 'hivemall.ftvec.pairing.PoweredFeaturesUDF' 
 DROP FUNCTION IF EXISTS rescale;
 CREATE FUNCTION rescale as 'hivemall.ftvec.scaling.RescaleUDF' USING JAR '${hivemall_jar}';
 
--- for backword compatibility
-DROP FUNCTION IF EXISTS rescale_fv;
-CREATE FUNCTION rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS zscore;
 CREATE FUNCTION zscore as 'hivemall.ftvec.scaling.ZScoreUDF' USING JAR '${hivemall_jar}';
 
@@ -215,10 +211,6 @@ CREATE FUNCTION amplify as 'hivemall.ftvec.amplify.AmplifierUDTF' USING JAR '${h
 
 DROP FUNCTION IF EXISTS rand_amplify;
 CREATE FUNCTION rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF' USING JAR '${hivemall_jar}';
-
--- for backward compatibility
-DROP FUNCTION IF EXISTS addBias;
-CREATE FUNCTION addBias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS add_bias;
 CREATE FUNCTION add_bias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar}';
@@ -314,7 +306,6 @@ CREATE FUNCTION tf as 'hivemall.ftvec.text.TermFrequencyUDAF' USING JAR '${hivem
 -- Regression functions --
 --------------------------
 
--- alias for backward compatibility
 DROP FUNCTION IF EXISTS logress;
 CREATE FUNCTION logress as 'hivemall.regression.LogressUDTF' USING JAR '${hivemall_jar}';
 

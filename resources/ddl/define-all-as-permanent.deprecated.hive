@@ -69,3 +69,9 @@ CREATE FUNCTION train_arowh as 'hivemall.classifier.AROWClassifierUDTF$AROWh' US
 
 DROP FUNCTION IF EXISTS normalize;
 CREATE FUNCTION normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS rescale_fv;
+CREATE FUNCTION rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS addBias;
+CREATE FUNCTION addBias as 'hivemall.ftvec.AddBiasUDF' USING JAR '${hivemall_jar}';

@@ -72,3 +72,9 @@ create temporary function normalize as 'hivemall.ftvec.scaling.L2NormalizationUD
 
 drop temporary function train_adagrad;
 create temporary function train_adagrad as 'hivemall.regression.AdaGradUDTF';
+
+drop temporary function rescale_fv;
+create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF';
+
+drop temporary function addBias;
+create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
