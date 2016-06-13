@@ -61,7 +61,7 @@ public final class FFMStringFeatureMapModel extends FieldAwareFactorizationMachi
         this._beta = params.betaFTRL;
         this._lambda1 = params.lambda1;
         this._lamdda2 = params.lamdda2;
-        this._entrySize = entrySize(_factor, _useFTRL, _useAdaGrad);;
+        this._entrySize = entrySize(_factor, _useFTRL, _useAdaGrad);
     }
 
     @Nonnull
