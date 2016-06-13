@@ -18,9 +18,6 @@
  */
 package hivemall.classifier;
 
-import static hivemall.HivemallConstants.BIGINT_TYPE_NAME;
-import static hivemall.HivemallConstants.INT_TYPE_NAME;
-import static hivemall.HivemallConstants.STRING_TYPE_NAME;
 import hivemall.LearnerBaseUDTF;
 import hivemall.model.FeatureValue;
 import hivemall.model.IWeightValue;
@@ -40,7 +37,6 @@ import javax.annotation.Nullable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
-import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -89,13 +85,8 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
             throws UDFArgumentException {
         this.featureListOI = (ListObjectInspector) arg;
         ObjectInspector featureRawOI = featureListOI.getListElementObjectInspector();
-        String keyTypeName = featureRawOI.getTypeName();
-        if (!STRING_TYPE_NAME.equals(keyTypeName) && !INT_TYPE_NAME.equals(keyTypeName)
-                && !BIGINT_TYPE_NAME.equals(keyTypeName)) {
-            throw new UDFArgumentTypeException(0,
-                "1st argument must be Map of key type [Int|BitInt|Text]: " + keyTypeName);
-        }
-        this.parseFeature = STRING_TYPE_NAME.equals(keyTypeName);
+        HiveUtils.validateFeatureOI(featureRawOI);
+        this.parseFeature = HiveUtils.isStringOI(featureRawOI);
         return HiveUtils.asPrimitiveObjectInspector(featureRawOI);
     }
 

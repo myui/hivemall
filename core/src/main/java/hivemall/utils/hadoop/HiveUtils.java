@@ -207,6 +207,17 @@ public final class HiveUtils {
         return category == Category.LIST;
     }
 
+    public static void validateFeatureOI(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        final String typeName = oi.getTypeName();
+        if (!STRING_TYPE_NAME.equals(typeName) && !INT_TYPE_NAME.equals(typeName)
+                && !BIGINT_TYPE_NAME.equals(typeName)) {
+            throw new UDFArgumentException(
+                "argument type for a feature must be List of key type [Int|BitInt|Text]: "
+                        + typeName);
+        }
+    }
+
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
         return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
     }

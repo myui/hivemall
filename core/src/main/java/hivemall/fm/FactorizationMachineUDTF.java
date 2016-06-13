@@ -211,10 +211,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
                         + Arrays.toString(argOIs));
         }
         this._xOI = HiveUtils.asListOI(argOIs[0]);
-        if (!HiveUtils.isStringOI(_xOI.getListElementObjectInspector())) {
-            throw new UDFArgumentException("Unexpected Object inspector for array<string>: "
-                    + argOIs[0]);
-        }
+        HiveUtils.validateFeatureOI(_xOI.getListElementObjectInspector());
         this._yOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
 
         this._params = newHyperParameters();
