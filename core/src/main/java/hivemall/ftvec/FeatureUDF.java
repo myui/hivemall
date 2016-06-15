@@ -19,73 +19,123 @@
 package hivemall.ftvec;
 
 import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 
 @Description(name = "feature",
         value = "_FUNC_(string feature, double weight) - Returns a feature string")
 @UDFType(deterministic = true, stateful = false)
-public final class FeatureUDF extends UDF {
+public final class FeatureUDF extends GenericUDF {
+    private PrimitiveObjectInspector.PrimitiveCategory featureCategory;
+    private PrimitiveObjectInspector.PrimitiveCategory weightCategory;
 
-    public Text evaluate(int feature, int weight) {
-        return new Text(feature + ":" + weight);
+    private ObjectInspectorConverters.Converter converter;
+
+    private ObjectInspector featureOI;
+    private ObjectInspector weightOI;
+
+    @Override
+    public ObjectInspector initialize(ObjectInspector[] objectInspectors)
+            throws UDFArgumentException {
+        if (objectInspectors.length != 2) {
+            throw new UDFArgumentException("_FUNC_ takes exactly 2 arguments, features label and weight");
+        }
+
+        if (!(objectInspectors[0] instanceof PrimitiveObjectInspector)) {
+            throw new UDFArgumentException("Expected numeric type or string but got "
+                    + objectInspectors[0].getTypeName());
+        }
+
+        if (!(objectInspectors[1] instanceof PrimitiveObjectInspector)) {
+            throw new UDFArgumentException("Expected numeric type but got "
+                    + objectInspectors[1].getTypeName());
+        }
+
+        featureCategory = parsePrimitiveCategory(objectInspectors[0], false);
+        featureOI = objectInspectors[0];
+        weightCategory = parsePrimitiveCategory(objectInspectors[1], true);
+        weightOI = objectInspectors[1];
+
+        converter = ObjectInspectorConverters.getConverter(
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+
+        return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     }
 
-    public Text evaluate(int feature, long weight) {
-        return new Text(feature + ":" + weight);
+    private PrimitiveObjectInspector.PrimitiveCategory parsePrimitiveCategory(ObjectInspector oi, boolean isWeight)
+            throws UDFArgumentException {
+        if (oi instanceof IntObjectInspector) {
+            return PrimitiveObjectInspector.PrimitiveCategory.INT;
+        } else if (oi instanceof LongObjectInspector) {
+            return PrimitiveObjectInspector.PrimitiveCategory.LONG;
+        } else if (oi instanceof FloatObjectInspector) {
+            return PrimitiveObjectInspector.PrimitiveCategory.FLOAT;
+        } else if (oi instanceof DoubleObjectInspector) {
+            return PrimitiveObjectInspector.PrimitiveCategory.DOUBLE;
+        } else if (oi instanceof StringObjectInspector && !isWeight) {
+            return PrimitiveObjectInspector.PrimitiveCategory.STRING;
+        } else {
+            throw new UDFArgumentException("Expected numeric or string type but got "
+                    + oi.getTypeName());
+        }
     }
 
-    public Text evaluate(int feature, float weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(int feature, double weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, int weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, long weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, float weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, double weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(String feature, int weight) {
-        if (feature == null) {
+    private String parseAsString(PrimitiveObjectInspector.PrimitiveCategory category, Object value) {
+        if (category == PrimitiveObjectInspector.PrimitiveCategory.INT) {
+            return ((Integer)value).toString();
+        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.LONG) {
+            return ((Long)value).toString();
+        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.FLOAT) {
+            return ((Float)value).toString();
+        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.DOUBLE) {
+            return ((Double)value).toString();
+        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.STRING) {
+            return ((String)value);
+        } else {
             return null;
         }
-        return new Text(feature + ':' + weight);
     }
 
-    public Text evaluate(String feature, long weight) {
-        if (feature == null) {
+    @Override
+    public Object evaluate(DeferredObject[] args) throws HiveException {
+        if (args.length != 2) {
             return null;
         }
-        return new Text(feature + ':' + weight);
+
+        if (args[0].get() == null || args[1].get() == null) {
+            return null;
+        }
+
+        if (featureOI == null || weightOI == null) {
+            return new HiveException("Invalid ObjectInspector");
+        }
+
+        Object feature = ((PrimitiveObjectInspector)featureOI)
+                .getPrimitiveJavaObject(args[0].get());
+        Object weight = ((PrimitiveObjectInspector)weightOI)
+                .getPrimitiveJavaObject(args[1].get());
+
+        String featureStr = parseAsString(featureCategory, feature);
+        String weightStr = parseAsString(weightCategory, weight);
+
+        return converter.convert(featureStr + ":" + weightStr);
     }
 
-    public Text evaluate(String feature, float weight) {
-        if (feature == null) {
-            return null;
-        }
-        return new Text(feature + ':' + weight);
-    }
-
-    public Text evaluate(String feature, double weight) {
-        if (feature == null) {
-            return null;
-        }
-        return new Text(feature + ':' + weight);
+    @Override
+    public String getDisplayString(String[] strings) {
+        return "feature(" + strings[0] + ", " + strings[1] + ")";
     }
 
 }
