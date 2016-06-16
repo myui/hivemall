@@ -48,7 +48,6 @@ create temporary function feature_hashing as 'hivemall.ftvec.hashing.FeatureHash
 create temporary function polynomial_features as 'hivemall.ftvec.pairing.PolynomialFeaturesUDF';
 create temporary function powered_features as 'hivemall.ftvec.pairing.PoweredFeaturesUDF';
 create temporary function rescale as 'hivemall.ftvec.scaling.RescaleUDF';
-create temporary function rescale_fv as 'hivemall.ftvec.scaling.RescaleUDF';
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 create temporary function amplify as 'hivemall.ftvec.amplify.AmplifierUDTF';
