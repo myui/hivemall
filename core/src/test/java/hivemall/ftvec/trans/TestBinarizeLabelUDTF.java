@@ -74,9 +74,9 @@ public class TestBinarizeLabelUDTF {
 
         verifyPrivate(udtf, times(5)).invoke("forward", any(Object[].class));
         verifyPrivate(udtf, times(2)).invoke("forward",
-            aryEq(new Object[] {WritableUtils.val("a:1", "b:2"), 0}));
-        verifyPrivate(udtf, times(3)).invoke("forward",
             aryEq(new Object[] {WritableUtils.val("a:1", "b:2"), 1}));
+        verifyPrivate(udtf, times(3)).invoke("forward",
+            aryEq(new Object[] {WritableUtils.val("a:1", "b:2"), 0}));
     }
 
     @Test

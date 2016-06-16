@@ -54,9 +54,9 @@ public final class BinarizeLabelUDTF extends GenericUDTF {
         this.negativeOI = HiveUtils.asIntCompatibleOI(argOIs[1]);
 
         this.positiveObjs = new Object[argOIs.length - 1];
-        positiveObjs[positiveObjs.length - 1] = 0;
+        positiveObjs[positiveObjs.length - 1] = 1;
         this.negativeObjs = new Object[argOIs.length - 1];
-        negativeObjs[negativeObjs.length - 1] = 1;
+        negativeObjs[negativeObjs.length - 1] = 0;
 
         ArrayList<String> fieldNames = new ArrayList<String>();
         ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();

@@ -220,7 +220,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     import hiveContext.implicits._
 
     val df1 = Seq((1, -3, 1), (2, -2, 1)).toDF("a", "b", "c")
-    assert(df1.binarize_label($"a", $"b", $"c").collect.toSet === Set(Row(1, 0)))
+    assert(df1.binarize_label($"a", $"b", $"c").collect.toSet === Set(Row(1, 1)))
 
     val df2 = Seq((0.1f, 0.2f), (0.5f, 0.3f)).toDF("a", "b")
     assert(df2.select(vectorize_features(Seq("a", "b"), df2("a"), df2("b"))).collect.toSet
