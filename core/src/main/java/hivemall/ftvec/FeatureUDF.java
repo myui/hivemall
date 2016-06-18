@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,74 +17,106 @@
  */
 package hivemall.ftvec;
 
+import hivemall.utils.hadoop.HiveUtils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hive.ql.exec.Description;
-import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
 
-@Description(name = "feature",
-        value = "_FUNC_(string feature, double weight) - Returns a feature string")
+@Description(
+        name = "feature",
+        value = "_FUNC_(<string|int|long|short|byte> feature, <number> value) - Returns a feature string")
 @UDFType(deterministic = true, stateful = false)
-public final class FeatureUDF extends UDF {
+public final class FeatureUDF extends GenericUDF {
 
-    public Text evaluate(int feature, int weight) {
-        return new Text(feature + ":" + weight);
+    @Nullable
+    private Text _result;
+
+    @Override
+    public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+        if (argOIs.length != 2) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes exactly 2 arguments, feature index and value");
+        }
+        validateFeatureOI(argOIs[0]);
+        validateValueOI(argOIs[1]);
+
+        return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     }
 
-    public Text evaluate(int feature, long weight) {
-        return new Text(feature + ":" + weight);
+    private static void validateFeatureOI(@Nonnull ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!HiveUtils.isPrimitiveOI(argOI)) {
+            throw new UDFArgumentException(
+                "_FUNC_ expects integer type or string for `feature` but got "
+                        + argOI.getTypeName());
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case BYTE:
+            case STRING:
+                break;
+            default: {
+                throw new UDFArgumentException(
+                    "_FUNC_ expects integer type or string for `feature` but got "
+                            + argOI.getTypeName());
+            }
+        }
     }
 
-    public Text evaluate(int feature, float weight) {
-        return new Text(feature + ":" + weight);
+    private static void validateValueOI(@Nonnull ObjectInspector argOI) throws UDFArgumentException {
+        if (!HiveUtils.isNumberOI(argOI)) {
+            throw new UDFArgumentException("_FUNC_ expects a number type for `value` but got "
+                    + argOI.getTypeName());
+        }
     }
 
-    public Text evaluate(int feature, double weight) {
-        return new Text(feature + ":" + weight);
-    }
+    @Override
+    @Nullable
+    public Text evaluate(@Nonnull DeferredObject[] args) throws HiveException {
+        assert (args.length == 2) : args.length;
 
-    public Text evaluate(long feature, int weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, long weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, float weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(long feature, double weight) {
-        return new Text(feature + ":" + weight);
-    }
-
-    public Text evaluate(String feature, int weight) {
-        if (feature == null) {
+        final Object arg0 = args[0].get();
+        if (arg0 == null) {
             return null;
         }
-        return new Text(feature + ':' + weight);
-    }
-
-    public Text evaluate(String feature, long weight) {
-        if (feature == null) {
+        final Object arg1 = args[1].get();
+        if (arg1 == null) {
             return null;
         }
-        return new Text(feature + ':' + weight);
+
+        // arg0|arg1 is Primitive Java object or Writable
+        // Then, toString() works fine
+        String featureStr = arg0.toString();
+        String valueStr = arg1.toString();
+        String fv = featureStr + ':' + valueStr;
+
+        Text result = this._result;
+        if (result == null) {
+            result = new Text(fv);
+            this._result = result;
+        } else {
+            result.set(fv);
+        }
+
+        return result;
     }
 
-    public Text evaluate(String feature, float weight) {
-        if (feature == null) {
-            return null;
-        }
-        return new Text(feature + ':' + weight);
-    }
-
-    public Text evaluate(String feature, double weight) {
-        if (feature == null) {
-            return null;
-        }
-        return new Text(feature + ':' + weight);
+    @Override
+    public String getDisplayString(@Nonnull String[] children) {
+        return "feature(" + children[0] + ", " + children[1] + ")";
     }
 
 }

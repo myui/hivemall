@@ -161,6 +161,10 @@ public final class HiveUtils {
         return Arrays.asList(ary);
     }
 
+    public static boolean isPrimitiveOI(@Nonnull final ObjectInspector oi) {
+        return oi.getCategory() == Category.PRIMITIVE;
+    }
+
     public static boolean isStringOI(@Nonnull final ObjectInspector oi) {
         String typeName = oi.getTypeName();
         return STRING_TYPE_NAME.equals(typeName);
@@ -194,7 +198,23 @@ public final class HiveUtils {
             case FLOAT:
             case DOUBLE:
             case BYTE:
-            case TIMESTAMP:
+                //case TIMESTAMP:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isIntegerOI(@Nonnull final ObjectInspector argOI) {
+        if (argOI.getCategory() != Category.PRIMITIVE) {
+            return false;
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case BYTE:
                 return true;
             default:
                 return false;
@@ -205,17 +225,6 @@ public final class HiveUtils {
     public static boolean isListOI(@Nonnull final ObjectInspector oi) {
         Category category = oi.getCategory();
         return category == Category.LIST;
-    }
-
-    public static void validateFeatureOI(@Nonnull final ObjectInspector oi)
-            throws UDFArgumentException {
-        final String typeName = oi.getTypeName();
-        if (!STRING_TYPE_NAME.equals(typeName) && !INT_TYPE_NAME.equals(typeName)
-                && !BIGINT_TYPE_NAME.equals(typeName)) {
-            throw new UDFArgumentException(
-                "argument type for a feature must be List of key type [Int|BitInt|Text]: "
-                        + typeName);
-        }
     }
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
@@ -270,6 +279,7 @@ public final class HiveUtils {
         return ObjectInspectorUtils.isConstantObjectInspector(oi) && isStringOI(oi);
     }
 
+    @Nonnull
     public static ListTypeInfo asListTypeInfo(@Nonnull TypeInfo typeInfo)
             throws UDFArgumentException {
         if (!typeInfo.getCategory().equals(Category.LIST)) {
@@ -545,7 +555,7 @@ public final class HiveUtils {
     public static PrimitiveObjectInspector asPrimitiveObjectInspector(
             @Nonnull final ObjectInspector oi) throws UDFArgumentException {
         if (oi.getCategory() != Category.PRIMITIVE) {
-            throw new UDFArgumentException("Is not PrimitiveObjectInspector: "
+            throw new UDFArgumentException("Expecting PrimitiveObjectInspector: "
                     + TypeInfoUtils.getTypeInfoFromObjectInspector(oi));
         }
         return (PrimitiveObjectInspector) oi;
@@ -662,7 +672,6 @@ public final class HiveUtils {
         return oi;
     }
 
-
     public static PrimitiveObjectInspector asDoubleCompatibleOI(@Nonnull final ObjectInspector argOI)
             throws UDFArgumentTypeException {
         if (argOI.getCategory() != Category.PRIMITIVE) {
@@ -696,6 +705,17 @@ public final class HiveUtils {
             throw new UDFArgumentException("Expected List OI but was: " + oi);
         }
         return (ListObjectInspector) oi;
+    }
+
+    public static void validateFeatureOI(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        final String typeName = oi.getTypeName();
+        if (!STRING_TYPE_NAME.equals(typeName) && !INT_TYPE_NAME.equals(typeName)
+                && !BIGINT_TYPE_NAME.equals(typeName)) {
+            throw new UDFArgumentException(
+                "argument type for a feature must be List of key type [Int|BitInt|Text]: "
+                        + typeName);
+        }
     }
 
     @Nonnull
