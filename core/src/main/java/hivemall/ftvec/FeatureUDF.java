@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,124 +17,106 @@
  */
 package hivemall.ftvec;
 
+import hivemall.utils.hadoop.HiveUtils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.FloatObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
+import org.apache.hadoop.io.Text;
 
-@Description(name = "feature",
-        value = "_FUNC_(string feature, double weight) - Returns a feature string")
+@Description(
+        name = "feature",
+        value = "_FUNC_(<string|int|long|short|byte> feature, <number> value) - Returns a feature string")
 @UDFType(deterministic = true, stateful = false)
 public final class FeatureUDF extends GenericUDF {
-    private PrimitiveObjectInspector.PrimitiveCategory featureCategory;
-    private PrimitiveObjectInspector.PrimitiveCategory weightCategory;
 
-    private ObjectInspectorConverters.Converter converter;
-
-    private ObjectInspector featureOI;
-    private ObjectInspector weightOI;
+    @Nullable
+    private Text _result;
 
     @Override
-    public ObjectInspector initialize(ObjectInspector[] objectInspectors)
-            throws UDFArgumentException {
-        if (objectInspectors.length != 2) {
-            throw new UDFArgumentException("_FUNC_ takes exactly 2 arguments, features label and weight");
+    public ObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
+        if (argOIs.length != 2) {
+            throw new UDFArgumentException(
+                "_FUNC_ takes exactly 2 arguments, feature index and value");
         }
-
-        if (!(objectInspectors[0] instanceof PrimitiveObjectInspector)) {
-            throw new UDFArgumentException("Expected numeric type or string but got "
-                    + objectInspectors[0].getTypeName());
-        }
-
-        if (!(objectInspectors[1] instanceof PrimitiveObjectInspector)) {
-            throw new UDFArgumentException("Expected numeric type but got "
-                    + objectInspectors[1].getTypeName());
-        }
-
-        featureCategory = parsePrimitiveCategory(objectInspectors[0], false);
-        featureOI = objectInspectors[0];
-        weightCategory = parsePrimitiveCategory(objectInspectors[1], true);
-        weightOI = objectInspectors[1];
-
-        converter = ObjectInspectorConverters.getConverter(
-            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            PrimitiveObjectInspectorFactory.writableStringObjectInspector);
+        validateFeatureOI(argOIs[0]);
+        validateValueOI(argOIs[1]);
 
         return PrimitiveObjectInspectorFactory.writableStringObjectInspector;
     }
 
-    private PrimitiveObjectInspector.PrimitiveCategory parsePrimitiveCategory(ObjectInspector oi, boolean isWeight)
+    private static void validateFeatureOI(@Nonnull ObjectInspector argOI)
             throws UDFArgumentException {
-        if (oi instanceof IntObjectInspector) {
-            return PrimitiveObjectInspector.PrimitiveCategory.INT;
-        } else if (oi instanceof LongObjectInspector) {
-            return PrimitiveObjectInspector.PrimitiveCategory.LONG;
-        } else if (oi instanceof FloatObjectInspector) {
-            return PrimitiveObjectInspector.PrimitiveCategory.FLOAT;
-        } else if (oi instanceof DoubleObjectInspector) {
-            return PrimitiveObjectInspector.PrimitiveCategory.DOUBLE;
-        } else if (oi instanceof StringObjectInspector && !isWeight) {
-            return PrimitiveObjectInspector.PrimitiveCategory.STRING;
-        } else {
-            throw new UDFArgumentException("Expected numeric or string type but got "
-                    + oi.getTypeName());
+        if (!HiveUtils.isPrimitiveOI(argOI)) {
+            throw new UDFArgumentException(
+                "_FUNC_ expects integer type or string for `feature` but got "
+                        + argOI.getTypeName());
+        }
+        final PrimitiveObjectInspector oi = (PrimitiveObjectInspector) argOI;
+        switch (oi.getPrimitiveCategory()) {
+            case INT:
+            case SHORT:
+            case LONG:
+            case BYTE:
+            case STRING:
+                break;
+            default: {
+                throw new UDFArgumentException(
+                    "_FUNC_ expects integer type or string for `feature` but got "
+                            + argOI.getTypeName());
+            }
         }
     }
 
-    private String parseAsString(PrimitiveObjectInspector.PrimitiveCategory category, Object value) {
-        if (category == PrimitiveObjectInspector.PrimitiveCategory.INT) {
-            return ((Integer)value).toString();
-        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.LONG) {
-            return ((Long)value).toString();
-        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.FLOAT) {
-            return ((Float)value).toString();
-        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.DOUBLE) {
-            return ((Double)value).toString();
-        } else if (category == PrimitiveObjectInspector.PrimitiveCategory.STRING) {
-            return ((String)value);
-        } else {
-            return null;
+    private static void validateValueOI(@Nonnull ObjectInspector argOI) throws UDFArgumentException {
+        if (!HiveUtils.isNumberOI(argOI)) {
+            throw new UDFArgumentException("_FUNC_ expects a number type for `value` but got "
+                    + argOI.getTypeName());
         }
     }
 
     @Override
-    public Object evaluate(DeferredObject[] args) throws HiveException {
-        if (args.length != 2) {
+    @Nullable
+    public Text evaluate(@Nonnull DeferredObject[] args) throws HiveException {
+        assert (args.length == 2) : args.length;
+
+        final Object arg0 = args[0].get();
+        if (arg0 == null) {
+            return null;
+        }
+        final Object arg1 = args[1].get();
+        if (arg1 == null) {
             return null;
         }
 
-        if (args[0].get() == null || args[1].get() == null) {
-            return null;
+        // arg0|arg1 is Primitive Java object or Writable
+        // Then, toString() works fine
+        String featureStr = arg0.toString();
+        String valueStr = arg1.toString();
+        String fv = featureStr + ':' + valueStr;
+
+        Text result = this._result;
+        if (result == null) {
+            result = new Text(fv);
+            this._result = result;
+        } else {
+            result.set(fv);
         }
 
-        if (featureOI == null || weightOI == null) {
-            return new HiveException("Invalid ObjectInspector");
-        }
-
-        Object feature = ((PrimitiveObjectInspector)featureOI)
-                .getPrimitiveJavaObject(args[0].get());
-        Object weight = ((PrimitiveObjectInspector)weightOI)
-                .getPrimitiveJavaObject(args[1].get());
-
-        String featureStr = parseAsString(featureCategory, feature);
-        String weightStr = parseAsString(weightCategory, weight);
-
-        return converter.convert(featureStr + ":" + weightStr);
+        return result;
     }
 
     @Override
-    public String getDisplayString(String[] strings) {
-        return "feature(" + strings[0] + ", " + strings[1] + ")";
+    public String getDisplayString(@Nonnull String[] children) {
+        return "feature(" + children[0] + ", " + children[1] + ")";
     }
 
 }

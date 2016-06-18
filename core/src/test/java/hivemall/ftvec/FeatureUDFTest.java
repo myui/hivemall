@@ -22,6 +22,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,12 +40,10 @@ public class FeatureUDFTest {
     public void testIntInt() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-            new DeferredJavaObject(1),
-            new DeferredJavaObject(2)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1),
+                new DeferredJavaObject(2)});
 
         Assert.assertEquals("1:2", ret.toString());
     }
@@ -53,12 +52,10 @@ public class FeatureUDFTest {
     public void testIntLong() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1),
-                new DeferredJavaObject(2L)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1),
+                new DeferredJavaObject(2L)});
 
         Assert.assertEquals("1:2", ret.toString());
     }
@@ -67,12 +64,10 @@ public class FeatureUDFTest {
     public void testIntFloat() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1),
-                new DeferredJavaObject(2.5f)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1),
+                new DeferredJavaObject(2.5f)});
 
         Assert.assertEquals("1:2.5", ret.toString());
     }
@@ -81,27 +76,22 @@ public class FeatureUDFTest {
     public void testIntDouble() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1),
-                new DeferredJavaObject(2.5)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1),
+                new DeferredJavaObject(2.5d)});
 
         Assert.assertEquals("1:2.5", ret.toString());
     }
-
 
     @Test
     public void testLongInt() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1L),
-                new DeferredJavaObject(2)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1L),
+                new DeferredJavaObject(2)});
 
         Assert.assertEquals("1:2", ret.toString());
     }
@@ -110,12 +100,10 @@ public class FeatureUDFTest {
     public void testLongLong() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1L),
-                new DeferredJavaObject(2L)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1L),
+                new DeferredJavaObject(2L)});
 
         Assert.assertEquals("1:2", ret.toString());
     }
@@ -124,12 +112,10 @@ public class FeatureUDFTest {
     public void testLongFloat() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1L),
-                new DeferredJavaObject(2.5f)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1L),
+                new DeferredJavaObject(2.5f)});
 
         Assert.assertEquals("1:2.5", ret.toString());
     }
@@ -138,12 +124,10 @@ public class FeatureUDFTest {
     public void testLongDouble() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject(1L),
-                new DeferredJavaObject(2.5)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject(1L),
+                new DeferredJavaObject(2.5d)});
 
         Assert.assertEquals("1:2.5", ret.toString());
     }
@@ -152,12 +136,10 @@ public class FeatureUDFTest {
     public void testStringInt() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject("f1"),
-                new DeferredJavaObject(2)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject("f1"),
+                new DeferredJavaObject(2)});
 
         Assert.assertEquals("f1:2", ret.toString());
     }
@@ -166,12 +148,10 @@ public class FeatureUDFTest {
     public void testStringLong() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaLongObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject("f1"),
-                new DeferredJavaObject(2L)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject("f1"),
+                new DeferredJavaObject(2L)});
 
         Assert.assertEquals("f1:2", ret.toString());
     }
@@ -180,12 +160,10 @@ public class FeatureUDFTest {
     public void testStringFloat() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaFloatObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject("f1"),
-                new DeferredJavaObject(2.5f)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject("f1"),
+                new DeferredJavaObject(2.5f)});
 
         Assert.assertEquals("f1:2.5", ret.toString());
     }
@@ -194,33 +172,54 @@ public class FeatureUDFTest {
     public void testStringDouble() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[]{
-                new DeferredJavaObject("f1"),
-                new DeferredJavaObject(2.5)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject("f1"),
+                new DeferredJavaObject(2.5d)});
+
+        Assert.assertEquals("f1:2.5", ret.toString());
+    }
+
+    @Test
+    public void testTextDouble() throws Exception {
+        ObjectInspector featureOI = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+        ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
+
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {
+                new DeferredJavaObject(new Text("f1")), new DeferredJavaObject(2.5d)});
+
+        Assert.assertEquals("f1:2.5", ret.toString());
+    }
+
+    @Test
+    public void testTextDoubleWritable() throws Exception {
+        ObjectInspector featureOI = PrimitiveObjectInspectorFactory.writableStringObjectInspector;
+        ObjectInspector weightOI = PrimitiveObjectInspectorFactory.writableDoubleObjectInspector;
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
+
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {
+                new DeferredJavaObject(new Text("f1")),
+                new DeferredJavaObject(new DoubleWritable(2.5d))});
 
         Assert.assertEquals("f1:2.5", ret.toString());
     }
 
     @Test(expected = UDFArgumentException.class)
-    public void testStringString() throws Exception {
+    public void testStringStringFails() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
     }
 
     @Test
     public void testNullWeight() throws Exception {
         ObjectInspector featureOI = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         ObjectInspector weightOI = PrimitiveObjectInspectorFactory.javaIntObjectInspector;
-        udf.initialize(new ObjectInspector[]{featureOI, weightOI});
+        udf.initialize(new ObjectInspector[] {featureOI, weightOI});
 
-        Text ret = (Text)udf.evaluate(new GenericUDF.DeferredObject[] {
-                new DeferredJavaObject("f1"),
-                new DeferredJavaObject(null)
-        });
+        Text ret = udf.evaluate(new GenericUDF.DeferredObject[] {new DeferredJavaObject("f1"),
+                new DeferredJavaObject(null)});
 
         Assert.assertNull(ret);
 
