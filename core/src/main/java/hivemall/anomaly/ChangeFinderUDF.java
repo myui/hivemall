@@ -236,11 +236,11 @@ public class ChangeFinderUDF extends UDFWithOptions {
         yModelCovarFull = callCount >= xRunningWindowSize + 2 * dimensions + yRunningWindowSize + 2;
         if (xModelCovarFull) {
             double temp = calcScore(x, xMeanEstimate, xModelCovar);
-            if (Double.isInfinite(temp)) {
+            if (Double.isInfinite(temp)) {//Recover from Infinity
                 xScore = xThreshold;
-            } else if (Double.isFinite(temp)) {
+            } else if (!(Double.isNaN(temp))) {
                 xScore = temp;
-            }//Ignores NaN
+            }//Ignore NaN
         }
         xTrain();
         if (xModelCovarFull) {
@@ -249,11 +249,11 @@ public class ChangeFinderUDF extends UDFWithOptions {
             y = yRunningSum / yRunningWindowSize;
             if (yModelCovarFull) {
                 double temp = calcScore(y, yMeanEstimate, yModelVar);
-                if (Double.isInfinite(temp)) {
+                if (Double.isInfinite(temp)) {//Recover from Infinity
                     yScore = yThreshold;
-                } else if (Double.isFinite(temp)) {
+                } else if (!(Double.isNaN(temp))) {
                     yScore = temp;
-                }//Ignores NaN
+                }//Ignore NaN
                 yScoreRunningSum += yScore;
                 yScoreHistory.addFirst(yScore);
                 yScoreRunningSum -= yScoreHistory.getLast();
