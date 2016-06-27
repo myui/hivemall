@@ -100,7 +100,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
 
     // ----------------------------------------
 
-    protected FactorizationMachineModel _model;
+    protected transient FactorizationMachineModel _model;
 
     /**
      * The number of training examples processed
@@ -215,9 +215,9 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         this._yOI = HiveUtils.asDoubleCompatibleOI(argOIs[1]);
 
         this._params = newHyperParameters();
-        CommandLine cl = processOptions(argOIs);
+        processOptions(argOIs);
 
-        this._model = initModel(cl, _params);
+        this._model = null;
         this._t = 0L;
 
         if (LOG.isInfoEnabled()) {
@@ -251,21 +251,28 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
     }
 
     @Nonnull
-    protected FactorizationMachineModel initModel(@Nullable CommandLine cl,
-            @Nonnull FMHyperParameters params) throws UDFArgumentException {
+    protected FactorizationMachineModel initModel(@Nonnull FMHyperParameters params)
+            throws UDFArgumentException {
+        final FactorizationMachineModel model;
         if (params.parseFeatureAsInt) {
             if (params.numFeatures == -1) {
-                return new FMIntFeatureMapModel(params);
+                model = new FMIntFeatureMapModel(params);
             } else {
-                return new FMArrayModel(params);
+                model = new FMArrayModel(params);
             }
         } else {
-            return new FMStringFeatureMapModel(params);
+            model = new FMStringFeatureMapModel(params);
         }
+        this._model = model;
+        return model;
     }
 
     @Override
     public void process(Object[] args) throws HiveException {
+        if (_model == null) {
+            this._model = initModel(_params);
+        }
+
         Feature[] x = parseFeatures(args[0]);
         if (x == null) {
             return;

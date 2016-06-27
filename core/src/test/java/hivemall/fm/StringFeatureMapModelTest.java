@@ -50,7 +50,7 @@ public class StringFeatureMapModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-adareg -init_v gaussian -factors 20 -classification -seed 31 -iters 10");
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMStringFeatureMapModel);
 
@@ -125,7 +125,7 @@ public class StringFeatureMapModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-factors 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMStringFeatureMapModel);
 

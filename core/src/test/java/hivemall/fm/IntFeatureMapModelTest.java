@@ -50,7 +50,7 @@ public class IntFeatureMapModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-adareg -int_feature -factors 20 -classification -seed 31 -iters 10");
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMIntFeatureMapModel);
 
@@ -125,7 +125,7 @@ public class IntFeatureMapModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-int_feature -factors 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1");
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMIntFeatureMapModel);
 

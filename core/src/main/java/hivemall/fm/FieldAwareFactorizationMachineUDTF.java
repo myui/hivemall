@@ -68,11 +68,11 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     private int _numFields;
     // ----------------------------------------
 
-    private FFMStringFeatureMapModel _ffmModel;
+    private transient FFMStringFeatureMapModel _ffmModel;
 
-    private IntArrayList _fieldList;
+    private transient IntArrayList _fieldList;
     @Nullable
-    private DoubleArray3D _sumVfX;
+    private transient DoubleArray3D _sumVfX;
 
     public FieldAwareFactorizationMachineUDTF() {
         super();
@@ -156,8 +156,8 @@ public final class FieldAwareFactorizationMachineUDTF extends FactorizationMachi
     }
 
     @Override
-    protected FFMStringFeatureMapModel initModel(@Nullable CommandLine cl,
-            @Nonnull FMHyperParameters params) throws UDFArgumentException {
+    protected FFMStringFeatureMapModel initModel(@Nonnull FMHyperParameters params)
+            throws UDFArgumentException {
         FFMHyperParameters ffmParams = (FFMHyperParameters) params;
 
         FFMStringFeatureMapModel model = new FFMStringFeatureMapModel(ffmParams);

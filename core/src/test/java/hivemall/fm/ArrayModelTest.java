@@ -50,7 +50,7 @@ public class ArrayModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-adareg -factors 20 -classification -seed 31 -iters 100 -int_feature -p " + COL);
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMArrayModel);
 
@@ -111,7 +111,7 @@ public class ArrayModelTest {
             println("Accuracy = " + accuracy);
         }
         udtf.runTrainingIteration(100);
-        Assert.assertTrue(accuracy > 0.95f);
+        Assert.assertTrue("Expected accuracy greather than 0.95f: " + accuracy, accuracy > 0.95f);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class ArrayModelTest {
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
             "-factors 20 -seed 31 -eta 0.001 -lambda0 0.1 -sigma 0.1 -int_feature -p " + COL);
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMArrayModel);
 
