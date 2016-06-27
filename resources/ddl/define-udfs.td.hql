@@ -151,4 +151,5 @@ create temporary function tokenize_ja as 'hivemall.nlp.tokenizer.KuromojiUDF';
 create temporary function concat_array as 'hivemall.tools.array.ArrayConcatUDF';
 create temporary function pa2a_regress as 'hivemall.regression.PassiveAggressiveRegressionUDTF$PA2a';
 create temporary function arow_regress as 'hivemall.regression.AROWRegressionUDTF';
+create temporary function addBias as 'hivemall.ftvec.AddBiasUDF';
 
