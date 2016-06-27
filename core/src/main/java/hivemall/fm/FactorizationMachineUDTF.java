@@ -197,11 +197,6 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         return cl;
     }
 
-    @Nonnull
-    protected FactorizationMachineModel getModel() {
-        return _model;
-    }
-
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length != 2 && argOIs.length != 3) {
