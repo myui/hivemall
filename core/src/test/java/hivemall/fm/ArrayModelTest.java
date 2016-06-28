@@ -48,7 +48,7 @@ public class ArrayModelTest {
         DoubleObjectInspector yOI = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         ObjectInspector paramOI = ObjectInspectorUtils.getConstantObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-            "-adareg -factors 20 -classification -seed 31 -iters 100 -int_feature -p " + COL);
+            "-adareg -factors 20 -classification -seed 31 -iters 10 -int_feature -p " + COL);
         udtf.initialize(new ObjectInspector[] {xOI, yOI, paramOI});
         FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
@@ -110,7 +110,7 @@ public class ArrayModelTest {
             accuracy = bingo / (float) total;
             println("Accuracy = " + accuracy);
         }
-        udtf.runTrainingIteration(100);
+        udtf.runTrainingIteration(10);
         Assert.assertTrue("Expected accuracy greather than 0.95f: " + accuracy, accuracy > 0.95f);
     }
 

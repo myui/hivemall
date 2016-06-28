@@ -101,7 +101,7 @@ public final class FMIntFeatureMapModel extends FactorizationMachineModel {
     }
 
     @Override
-    protected float[] getV(int i) {
+    protected float[] getV(int i, boolean init) {
         assert (i >= 1) : i;
         return _V.get(i);
     }

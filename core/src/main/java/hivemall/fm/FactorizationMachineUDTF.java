@@ -465,7 +465,7 @@ public class FactorizationMachineUDTF extends UDTFWithOptions {
         forwardObjs[2] = Arrays.asList(f_Vi);
 
         for (int i = model.getMinIndex(), maxIdx = model.getMaxIndex(); i <= maxIdx; i++) {
-            final float[] vi = model.getV(i);
+            final float[] vi = model.getV(i, false);
             if (vi == null) {
                 continue;
             }
