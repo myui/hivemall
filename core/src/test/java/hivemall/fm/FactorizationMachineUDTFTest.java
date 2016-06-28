@@ -31,7 +31,7 @@ public class FactorizationMachineUDTFTest {
                     "-factors 5 -min 1 -max 5 -iters 1 -init_v gaussian -eta0 0.01 -seed 31")};
 
         udtf.initialize(argOIs);
-        FactorizationMachineModel model = udtf.getModel();
+        FactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FMStringFeatureMapModel);
 

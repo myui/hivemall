@@ -80,7 +80,7 @@ public class FieldAwareFactorizationMachineUDTFTest {
                     PrimitiveObjectInspectorFactory.javaStringObjectInspector, testOptions)};
 
         udtf.initialize(argOIs);
-        FieldAwareFactorizationMachineModel model = (FieldAwareFactorizationMachineModel) udtf.getModel();
+        FieldAwareFactorizationMachineModel model = udtf.initModel(udtf._params);
         Assert.assertTrue("Actual class: " + model.getClass().getName(),
             model instanceof FFMStringFeatureMapModel);
 

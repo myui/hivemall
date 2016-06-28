@@ -17,6 +17,7 @@
  */
 package hivemall.ftvec.hashing;
 
+import hivemall.HivemallConstants;
 import hivemall.UDFWithOptions;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hashing.MurmurHash3;
@@ -146,18 +147,28 @@ public final class FeatureHashingUDF extends UDFWithOptions {
     }
 
     @Nonnull
-    private static String featureHashing(@Nonnull final String fv, final int numFeatures) {
+    static String featureHashing(@Nonnull final String fv, final int numFeatures) {
         final int headPos = fv.indexOf(':');
         if (headPos == -1) {
+            if (fv.equals(HivemallConstants.BIAS_CLAUSE)) {
+                return fv;
+            }
             int h = mhash(fv, numFeatures);
             return String.valueOf(h);
         } else {
             final int tailPos = fv.lastIndexOf(':');
             if (headPos == tailPos) {
                 String f = fv.substring(0, headPos);
+                String tail = fv.substring(headPos);
+                if (f.equals(HivemallConstants.BIAS_CLAUSE)) {
+                    String v = fv.substring(headPos + 1);
+                    double d = Double.parseDouble(v);
+                    if (d == 1.d) {
+                        return fv;
+                    }
+                }
                 int h = mhash(f, numFeatures);
-                String v = fv.substring(headPos);
-                return h + v;
+                return h + tail;
             } else {
                 String field = fv.substring(0, headPos + 1);
                 String f = fv.substring(headPos + 1, tailPos);
@@ -168,7 +179,7 @@ public final class FeatureHashingUDF extends UDFWithOptions {
         }
     }
 
-    private static int mhash(@Nonnull final String word, final int numFeatures) {
+    static int mhash(@Nonnull final String word, final int numFeatures) {
         int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
         if (r < 0) {
             r += numFeatures;

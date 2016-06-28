@@ -50,8 +50,8 @@ import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.StringObjectInspector;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -66,7 +66,7 @@ import org.apache.hadoop.mapred.JobConf;
 public final class TreePredictUDF extends GenericUDF {
 
     private boolean classification;
-    private IntObjectInspector modelTypeOI;
+    private PrimitiveObjectInspector modelTypeOI;
     private StringObjectInspector stringOI;
     private ListObjectInspector featureListOI;
     private PrimitiveObjectInspector featureElemOI;
@@ -94,7 +94,7 @@ public final class TreePredictUDF extends GenericUDF {
             throw new UDFArgumentException("_FUNC_ takes 4 or 5 arguments");
         }
 
-        this.modelTypeOI = HiveUtils.asIntOI(argOIs[1]);
+        this.modelTypeOI = HiveUtils.asIntegerOI(argOIs[1]);
         this.stringOI = HiveUtils.asStringOI(argOIs[2]);
         ListObjectInspector listOI = HiveUtils.asListOI(argOIs[3]);
         this.featureListOI = listOI;
@@ -124,7 +124,7 @@ public final class TreePredictUDF extends GenericUDF {
         String modelId = arg0.toString();
 
         Object arg1 = arguments[1].get();
-        int modelTypeId = modelTypeOI.get(arg1);
+        int modelTypeId = PrimitiveObjectInspectorUtils.getInt(arg1, modelTypeOI);
         ModelType modelType = ModelType.resolve(modelTypeId);
 
         Object arg2 = arguments[2].get();

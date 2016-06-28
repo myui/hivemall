@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
-		<version>0.4.2-rc.1</version>
+		<version>0.4.2-rc.2</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>hivemall-spark</artifactId>
-	<name>Hivemall in Spark</name>
+	<name>Hivemall on Spark</name>
 	<packaging>jar</packaging>
 
 
@@ -194,7 +194,7 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
-                                        <argLine>-Xms256m -Xmx1024m -XX:MaxPermSize=1024m -XX:+CMSClassUnloadingEnabled</argLine>
+					<argLine>-Xms256m -Xmx1024m -XX:MaxPermSize=1024m -XX:+CMSClassUnloadingEnabled</argLine>
 				</configuration>
 				<executions>
 					<execution>

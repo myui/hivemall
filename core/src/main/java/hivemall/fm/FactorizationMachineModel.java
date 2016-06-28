@@ -65,11 +65,7 @@ public abstract class FactorizationMachineModel {
         this._lambdaW = params.lambdaW;
         this._lambdaV = new float[params.factors];
         Arrays.fill(_lambdaV, params.lambdaV);
-
-        initLearningParams();
     }
-
-    protected void initLearningParams() {}
 
     public abstract int getSize();
 
@@ -100,7 +96,7 @@ public abstract class FactorizationMachineModel {
      * @param i index value >= 1
      */
     @Nullable
-    protected float[] getV(int i) {
+    protected float[] getV(int i, boolean init) {
         throw new UnsupportedOperationException();
     }
 
