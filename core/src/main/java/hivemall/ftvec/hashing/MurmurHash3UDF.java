@@ -22,6 +22,9 @@ import hivemall.utils.hashing.MurmurHash3;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -33,11 +36,13 @@ import org.apache.hadoop.io.IntWritable;
 @UDFType(deterministic = true, stateful = false)
 public final class MurmurHash3UDF extends UDF {
 
-    public IntWritable evaluate(final String word) throws UDFArgumentException {
+    @Nullable
+    public IntWritable evaluate(@Nullable final String word) throws UDFArgumentException {
         return evaluate(word, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public IntWritable evaluate(final String word, final int numFeatures)
+    @Nullable
+    public IntWritable evaluate(@Nullable final String word, final int numFeatures)
             throws UDFArgumentException {
         if (word == null) {
             return null;
@@ -46,11 +51,13 @@ public final class MurmurHash3UDF extends UDF {
         return new IntWritable(h);
     }
 
-    public IntWritable evaluate(final List<String> words) throws UDFArgumentException {
+    @Nullable
+    public IntWritable evaluate(@Nullable final List<String> words) throws UDFArgumentException {
         return evaluate(words, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public IntWritable evaluate(final List<String> words, final int numFeatures)
+    @Nullable
+    public IntWritable evaluate(@Nullable final List<String> words, final int numFeatures)
             throws UDFArgumentException {
         if (words == null) {
             return null;
@@ -70,11 +77,11 @@ public final class MurmurHash3UDF extends UDF {
         return evaluate(s, numFeatures);
     }
 
-    public static int mhash(final String word) {
+    public static int mhash(@Nonnull final String word) {
         return mhash(word, MurmurHash3.DEFAULT_NUM_FEATURES);
     }
 
-    public static int mhash(final String word, final int numFeatures) {
+    public static int mhash(@Nonnull final String word, final int numFeatures) {
         int r = MurmurHash3.murmurhash3_x86_32(word, 0, word.length(), 0x9747b28c) % numFeatures;
         if (r < 0) {
             r += numFeatures;
