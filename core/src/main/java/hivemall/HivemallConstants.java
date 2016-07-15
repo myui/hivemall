@@ -24,7 +24,6 @@ public final class HivemallConstants {
 
     public static final String BIAS_CLAUSE = "0";
     public static final int BIAS_CLAUSE_HASHVAL = 0;
-    public static final long DEFAULT_RAND_AMPLIFY_SEED = 42;
 
     // org.apache.hadoop.hive.serde.Constants (hive 0.9)
     // org.apache.hadoop.hive.serde.serdeConstants (hive 0.10 or later)
