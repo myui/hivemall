@@ -200,7 +200,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
   test("ftvec.amplify") {
     import hiveContext.implicits._
     assert(TinyTrainData.amplify(3, $"label", $"features").count() == 9)
-    assert(TinyTrainData.rand_amplify(3, 128, $"label", $"features").count() == 9)
+    assert(TinyTrainData.rand_amplify(3, "-buf 128", $"label", $"features").count() == 9)
     assert(TinyTrainData.part_amplify(3).count() == 9)
   }
 
