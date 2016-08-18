@@ -27,10 +27,10 @@ public class BinaryResponsesMeasuresTest {
 
     @Test
     public void testNDCG() {
-        List<Integer> rankedList = Arrays.asList(3, 0, 2, 1, 1);
-        List<Integer> groundTruth = Arrays.asList(3, 2, 1, 1, 4);
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
         double actual = BinaryResponsesMeasures.nDCG(rankedList, groundTruth);
-        Assert.assertEquals(0.7860137352654725d, actual, 0.0001d);
+        Assert.assertEquals(0.7039180890341348d, actual, 0.0001d);
     }
 
 }
