@@ -31,11 +31,12 @@ public final class BinaryResponsesMeasures {
 
     private BinaryResponsesMeasures() {}
 
-    public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth) {
+    public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                              @Nonnull final int recommendSize) {
         double dcg = 0.d;
-        double idcg = IDCG(groundTruth.size());
+        double idcg = IDCG(Math.min(recommendSize, groundTruth.size()));
 
-        for (int i = 0, n = rankedList.size(); i < n; i++) {
+        for (int i = 0, n = recommendSize; i < n; i++) {
             Object item_id = rankedList.get(i);
             if (!groundTruth.contains(item_id)) {
                 continue;
