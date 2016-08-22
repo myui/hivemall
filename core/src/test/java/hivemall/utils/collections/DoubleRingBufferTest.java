@@ -49,7 +49,6 @@ public class DoubleRingBufferTest {
         Assert.assertArrayEquals(new double[] {5, 6, 7}, dst, 0.d);
     }
 
-
     @Test
     public void testIterator() {
         DoubleRingBuffer ring = new DoubleRingBuffer(3);
@@ -63,6 +62,69 @@ public class DoubleRingBufferTest {
         Assert.assertEquals(3, itor.next().intValue());
         Assert.assertEquals(4, itor.next().intValue());
         Assert.assertFalse(itor.hasNext());
+    }
+
+    @Test
+    public void testFifoLifo() {
+        final int capacity = 3;
+        final double[] dst = new double[capacity];
+        DoubleRingBuffer ring = new DoubleRingBuffer(capacity);
+        ring.add(1);
+        ring.add(2);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {1, 2, 0}, dst, 0.d);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {2, 1, 0}, dst, 0.d);
+        ring.add(3);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {1, 2, 3}, dst, 0.d);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {3, 2, 1}, dst, 0.d);
+        ring.add(4);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {2, 3, 4}, dst, 0.d);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {4, 3, 2}, dst, 0.d);
+    }
+
+    @Test
+    public void testLifo() {
+        final double[] dst = new double[] {-1, -1, -1};
+        DoubleRingBuffer ring = new DoubleRingBuffer(3);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {0, 0, 0}, dst, 0.d);
+        ring.add(1);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {1, 0, 0}, dst, 0.d);
+        ring.add(2);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {2, 1, 0}, dst, 0.d);
+        ring.add(3);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {3, 2, 1}, dst, 0.d);
+        ring.add(4);
+        ring.toArray(dst, false);
+        Assert.assertArrayEquals(new double[] {4, 3, 2}, dst, 0.d);
+    }
+
+    @Test
+    public void testFifo() {
+        final double[] dst = new double[] {-1, -1, -1};
+        DoubleRingBuffer ring = new DoubleRingBuffer(3);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {0, 0, 0}, dst, 0.d);
+        ring.add(1);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {1, 0, 0}, dst, 0.d);
+        ring.add(2);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {1, 2, 0}, dst, 0.d);
+        ring.add(3);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {1, 2, 3}, dst, 0.d);
+        ring.add(4);
+        ring.toArray(dst, true);
+        Assert.assertArrayEquals(new double[] {2, 3, 4}, dst, 0.d);
     }
 
 }

@@ -61,21 +61,37 @@ public final class DoubleRingBuffer implements Iterable<Double> {
         return size == capacity;
     }
 
-    public void add(final double x) {
+    public DoubleRingBuffer add(final double x) {
         ring[head] = x;
         head = (head + 1) % capacity;
         if (size != capacity) {
             size++;
         }
+        return this;
     }
 
     public void toArray(@Nonnull final double[] dst) {
+        toArray(dst, true);
+    }
+
+    public void toArray(@Nonnull final double[] dst, final boolean fifo) {
         Preconditions.checkArgument(dst.length == capacity);
 
-        int curr = isFull() ? head : 0;
-        for (int i = 0; i < capacity; i++) {
-            dst[i] = ring[curr];
-            curr = (curr + 1) % capacity;
+        if (fifo) {
+            int curr = isFull() ? head : 0;
+            for (int i = 0; i < capacity; i++) {
+                dst[i] = ring[curr];
+                curr = (curr + 1) % capacity;
+            }
+        } else {
+            int curr = isFull() ? head : 0;
+            for (int i = 1; i <= size; i++) {
+                dst[size - i] = ring[curr];
+                curr = (curr + 1) % capacity;
+            }
+            for (int i = size; i < capacity; i++) {
+                dst[i] = 0;
+            }
         }
     }
 
