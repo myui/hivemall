@@ -62,7 +62,7 @@ private[this] class TestInputStream[T: ClassTag](
 final class HivemallOpsSuite extends HivemallQueryTest {
 
   // This implicit value used in `HivemallStreamingOps`
-  implicit val sqlCtx = sqlContext
+  implicit val sqlCtx = hiveContext
 
   /**
    * Run a block of code with the given StreamingContext.

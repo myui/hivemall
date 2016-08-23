@@ -19,7 +19,7 @@ package org.apache.spark.test
 
 import scala.reflect.runtime.{universe => ru}
 
-import org.apache.spark.Logging
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.DataFrame
 
 object TestUtils extends Logging {

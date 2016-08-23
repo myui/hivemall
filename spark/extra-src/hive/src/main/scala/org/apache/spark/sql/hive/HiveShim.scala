@@ -15,512 +15,265 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.hive.client
+package org.apache.spark.sql.hive
 
-import java.lang.{Boolean => JBoolean, Integer => JInteger, Long => JLong}
-import java.lang.reflect.{Method, Modifier}
-import java.net.URI
-import java.util.{ArrayList => JArrayList, List => JList, Map => JMap, Set => JSet}
-import java.util.concurrent.TimeUnit
+import java.io.{InputStream, OutputStream}
+import java.rmi.server.UID
 
 import scala.collection.JavaConverters._
+import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.ql.Driver
-import org.apache.hadoop.hive.ql.metadata.{Hive, Partition, Table}
-import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
-import org.apache.hadoop.hive.ql.session.SessionState
-import org.apache.hadoop.hive.serde.serdeConstants
+import com.google.common.base.Objects
+import org.apache.avro.Schema
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hive.ql.exec.{UDF, Utilities}
+import org.apache.hadoop.hive.ql.plan.{FileSinkDesc, TableDesc}
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFMacro
+import org.apache.hadoop.hive.serde2.ColumnProjectionUtils
+import org.apache.hadoop.hive.serde2.avro.{AvroGenericRecordWritable, AvroSerdeUtils}
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.HiveDecimalObjectInspector
+import org.apache.hadoop.io.Writable
+import org.apache.hive.com.esotericsoftware.kryo.Kryo
+import org.apache.hive.com.esotericsoftware.kryo.io.{Input, Output}
 
-import org.apache.spark.Logging
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.types.{IntegralType, StringType}
+import org.apache.spark.internal.Logging
+import org.apache.spark.sql.types.Decimal
+import org.apache.spark.util.Utils
 
-/**
- * A shim that defines the interface between ClientWrapper and the underlying Hive library used to
- * talk to the metastore. Each Hive version has its own implementation of this class, defining
- * version-specific version of needed functions.
- *
- * The guideline for writing shims is:
- * - always extend from the previous version unless really not possible
- * - initialize methods in lazy vals, both for quicker access for multiple invocations, and to
- *   avoid runtime errors due to the above guideline.
- */
-private[client] sealed abstract class Shim {
+private[hive] object HiveShim {
+  // Precision and scale to pass for unlimited decimals; these are the same as the precision and
+  // scale Hive 0.13 infers for BigDecimals from sources that don't specify them (e.g. UDFs)
+  val UNLIMITED_DECIMAL_PRECISION = 38
+  val UNLIMITED_DECIMAL_SCALE = 18
+  val HIVE_GENERIC_UDF_MACRO_CLS = "org.apache.hadoop.hive.ql.udf.generic.GenericUDFMacro"
 
-  /**
-   * Set the current SessionState to the given SessionState. Also, set the context classloader of
-   * the current thread to the one set in the HiveConf of this given `state`.
-   * @param state
+  /*
+   * This function in hive-0.13 become private, but we have to do this to walkaround hive bug
    */
-  def setCurrentSessionState(state: SessionState): Unit
+  private def appendReadColumnNames(conf: Configuration, cols: Seq[String]) {
+    val old: String = conf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR, "")
+    val result: StringBuilder = new StringBuilder(old)
+    var first: Boolean = old.isEmpty
 
-  /**
-   * This shim is necessary because the return type is different on different versions of Hive.
-   * All parameters are the same, though.
-   */
-  def getDataLocation(table: Table): Option[String]
-
-  def setDataLocation(table: Table, loc: String): Unit
-
-  def getAllPartitions(hive: Hive, table: Table): Seq[Partition]
-
-  def getPartitionsByFilter(hive: Hive, table: Table, predicates: Seq[Expression]): Seq[Partition]
-
-  def getCommandProcessor(token: String, conf: HiveConf): CommandProcessor
-
-  def getDriverResults(driver: Driver): Seq[String]
-
-  def getMetastoreClientConnectRetryDelayMillis(conf: HiveConf): Long
-
-  def loadPartition(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      holdDDLTime: Boolean,
-      inheritTableSpecs: Boolean,
-      isSkewedStoreAsSubdir: Boolean): Unit
-
-  def loadTable(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      replace: Boolean,
-      holdDDLTime: Boolean): Unit
-
-  def loadDynamicPartitions(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      numDP: Int,
-      holdDDLTime: Boolean,
-      listBucketingEnabled: Boolean): Unit
-
-  def dropIndex(hive: Hive, dbName: String, tableName: String, indexName: String): Unit
-
-  protected def findStaticMethod(klass: Class[_], name: String, args: Class[_]*): Method = {
-    val method = findMethod(klass, name, args: _*)
-    require(Modifier.isStatic(method.getModifiers()),
-      s"Method $name of class $klass is not static.")
-    method
-  }
-
-  protected def findMethod(klass: Class[_], name: String, args: Class[_]*): Method = {
-    klass.getMethod(name, args: _*)
-  }
-
-}
-
-private[client] class Shim_v0_12 extends Shim with Logging {
-
-  private lazy val startMethod =
-    findStaticMethod(
-      classOf[SessionState],
-      "start",
-      classOf[SessionState])
-  private lazy val getDataLocationMethod = findMethod(classOf[Table], "getDataLocation")
-  private lazy val setDataLocationMethod =
-    findMethod(
-      classOf[Table],
-      "setDataLocation",
-      classOf[URI])
-  private lazy val getAllPartitionsMethod =
-    findMethod(
-      classOf[Hive],
-      "getAllPartitionsForPruner",
-      classOf[Table])
-  private lazy val getCommandProcessorMethod =
-    findStaticMethod(
-      classOf[CommandProcessorFactory],
-      "get",
-      classOf[String],
-      classOf[HiveConf])
-  private lazy val getDriverResultsMethod =
-    findMethod(
-      classOf[Driver],
-      "getResults",
-      classOf[JArrayList[String]])
-  private lazy val loadPartitionMethod =
-    findMethod(
-      classOf[Hive],
-      "loadPartition",
-      classOf[Path],
-      classOf[String],
-      classOf[JMap[String, String]],
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val loadTableMethod =
-    findMethod(
-      classOf[Hive],
-      "loadTable",
-      classOf[Path],
-      classOf[String],
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val loadDynamicPartitionsMethod =
-    findMethod(
-      classOf[Hive],
-      "loadDynamicPartitions",
-      classOf[Path],
-      classOf[String],
-      classOf[JMap[String, String]],
-      JBoolean.TYPE,
-      JInteger.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val dropIndexMethod =
-    findMethod(
-      classOf[Hive],
-      "dropIndex",
-      classOf[String],
-      classOf[String],
-      classOf[String],
-      JBoolean.TYPE)
-
-  override def setCurrentSessionState(state: SessionState): Unit = {
-    // Starting from Hive 0.13, setCurrentSessionState will internally override
-    // the context class loader of the current thread by the class loader set in
-    // the conf of the SessionState. So, for this Hive 0.12 shim, we add the same
-    // behavior and make shim.setCurrentSessionState of all Hive versions have the
-    // consistent behavior.
-    Thread.currentThread().setContextClassLoader(state.getConf.getClassLoader)
-    startMethod.invoke(null, state)
-  }
-
-  override def getDataLocation(table: Table): Option[String] =
-    Option(getDataLocationMethod.invoke(table)).map(_.toString())
-
-  override def setDataLocation(table: Table, loc: String): Unit =
-    setDataLocationMethod.invoke(table, new URI(loc))
-
-  override def getAllPartitions(hive: Hive, table: Table): Seq[Partition] =
-    getAllPartitionsMethod.invoke(hive, table).asInstanceOf[JSet[Partition]].asScala.toSeq
-
-  override def getPartitionsByFilter(
-      hive: Hive,
-      table: Table,
-      predicates: Seq[Expression]): Seq[Partition] = {
-    // getPartitionsByFilter() doesn't support binary comparison ops in Hive 0.12.
-    // See HIVE-4888.
-    logDebug("Hive 0.12 doesn't support predicate pushdown to metastore. " +
-      "Please use Hive 0.13 or higher.")
-    getAllPartitions(hive, table)
-  }
-
-  override def getCommandProcessor(token: String, conf: HiveConf): CommandProcessor =
-    getCommandProcessorMethod.invoke(null, token, conf).asInstanceOf[CommandProcessor]
-
-  override def getDriverResults(driver: Driver): Seq[String] = {
-    val res = new JArrayList[String]()
-    getDriverResultsMethod.invoke(driver, res)
-    res.asScala
-  }
-
-  override def getMetastoreClientConnectRetryDelayMillis(conf: HiveConf): Long = {
-    conf.getIntVar(HiveConf.ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY) * 1000
-  }
-
-  override def loadPartition(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      holdDDLTime: Boolean,
-      inheritTableSpecs: Boolean,
-      isSkewedStoreAsSubdir: Boolean): Unit = {
-    loadPartitionMethod.invoke(hive, loadPath, tableName, partSpec, replace: JBoolean,
-      holdDDLTime: JBoolean, inheritTableSpecs: JBoolean, isSkewedStoreAsSubdir: JBoolean)
-  }
-
-  override def loadTable(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      replace: Boolean,
-      holdDDLTime: Boolean): Unit = {
-    loadTableMethod.invoke(hive, loadPath, tableName, replace: JBoolean, holdDDLTime: JBoolean)
-  }
-
-  override def loadDynamicPartitions(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      numDP: Int,
-      holdDDLTime: Boolean,
-      listBucketingEnabled: Boolean): Unit = {
-    loadDynamicPartitionsMethod.invoke(hive, loadPath, tableName, partSpec, replace: JBoolean,
-      numDP: JInteger, holdDDLTime: JBoolean, listBucketingEnabled: JBoolean)
-  }
-
-  override def dropIndex(hive: Hive, dbName: String, tableName: String, indexName: String): Unit = {
-    dropIndexMethod.invoke(hive, dbName, tableName, indexName, true: JBoolean)
-  }
-
-}
-
-private[client] class Shim_v0_13 extends Shim_v0_12 {
-
-  private lazy val setCurrentSessionStateMethod =
-    findStaticMethod(
-      classOf[SessionState],
-      "setCurrentSessionState",
-      classOf[SessionState])
-  private lazy val setDataLocationMethod =
-    findMethod(
-      classOf[Table],
-      "setDataLocation",
-      classOf[Path])
-  private lazy val getAllPartitionsMethod =
-    findMethod(
-      classOf[Hive],
-      "getAllPartitionsOf",
-      classOf[Table])
-  private lazy val getPartitionsByFilterMethod =
-    findMethod(
-      classOf[Hive],
-      "getPartitionsByFilter",
-      classOf[Table],
-      classOf[String])
-  private lazy val getCommandProcessorMethod =
-    findStaticMethod(
-      classOf[CommandProcessorFactory],
-      "get",
-      classOf[Array[String]],
-      classOf[HiveConf])
-  private lazy val getDriverResultsMethod =
-    findMethod(
-      classOf[Driver],
-      "getResults",
-      classOf[JList[Object]])
-
-  override def setCurrentSessionState(state: SessionState): Unit =
-    setCurrentSessionStateMethod.invoke(null, state)
-
-  override def setDataLocation(table: Table, loc: String): Unit =
-    setDataLocationMethod.invoke(table, new Path(loc))
-
-  override def getAllPartitions(hive: Hive, table: Table): Seq[Partition] =
-    getAllPartitionsMethod.invoke(hive, table).asInstanceOf[JSet[Partition]].asScala.toSeq
-
-  /**
-   * Converts catalyst expression to the format that Hive's getPartitionsByFilter() expects, i.e.
-   * a string that represents partition predicates like "str_key=\"value\" and int_key=1 ...".
-   *
-   * Unsupported predicates are skipped.
-   */
-  def convertFilters(table: Table, filters: Seq[Expression]): String = {
-    // hive varchar is treated as catalyst string, but hive varchar can't be pushed down.
-    val varcharKeys = table.getPartitionKeys.asScala
-      .filter(col => col.getType.startsWith(serdeConstants.VARCHAR_TYPE_NAME) ||
-        col.getType.startsWith(serdeConstants.CHAR_TYPE_NAME))
-      .map(col => col.getName).toSet
-
-    filters.collect {
-      case op @ BinaryComparison(a: Attribute, Literal(v, _: IntegralType)) =>
-        s"${a.name} ${op.symbol} $v"
-      case op @ BinaryComparison(Literal(v, _: IntegralType), a: Attribute) =>
-        s"$v ${op.symbol} ${a.name}"
-      case op @ BinaryComparison(a: Attribute, Literal(v, _: StringType))
-          if !varcharKeys.contains(a.name) =>
-        s"""${a.name} ${op.symbol} "$v""""
-      case op @ BinaryComparison(Literal(v, _: StringType), a: Attribute)
-          if !varcharKeys.contains(a.name) =>
-        s""""$v" ${op.symbol} ${a.name}"""
-    }.mkString(" and ")
-  }
-
-  override def getPartitionsByFilter(
-      hive: Hive,
-      table: Table,
-      predicates: Seq[Expression]): Seq[Partition] = {
-
-    // Hive getPartitionsByFilter() takes a string that represents partition
-    // predicates like "str_key=\"value\" and int_key=1 ..."
-    val filter = convertFilters(table, predicates)
-    val partitions =
-      if (filter.isEmpty) {
-        getAllPartitionsMethod.invoke(hive, table).asInstanceOf[JSet[Partition]]
+    for (col <- cols) {
+      if (first) {
+        first = false
       } else {
-        logDebug(s"Hive metastore filter is '$filter'.")
-        getPartitionsByFilterMethod.invoke(hive, table, filter).asInstanceOf[JArrayList[Partition]]
+        result.append(',')
       }
-
-    partitions.asScala.toSeq
+      result.append(col)
+    }
+    conf.set(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR, result.toString)
   }
 
-  override def getCommandProcessor(token: String, conf: HiveConf): CommandProcessor =
-    getCommandProcessorMethod.invoke(null, Array(token), conf).asInstanceOf[CommandProcessor]
+  /*
+   * Cannot use ColumnProjectionUtils.appendReadColumns directly, if ids is null or empty
+   */
+  def appendReadColumns(conf: Configuration, ids: Seq[Integer], names: Seq[String]) {
+    if (ids != null && ids.nonEmpty) {
+      ColumnProjectionUtils.appendReadColumns(conf, ids.asJava)
+    }
+    if (names != null && names.nonEmpty) {
+      appendReadColumnNames(conf, names)
+    }
+  }
 
-  override def getDriverResults(driver: Driver): Seq[String] = {
-    val res = new JArrayList[Object]()
-    getDriverResultsMethod.invoke(driver, res)
-    res.asScala.map { r =>
-      r match {
-        case s: String => s
-        case a: Array[Object] => a(0).asInstanceOf[String]
+  /*
+   * Bug introduced in hive-0.13. AvroGenericRecordWritable has a member recordReaderID that
+   * is needed to initialize before serialization.
+   */
+  def prepareWritable(w: Writable, serDeProps: Seq[(String, String)]): Writable = {
+    w match {
+      case w: AvroGenericRecordWritable =>
+        w.setRecordReaderID(new UID())
+        // In Hive 1.1, the record's schema may need to be initialized manually or a NPE will
+        // be thrown.
+        if (w.getFileSchema() == null) {
+          serDeProps
+            .find(_._1 == AvroSerdeUtils.AvroTableProperties.SCHEMA_LITERAL.getPropName())
+            .foreach { kv =>
+              w.setFileSchema(new Schema.Parser().parse(kv._2))
+            }
+        }
+      case _ =>
+    }
+    w
+  }
+
+  def toCatalystDecimal(hdoi: HiveDecimalObjectInspector, data: Any): Decimal = {
+    if (hdoi.preferWritable()) {
+      Decimal(hdoi.getPrimitiveWritableObject(data).getHiveDecimal().bigDecimalValue,
+        hdoi.precision(), hdoi.scale())
+    } else {
+      Decimal(hdoi.getPrimitiveJavaObject(data).bigDecimalValue(), hdoi.precision(), hdoi.scale())
+    }
+  }
+
+  /**
+   * This class provides the UDF creation and also the UDF instance serialization and
+   * de-serialization cross process boundary.
+   *
+   * Detail discussion can be found at https://github.com/apache/spark/pull/3640
+   *
+   * @param functionClassName UDF class name
+   * @param instance optional UDF instance which contains additional information (for macro)
+   */
+  private[hive] case class HiveFunctionWrapper(var functionClassName: String,
+    private var instance: AnyRef = null) extends java.io.Externalizable {
+
+    // for Serialization
+    def this() = this(null)
+
+    override def hashCode(): Int = {
+      if (functionClassName == HIVE_GENERIC_UDF_MACRO_CLS) {
+        Objects.hashCode(functionClassName, instance.asInstanceOf[GenericUDFMacro].getBody())
+      } else {
+        functionClassName.hashCode()
+      }
+    }
+
+    override def equals(other: Any): Boolean = other match {
+      case a: HiveFunctionWrapper if functionClassName == a.functionClassName =>
+        // In case of udf macro, check to make sure they point to the same underlying UDF
+        if (functionClassName == HIVE_GENERIC_UDF_MACRO_CLS) {
+          a.instance.asInstanceOf[GenericUDFMacro].getBody() ==
+            instance.asInstanceOf[GenericUDFMacro].getBody()
+        } else {
+          true
+        }
+      case _ => false
+    }
+
+    @transient
+    def deserializeObjectByKryo[T: ClassTag](
+        kryo: Kryo,
+        in: InputStream,
+        clazz: Class[_]): T = {
+      val inp = new Input(in)
+      val t: T = kryo.readObject(inp, clazz).asInstanceOf[T]
+      inp.close()
+      t
+    }
+
+    @transient
+    def serializeObjectByKryo(
+        kryo: Kryo,
+        plan: Object,
+        out: OutputStream) {
+      val output: Output = new Output(out)
+      kryo.writeObject(output, plan)
+      output.close()
+    }
+
+    def deserializePlan[UDFType](is: java.io.InputStream, clazz: Class[_]): UDFType = {
+      deserializeObjectByKryo(Utilities.runtimeSerializationKryo.get(), is, clazz)
+        .asInstanceOf[UDFType]
+    }
+
+    def serializePlan(function: AnyRef, out: java.io.OutputStream): Unit = {
+      serializeObjectByKryo(Utilities.runtimeSerializationKryo.get(), function, out)
+    }
+
+    def writeExternal(out: java.io.ObjectOutput) {
+      // output the function name
+      out.writeUTF(functionClassName)
+
+      // Write a flag if instance is null or not
+      out.writeBoolean(instance != null)
+      if (instance != null) {
+        // Some of the UDF are serializable, but some others are not
+        // Hive Utilities can handle both cases
+        val baos = new java.io.ByteArrayOutputStream()
+        serializePlan(instance, baos)
+        val functionInBytes = baos.toByteArray
+
+        // output the function bytes
+        out.writeInt(functionInBytes.length)
+        out.write(functionInBytes, 0, functionInBytes.length)
+      }
+    }
+
+    def readExternal(in: java.io.ObjectInput) {
+      // read the function name
+      functionClassName = in.readUTF()
+
+      if (in.readBoolean()) {
+        // if the instance is not null
+        // read the function in bytes
+        val functionInBytesLength = in.readInt()
+        val functionInBytes = new Array[Byte](functionInBytesLength)
+        in.readFully(functionInBytes)
+
+        // deserialize the function object via Hive Utilities
+        instance = deserializePlan[AnyRef](new java.io.ByteArrayInputStream(functionInBytes),
+          Utils.getContextOrSparkClassLoader.loadClass(functionClassName))
+      }
+    }
+
+    def createFunction[UDFType <: AnyRef](): UDFType = {
+      if (instance != null) {
+        instance.asInstanceOf[UDFType]
+      } else {
+        val func = Utils.getContextOrSparkClassLoader
+          .loadClass(functionClassName).newInstance.asInstanceOf[UDFType]
+        if (!func.isInstanceOf[UDF]) {
+          // We cache the function if it's no the Simple UDF,
+          // as we always have to create new instance for Simple UDF
+          instance = func
+        }
+        func
       }
     }
   }
 
-}
-
-private[client] class Shim_v0_14 extends Shim_v0_13 {
-
-  private lazy val loadPartitionMethod =
-    findMethod(
-      classOf[Hive],
-      "loadPartition",
-      classOf[Path],
-      classOf[String],
-      classOf[JMap[String, String]],
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val loadTableMethod =
-    findMethod(
-      classOf[Hive],
-      "loadTable",
-      classOf[Path],
-      classOf[String],
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val loadDynamicPartitionsMethod =
-    findMethod(
-      classOf[Hive],
-      "loadDynamicPartitions",
-      classOf[Path],
-      classOf[String],
-      classOf[JMap[String, String]],
-      JBoolean.TYPE,
-      JInteger.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-  private lazy val getTimeVarMethod =
-    findMethod(
-      classOf[HiveConf],
-      "getTimeVar",
-      classOf[HiveConf.ConfVars],
-      classOf[TimeUnit])
-
-  override def loadPartition(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      holdDDLTime: Boolean,
-      inheritTableSpecs: Boolean,
-      isSkewedStoreAsSubdir: Boolean): Unit = {
-    loadPartitionMethod.invoke(hive, loadPath, tableName, partSpec, replace: JBoolean,
-      holdDDLTime: JBoolean, inheritTableSpecs: JBoolean, isSkewedStoreAsSubdir: JBoolean,
-      isSrcLocal(loadPath, hive.getConf()): JBoolean, JBoolean.FALSE)
+  /*
+   * Bug introduced in hive-0.13. FileSinkDesc is serializable, but its member path is not.
+   * Fix it through wrapper.
+   */
+  implicit def wrapperToFileSinkDesc(w: ShimFileSinkDesc): FileSinkDesc = {
+    val f = new FileSinkDesc(new Path(w.dir), w.tableInfo, w.compressed)
+    f.setCompressCodec(w.compressCodec)
+    f.setCompressType(w.compressType)
+    f.setTableInfo(w.tableInfo)
+    f.setDestTableId(w.destTableId)
+    f
   }
 
-  override def loadTable(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      replace: Boolean,
-      holdDDLTime: Boolean): Unit = {
-    loadTableMethod.invoke(hive, loadPath, tableName, replace: JBoolean, holdDDLTime: JBoolean,
-      isSrcLocal(loadPath, hive.getConf()): JBoolean, JBoolean.FALSE, JBoolean.FALSE)
+  /*
+   * Bug introduced in hive-0.13. FileSinkDesc is serializable, but its member path is not.
+   * Fix it through wrapper.
+   */
+  private[hive] class ShimFileSinkDesc(
+      var dir: String,
+      var tableInfo: TableDesc,
+      var compressed: Boolean)
+    extends Serializable with Logging {
+    var compressCodec: String = _
+    var compressType: String = _
+    var destTableId: Int = _
+
+    def setCompressed(compressed: Boolean) {
+      this.compressed = compressed
+    }
+
+    def getDirName(): String = dir
+
+    def setDestTableId(destTableId: Int) {
+      this.destTableId = destTableId
+    }
+
+    def setTableInfo(tableInfo: TableDesc) {
+      this.tableInfo = tableInfo
+    }
+
+    def setCompressCodec(intermediateCompressorCodec: String) {
+      compressCodec = intermediateCompressorCodec
+    }
+
+    def setCompressType(intermediateCompressType: String) {
+      compressType = intermediateCompressType
+    }
   }
-
-  override def loadDynamicPartitions(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      numDP: Int,
-      holdDDLTime: Boolean,
-      listBucketingEnabled: Boolean): Unit = {
-    loadDynamicPartitionsMethod.invoke(hive, loadPath, tableName, partSpec, replace: JBoolean,
-      numDP: JInteger, holdDDLTime: JBoolean, listBucketingEnabled: JBoolean, JBoolean.FALSE)
-  }
-
-  override def getMetastoreClientConnectRetryDelayMillis(conf: HiveConf): Long = {
-    getTimeVarMethod.invoke(
-      conf,
-      HiveConf.ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY,
-      TimeUnit.MILLISECONDS).asInstanceOf[Long]
-  }
-
-  protected def isSrcLocal(path: Path, conf: HiveConf): Boolean = {
-    val localFs = FileSystem.getLocal(conf)
-    val pathFs = FileSystem.get(path.toUri(), conf)
-    localFs.getUri() == pathFs.getUri()
-  }
-
-}
-
-private[client] class Shim_v1_0 extends Shim_v0_14 {
-
-}
-
-private[client] class Shim_v1_1 extends Shim_v1_0 {
-
-  private lazy val dropIndexMethod =
-    findMethod(
-      classOf[Hive],
-      "dropIndex",
-      classOf[String],
-      classOf[String],
-      classOf[String],
-      JBoolean.TYPE,
-      JBoolean.TYPE)
-
-  override def dropIndex(hive: Hive, dbName: String, tableName: String, indexName: String): Unit = {
-    dropIndexMethod.invoke(hive, dbName, tableName, indexName, true: JBoolean, true: JBoolean)
-  }
-
-}
-
-private[client] class Shim_v1_2 extends Shim_v1_1 {
-
-  private lazy val loadDynamicPartitionsMethod =
-    findMethod(
-      classOf[Hive],
-      "loadDynamicPartitions",
-      classOf[Path],
-      classOf[String],
-      classOf[JMap[String, String]],
-      JBoolean.TYPE,
-      JInteger.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JBoolean.TYPE,
-      JLong.TYPE)
-
-  override def loadDynamicPartitions(
-      hive: Hive,
-      loadPath: Path,
-      tableName: String,
-      partSpec: JMap[String, String],
-      replace: Boolean,
-      numDP: Int,
-      holdDDLTime: Boolean,
-      listBucketingEnabled: Boolean): Unit = {
-    loadDynamicPartitionsMethod.invoke(hive, loadPath, tableName, partSpec, replace: JBoolean,
-      numDP: JInteger, holdDDLTime: JBoolean, listBucketingEnabled: JBoolean, JBoolean.FALSE,
-      0L: JLong)
-  }
-
 }

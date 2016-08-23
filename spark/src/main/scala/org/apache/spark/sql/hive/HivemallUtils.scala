@@ -19,9 +19,10 @@ package org.apache.spark.sql.hive
 
 import org.apache.spark.mllib.linalg.{BLAS, Vector, Vectors}
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, DataFrame, Row, UserDefinedFunction}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 
 object HivemallUtils {
 

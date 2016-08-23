@@ -17,7 +17,7 @@ test in assembly := {}
 // spark-package settings
 spName := "maropu/hivemall-spark"
 
-sparkVersion := "1.6.1"
+sparkVersion := "2.0.0"
 
 sparkComponents ++= Seq("sql", "mllib", "hive")
 

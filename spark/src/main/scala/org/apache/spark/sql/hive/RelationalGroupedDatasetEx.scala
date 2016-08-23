@@ -17,24 +17,21 @@
 
 package org.apache.spark.sql.hive
 
-import org.apache.spark.sql.{AnalysisException, DataFrame, GroupedData}
+import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.RelationalGroupedDataset
+import org.apache.spark.sql.{AnalysisException, DataFrame}
 import org.apache.spark.sql.catalyst.analysis.{Star, UnresolvedAlias, UnresolvedAttribute, UnresolvedFunction}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Cube, Rollup, Pivot}
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Pivot}
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
 
-final class GroupedDataEx protected[sql](
+final class RelationalGroupedDatasetEx protected[sql](
     df: DataFrame,
     groupingExprs: Seq[Expression],
-    private val groupType: GroupedData.GroupType)
-  extends GroupedData(df, groupingExprs, groupType) {
-
-  //////////////////////////////////////////////////////////////////////////////////////////////
-  // toDF, alias, and strToExpr are copyed from the base class, GroupedData, because
-  // these methods have 'private[this]' modifiers.
-  //////////////////////////////////////////////////////////////////////////////////////////////
+    private val groupType: RelationalGroupedDataset.GroupType)
+  extends RelationalGroupedDataset(df, groupingExprs, groupType) {
 
   private[this] def toDF(aggExprs: Seq[Expression]): DataFrame = {
     val aggregates = if (df.sqlContext.conf.dataFrameRetainGroupColumns) {
@@ -46,26 +43,26 @@ final class GroupedDataEx protected[sql](
     val aliasedAgg = aggregates.map(alias)
 
     groupType match {
-      case GroupedData.GroupByType =>
-        DataFrame(
-          df.sqlContext, Aggregate(groupingExprs, aliasedAgg, df.logicalPlan))
-      case GroupedData.RollupType =>
-        DataFrame(
-          df.sqlContext, Rollup(groupingExprs, df.logicalPlan, aliasedAgg))
-      case GroupedData.CubeType =>
-        DataFrame(
-          df.sqlContext, Cube(groupingExprs, df.logicalPlan, aliasedAgg))
-      case GroupedData.PivotType(pivotCol, values) =>
+      case RelationalGroupedDataset.GroupByType =>
+        Dataset.ofRows(
+          df.sparkSession, Aggregate(groupingExprs, aliasedAgg, df.logicalPlan))
+      case RelationalGroupedDataset.RollupType =>
+        Dataset.ofRows(
+          df.sparkSession, Aggregate(Seq(Rollup(groupingExprs)), aliasedAgg, df.logicalPlan))
+      case RelationalGroupedDataset.CubeType =>
+        Dataset.ofRows(
+          df.sparkSession, Aggregate(Seq(Cube(groupingExprs)), aliasedAgg, df.logicalPlan))
+      case RelationalGroupedDataset.PivotType(pivotCol, values) =>
         val aliasedGrps = groupingExprs.map(alias)
-        DataFrame(
-          df.sqlContext, Pivot(aliasedGrps, pivotCol, values, aggExprs, df.logicalPlan))
+        Dataset.ofRows(
+          df.sparkSession, Pivot(aliasedGrps, pivotCol, values, aggExprs, df.logicalPlan))
     }
   }
 
   private[this] def alias(expr: Expression): NamedExpression = expr match {
     case u: UnresolvedAttribute => UnresolvedAlias(u)
     case expr: NamedExpression => expr
-    case expr: Expression => Alias(expr, expr.prettyString)()
+    case expr: Expression => Alias(expr, expr.prettyName)()
   }
 
   private[this] def strToExpr(expr: String): (Expression => Expression) = {
@@ -97,18 +94,21 @@ final class GroupedDataEx protected[sql](
       val a = expr match {
         case "voted_avg" =>
           HiveUDAFFunction(
+            "voted_avg",
             new HiveFunctionWrapper("hivemall.ensemble.bagging.VotedAvgUDAF"),
             Seq(df.col(colName).expr),
             isUDAFBridgeRequired = true
           ).toAggregateExpression
         case "weight_voted_avg" =>
           HiveUDAFFunction(
+            "weight_voted_avg",
             new HiveFunctionWrapper("hivemall.ensemble.bagging.WeightVotedAvgUDAF"),
             Seq(df.col(colName).expr),
             isUDAFBridgeRequired = true
           ).toAggregateExpression()
         case "rf_ensemble" =>
           HiveUDAFFunction(
+            "rf_ensemble",
             new HiveFunctionWrapper("hivemall.smile.tools.RandomForestEnsembleUDAF"),
             Seq(df.col(colName).expr),
             isUDAFBridgeRequired = true
@@ -116,7 +116,7 @@ final class GroupedDataEx protected[sql](
         case _ =>
           strToExpr(expr)(df(colName).expr)
       }
-      Alias(a, a.prettyString)()
+      Alias(a, a.prettyName)()
     }.toSeq)
   }
 
@@ -134,11 +134,12 @@ final class GroupedDataEx protected[sql](
   def voted_avg(weight: String): DataFrame = {
     // checkType(weight, NumericType)
     val udaf = HiveUDAFFunction(
+        "voted_avg",
         new HiveFunctionWrapper("hivemall.ensemble.bagging.WeightVotedAvgUDAF"),
         Seq(weight).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -147,11 +148,12 @@ final class GroupedDataEx protected[sql](
   def weight_voted_avg(weight: String): DataFrame = {
     // checkType(weight, NumericType)
     val udaf = HiveUDAFFunction(
+        "weight_voted_avg",
         new HiveFunctionWrapper("hivemall.ensemble.bagging.WeightVotedAvgUDAF"),
         Seq(weight).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -161,11 +163,12 @@ final class GroupedDataEx protected[sql](
     // checkType(weight, NumericType)
     // checkType(conv, NumericType)
     val udaf = HiveUDAFFunction(
+        "argmin_kld",
         new HiveFunctionWrapper("hivemall.ensemble.ArgminKLDistanceUDAF"),
         Seq(weight, conv).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -175,11 +178,12 @@ final class GroupedDataEx protected[sql](
     // checkType(score, NumericType)
     checkType(label, StringType)
     val udaf = HiveUDAFFunction(
+        "max_label",
         new HiveFunctionWrapper("hivemall.ensemble.MaxValueLabelUDAF"),
         Seq(score, label).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -189,11 +193,12 @@ final class GroupedDataEx protected[sql](
     // checkType(score, NumericType)
     checkType(label, StringType)
     val udaf = HiveUDAFFunction(
+        "maxrow",
         new HiveFunctionWrapper("hivemall.ensemble.MaxRowUDAF"),
         Seq(score, label).map(df.col(_).expr),
         isUDAFBridgeRequired = false)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -202,11 +207,12 @@ final class GroupedDataEx protected[sql](
   def rf_ensemble(predict: String): DataFrame = {
     // checkType(predict, NumericType)
     val udaf = HiveUDAFFunction(
+        "rf_ensemble",
         new HiveFunctionWrapper("hivemall.smile.tools.RandomForestEnsembleUDAF"),
         Seq(predict).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -216,11 +222,12 @@ final class GroupedDataEx protected[sql](
     checkType(predict, FloatType)
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
+        "mae",
         new HiveFunctionWrapper("hivemall.evaluation.MeanAbsoluteErrorUDAF"),
         Seq(predict, target).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -230,11 +237,12 @@ final class GroupedDataEx protected[sql](
     checkType(predict, FloatType)
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
+        "mse",
         new HiveFunctionWrapper("hivemall.evaluation.MeanSquaredErrorUDAF"),
         Seq(predict, target).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -244,11 +252,12 @@ final class GroupedDataEx protected[sql](
     checkType(predict, FloatType)
     checkType(target, FloatType)
     val udaf = HiveUDAFFunction(
+      "rmse",
       new HiveFunctionWrapper("hivemall.evaluation.RootMeanSquaredErrorUDAF"),
         Seq(predict, target).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 
   /**
@@ -258,10 +267,11 @@ final class GroupedDataEx protected[sql](
     // checkType(target, ArrayType(IntegerType))
     // checkType(predict, ArrayType(IntegerType))
     val udaf = HiveUDAFFunction(
+        "f1score",
         new HiveFunctionWrapper("hivemall.evaluation.FMeasureUDAF"),
         Seq(predict, target).map(df.col(_).expr),
         isUDAFBridgeRequired = true)
       .toAggregateExpression()
-    toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
+    toDF((Alias(udaf, udaf.prettyName)() :: Nil).toSeq)
   }
 }
