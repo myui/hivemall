@@ -257,6 +257,9 @@ CREATE FUNCTION to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF' USING JAR
 DROP FUNCTION IF EXISTS quantify;
 CREATE FUNCTION quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS build_bins;
+CREATE FUNCTION build_bins as 'hivemall.ftvec.binning.BuildBinsUDAF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- feature transformers --
 --------------------------
