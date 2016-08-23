@@ -58,7 +58,7 @@ public class FeatureBinningUDF extends GenericUDF {
 
     private PrimitiveObjectInspector weightOI;
 
-    private Map<Text, double[]> quantilesMap = null;// want to init in `initialize`
+    private Map<Text, double[]> quantilesMap = null;
     private double[] quantiles = null;
 
     @Override
