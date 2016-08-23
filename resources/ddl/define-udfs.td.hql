@@ -66,6 +66,7 @@ create temporary function to_sparse_features as 'hivemall.ftvec.conv.ToSparseFea
 create temporary function to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF';
 create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
 create temporary function build_bins as 'hivemall.ftvec.binning.BuildBinsUDAF';
+create temporary function feature_binning as 'hivemall.ftvec.binngin.FeatureBinningUDF';
 create temporary function vectorize_features as 'hivemall.ftvec.trans.VectorizeFeaturesUDF';
 create temporary function categorical_features as 'hivemall.ftvec.trans.CategoricalFeaturesUDF';
 create temporary function ffm_features as 'hivemall.ftvec.trans.FFMFeaturesUDF';
