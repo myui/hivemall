@@ -17,24 +17,24 @@
  */
 package hivemall.evaluation;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-public class BinaryResponsesMeasuresTest {
+import java.util.Arrays;
+import java.util.List;
+
+public class GradedResponsesMeasuresTest {
 
     @Test
     public void testNDCG() {
-        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
-        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+        List<Double> recommendTopRelScoreList = Arrays.asList(5.0, 2.0, 4.0, 1.0, 3.0);
+        List<Double> truthTopRelScoreList = Arrays.asList(5.0, 4.0, 3.0);
 
-        double actual = BinaryResponsesMeasures.nDCG(rankedList, groundTruth, rankedList.size());
-        Assert.assertEquals(0.7039180890341348d, actual, 0.0001d);
+        double actual = GradedResponsesMeasures.nDCG(recommendTopRelScoreList, truthTopRelScoreList, 3);
+        Assert.assertEquals(0.918770780535d, actual, 0.0001d);
 
-        actual = BinaryResponsesMeasures.nDCG(rankedList, groundTruth, 2);
-        Assert.assertEquals(0.6131471927654585d, actual, 0.0001d);
+        actual = GradedResponsesMeasures.nDCG(recommendTopRelScoreList, truthTopRelScoreList, 2);
+        Assert.assertEquals(0.812891283859d, actual, 0.0001d);
     }
 
 }

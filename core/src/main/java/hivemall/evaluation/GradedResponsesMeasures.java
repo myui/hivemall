@@ -18,48 +18,41 @@
  */
 package hivemall.evaluation;
 
-import java.util.List;
-
 import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
  * Utility class of various measures.
  * 
  * See http://recsyswiki.com/wiki/Discounted_Cumulative_Gain
  */
-public final class BinaryResponsesMeasures {
+public final class GradedResponsesMeasures {
 
-    private BinaryResponsesMeasures() {}
+    private GradedResponsesMeasures() {}
 
-    public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+    public static double nDCG(@Nonnull final List<Double> recommendTopRelScoreList,
+                              @Nonnull final List<Double> truthTopRelScoreList,
                               @Nonnull final int recommendSize) {
-        double dcg = 0.d;
-        double idcg = IDCG(Math.min(recommendSize, groundTruth.size()));
 
-        for (int i = 0, n = recommendSize; i < n; i++) {
-            Object item_id = rankedList.get(i);
-            if (!groundTruth.contains(item_id)) {
-                continue;
-            }
-            int rank = i + 1;
-            dcg += Math.log(2) / Math.log(rank + 1);
-        }
-
+        double dcg = DCG(recommendTopRelScoreList, recommendSize);
+        double idcg = DCG(truthTopRelScoreList, recommendSize);
         return dcg / idcg;
     }
 
     /**
-     * Computes the ideal DCG
+     * Computes DCG
      * 
-     * @param n the number of positive items
-     * @return ideal DCG
+     * @param topRelScoreList ranked list of top relevance scores
+     * @param recommendSize the number of positive items
+     * @return DCG
      */
-    public static double IDCG(final int n) {
-        double idcg = 0.d;
-        for (int i = 0; i < n; i++) {
-            idcg += Math.log(2) / Math.log(i + 2);
+    public static double DCG(final List<Double> topRelScoreList, final int recommendSize) {
+        double dcg = 0.d;
+        for (int i = 0; i < recommendSize; i++) {
+            double relScore = topRelScoreList.get(i);
+            dcg += ((Math.pow(2, relScore) - 1) * Math.log(2)) / Math.log(i + 2);
         }
-        return idcg;
+        return dcg;
     }
 
 }
