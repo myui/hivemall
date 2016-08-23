@@ -45,7 +45,8 @@
 		<module>nlp</module>
 		<module>mixserv</module>
 		<module>spark</module>
-	</modules>
+        <module>systemtest</module>
+    </modules>
 
 	<properties>
 		<maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
