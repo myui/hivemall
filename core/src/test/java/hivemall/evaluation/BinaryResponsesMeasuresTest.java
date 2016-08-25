@@ -17,6 +17,7 @@
  */
 package hivemall.evaluation;
 
+import java.util.Collections;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,6 +36,71 @@ public class BinaryResponsesMeasuresTest {
 
         actual = BinaryResponsesMeasures.nDCG(rankedList, groundTruth, 2);
         Assert.assertEquals(0.6131471927654585d, actual, 0.0001d);
+    }
+
+    @Test
+    public void testRecall() {
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+
+        double actual = BinaryResponsesMeasures.Recall(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(0.6666666666666666d, actual, 0.0001d);
+
+        actual = BinaryResponsesMeasures.Recall(rankedList, groundTruth, 2);
+        Assert.assertEquals(0.3333333333333333d, actual, 0.0001d);
+    }
+
+    @Test
+    public void testPrecision() {
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+
+        double actual = BinaryResponsesMeasures.Precision(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(0.5d, actual, 0.0001d);
+
+        actual = BinaryResponsesMeasures.Precision(rankedList, groundTruth, 2);
+        Assert.assertEquals(0.5d, actual, 0.0001d);
+    }
+
+    @Test
+    public void testMRR() {
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+
+        double actual = BinaryResponsesMeasures.MRR(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(1.0d, actual, 0.0001d);
+
+        Collections.reverse(rankedList);
+
+        actual = BinaryResponsesMeasures.MRR(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(0.5d, actual, 0.0001d);
+
+        actual = BinaryResponsesMeasures.MRR(rankedList, groundTruth, 1);
+        Assert.assertEquals(0.0d, actual, 0.0001d);
+    }
+
+    @Test
+    public void testMAP() {
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+
+        double actual = BinaryResponsesMeasures.MAP(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(0.5555555555555555d, actual, 0.0001d);
+
+        actual = BinaryResponsesMeasures.MAP(rankedList, groundTruth, 2);
+        Assert.assertEquals(0.3333333333333333d, actual, 0.0001d);
+    }
+
+    @Test
+    public void testAUC() {
+        List<Integer> rankedList = Arrays.asList(1, 3, 2, 6);
+        List<Integer> groundTruth = Arrays.asList(1, 2, 4);
+
+        double actual = BinaryResponsesMeasures.AUC(rankedList, groundTruth, rankedList.size());
+        Assert.assertEquals(0.75d, actual, 0.0001d);
+
+        actual = BinaryResponsesMeasures.AUC(rankedList, groundTruth, 2);
+        Assert.assertEquals(1.0d, actual, 0.0001d);
     }
 
 }

@@ -23,14 +23,25 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 /**
- * Utility class of various measures.
- * 
- * See http://recsyswiki.com/wiki/Discounted_Cumulative_Gain
+ * Binary responses measures for item recommendation (i.e. ranking problems)
+ *
+ * References:
+ *   B. McFee and G. R. Lanckriet. "Metric Learning to Rank" ICML 2010.
+ *   MyMediaLite http://mymedialite.net/
+ *   LibRec http://www.librec.net/
  */
 public final class BinaryResponsesMeasures {
 
     private BinaryResponsesMeasures() {}
 
+    /**
+     * Computes binary nDCG (i.e. relevance score is 0 or 1)
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return nDCG
+     */
     public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
                               @Nonnull final int recommendSize) {
         double dcg = 0.d;
@@ -60,6 +71,129 @@ public final class BinaryResponsesMeasures {
             idcg += Math.log(2) / Math.log(i + 2);
         }
         return idcg;
+    }
+
+    /**
+     * Computes Precision@`recommendSize`
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return Precision
+     */
+    public static double Precision(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                                  @Nonnull final int recommendSize) {
+        return (double) countTruePositive(rankedList, groundTruth, recommendSize) / recommendSize;
+    }
+
+    /**
+     * Computes Recall@`recommendSize`
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return Recall
+     */
+    public static double Recall(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                                  @Nonnull final int recommendSize) {
+        return (double) countTruePositive(rankedList, groundTruth, recommendSize) / groundTruth.size();
+    }
+
+    /**
+     * Counts the number of true positives
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return number of true positives
+     */
+    public static int countTruePositive(final List<?> rankedList, final List<?> groundTruth, final int recommendSize) {
+        int nTruePositive = 0;
+
+        for (int i = 0, n = recommendSize; i < n; i++) {
+            Object item_id = rankedList.get(i);
+            if (groundTruth.contains(item_id)) {
+                nTruePositive++;
+            }
+        }
+
+        return nTruePositive;
+    }
+
+    /**
+     * Computes Mean Reciprocal Rank (MRR)
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return MRR
+     */
+    public static double MRR(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                             @Nonnull final int recommendSize) {
+        for (int i = 0, n = recommendSize; i < n; i++) {
+            Object item_id = rankedList.get(i);
+            if (groundTruth.contains(item_id)) {
+                return 1.0 / (i + 1.0);
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Computes Mean Average Precision (MAP)
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return MAP
+     */
+    public static double MAP(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                             @Nonnull final int recommendSize) {
+        int nTruePositive = 0;
+        double sumPrecision = 0.0;
+
+        // accumulate precision@1 to @recommendSize
+        for (int i = 0, n = recommendSize; i < n; i++) {
+            Object item_id = rankedList.get(i);
+            if (groundTruth.contains(item_id)) {
+                nTruePositive++;
+                sumPrecision +=  nTruePositive / (i + 1.0);
+            }
+        }
+
+        return sumPrecision / groundTruth.size();
+    }
+
+    /**
+     * Computes the area under the ROC curve (AUC)
+     *
+     * @param rankedList a list of ranked item IDs (first item is highest-ranked)
+     * @param groundTruth a collection of positive/correct item IDs
+     * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
+     * @return AUC
+     */
+    public static double AUC(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
+                             @Nonnull final int recommendSize) {
+        int nTruePositive = 0, nCorrectPairs = 0;
+
+        // count # of pairs of items that are ranked in the correct order (i.e. TP > FP)
+        for (int i = 0, n = recommendSize; i < n; i++) {
+            Object item_id = rankedList.get(i);
+            if (groundTruth.contains(item_id)) {
+                // # of true positives which are ranked higher position than i-th recommended item
+                nTruePositive++;
+            } else {
+                // for each FP item, # of correct ordered <TP, FP> pairs equals to # of TPs at i-th position
+                nCorrectPairs += nTruePositive;
+            }
+        }
+
+        // # of all possible <TP, FP> pairs
+        int nPairs = nTruePositive * (recommendSize - nTruePositive);
+
+        // AUC can equivalently be calculated by counting the portion of correctly ordered pairs
+        return (double) nCorrectPairs / nPairs;
     }
 
 }
