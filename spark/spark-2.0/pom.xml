@@ -142,7 +142,7 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.5</version>
 				<configuration>
-					<finalName>${project.artifactId}-${project.version}</finalName>
+					<finalName>${project.artifactId}-v2.0-${project.version}</finalName>
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
@@ -159,7 +159,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>${project.artifactId}-${project.version}-with-dependencies</finalName>
+							<finalName>${project.artifactId}-v2.0-${project.version}-with-dependencies</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>false</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
