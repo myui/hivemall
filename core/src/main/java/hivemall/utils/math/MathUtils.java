@@ -34,9 +34,15 @@
 //
 package hivemall.utils.math;
 
+import hivemall.utils.lang.Preconditions;
+
 import java.util.Random;
 
 import javax.annotation.Nonnull;
+
+import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 
 public final class MathUtils {
 
@@ -117,7 +123,7 @@ public final class MathUtils {
     public static double inverseErf(final double x) {
 
         // beware that the logarithm argument must be
-        // commputed as (1.0 - x) * (1.0 + x),
+        // computed as (1.0 - x) * (1.0 + x),
         // it must NOT be simplified as 1.0 - x * x as this
         // would induce rounding errors near the boundaries +/-1
         double w = -Math.log((1.0 - x) * (1.0 + x));
@@ -292,4 +298,49 @@ public final class MathUtils {
         return true;
     }
 
+    /**
+     * @return value of probabilistic density function
+     */
+    public static double pdf(final double x, final double x_hat, final double sigma) {
+        if (sigma == 0.d) {
+            return 0.d;
+        }
+        double diff = x - x_hat;
+        double numerator = Math.exp(-0.5d * diff * diff / sigma);
+        double denominator = Math.sqrt(2.d * Math.PI) * Math.sqrt(sigma);
+        return numerator / denominator;
+    }
+
+
+    /**
+     * pdf(x, x_hat) = exp(-0.5 * (x-x_hat) * inv(Σ) * (x-x_hat)T) / ( 2π^0.5d * det(Σ)^0.5)
+     * 
+     * @return value of probabilistic density function
+     * @link https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function
+     */
+    public static double pdf(@Nonnull final RealVector x, @Nonnull final RealVector x_hat,
+            @Nonnull final RealMatrix sigma) {
+        final int dim = x.getDimension();
+        Preconditions.checkArgument(x_hat.getDimension() == dim, "|x| != |x_hat|, |x|=" + dim
+                + ", |x_hat|=" + x_hat.getDimension());
+        Preconditions.checkArgument(sigma.getRowDimension() == dim, "|x| != |sigma|, |x|=" + dim
+                + ", |sigma|=" + sigma.getRowDimension());
+
+        //LUDecomposition LU = new LUDecomposition(sigma);        
+        //double detSigma =  LU.getDeterminant();
+        EigenDecomposition eigen = new EigenDecomposition(sigma);
+        double detSigma = eigen.getDeterminant();
+        double denominator = Math.pow(2.d * Math.PI, 0.5d * dim) * Math.pow(detSigma, 0.5d);
+        if (denominator == 0.d) { // avoid divide by zero
+            return 0.d;
+        }
+
+        RealVector diff = x.subtract(x_hat);
+        RealMatrix invSigma = eigen.getSolver().getInverse();
+        RealVector premultiplied = invSigma.preMultiply(diff);
+        double sum = premultiplied.dotProduct(diff);
+        double numerator = Math.exp(-0.5d * sum);
+
+        return numerator / denominator;
+    }
 }

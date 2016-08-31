@@ -494,7 +494,7 @@ public final class HiveUtils {
         return ary;
     }
 
-    @Nonnull
+    @Nullable
     public static double[] asDoubleArray(@Nullable final Object argObj,
             @Nonnull final ListObjectInspector listOI,
             @Nonnull final PrimitiveObjectInspector elemOI) {
@@ -512,6 +512,30 @@ public final class HiveUtils {
             ary[i] = d;
         }
         return ary;
+    }
+
+    @Nonnull
+    public static void toDoubleArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI,
+            @Nonnull final PrimitiveObjectInspector elemOI, @Nonnull final double[] out)
+            throws HiveException {
+        if (argObj == null) {
+            return;
+        }
+        final int length = listOI.getListLength(argObj);
+        if (out.length != length) {
+            throw new HiveException("Dimension mismatched. Expected: " + out.length + ", Actual: "
+                    + length);
+        }
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                continue;
+            }
+            double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
+            out[i] = d;
+        }
+        return;
     }
 
     /**

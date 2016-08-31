@@ -64,6 +64,11 @@ public final class ChangeFinderUDF extends UDFWithOptions {
 
     public ChangeFinderUDF() {}
 
+    // Visible for testing
+    Parameters getParameters() {
+        return _params;
+    }
+
     @Override
     protected Options getOptions() {
         Options opts = new Options();
@@ -133,6 +138,7 @@ public final class ChangeFinderUDF extends UDFWithOptions {
         if (HiveUtils.isListOI(argOI0)) {
             ListObjectInspector listOI = HiveUtils.asListOI(argOI0);
             this._changeFinder = new ChangeFinder2D(_params, listOI);
+            throw new UnsupportedOperationException("2D x is not supported yet");
         } else if (HiveUtils.isNumberOI(argOI0)) {
             PrimitiveObjectInspector xOI = HiveUtils.asDoubleCompatibleOI(argOI0);
             this._changeFinder = new ChangeFinder1D(_params, xOI);
@@ -223,7 +229,7 @@ public final class ChangeFinderUDF extends UDFWithOptions {
     }
 
     public interface ChangeFinder {
-        void update(@Nonnull Object arg, @Nonnull double[] outScores);
+        void update(@Nonnull Object arg, @Nonnull double[] outScores) throws HiveException;
     }
 
     static double smoothing(@Nonnull DoubleRingBuffer scores) {

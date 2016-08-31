@@ -18,6 +18,7 @@
 package hivemall.anomaly;
 
 import hivemall.utils.lang.Preconditions;
+import hivemall.utils.math.MathUtils;
 import hivemall.utils.math.MatrixUtils;
 
 import javax.annotation.Nonnull;
@@ -35,10 +36,12 @@ public final class SDAR1D {
     // --------------------------------
     // parameters
 
+    private final double[] _C;
+    private final double[] _A;
     private double _mu;
-    private double[] _C;
-    private double[] _A;
     private double _sigma;
+
+    private boolean _initialized;
 
     public SDAR1D(final double r, final int k) {
         Preconditions.checkArgument(0.d < r && r < 1.d, "Invalid forgetfullness parameter r: " + r);
@@ -46,18 +49,28 @@ public final class SDAR1D {
         this._r = r;
         this._C = new double[k + 1];
         this._A = new double[k + 1];
+        this._initialized = false;
     }
 
     /**
      * @param x series of input in LIFO order
+     * @param k
+     * @return x_hat
      */
-    public double update(@Nonnull final double[] x) {
+    public double update(@Nonnull final double[] x, final int k) {
         Preconditions.checkArgument(x.length >= 1, "x.length MUST be greather than 1: " + x.length);
-        final int k = x.length - 1;
         Preconditions.checkArgument(k < _C.length,
             "x.length MUST be less than smooting window size: " + k);
 
         final double x_t = x[0];
+
+        if (_initialized == false) {
+            this._mu = x_t;
+            this._sigma = 0.d;
+            this._initialized = true;
+            return 0.d;
+        }
+
         // update mean vector
         // \hat{mu} := (1-r) \hat{µ} + r x_t
         this._mu = (1.d - _r) * _mu + _r * x_t;
@@ -84,27 +97,13 @@ public final class SDAR1D {
         // update model covariance
         // ∑ := (1-r) ∑ + r (x - \hat{x}) (x - \hat{x})'
         this._sigma = (1.d - _r) * _sigma + _r * (x_t - x_hat) * (x_t - x_hat);
-        
+
         return x_hat;
     }
 
     public double logLoss(final double actual, final double predicted) {
-        double p = pdf(actual, predicted, _mu, _sigma);
+        double p = MathUtils.pdf(actual, predicted, _sigma);
         return -Math.log(p);
-    }
-
-    /**
-     * @return value of probabilistic density function
-     */
-    private static double pdf(final double x, final double x_hat, final double mu,
-            final double sigma) {
-        if (sigma == 0.d) {
-            return 0.d;
-        }
-        double diff = x - x_hat;
-        double numerator = Math.exp(-0.5d * diff * diff / sigma);
-        double denominator = Math.sqrt(2.d * Math.PI) * Math.sqrt(sigma);
-        return numerator / denominator;
     }
 
 }

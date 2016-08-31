@@ -23,6 +23,7 @@ import hivemall.utils.collections.DoubleRingBuffer;
 
 import javax.annotation.Nonnull;
 
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 
@@ -53,19 +54,22 @@ final class ChangeFinder1D implements ChangeFinder {
     }
 
     @Override
-    public void update(@Nonnull final Object arg, @Nonnull final double[] outScores) {
+    public void update(@Nonnull final Object arg, @Nonnull final double[] outScores)
+            throws HiveException {
         double x = PrimitiveObjectInspectorUtils.getDouble(arg, oi);
 
         // [Stage#1] Outlier Detection
+        int k = xRing.size();
         xRing.add(x).toArray(xSeries, false /* LIFO */);
-        double x_hat = sdar1.update(xSeries);
+        double x_hat = sdar1.update(xSeries, k);
         double scoreX = sdar1.logLoss(x, x_hat);
         // smoothing
         double y = ChangeFinderUDF.smoothing(outlierScores.add(scoreX));
 
         // [Stage#2] Change-point Detection
+        k = yRing.size();
         yRing.add(y).toArray(ySeries, false /* LIFO */);
-        double y_hat = sdar2.update(ySeries);
+        double y_hat = sdar2.update(ySeries, k);
         double lossY = sdar2.logLoss(y, y_hat);
         double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(lossY));
 
@@ -73,4 +77,3 @@ final class ChangeFinder1D implements ChangeFinder {
         outScores[1] = scoreY;
     }
 }
-

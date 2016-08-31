@@ -21,6 +21,9 @@ import hivemall.utils.lang.Preconditions;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+
 public final class MatrixUtils {
 
     private MatrixUtils() {}
@@ -37,7 +40,7 @@ public final class MatrixUtils {
     @Nonnull
     public static double[] aryule(@Nonnull final double[] R, @Nonnull final double[] A,
             final int order) {
-        Preconditions.checkArgument(R.length > order, "|C| MUST be greater than or equals to "
+        Preconditions.checkArgument(R.length > order, "|R| MUST be greater than or equals to "
                 + order + ": " + R.length);
         Preconditions.checkArgument(A.length >= order + 1, "|A| MUST be greater than or equals to "
                 + (order + 1) + ": " + A.length);
@@ -106,6 +109,83 @@ public final class MatrixUtils {
         }
 
         return E;
+    }
+
+    /**
+     * Construct a Toeplitz matrix.
+     */
+    @Nonnull
+    public static RealMatrix[][] toeplitz(@Nonnull final RealMatrix[] c, final int dim) {
+        Preconditions.checkArgument(dim >= 1, "Invliad dimension: " + dim);
+        Preconditions.checkArgument(c.length >= dim, "|c| must be greather than " + dim + ": "
+                + c.length);
+
+        /*
+         * Toeplitz matrix  (symmetric, invertible, k*dimensions by k*dimensions)
+         *
+         * /C_0     |C_1     |C_2     | .  .  .   |C_{k-1} \
+         * |--------+--------+--------+           +--------|
+         * |C_1'    |C_0     |C_1     |               .    |
+         * |--------+--------+--------+               .    |
+         * |C_2'    |C_1'    |C_0     |               .    |
+         * |--------+--------+--------+                    |
+         * |   .                         .                 |
+         * |   .                            .              |
+         * |   .                               .           |
+         * |--------+                              +-------|
+         * \C_{k-1}'| .  .  .                      |C_0    /
+         */
+
+        final RealMatrix c0 = c[0];
+        final RealMatrix[][] toeplitz = new RealMatrix[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            toeplitz[i][i] = c0;
+            for (int j = 0; j < i; j++) {
+                int index = i - j - 1;
+                assert (index >= 0) : index;
+                toeplitz[i][j] = c[index].transpose();
+                toeplitz[j][i] = c[index];
+            }
+        }
+        return toeplitz;
+    }
+
+    @Nonnull
+    public static RealMatrix flatten(@Nonnull final RealMatrix[][] grid) {
+        Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
+        Preconditions.checkArgument(grid[0].length >= 1,
+            "The number of cols must be greather than 1");
+
+        final int rows = grid.length;
+        final int cols = grid[0].length;
+        final int rowDims = grid[0][0].getRowDimension();
+        final int colDims = grid[0][0].getColumnDimension();
+
+        final RealMatrix combined = new BlockRealMatrix(rows * rowDims, cols * colDims);
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid[row].length; col++) {
+                combined.setSubMatrix(grid[row][col].getData(), row * rowDims, col * colDims);
+            }
+        }
+        return combined;
+    }
+
+    /**
+     * Flatten grid of matrix that has 1 col.
+     */
+    @Nonnull
+    public static RealMatrix flatten(@Nonnull final RealMatrix[] grid) {
+        Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
+
+        final int rows = grid.length;
+        final int rowDims = grid[0].getRowDimension();
+        final int colDims = grid[0].getColumnDimension();
+
+        final RealMatrix combined = new BlockRealMatrix(rows * rowDims, colDims);
+        for (int row = 0; row < grid.length; row++) {
+            combined.setSubMatrix(grid[row].getData(), row * rowDims, 0);
+        }
+        return combined;
     }
 
 }
