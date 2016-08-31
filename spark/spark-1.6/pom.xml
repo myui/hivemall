@@ -156,6 +156,7 @@
 							<artifactSet>
 								<includes>
 									<include>io.github.myui:hivemall-core</include>
+									<include>io.github.myui:hivemall-spark-common</include>
 									<include>com.github.haifengl:smile-core</include>
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
