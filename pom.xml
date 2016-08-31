@@ -70,6 +70,12 @@
 
 	<profiles>
 		<profile>
+			<id>spark-1.6</id>
+			<modules>
+				<module>spark/spark-1.6</module>
+			</modules>
+		</profile>
+		<profile>
 			<id>spark-2.0</id>
 			<modules>
 				<module>spark/spark-2.0</module>
