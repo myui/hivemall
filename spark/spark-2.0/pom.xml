@@ -6,7 +6,7 @@
 		<groupId>io.github.myui</groupId>
 		<artifactId>hivemall</artifactId>
 		<version>0.4.2-rc.2</version>
-		<relativePath>../pom.xml</relativePath>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>hivemall-spark</artifactId>
@@ -19,22 +19,6 @@
 		<spark.version>2.0.0</spark.version>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>scala-tools.org</id>
-			<name>Scala-tools Maven2 Repository</name>
-			<url>https://oss.sonatype.org/content/groups/scala-tools/</url>
-		</repository>
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>scala-tools.org</id>
-			<name>Scala-tools Maven2 Repository</name>
-			<url>https://oss.sonatype.org/content/groups/scala-tools/</url>
-		</pluginRepository>
-	</pluginRepositories>
-
 	<dependencies>
 		<!-- hivemall dependencies -->
 		<dependency>
@@ -46,6 +30,12 @@
 		<dependency>
 			<groupId>io.github.myui</groupId>
 			<artifactId>hivemall-mixserv</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.myui</groupId>
+			<artifactId>hivemall-spark-common</artifactId>
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
