@@ -44,7 +44,6 @@
 		<module>core</module>
 		<module>nlp</module>
 		<module>mixserv</module>
-		<module>spark</module>
 	</modules>
 
 	<properties>
@@ -70,6 +69,12 @@
 	</distributionManagement>
 
 	<profiles>
+		<profile>
+			<id>spark-2.0</id>
+			<modules>
+				<module>spark/spark-2.0</module>
+			</modules>
+		</profile>
 		<profile>
 			<id>doclint-java8-disable</id>
 			<activation>
