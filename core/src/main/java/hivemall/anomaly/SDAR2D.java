@@ -98,7 +98,13 @@ public final class SDAR2D {
         final RealMatrix[] C = this._C;
         final RealVector rxResidual0 = xResidual[0].mapMultiply(_r); // r (x_t - \hat{µ}) 
         for (int j = 0; j <= k; j++) {
-            C[j] = C[j].scalarMultiply(1.d - _r).add(rxResidual0.outerProduct(x[j].subtract(_mu)));
+            RealMatrix Cj = C[j];
+            if (Cj == null) {
+                C[j] = rxResidual0.outerProduct(x[j].subtract(_mu));
+            } else {
+                C[j] = Cj.scalarMultiply(1.d - _r)
+                         .add(rxResidual0.outerProduct(x[j].subtract(_mu)));
+            }
         }
 
         // solve A in the following Yule-Walker equation
@@ -116,9 +122,11 @@ public final class SDAR2D {
          * \C_n/     \A_n/  \C_{k-1}'| .  .  .                      |C_0    / 
          */
         RealMatrix[][] rhs = MatrixUtils.toeplitz(C, k);
-        RealMatrix[] lhs = Arrays.copyOfRange(C, 1, k);
-        LUDecomposition LU = new LUDecomposition(MatrixUtils.flatten(rhs));
-        RealMatrix A = LU.getSolver().solve(MatrixUtils.flatten(lhs));
+        RealMatrix[] lhs = Arrays.copyOfRange(C, 1, k + 1);
+        RealMatrix R = MatrixUtils.flatten(rhs);
+        RealMatrix L = MatrixUtils.flatten(lhs);
+        LUDecomposition LU = new LUDecomposition(R);
+        RealMatrix A = LU.getSolver().solve(L);
 
         // estimate x
         // \hat{x} = \hat{µ} + ∑_{i=1}^k A_i (x_{t-i} - \hat{µ})
@@ -140,7 +148,7 @@ public final class SDAR2D {
 
     public double logLoss(@Nonnull final RealVector actual, final RealVector predicted) {
         double p = MathUtils.pdf(actual, predicted, _sigma);
-        if(p == 0.d) {
+        if (p == 0.d) {
             return 0.d;
         }
         return -Math.log(p);

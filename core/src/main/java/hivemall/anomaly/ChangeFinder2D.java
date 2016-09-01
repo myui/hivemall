@@ -54,9 +54,6 @@ final class ChangeFinder2D implements ChangeFinder {
     @Nonnull
     private final DoubleRingBuffer outlierScores, changepointScores;
 
-    private transient double[] _x = null;
-    private transient ArrayRealVector _xVector = null;
-
     ChangeFinder2D(@Nonnull Parameters params, @Nonnull ListObjectInspector listOI)
             throws UDFArgumentTypeException {
         this.listOI = listOI;
@@ -98,16 +95,18 @@ final class ChangeFinder2D implements ChangeFinder {
 
     @Nonnull
     private ArrayRealVector parseX(final Object arg) throws HiveException {
-        if (_x == null) {
-            this._x = HiveUtils.asDoubleArray(arg, listOI, elemOI);
-            if (_x.length == 0) {
+        ArrayRealVector xVec = xRing.head();
+        if (xVec == null) {
+            double[] data = HiveUtils.asDoubleArray(arg, listOI, elemOI);
+            if (data.length == 0) {
                 throw new HiveException("Dimension of x SHOULD be more than zero");
             }
-            this._xVector = new ArrayRealVector(_x);
+            xVec = new ArrayRealVector(data, false);
         } else {
-            HiveUtils.toDoubleArray(arg, listOI, elemOI, _x);
+            double[] ref = xVec.getDataRef();
+            HiveUtils.toDoubleArray(arg, listOI, elemOI, ref);
         }
-        return _xVector;
+        return xVec;
     }
 
 }

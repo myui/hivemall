@@ -135,16 +135,16 @@ public final class MatrixUtils {
          * |--------+                              +-------|
          * \C_{k-1}'| .  .  .                      |C_0    /
          */
-
         final RealMatrix c0 = c[0];
         final RealMatrix[][] toeplitz = new RealMatrix[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            toeplitz[i][i] = c0;
-            for (int j = 0; j < i; j++) {
-                int index = i - j - 1;
-                assert (index >= 0) : index;
-                toeplitz[i][j] = c[index].transpose();
-                toeplitz[j][i] = c[index];
+        for (int row = 0; row < dim; row++) {
+            toeplitz[row][row] = c0;
+            for (int col = 0; col < dim; col++) {
+                if (row < col) {
+                    toeplitz[row][col] = c[col - row];
+                } else if (row > col) {
+                    toeplitz[row][col] = c[row - col].transpose();
+                }
             }
         }
         return toeplitz;
@@ -175,7 +175,8 @@ public final class MatrixUtils {
      */
     @Nonnull
     public static RealMatrix flatten(@Nonnull final RealMatrix[] grid) {
-        Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
+        Preconditions.checkArgument(grid.length >= 1,
+            "The number of rows must be greather than 0: " + grid.length);
 
         final int rows = grid.length;
         final int rowDims = grid[0].getRowDimension();

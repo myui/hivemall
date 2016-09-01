@@ -22,7 +22,6 @@ import hivemall.utils.math.MathUtils;
 import hivemall.utils.math.MatrixUtils;
 
 import java.util.Arrays;
-import java.util.Random;
 
 import javax.annotation.Nonnull;
 
@@ -52,9 +51,6 @@ public final class SDAR1D {
         this._r = r;
         this._C = new double[k + 1];
         this._A = new double[k + 1];
-        Random rand = new Random();
-        this._mu = rand.nextDouble();
-        this._sigma = rand.nextDouble();
         this._initialized = false;
     }
 

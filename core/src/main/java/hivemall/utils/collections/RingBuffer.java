@@ -22,6 +22,7 @@ import hivemall.utils.lang.Preconditions;
 import java.util.Iterator;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
@@ -69,6 +70,11 @@ public final class RingBuffer<T> implements Iterable<T> {
             size++;
         }
         return this;
+    }
+    
+    @Nullable
+    public T head() {
+        return ring[head];
     }
 
     public void toArray(@Nonnull final T[] dst) {

@@ -17,8 +17,8 @@
  */
 package hivemall.utils.math;
 
-import java.util.Arrays;
-
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +32,6 @@ public class MatrixUtilsTest {
         MatrixUtils.aryule(R, A, k);
         Assert.assertEquals(-1.3333333333333335d, A[1], 0.001d);
         Assert.assertEquals(-0.3333333333333333d, A[2], 0.001d);
-        System.out.println(Arrays.toString(A));
     }
 
     @Test
@@ -41,11 +40,30 @@ public class MatrixUtilsTest {
         double[] R = new double[] {143.85, 141.95, 141.45, 142.30, 140.60, 140.00, 138.40, 137.10,
                 138.90, 139.85};
         double[] A = new double[k + 1];
-        double[] E = MatrixUtils.aryule(R, A, k);
+        MatrixUtils.aryule(R, A, k);
         double[] expected = new double[] {1.0, -2.90380682, -0.31235631, -1.26463104, 3.30187384,
                 1.61653593, 2.10367317, -1.37563117, -2.18139823, -0.02314717};
         Assert.assertArrayEquals(expected, A, 0.01d);
-        System.out.println(Arrays.toString(E));
+    }
+
+    @Test
+    public void toeplitz() {
+        RealMatrix[] c = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1}),
+                new Array2DRowRealMatrix(new double[] {2}),
+                new Array2DRowRealMatrix(new double[] {3})};
+        RealMatrix[][] A = MatrixUtils.toeplitz(c, 3);
+        // 1  2  3
+        // 2  1  2
+        // 3  2  1
+        Assert.assertArrayEquals(new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1}),
+                new Array2DRowRealMatrix(new double[] {2}),
+                new Array2DRowRealMatrix(new double[] {3})}, A[0]);
+        Assert.assertArrayEquals(new RealMatrix[] {new Array2DRowRealMatrix(new double[] {2}),
+                new Array2DRowRealMatrix(new double[] {1}),
+                new Array2DRowRealMatrix(new double[] {2})}, A[1]);
+        Assert.assertArrayEquals(new RealMatrix[] {new Array2DRowRealMatrix(new double[] {3}),
+                new Array2DRowRealMatrix(new double[] {1}),
+                new Array2DRowRealMatrix(new double[] {2})}, A[2]);
     }
 
 
