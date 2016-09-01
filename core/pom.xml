@@ -164,7 +164,7 @@
 				<executions>
 					<execution>
 						<id>install-external</id>
-						<phase>clean</phase>
+						<phase>validate</phase>
 						<configuration>
 							<file>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</file>
 							<repositoryLayout>default</repositoryLayout>

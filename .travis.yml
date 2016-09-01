@@ -29,6 +29,9 @@ branches:
     - master
     - develop
 
+before_install:
+  - mvn validate
+
 notifications:
   email: false
 
