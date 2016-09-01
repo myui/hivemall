@@ -35,7 +35,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
     name = "train_multiclass_xgboost_classifier",
     value = "_FUNC_(string[] features, double target [, string options]) - Returns a relation consisting of <string model_id, array<byte> pred_model>"
 )
-public final class XGBoostMulticlassClassifierUDTF extends XGBoostUDTF {
+public class XGBoostMulticlassClassifierUDTF extends XGBoostUDTF {
 
     public XGBoostMulticlassClassifierUDTF() {}
 
