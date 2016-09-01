@@ -101,7 +101,7 @@
 			<artifactId>xgboost4j</artifactId>
 			<version>0.5</version>
 			<scope>system</scope>
-			<systemPath>${basedir}/lib/xgboost4j-0.5-with-dependencies.jar</systemPath>
+			<systemPath>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</systemPath>
 		</dependency>
 
 		<!-- test scope -->
