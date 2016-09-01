@@ -77,19 +77,19 @@ final class ChangeFinder2D implements ChangeFinder {
             throws HiveException {
         ArrayRealVector x = parseX(arg);
 
-        // [Stage#1] Outlier Detection
-        int k = xRing.size();
+        // [Stage#1] Outlier Detection        
         xRing.add(x).toArray(xSeries, false /* LIFO */);
-        RealVector x_hat = sdar1.update(xSeries, k);
-        double scoreX = sdar1.logLoss(x, x_hat);
+        int k1 = xRing.size() - 1;
+        RealVector x_hat = sdar1.update(xSeries, k1);
+        double scoreX = (k1 == 0.d) ? 0.d : sdar1.logLoss(x, x_hat);
         // smoothing
         double y = ChangeFinderUDF.smoothing(outlierScores.add(scoreX));
 
         // [Stage#2] Change-point Detection
-        k = yRing.size();
         yRing.add(y).toArray(ySeries, false /* LIFO */);
-        double y_hat = sdar2.update(ySeries, k);
-        double lossY = sdar2.logLoss(y, y_hat);
+        int k2 = yRing.size() - 1;
+        double y_hat = sdar2.update(ySeries, k2);
+        double lossY = (k2 == 0.d) ? 0.d : sdar2.logLoss(y, y_hat);
         double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(lossY));
 
         outScores[0] = scoreX;

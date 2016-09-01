@@ -35,7 +35,6 @@ public class MatrixUtilsTest {
         System.out.println(Arrays.toString(A));
     }
 
-
     @Test
     public void testAryule1k9() {
         final int k = 9;

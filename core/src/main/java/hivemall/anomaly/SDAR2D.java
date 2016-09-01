@@ -60,16 +60,18 @@ public final class SDAR2D {
 
     /**
      * @param x series of input in LIFO order
-     * @param k
-     * @return x_hat
+     * @param k AR window size
+     * @return x_hat predicted x
+     * @link https://en.wikipedia.org/wiki/Matrix_multiplication#Outer_product
      */
     @Nonnull
     public RealVector update(@Nonnull final ArrayRealVector[] x, final int k) {
         Preconditions.checkArgument(x.length >= 1, "x.length MUST be greather than 1: " + x.length);
-        Preconditions.checkArgument(k < _C.length,
-            "x.length MUST be less than smooting window size: " + k);
+        Preconditions.checkArgument(k >= 0, "k MUST be greather than or equals to 0: ", k);
+        Preconditions.checkArgument(k < _C.length, "k MUST be less than |C| but " + "k=" + k
+                + ", |C|=" + _C.length);
 
-        ArrayRealVector x_t = x[0];
+        final ArrayRealVector x_t = x[0];
         final int dims = x_t.getDimension();
 
         if (_initialized == false) {
@@ -79,6 +81,7 @@ public final class SDAR2D {
             this._initialized = true;
             return new ArrayRealVector(dims);
         }
+        Preconditions.checkArgument(k >= 1, "k MUST be greater than 0: ", k);
 
         // update mean vector
         // \hat{mu} := (1-r) \hat{µ} + r x_t
@@ -91,7 +94,7 @@ public final class SDAR2D {
         }
 
         // update covariance matrices
-        // C_j := (1-r) C_j + r (x_t - \hat{µ}) (x_{t-j} - \hat{µ})^T
+        // C_j := (1-r) C_j + r (x_t - \hat{µ}) (x_{t-j} - \hat{µ})'
         final RealMatrix[] C = this._C;
         final RealVector rxResidual0 = xResidual[0].mapMultiply(_r); // r (x_t - \hat{µ}) 
         for (int j = 0; j <= k; j++) {
@@ -99,8 +102,7 @@ public final class SDAR2D {
         }
 
         // solve A in the following Yule-Walker equation
-        // C_j = ∑_{i=1}^{k} A_i C_{j-i} where j = 1..k, C_{-i} = C'_i      
-        // A = dot(inv(toeplitz(c[:k])), c[1:])  
+        // C_j = ∑_{i=1}^{k} A_i C_{j-i} where j = 1..k, C_{-i} = C'_i 
         /*
          * /C_1\     /A_1\  /C_0     |C_1     |C_2     | .  .  .   |C_{k-1} \ 
          * |---|     |---|  |--------+--------+--------+           +--------|
@@ -128,9 +130,9 @@ public final class SDAR2D {
         }
 
         // update model covariance
-        // ∑ := (1-r) ∑ + r (x - \hat{x}) (x - \hat{x})'
+        // ∑ := (1-r) ∑ + r (x - \hat{x}) (x - \hat{x})'       
         RealVector xEstimateResidual = x_t.subtract(x_hat);
-        this._sigma = _sigma.scalarMultiply(1.0 - _r).add(
+        this._sigma = _sigma.scalarMultiply(1.d - _r).add(
             xEstimateResidual.mapMultiply(_r).outerProduct(xEstimateResidual));
 
         return x_hat;
@@ -138,6 +140,9 @@ public final class SDAR2D {
 
     public double logLoss(@Nonnull final RealVector actual, final RealVector predicted) {
         double p = MathUtils.pdf(actual, predicted, _sigma);
+        if(p == 0.d) {
+            return 0.d;
+        }
         return -Math.log(p);
     }
 

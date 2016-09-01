@@ -21,6 +21,9 @@ import hivemall.utils.lang.Preconditions;
 import hivemall.utils.math.MathUtils;
 import hivemall.utils.math.MatrixUtils;
 
+import java.util.Arrays;
+import java.util.Random;
+
 import javax.annotation.Nonnull;
 
 public final class SDAR1D {
@@ -49,18 +52,22 @@ public final class SDAR1D {
         this._r = r;
         this._C = new double[k + 1];
         this._A = new double[k + 1];
+        Random rand = new Random();
+        this._mu = rand.nextDouble();
+        this._sigma = rand.nextDouble();
         this._initialized = false;
     }
 
     /**
      * @param x series of input in LIFO order
-     * @param k
-     * @return x_hat
+     * @param k AR window size
+     * @return x_hat predicted x
      */
     public double update(@Nonnull final double[] x, final int k) {
-        Preconditions.checkArgument(x.length >= 1, "x.length MUST be greather than 1: " + x.length);
-        Preconditions.checkArgument(k < _C.length,
-            "x.length MUST be less than smooting window size: " + k);
+        Preconditions.checkArgument(x.length >= 1, "x.length MUST be greather than 1: ", x.length);
+        Preconditions.checkArgument(k >= 0, "k MUST be greather than or equals to 0: ", k);
+        Preconditions.checkArgument(k < _C.length, "k MUST be less than |C| but ", "k=", k
+                + ", |C|=", _C.length);
 
         final double x_t = x[0];
 
@@ -70,6 +77,7 @@ public final class SDAR1D {
             this._initialized = true;
             return 0.d;
         }
+        Preconditions.checkArgument(k >= 1, "k MUST be greater than 0: ", k);
 
         // update mean vector
         // \hat{mu} := (1-r) \hat{µ} + r x_t
@@ -85,6 +93,7 @@ public final class SDAR1D {
         // solve A in the following Yule-Walker equation
         // C_j = ∑_{i=1}^{k} A_i C_{j-i} where j = 1..k, C_{-i} = C'_i
         final double[] A = _A;
+        Arrays.fill(A, 0.d);
         MatrixUtils.aryule(C, A, k);
 
         // estimate x
@@ -96,13 +105,18 @@ public final class SDAR1D {
 
         // update model covariance
         // ∑ := (1-r) ∑ + r (x - \hat{x}) (x - \hat{x})'
-        this._sigma = (1.d - _r) * _sigma + _r * (x_t - x_hat) * (x_t - x_hat);
+        double diffx = x_t - x_hat;
+        double sigma = (1.d - _r) * _sigma + _r * diffx * diffx;
+        this._sigma = sigma;
 
         return x_hat;
     }
 
     public double logLoss(final double actual, final double predicted) {
         double p = MathUtils.pdf(actual, predicted, _sigma);
+        if (p == 0.d) {
+            return 0.d;
+        }
         return -Math.log(p);
     }
 

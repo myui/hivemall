@@ -232,13 +232,13 @@ public final class ChangeFinderUDF extends UDFWithOptions {
         void update(@Nonnull Object arg, @Nonnull double[] outScores) throws HiveException;
     }
 
-    static double smoothing(@Nonnull DoubleRingBuffer scores) {
+    static double smoothing(@Nonnull final DoubleRingBuffer scores) {
         double sum = 0.d;
         for (double score : scores.getRing()) {
             sum += score;
         }
-        int capacity = scores.capacity();
-        return sum / capacity;
+        int size = scores.size();
+        return sum / size;
     }
 
 }
