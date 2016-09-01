@@ -28,7 +28,6 @@ branches:
   only:
     - master
     - develop
-    - dev/spark
 
 notifications:
   email: false
