@@ -46,11 +46,7 @@ case class XGBoostOptions() {
   }
 
   def set(key: String, value: String): XGBoostOptions = {
-    if (options.hasOption(key)) {
-      params.put(key, value)
-    } else {
-      throw new IllegalArgumentException(s"Non-existing key in options: ${key}")
-    }
+    params.put(key, value)
     this
   }
 
@@ -637,7 +633,7 @@ final class HivemallOps(df: DataFrame) extends Logging {
     val testDf = toHivemallTestDf(exprs: _*)
     Generate(HiveGenericUDTF(
         "xgboost_multiclass_predict",
-        new HiveFunctionWrapper("hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF "),
+        new HiveFunctionWrapper("hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF"),
         setMixServs(
           Seq(testDf("rowid"), testDf("features"), testDf("model_id"), testDf("pred_model")): _*
         ).map(_.expr)),
