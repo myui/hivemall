@@ -21,7 +21,7 @@ set -eu
 set -o pipefail
 
 # Target commit hash value
-XGBOOST_HASHVAL='209f08176d677c6eed3343489858a7578472656d'
+XGBOOST_HASHVAL='cc0c6e22fcf2523ee5659f6f4ddf4bb4fc6483a5'
 
 # Move to a working directory
 WORKING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,12 +40,11 @@ cd $XGBOOST_OUT
 # Fetch xgboost sources
 git clone --progress https://github.com/maropu/xgboost.git
 cd xgboost
+git checkout $XGBOOST_HASHVAL
 
 # Resolve dependent sources
-git submodule init dmlc-core
-git submodule update dmlc-core
-git submodule init rabit
-git submodule update rabit
+git submodule init
+git submodule update
 
 # Copy a built binary to the output
 cd jvm-packages
