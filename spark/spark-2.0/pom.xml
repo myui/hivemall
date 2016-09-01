@@ -160,6 +160,7 @@
 									<include>com.github.haifengl:smile-core</include>
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
+									<include>ml.dmlc:xgboost4j</include>
 								</includes>
 							</artifactSet>
 						</configuration>

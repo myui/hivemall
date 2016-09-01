@@ -99,9 +99,8 @@
 		<dependency>
 			<groupId>ml.dmlc</groupId>
 			<artifactId>xgboost4j</artifactId>
-			<version>0.5</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</systemPath>
+			<version>0.6</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<!-- test scope -->
@@ -157,6 +156,30 @@
 					</headerDefinitions>
 				</configuration>
 			</plugin>
+			<!-- TODO: This is hacky, so we'll replace this with another better way in a future -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>install-external</id>
+						<phase>clean</phase>
+						<configuration>
+							<file>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</file>
+							<repositoryLayout>default</repositoryLayout>
+							<groupId>ml.dmlc</groupId>
+							<artifactId>xgboost4j</artifactId>
+							<version>0.6</version>
+							<packaging>jar</packaging>
+							<generatePom>true</generatePom>
+						</configuration>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<!-- hivemall-core-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -191,6 +214,7 @@
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
 									<include>org.tukaani:xz</include>
+									<include>ml.dmlc:xgboost4j</include>
 								</includes>
 							</artifactSet>
 							<transformers>
