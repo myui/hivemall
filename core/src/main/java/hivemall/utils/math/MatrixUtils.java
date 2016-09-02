@@ -36,6 +36,7 @@ public final class MatrixUtils {
      * @param R autocovariance where |R| >= order
      * @param A coefficient to be solved where |A| >= order + 1
      * @return E variance of prediction error
+     * @link http://www.emptyloop.com/technotes/a%20tutorial%20on%20linear%20prediction%20and%20levinson-durbin.pdf
      */
     @Nonnull
     public static double[] aryule(@Nonnull final double[] R, @Nonnull final double[] A,
