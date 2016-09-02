@@ -9,13 +9,12 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>hivemall-spark</artifactId>
-	<name>Hivemall on Spark</name>
+	<artifactId>hivemall-spark_2.11</artifactId>
+	<name>Hivemall on Spark 1.6</name>
 	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spark.version>1.6.1</spark.version>
 		<scala.version>2.11.8</scala.version>
 	</properties>
 
@@ -39,6 +38,7 @@
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
+
 		<!-- other third-party dependencies -->
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -66,6 +66,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-streaming_2.11</artifactId>
+			<version>${spark.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-mllib_2.11</artifactId>
 			<version>${spark.version}</version>
 			<scope>compile</scope>
@@ -76,6 +82,7 @@
 			<version>1.8</version>
 			<scope>compile</scope>
 		</dependency>
+
 		<!-- test dependencies -->
 		<dependency>
 			<groupId>org.xerial</groupId>
@@ -126,7 +133,7 @@
 					</jvmArgs>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark-xx.jar -->
+			<!-- hivemall-spark_2.11-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -136,7 +143,7 @@
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark-xx-with-dependencies.jar including minimum dependencies -->
+			<!-- hivemall-spark_2.11-xx-with-dependencies.jar including minimum dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
