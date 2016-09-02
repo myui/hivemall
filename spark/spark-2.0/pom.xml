@@ -29,6 +29,12 @@
 		</dependency>
 		<dependency>
 			<groupId>io.github.myui</groupId>
+			<artifactId>hivemall-xgboost</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.myui</groupId>
 			<artifactId>hivemall-mixserv</artifactId>
 			<version>${project.version}</version>
 			<scope>compile</scope>

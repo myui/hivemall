@@ -9,8 +9,8 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>hivemall-core</artifactId>
-	<name>Hivemall Core</name>
+	<artifactId>hivemall-xgboost</artifactId>
+	<name>Hivemall XGBoost Integration</name>
 	<packaging>jar</packaging>
 
 	<dependencies>
@@ -64,64 +64,20 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>javax.jdo</groupId>
-			<artifactId>jdo2-api</artifactId>
-			<version>2.3-eb</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop.thirdparty.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>r09-jarjar</version>
+			<groupId>io.github.myui</groupId>
+			<artifactId>hivemall-core</artifactId>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
 		<!-- compile scope -->
 		<dependency>
-			<!-- required for mixing client -->
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-			<version>4.0.23.Final</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.github.haifengl</groupId>
-			<artifactId>smile-core</artifactId>
-			<version>1.0.3</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.tukaani</groupId>
-			<artifactId>xz</artifactId>
-			<version>1.5</version>
+			<groupId>ml.dmlc</groupId>
+			<artifactId>xgboost4j</artifactId>
+			<version>0.6</version>
 			<scope>compile</scope>
 		</dependency>
 
-		<!-- test scope -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>1.10.19</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-			<version>1.6.3</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito</artifactId>
-			<version>1.6.3</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -150,7 +106,31 @@
 					</headerDefinitions>
 				</configuration>
 			</plugin>
-			<!-- hivemall-core-xx.jar -->
+			<!-- TODO: This is hacky, so we'll replace this with another better way in a future -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>install-external</id>
+						<phase>validate</phase>
+						<configuration>
+							<file>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</file>
+							<repositoryLayout>default</repositoryLayout>
+							<groupId>ml.dmlc</groupId>
+							<artifactId>xgboost4j</artifactId>
+							<version>0.6</version>
+							<packaging>jar</packaging>
+							<generatePom>true</generatePom>
+						</configuration>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- hivemall-xgboost-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -160,7 +140,7 @@
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
-			<!-- hivemall-core-xx-with-dependencies.jar including minimum dependencies -->
+			<!-- hivemall-xgboost-xx-with-dependencies.jar including minimum dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -179,13 +159,35 @@
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<artifactSet>
 								<includes>
+									<include>io.github.myui:hivemall-core</include>
 									<include>io.netty:netty-all</include>
 									<include>com.github.haifengl:smile-core</include>
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
 									<include>org.tukaani:xz</include>
+									<include>ml.dmlc:xgboost4j</include>
 								</includes>
 							</artifactSet>
+							<filters>
+								<filter>
+									<artifact>org.apache.lucene:lucene-analyzers-kuromoji</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>org.apache.lucene:lucene-analyzers-common</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+								<filter>
+									<artifact>org.apache.lucene:lucene-core</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+							</filters>
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
