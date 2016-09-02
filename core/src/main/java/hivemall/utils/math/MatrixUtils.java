@@ -112,6 +112,97 @@ public final class MatrixUtils {
     }
 
     /**
+     * Fit an AR(order) model using the Burg's method.
+     *
+     * cf. https://searchcode.com/codesearch/view/9503568/
+     *
+     * @param X data vector to estimate where |X| >= order
+     * @param A coefficient to be solved where |A| >= order + 1
+     * @return E variance of white noise
+     */
+    @Nonnull
+    public static double[] arburg(@Nonnull final double[] X, @Nonnull final double[] A,
+                                  final int order) {
+        Preconditions.checkArgument(X.length > order, "|X| MUST be greater than or equals to "
+                + order + ": " + X.length);
+        Preconditions.checkArgument(A.length >= order + 1, "|A| MUST be greater than or equals to "
+                + (order + 1) + ": " + A.length);
+
+        final int nDataPoints = X.length;
+        final double[] E = new double[order + 1];
+
+        E[0] = 0.0d;
+        for (int i = 0; i < nDataPoints; i++) {
+            E[0] += X[i] * X[i];
+        }
+
+        // f and b are the forward and backward error sequences
+        int currentErrorSequenceSize = nDataPoints - 1;
+        double[] F = new double[currentErrorSequenceSize];
+        double[] B = new double[currentErrorSequenceSize];
+        for (int i = 0; i < currentErrorSequenceSize; i++) {
+            F[i] = X[i + 1];
+            B[i] = X[i];
+        }
+
+        A[0] = 1.0d;
+
+        // remaining stages i=2 to p
+        for (int i = 0; i < order; i++) {
+
+            // get the i-th reflection coefficient
+            double numerator = 0.0d;
+            double denominator = 0.0d;
+            for (int j = 0; j < currentErrorSequenceSize; j++) {
+                numerator += F[j] * B[j];
+                denominator += F[j] * F[j] + B[j] * B[j];
+            }
+            numerator *= 2.0d;
+            double g = 0.0d;
+            if (denominator != 0.0d) {
+                g = numerator / denominator;
+            }
+
+            // generate next filter order
+            final double[] prevA = new double[i];
+            for (int j = 0; j < i; j++) {
+                // No need to copy A[0] = 1.0
+                prevA[j] = A[j + 1];
+            }
+            A[1] = g;
+            for (int j = 1; j < i + 1; j++) {
+                A[j + 1] = prevA[j - 1] - g * prevA[i - j];
+            }
+
+            // keep track of the error
+            E[i + 1] = E[i] * (1 - g * g);
+
+            // update the prediction error sequences
+            final double[] prevF = new double[currentErrorSequenceSize];
+            for (int j = 0; j < currentErrorSequenceSize; j++) {
+                prevF[j] = F[j];
+            }
+            final int nextErrorSequenceSize = nDataPoints - i - 2;
+            for (int j = 0; j < nextErrorSequenceSize; j++) {
+                F[j] = prevF[j + 1] - g * B[j + 1];
+                B[j] = B[j] - g * prevF[j];
+            }
+
+            currentErrorSequenceSize = nextErrorSequenceSize;
+
+        }
+
+        for (int i = 1, mid = order / 2 + 1; i < mid; i++) {
+            // Reverse 1..(order - 1)-th elements by swapping
+            final double tmp = A[i];
+            A[i] = A[order + 1 - i];
+            A[order + 1 - i] = tmp;
+        }
+
+        return E;
+    }
+
+    /**
      * Construct a Toeplitz matrix.
      */
     @Nonnull

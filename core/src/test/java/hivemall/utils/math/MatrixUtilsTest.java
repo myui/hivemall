@@ -47,6 +47,29 @@ public class MatrixUtilsTest {
     }
 
     @Test
+    public void testArburgk2() {
+        // Expected outputs are obtained from Octave's arburg() function
+        // k must be less than (X.length - 2) on Octave, but A can be computed w/o the assumption
+        int k = 2;
+        double[] X = new double[] {1, 2, 3, 4, 5};
+        double[] A = new double[k + 1];
+        MatrixUtils.arburg(X, A, k);
+        Assert.assertEquals(1.86391d, A[1], 0.00001d);
+        Assert.assertEquals(-0.95710d, A[2], 0.00001d);
+    }
+
+    @Test
+    public void testArburgk5() {
+        final int k = 5;
+        double[] X = new double[] {143.85, 141.95, 141.45, 142.30, 140.60, 140.00, 138.40, 137.10,
+                138.90, 139.85};
+        double[] A = new double[k + 1];
+        MatrixUtils.arburg(X, A, k);
+        double[] expected = new double[] {1.0, 1.31033, -0.58569, 0.56058, -0.63859, 0.35334};
+        Assert.assertArrayEquals(expected, A, 0.00001d);
+    }
+
+    @Test
     public void toeplitz() {
         RealMatrix[] c = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1}),
                 new Array2DRowRealMatrix(new double[] {2}),
