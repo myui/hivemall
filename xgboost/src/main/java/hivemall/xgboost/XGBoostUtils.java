@@ -24,6 +24,8 @@ import java.util.List;
 
 public final class XGBoostUtils {
 
+    private XGBoostUtils() {}
+
     /** Transform List<String> inputs into a XGBoost input format */
     public static LabeledPoint parseFeatures(double target, List<String> features) {
         final int size = features.size();
