@@ -70,6 +70,10 @@ public final class MatrixUtils {
             E[k + 1] = Ek * (1.0d - lambda * lambda);
         }
 
+        for (int i = 0; i < order + 1; i++) {
+            A[i] = -A[i];
+        }
+
         return E;
     }
 
@@ -106,6 +110,10 @@ public final class MatrixUtils {
             }
 
             E[k + 1] = E[k] * (1.0d - lambda * lambda);
+        }
+
+        for (int i = 0; i < order + 1; i++) {
+            A[i] = -A[i];
         }
 
         return E;
@@ -197,6 +205,10 @@ public final class MatrixUtils {
             final double tmp = A[i];
             A[i] = A[order + 1 - i];
             A[order + 1 - i] = tmp;
+        }
+
+        for (int i = 0; i < order + 1; i++) {
+            A[i] = -A[i];
         }
 
         return E;

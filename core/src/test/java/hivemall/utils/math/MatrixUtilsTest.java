@@ -30,8 +30,8 @@ public class MatrixUtilsTest {
         double[] R = new double[] {1, 2, 3};
         double[] A = new double[k + 1];
         MatrixUtils.aryule(R, A, k);
-        Assert.assertEquals(-1.3333333333333335d, A[1], 0.001d);
-        Assert.assertEquals(-0.3333333333333333d, A[2], 0.001d);
+        Assert.assertEquals(1.3333333333333335d, A[1], 0.001d);
+        Assert.assertEquals(0.3333333333333333d, A[2], 0.001d);
     }
 
     @Test
@@ -41,8 +41,8 @@ public class MatrixUtilsTest {
                 138.90, 139.85};
         double[] A = new double[k + 1];
         MatrixUtils.aryule(R, A, k);
-        double[] expected = new double[] {1.0, -2.90380682, -0.31235631, -1.26463104, 3.30187384,
-                1.61653593, 2.10367317, -1.37563117, -2.18139823, -0.02314717};
+        double[] expected = new double[] {-1.0, 2.90380682, 0.31235631, 1.26463104, -3.30187384,
+                -1.61653593, -2.10367317, 1.37563117, 2.18139823, 0.02314717};
         Assert.assertArrayEquals(expected, A, 0.01d);
     }
 
@@ -54,8 +54,8 @@ public class MatrixUtilsTest {
         double[] X = new double[] {1, 2, 3, 4, 5};
         double[] A = new double[k + 1];
         MatrixUtils.arburg(X, A, k);
-        Assert.assertEquals(1.86391d, A[1], 0.00001d);
-        Assert.assertEquals(-0.95710d, A[2], 0.00001d);
+        Assert.assertEquals(-1.86391d, A[1], 0.00001d);
+        Assert.assertEquals(0.95710d, A[2], 0.00001d);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class MatrixUtilsTest {
                 138.90, 139.85};
         double[] A = new double[k + 1];
         MatrixUtils.arburg(X, A, k);
-        double[] expected = new double[] {1.0, 1.31033, -0.58569, 0.56058, -0.63859, 0.35334};
+        double[] expected = new double[] {-1.0, -1.31033, 0.58569, -0.56058, 0.63859, -0.35334};
         Assert.assertArrayEquals(expected, A, 0.00001d);
     }
 
