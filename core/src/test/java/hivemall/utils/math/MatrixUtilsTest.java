@@ -85,8 +85,8 @@ public class MatrixUtilsTest {
                 new Array2DRowRealMatrix(new double[] {1}),
                 new Array2DRowRealMatrix(new double[] {2})}, A[1]);
         Assert.assertArrayEquals(new RealMatrix[] {new Array2DRowRealMatrix(new double[] {3}),
-                new Array2DRowRealMatrix(new double[] {1}),
-                new Array2DRowRealMatrix(new double[] {2})}, A[2]);
+                new Array2DRowRealMatrix(new double[] {2}),
+                new Array2DRowRealMatrix(new double[] {1})}, A[2]);
     }
 
 
