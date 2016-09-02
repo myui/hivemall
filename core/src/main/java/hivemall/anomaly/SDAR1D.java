@@ -42,6 +42,8 @@ public final class SDAR1D {
     private final double[] _A;
     private double _mu;
     private double _sigma;
+    private double _muOld;
+    private double _sigmaOld;
 
     private boolean _initialized;
 
@@ -74,6 +76,10 @@ public final class SDAR1D {
             return 0.d;
         }
         Preconditions.checkArgument(k >= 1, "k MUST be greater than 0: ", k);
+
+        // old parameters are accessible to compute the Hellinger distance
+        this._muOld = _mu;
+        this._sigmaOld = _sigma;
 
         // update mean vector
         // \hat{mu} := (1-r) \hat{µ} + r x_t
@@ -115,4 +121,7 @@ public final class SDAR1D {
         return -Math.log(p);
     }
 
+    public double hellingerDistance() {
+        return MathUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
+    }
 }

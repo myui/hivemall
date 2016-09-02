@@ -343,4 +343,25 @@ public final class MathUtils {
 
         return numerator / denominator;
     }
+
+    /**
+     * @param mu1 mean of the first normal distribution
+     * @param sigma1 variance of the first normal distribution
+     * @param mu2 mean of the second normal distribution
+     * @param sigma2 variance of the second normal distribution
+     * @return the Hellinger distance between two normal distributions
+     * @link https://en.wikipedia.org/wiki/Hellinger_distance#Examples
+     */
+    public static double hellingerDistance(@Nonnull final double mu1, @Nonnull final double sigma1,
+                                           @Nonnull final double mu2, @Nonnull final double sigma2) {
+        double sigmaSum = sigma1 + sigma2;
+        if (sigmaSum == 0.d) {
+            return 0.d;
+        }
+        double numerator = Math.pow(sigma1, 0.25) * Math.pow(sigma2, 0.25) *
+                Math.exp(-0.25 * Math.pow(mu1 - mu2, 2) / sigmaSum);
+        double denominator = Math.sqrt(sigmaSum / 2);
+        return 1.d - numerator / denominator;
+    }
+
 }
