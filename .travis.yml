@@ -33,5 +33,9 @@ branches:
 notifications:
   email: false
 
+script:
+  - mvn test -Pspark-1.6
+  - mvn test -Pspark-2.0
+
 after_success:
   - mvn clean cobertura:cobertura coveralls:report
