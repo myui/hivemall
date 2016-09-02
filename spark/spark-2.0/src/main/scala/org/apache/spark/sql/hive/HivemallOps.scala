@@ -22,6 +22,7 @@ import java.util.UUID
 import scala.collection.mutable
 
 import org.apache.commons.cli.Options
+import org.apache.spark.annotation.{AlphaComponent, Experimental}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.feature.HmFeature
 import org.apache.spark.ml.linalg.{DenseVector => SDV, SparseVector => SSV, Vector => SV}
@@ -37,6 +38,11 @@ import org.apache.spark.sql.types._
 
 import hivemall.xgboost.XGBoostUDTF
 
+/**
+ * :: AlphaComponent ::
+ * An utility class to generate a sequence of options used in XGBoost.
+ */
+@AlphaComponent
 case class XGBoostOptions() {
   private val params: mutable.Map[String, String] = mutable.Map.empty
   private val options: Options = {
@@ -45,8 +51,18 @@ case class XGBoostOptions() {
     }.options()
   }
 
+  def isValidKey(key: String): Boolean = {
+    // TODO: Is there another way to handle all the XGBoost options?
+    options.hasOption(key) || key == "num_class"
+  }
+
   def set(key: String, value: String): XGBoostOptions = {
-    params.put(key, value)
+    if (isValidKey(key)) {
+      params.put(key, value)
+    } else {
+      throw new IllegalArgumentException(
+        s"Non-existing key detected in XGBoost options: ${key}" )
+    }
     this
   }
 
@@ -556,9 +572,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * :: Experimental ::
    * @see hivemall.xgboost.regression.XGBoostRegressionUDTF
    * @group xgboost
    */
+  @Experimental
   @scala.annotation.varargs
   def train_xgboost_regr(exprs: Column*): DataFrame = withTypedPlan {
     val trainDf = toHivemallTrainDf(exprs: _*)
@@ -573,9 +591,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * :: Experimental ::
    * @see hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF
    * @group xgboost
    */
+  @Experimental
   @scala.annotation.varargs
   def train_xgboost_classifier(exprs: Column*): DataFrame = withTypedPlan {
     val trainDf = toHivemallTrainDf(exprs: _*)
@@ -590,9 +610,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * :: Experimental ::
    * @see hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF
    * @group xgboost
    */
+  @Experimental
   @scala.annotation.varargs
   def train_xgboost_multiclass_classifier(exprs: Column*): DataFrame = withTypedPlan {
     val trainDf = toHivemallTrainDf(exprs: _*)
@@ -607,9 +629,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * :: Experimental ::
    * @see hivemall.xgboost.tools.XGBoostPredictUDTF
    * @group xgboost
    */
+  @Experimental
   @scala.annotation.varargs
   def xgboost_predict(exprs: Column*): DataFrame = withTypedPlan {
     val testDf = toHivemallTestDf(exprs: _*)
@@ -625,9 +649,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
+   * :: Experimental ::
    * @see hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF
    * @group xgboost
    */
+  @Experimental
   @scala.annotation.varargs
   def xgboost_multiclass_predict(exprs: Column*): DataFrame = withTypedPlan {
     val testDf = toHivemallTestDf(exprs: _*)
