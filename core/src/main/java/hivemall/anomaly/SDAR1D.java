@@ -102,8 +102,7 @@ public final class SDAR1D {
         // update model covariance
         // ∑ := (1-r) ∑ + r (x - \hat{x}) (x - \hat{x})'
         double diffx = x_t - x_hat;
-        double sigma = (1.d - _r) * _sigma + _r * diffx * diffx;
-        this._sigma = sigma;
+        this._sigma = (1.d - _r) * _sigma + _r * diffx * diffx;
 
         return x_hat;
     }
