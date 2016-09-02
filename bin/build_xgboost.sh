@@ -27,7 +27,7 @@ XGBOOST_HASHVAL='cc0c6e22fcf2523ee5659f6f4ddf4bb4fc6483a5'
 WORKING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Final output dir for a custom-compiled xgboost binary
-HIVEMALL_LIB_DIR="$WORKING_DIR/../core/src/main/resources/lib/"
+HIVEMALL_LIB_DIR="$WORKING_DIR/../xgboost/src/main/resources/lib/"
 rm -rf $HIVEMALL_LIB_DIR >> /dev/null
 mkdir -p $HIVEMALL_LIB_DIR
 
