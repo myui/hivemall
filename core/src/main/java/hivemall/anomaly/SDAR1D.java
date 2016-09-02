@@ -96,7 +96,7 @@ public final class SDAR1D {
         // \hat{x} = \hat{µ} + ∑_{i=1}^k A_i (x_{t-i} - \hat{µ})
         double x_hat = _mu;
         for (int i = 1; i <= k; i++) {
-            x_hat += (-A[i]) * (x[i] - _mu); // -A[i] when solved by aryule()
+            x_hat += A[i] * (x[i] - _mu);
         }
 
         // update model covariance
