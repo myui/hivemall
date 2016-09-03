@@ -62,7 +62,12 @@ final class ChangeFinder1D implements ChangeFinder {
         xRing.add(x).toArray(xSeries, false /* LIFO */);
         int k1 = xRing.size() - 1;
         double x_hat = sdar1.update(xSeries, k1);
+
+        // <LogLoss>
         double scoreX = (k1 == 0.d) ? 0.d : sdar1.logLoss(x, x_hat);
+        // <Hellinger distance>
+        // double scoreX = (k1 == 0.d) ? 0.d : sdar1.hellingerDistance();
+
         // smoothing
         double y = ChangeFinderUDF.smoothing(outlierScores.add(scoreX));
 
@@ -70,8 +75,13 @@ final class ChangeFinder1D implements ChangeFinder {
         yRing.add(y).toArray(ySeries, false /* LIFO */);
         int k2 = yRing.size() - 1;
         double y_hat = sdar2.update(ySeries, k2);
+
+        // <LogLoss>
         double lossY = (k2 == 0.d) ? 0.d : sdar2.logLoss(y, y_hat);
         double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(lossY));
+        // <Hellinger distance>
+        // double distanceY = (k2 == 0.d) ? 0.d : sdar2.hellingerDistance();
+        // double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(distanceY));
 
         outScores[0] = scoreX;
         outScores[1] = scoreY;

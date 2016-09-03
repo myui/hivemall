@@ -41,6 +41,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -343,4 +344,48 @@ public final class MathUtils {
 
         return numerator / denominator;
     }
+
+    /**
+     * @param mu1 mean of the first normal distribution
+     * @param sigma1 variance of the first normal distribution
+     * @param mu2 mean of the second normal distribution
+     * @param sigma2 variance of the second normal distribution
+     * @return the Hellinger distance between two normal distributions
+     * @link https://en.wikipedia.org/wiki/Hellinger_distance#Examples
+     */
+    public static double hellingerDistance(@Nonnull final double mu1, @Nonnull final double sigma1,
+                                           @Nonnull final double mu2, @Nonnull final double sigma2) {
+        double sigmaSum = sigma1 + sigma2;
+        if (sigmaSum == 0.d) {
+            return 0.d;
+        }
+        double numerator = Math.pow(sigma1, 0.25) * Math.pow(sigma2, 0.25) *
+                Math.exp(-0.25 * Math.pow(mu1 - mu2, 2) / sigmaSum);
+        double denominator = Math.sqrt(sigmaSum / 2);
+        return 1.d - numerator / denominator;
+    }
+
+    /**
+     * @param mu1 mean vector of the first normal distribution
+     * @param sigma1 covariance matrix of the first normal distribution
+     * @param mu2 mean vector of the second normal distribution
+     * @param sigma2 covariance matrix of the second normal distribution
+     * @return the Hellinger distance between two multivariate normal distributions
+     * @link https://en.wikipedia.org/wiki/Hellinger_distance#Examples
+     */
+    public static double hellingerDistance(@Nonnull final RealVector mu1, @Nonnull final RealMatrix sigma1,
+                                           @Nonnull final RealVector mu2, @Nonnull final RealMatrix sigma2) {
+        RealVector muSub = mu1.subtract(mu2);
+        RealMatrix sigmaMean = sigma1.add(sigma2).scalarMultiply(0.5);
+        RealMatrix sigmaMeanInv = new LUDecomposition(sigmaMean).getSolver().getInverse();
+        double sigma1Det = new LUDecomposition(sigma1).getDeterminant();
+        double sigma2Det = new LUDecomposition(sigma2).getDeterminant();
+
+        double numerator = Math.pow(sigma1Det, 0.25) * Math.pow(sigma2Det, 0.25) *
+                Math.exp(-0.125 * sigmaMeanInv.preMultiply(muSub).dotProduct(muSub));
+        double denominator = Math.sqrt(new LUDecomposition(sigmaMean).getDeterminant());
+
+        return 1.d - numerator / denominator;
+    }
+
 }

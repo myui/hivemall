@@ -47,6 +47,8 @@ public final class SDAR2D {
     private final RealMatrix[] _C;
     private RealVector _mu;
     private RealMatrix _sigma;
+    private RealVector _muOld;
+    private RealMatrix _sigmaOld;
 
     private boolean _initialized;
 
@@ -82,6 +84,10 @@ public final class SDAR2D {
             return new ArrayRealVector(dims);
         }
         Preconditions.checkArgument(k >= 1, "k MUST be greater than 0: ", k);
+
+        // old parameters are accessible to compute the Hellinger distance
+        this._muOld = _mu.copy();
+        this._sigmaOld = _sigma.copy();
 
         // update mean vector
         // \hat{mu} := (1-r) \hat{µ} + r x_t
@@ -154,4 +160,7 @@ public final class SDAR2D {
         return -Math.log(p);
     }
 
+    public double hellingerDistance() {
+        return MathUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
+    }
 }
