@@ -24,11 +24,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -114,6 +117,39 @@ public class ChangeFinder2DTest {
             numChangepoints > 0);
         Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
             numChangepoints < 5);
+    }
+
+    @Test
+    public void testPoissenDist() throws HiveException {
+        final int examples = 10000;
+        final int dims = 3;
+        final PoissonDistribution[] poisson = new PoissonDistribution[] {
+                new PoissonDistribution(10.d), new PoissonDistribution(5.d),
+                new PoissonDistribution(20.d)};
+        final Random rand = new Random(42);
+        final Double[] x = new Double[dims];
+        final List<Double> xList = Arrays.asList(x);
+
+        Parameters params = new Parameters();
+        params.r1 = 0.01d;
+        params.k = 6;
+        params.T1 = 10;
+        params.T2 = 5;
+        PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
+        ListObjectInspector listOI = ObjectInspectorFactory.getStandardListObjectInspector(oi);
+        final ChangeFinder2D cf = new ChangeFinder2D(params, listOI);
+        final double[] outScores = new double[2];
+
+        println("# time x outlier change");
+        for (int i = 0; i < examples; i++) {
+            double r = rand.nextDouble();
+            x[0] = r * poisson[0].sample();
+            x[1] = r * poisson[1].sample();
+            x[2] = r * poisson[2].sample();
+
+            cf.update(xList, outScores);
+            printf("%d %f %f %f %f %f%n", i, x[0], x[1], x[2], outScores[0], outScores[1]);
+        }
     }
 
     private static void println(String msg) {
