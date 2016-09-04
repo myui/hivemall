@@ -70,7 +70,7 @@ public class MatrixUtilsTest {
     }
 
     @Test
-    public void toeplitz() {
+    public void testToeplitz() {
         RealMatrix[] c = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1}),
                 new Array2DRowRealMatrix(new double[] {2}),
                 new Array2DRowRealMatrix(new double[] {3})};
@@ -89,5 +89,54 @@ public class MatrixUtilsTest {
                 new Array2DRowRealMatrix(new double[] {1})}, A[2]);
     }
 
+    @Test
+    public void testFlatten1d() {
+        RealMatrix[] m1 = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1, 1.1}),
+                new Array2DRowRealMatrix(new double[] {2, 2.2}),
+                new Array2DRowRealMatrix(new double[] {3, 3.3})};
+        RealMatrix flatten1 = MatrixUtils.flatten(m1);
+        double[][] data = flatten1.getData();
+        Assert.assertEquals(1, data.length);
+        Assert.assertArrayEquals(new double[] {1.0, 1.1, 2, 2.2, 3.0, 3.3}, data[0], 0.d);
+    }
+
+    @Test
+    public void testFlatten2d() {
+        RealMatrix e1 = new Array2DRowRealMatrix(new double[] {1, 1.1});
+        RealMatrix e2 = new Array2DRowRealMatrix(new double[] {2, 2.2});
+        RealMatrix e2T = e2.transpose();
+        RealMatrix e3 = new Array2DRowRealMatrix(new double[] {3, 3.3});
+        RealMatrix e3T = e3.transpose();
+        RealMatrix[] m1 = new RealMatrix[] {e1, e2, e3};
+        // {1.0,1.1}
+        // {2.0,2.2}
+        // {3.0,3.3}
+        RealMatrix[][] toeplitz1 = MatrixUtils.toeplitz(m1, 3);
+        Assert.assertEquals(3, toeplitz1.length);
+        Assert.assertEquals(3, toeplitz1[0].length);
+        Assert.assertEquals(3, toeplitz1[1].length);
+        Assert.assertEquals(3, toeplitz1[2].length);
+        Assert.assertEquals(e1, toeplitz1[0][0]);
+        Assert.assertEquals(e1, toeplitz1[1][1]);
+        Assert.assertEquals(e1, toeplitz1[2][2]);
+        Assert.assertEquals(e2, toeplitz1[1][0]);
+        Assert.assertEquals(e2, toeplitz1[2][1]);
+        Assert.assertEquals(e3, toeplitz1[2][0]);
+        Assert.assertEquals(e2T, toeplitz1[0][1]);
+        Assert.assertEquals(e2T, toeplitz1[1][2]);
+        Assert.assertEquals(e3T, toeplitz1[0][2]);
+        // {1.0,1.1}  {2.0,2.2}' {3.0,3.3}'
+        // {2.0,2.2}  {1.0,1.1}  {2.0,2.2}'
+        // {3.0,3.3}  {2.0,2.2}  {1.0,1.1}
+        RealMatrix flatten1 = MatrixUtils.flatten(toeplitz1, 2);
+        // 1.0 0.0 2.0 2.2 3.0 3.3
+        // 1.1 0.0 0.0 0.0 0.0 0.0
+        // 2.0 0.0 1.0 0.0 2.0 2.2
+        // 2.2 0.0 1.1 0.0 0.0 0.0
+        // 3.0 0.0 2.0 0.0 1.0 0.0
+        // 3.3 0.0 2.2 0.0 1.1 0.0
+        Assert.assertEquals(6, flatten1.getRowDimension());
+        Assert.assertEquals(6, flatten1.getColumnDimension());
+    }
 
 }
