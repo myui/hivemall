@@ -74,10 +74,16 @@
 		<dependency>
 			<groupId>ml.dmlc</groupId>
 			<artifactId>xgboost4j</artifactId>
-			<version>0.6</version>
+			<version>v0.6-0.1</version>
 			<scope>compile</scope>
 		</dependency>
-
+		<dependency>
+			<!-- NOTE: This dependency needed for xgboost4j -->
+			<groupId>com.esotericsoftware.kryo</groupId>
+			<artifactId>kryo</artifactId>
+			<version>2.21</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -113,14 +119,14 @@
 				<version>2.4</version>
 				<executions>
 					<execution>
-						<id>install-external</id>
+						<id>install-xgboost</id>
 						<phase>validate</phase>
 						<configuration>
-							<file>${basedir}/lib/xgboost4j-0.6-0.1-with-dependencies.jar</file>
+							<file>${basedir}/lib/xgboost4j-v0.6-0.1.jar</file>
 							<repositoryLayout>default</repositoryLayout>
 							<groupId>ml.dmlc</groupId>
 							<artifactId>xgboost4j</artifactId>
-							<version>0.6</version>
+							<version>v0.6-0.1</version>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
 						</configuration>
@@ -166,38 +172,9 @@
 									<include>com.github.haifengl:smile-data</include>
 									<include>org.tukaani:xz</include>
 									<include>ml.dmlc:xgboost4j</include>
+									<include>com.esotericsoftware.kryo:kryo</include>
 								</includes>
 							</artifactSet>
-							<filters>
-								<filter>
-									<artifact>org.apache.lucene:lucene-analyzers-kuromoji</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-								<filter>
-									<artifact>org.apache.lucene:lucene-analyzers-common</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-								<filter>
-									<artifact>org.apache.lucene:lucene-core</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-							</filters>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Implementation-Title>${project.name}</Implementation-Title>
-										<Implementation-Version>${project.version}</Implementation-Version>
-										<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
-									</manifestEntries>
-								</transformer>
-							</transformers>
 						</configuration>
 					</execution>
 				</executions>

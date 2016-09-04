@@ -43,7 +43,6 @@
 	<modules>
 		<module>core</module>
 		<module>nlp</module>
-		<module>xgboost</module>
 		<module>mixserv</module>
 	</modules>
 
@@ -71,6 +70,12 @@
 
 	<profiles>
 		<profile>
+			<id>xgboost</id>
+			<modules>
+				<module>xgboost</module>
+			</modules>
+		</profile>
+		<profile>
 			<id>spark-1.6</id>
 			<modules>
 				<module>spark/spark-1.6</module>
@@ -85,6 +90,7 @@
 			<modules>
 				<module>spark/spark-2.0</module>
 				<module>spark/spark-common</module>
+				<module>xgboost</module>
 			</modules>
 			<properties>
 				<spark.version>2.0.0</spark.version>

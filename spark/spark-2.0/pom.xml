@@ -34,12 +34,6 @@
 		</dependency>
 		<dependency>
 			<groupId>io.github.myui</groupId>
-			<artifactId>hivemall-mixserv</artifactId>
-			<version>${project.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.github.myui</groupId>
 			<artifactId>hivemall-spark-common</artifactId>
 			<version>${project.version}</version>
 			<scope>compile</scope>
@@ -90,6 +84,12 @@
 		</dependency>
 
 		<!-- test dependencies -->
+		<dependency>
+			<groupId>io.github.myui</groupId>
+			<artifactId>hivemall-mixserv</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>xerial-core</artifactId>
@@ -175,6 +175,7 @@
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
 									<include>ml.dmlc:xgboost4j</include>
+									<include>com.esotericsoftware.kryo:kryo</include>
 								</includes>
 							</artifactSet>
 						</configuration>
