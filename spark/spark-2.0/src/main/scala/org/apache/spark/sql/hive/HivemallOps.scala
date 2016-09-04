@@ -51,18 +51,14 @@ case class XGBoostOptions() {
     }.options()
   }
 
-  def isValidKey(key: String): Boolean = {
+  private def isValidKey(key: String): Boolean = {
     // TODO: Is there another way to handle all the XGBoost options?
     options.hasOption(key) || key == "num_class"
   }
 
   def set(key: String, value: String): XGBoostOptions = {
-    if (isValidKey(key)) {
-      params.put(key, value)
-    } else {
-      throw new IllegalArgumentException(
-        s"Non-existing key detected in XGBoost options: ${key}" )
-    }
+    require(isValidKey(key), s"Non-existing key detected in XGBoost options: ${key}")
+    params.put(key, value)
     this
   }
 
