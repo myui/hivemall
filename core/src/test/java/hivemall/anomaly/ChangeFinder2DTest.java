@@ -70,8 +70,8 @@ public class ChangeFinder2DTest {
             }
             x.clear();
         }
-        Assert.assertTrue("#outliners SHOULD be greater than 10: " + numOutliers, numOutliers > 10);
-        Assert.assertTrue("#outliners SHOULD be less than 20: " + numOutliers, numOutliers < 20);
+        Assert.assertTrue("#outliers SHOULD be greater than 10: " + numOutliers, numOutliers > 10);
+        Assert.assertTrue("#outliers SHOULD be less than 20: " + numOutliers, numOutliers < 20);
         Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
             numChangepoints > 0);
         Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
@@ -111,8 +111,8 @@ public class ChangeFinder2DTest {
             x.clear();
             i++;
         }
-        Assert.assertTrue("#outliners SHOULD be greater than 5: " + numOutliers, numOutliers > 5);
-        Assert.assertTrue("#outliners SHOULD be less than 10: " + numOutliers, numOutliers < 10);
+        Assert.assertTrue("#outliers SHOULD be greater than 5: " + numOutliers, numOutliers > 5);
+        Assert.assertTrue("#outliers SHOULD be less than 10: " + numOutliers, numOutliers < 10);
         Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
             numChangepoints > 0);
         Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
