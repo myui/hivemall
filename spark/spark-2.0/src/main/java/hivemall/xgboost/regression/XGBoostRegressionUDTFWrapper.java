@@ -41,6 +41,6 @@ public class XGBoostRegressionUDTFWrapper extends XGBoostRegressionUDTF {
         /**
          * TODO: Check if it is unique over all tasks in executors of Spark.
          */
-        return taskId + "-" + UUID.randomUUID() + "-" + sequence;
+        return "xgbmodel-" + taskId + "-" + UUID.randomUUID() + "-" + sequence;
     }
 }

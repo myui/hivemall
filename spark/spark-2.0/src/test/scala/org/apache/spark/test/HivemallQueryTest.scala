@@ -17,18 +17,13 @@
 
 package org.apache.spark.test
 
-import java.io.File
-import java.nio.charset.StandardCharsets
-
 import scala.collection.mutable.Seq
 
-import com.google.common.io.Files
 import org.apache.spark.sql.hive.HivemallOps
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.test.TestHiveSingleton
 import org.apache.spark.sql.{QueryTest, Row, functions}
 import org.apache.spark.test.TestUtils._
-import org.apache.spark.util.Utils
 
 import hivemall.tools.RegressionDatagen
 
@@ -38,38 +33,6 @@ import hivemall.tools.RegressionDatagen
 abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
 
   import hiveContext.implicits._
-
-  var trainDir: File = _
-  var testDir: File = _
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    val trainLines =
-      """
-        |1 1:1.0 3:2.0 5:3.0
-        |0 2:4.0 4:5.0 6:6.0
-        |1 1:1.1 4:1.0 5:2.3 7:1.0
-        |1 1:1.0 4:1.5 5:2.1 7:1.2
-      """.stripMargin
-    trainDir = Utils.createTempDir()
-    Files.write(trainLines, new File(trainDir, "train-00000"), StandardCharsets.UTF_8)
-    val testLines =
-      """
-        |1 1:1.3 3:2.1 5:2.8
-        |0 2:3.9 4:5.3 6:8.0
-      """.stripMargin
-    testDir = Utils.createTempDir()
-    Files.write(testLines, new File(testDir, "test-00000"), StandardCharsets.UTF_8)
-  }
-
-  override def afterAll(): Unit = {
-    try {
-      Utils.deleteRecursively(trainDir)
-      Utils.deleteRecursively(testDir)
-    } finally {
-      super.afterAll()
-    }
-  }
 
   protected val DummyInputData =
     Seq(

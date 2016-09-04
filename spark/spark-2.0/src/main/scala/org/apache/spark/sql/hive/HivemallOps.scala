@@ -57,7 +57,7 @@ case class XGBoostOptions() {
   }
 
   def set(key: String, value: String): XGBoostOptions = {
-    require(isValidKey(key), s"Non-existing key detected in XGBoost options: ${key}")
+    require(isValidKey(key), s"non-existing key detected in XGBoost options: ${key}")
     params.put(key, value)
     this
   }
