@@ -129,7 +129,7 @@ public final class SDAR2D {
          */
         RealMatrix[][] rhs = MatrixUtils.toeplitz(C, k);
         RealMatrix[] lhs = Arrays.copyOfRange(C, 1, k + 1);
-        RealMatrix R = MatrixUtils.flatten(rhs);
+        RealMatrix R = MatrixUtils.flatten(rhs, dims);
         RealMatrix L = MatrixUtils.flatten(lhs);
         LUDecomposition LU = new LUDecomposition(R);
         RealMatrix A = LU.getSolver().solve(L);
