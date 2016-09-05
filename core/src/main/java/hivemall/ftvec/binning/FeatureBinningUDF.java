@@ -64,7 +64,7 @@ public class FeatureBinningUDF extends GenericUDF {
     @Override
     public ObjectInspector initialize(ObjectInspector[] OIs) throws UDFArgumentException {
         if (OIs.length != 2)
-            throw new UDFArgumentLengthException("Specify three arguments");
+            throw new UDFArgumentLengthException("Specify two arguments");
 
         Category arg0Category = OIs[0].getCategory();
         Category arg1Category = OIs[1].getCategory();
