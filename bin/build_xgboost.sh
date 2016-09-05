@@ -21,18 +21,29 @@ set -eu
 set -o pipefail
 
 # Target commit hash value
-XGBOOST_HASHVAL='e6f89a09074b3b25d460a99ecd195fd16b903511'
+XGBOOST_HASHVAL='85443403310e90bd8a90a1f817841520838b4ac7'
 
-# Move to a working directory
-WORKING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Move to a top directory
+if [ "$HIVEMALL_HOME" == "" ]; then
+  if [ -e ../bin/${0##*/} ]; then
+    HIVEMALL_HOME=".."
+  elif [ -e ./bin/${0##*/} ]; then
+    HIVEMALL_HOME="."
+  else
+    echo "env HIVEMALL_HOME not defined"
+    exit 1
+  fi
+fi
+
+cd $HIVEMALL_HOME
 
 # Final output dir for a custom-compiled xgboost binary
-HIVEMALL_LIB_DIR="$WORKING_DIR/../xgboost/src/main/resources/lib/"
+HIVEMALL_LIB_DIR="$HIVEMALL_HOME/xgboost/src/main/resources/lib/"
 rm -rf $HIVEMALL_LIB_DIR >> /dev/null
 mkdir -p $HIVEMALL_LIB_DIR
 
 # Move to an output directory
-XGBOOST_OUT="../target/xgboost-$XGBOOST_HASHVAL"
+XGBOOST_OUT="$HIVEMALL_HOME/target/xgboost-$XGBOOST_HASHVAL"
 rm -rf $XGBOOST_OUT >> /dev/null
 mkdir -p $XGBOOST_OUT
 cd $XGBOOST_OUT
