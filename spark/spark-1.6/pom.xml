@@ -13,11 +13,6 @@
 	<name>Hivemall on Spark 1.6</name>
 	<packaging>jar</packaging>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scala.version>2.11.8</scala.version>
-	</properties>
-
 	<dependencies>
 		<!-- hivemall dependencies -->
 		<dependency>
