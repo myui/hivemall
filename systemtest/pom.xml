@@ -2,14 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>hivemall</artifactId>
-        <groupId>io.github.myui</groupId>
-        <version>0.4.2-rc.2</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>systemtest</artifactId>
+    <parent>
+        <groupId>io.github.myui</groupId>
+        <artifactId>hivemall</artifactId>
+        <version>0.4.2-rc.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>hivemall-systemtest</artifactId>
+    <name>System test for Hivemall</name>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
