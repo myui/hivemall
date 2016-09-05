@@ -40,10 +40,11 @@ import java.util.Random;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.math3.linear.EigenDecomposition;
+import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 public final class MathUtils {
 
@@ -327,17 +328,26 @@ public final class MathUtils {
         Preconditions.checkArgument(sigma.getRowDimension() == dim, "|x| != |sigma|, |x|=" + dim
                 + ", |sigma|=" + sigma.getRowDimension());
 
-        //LUDecomposition LU = new LUDecomposition(sigma);        
-        //double detSigma =  LU.getDeterminant();
-        EigenDecomposition eigen = new EigenDecomposition(sigma);
-        double detSigma = eigen.getDeterminant();
+        LUDecomposition LU = new LUDecomposition(sigma);
+        final double detSigma = LU.getDeterminant();
         double denominator = Math.pow(2.d * Math.PI, 0.5d * dim) * Math.pow(detSigma, 0.5d);
         if (denominator == 0.d) { // avoid divide by zero
             return 0.d;
         }
 
+        final RealMatrix invSigma;
+        DecompositionSolver solver = LU.getSolver();
+        if (solver.isNonSingular() == false) {
+            SingularValueDecomposition svd = new SingularValueDecomposition(sigma);
+            invSigma = svd.getSolver().getInverse(); // least square solution
+        } else {
+            invSigma = solver.getInverse();
+        }
+        //EigenDecomposition eigen = new EigenDecomposition(sigma);
+        //double detSigma = eigen.getDeterminant();
+        //RealMatrix invSigma = eigen.getSolver().getInverse();
+
         RealVector diff = x.subtract(x_hat);
-        RealMatrix invSigma = eigen.getSolver().getInverse();
         RealVector premultiplied = invSigma.preMultiply(diff);
         double sum = premultiplied.dotProduct(diff);
         double numerator = Math.exp(-0.5d * sum);
@@ -354,13 +364,13 @@ public final class MathUtils {
      * @link https://en.wikipedia.org/wiki/Hellinger_distance#Examples
      */
     public static double hellingerDistance(@Nonnull final double mu1, @Nonnull final double sigma1,
-                                           @Nonnull final double mu2, @Nonnull final double sigma2) {
+            @Nonnull final double mu2, @Nonnull final double sigma2) {
         double sigmaSum = sigma1 + sigma2;
         if (sigmaSum == 0.d) {
             return 0.d;
         }
-        double numerator = Math.pow(sigma1, 0.25) * Math.pow(sigma2, 0.25) *
-                Math.exp(-0.25 * Math.pow(mu1 - mu2, 2) / sigmaSum);
+        double numerator = Math.pow(sigma1, 0.25) * Math.pow(sigma2, 0.25)
+                * Math.exp(-0.25 * Math.pow(mu1 - mu2, 2) / sigmaSum);
         double denominator = Math.sqrt(sigmaSum / 2);
         return 1.d - numerator / denominator;
     }
@@ -373,16 +383,17 @@ public final class MathUtils {
      * @return the Hellinger distance between two multivariate normal distributions
      * @link https://en.wikipedia.org/wiki/Hellinger_distance#Examples
      */
-    public static double hellingerDistance(@Nonnull final RealVector mu1, @Nonnull final RealMatrix sigma1,
-                                           @Nonnull final RealVector mu2, @Nonnull final RealMatrix sigma2) {
+    public static double hellingerDistance(@Nonnull final RealVector mu1,
+            @Nonnull final RealMatrix sigma1, @Nonnull final RealVector mu2,
+            @Nonnull final RealMatrix sigma2) {
         RealVector muSub = mu1.subtract(mu2);
         RealMatrix sigmaMean = sigma1.add(sigma2).scalarMultiply(0.5);
         RealMatrix sigmaMeanInv = new LUDecomposition(sigmaMean).getSolver().getInverse();
         double sigma1Det = new LUDecomposition(sigma1).getDeterminant();
         double sigma2Det = new LUDecomposition(sigma2).getDeterminant();
 
-        double numerator = Math.pow(sigma1Det, 0.25) * Math.pow(sigma2Det, 0.25) *
-                Math.exp(-0.125 * sigmaMeanInv.preMultiply(muSub).dotProduct(muSub));
+        double numerator = Math.pow(sigma1Det, 0.25) * Math.pow(sigma2Det, 0.25)
+                * Math.exp(-0.125 * sigmaMeanInv.preMultiply(muSub).dotProduct(muSub));
         double denominator = Math.sqrt(new LUDecomposition(sigmaMean).getDeterminant());
 
         return 1.d - numerator / denominator;
