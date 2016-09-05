@@ -45,7 +45,7 @@ import java.util.Map;
 
 @Description(
         name = "feature_binning",
-        value = "_FUNC_(array<features::string> features, map<string, double> quantiles_map)/(int|bigint|float|double weight, array<double> quantiles) - Returns binned features as an array<features::string> / bin ID as int")
+        value = "_FUNC_(array<features::string> features, const map<string, array<double>> quantiles_map)/(int|bigint|float|double weight, const array<double> quantiles) - Returns binned features as an array<features::string> / bin ID as int")
 public class FeatureBinningUDF extends GenericUDF {
     private boolean multiple = true;
 
