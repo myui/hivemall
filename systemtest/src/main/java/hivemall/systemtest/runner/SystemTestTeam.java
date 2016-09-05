@@ -10,17 +10,17 @@ import org.junit.rules.ExternalResource;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class SystemTestTeam extends ExternalResource {
     private List<SystemTestRunner> runners = new ArrayList<SystemTestRunner>();
     private List<SystemTestRunner> reachGoal = new ArrayList<SystemTestRunner>(); // distinct
 
     private List<StrictHQ> initHqs = new ArrayList<StrictHQ>();
-    private Set<Entry<StrictHQ, String>> entries = new LinkedHashSet<Entry<StrictHQ, String>>();
+    private Map<Entry<StrictHQ, String>, Boolean> entries = new LinkedHashMap<Entry<StrictHQ, String>, Boolean>();
 
 
     public SystemTestTeam(SystemTestRunner... runners) {
@@ -58,8 +58,12 @@ public class SystemTestTeam extends ExternalResource {
         initHqs.addAll(hqs);
     }
 
+    public void set(StrictHQ hq, String expected, boolean ordered) {
+        entries.put(pair(hq, expected), ordered);
+    }
+
     public void set(StrictHQ hq, String expected) {
-        entries.add(pair(hq, expected));
+        entries.put(pair(hq, expected), false);
     }
 
     public void set(List<? extends StrictHQ> hqs, String... expecteds) {
@@ -95,8 +99,9 @@ public class SystemTestTeam extends ExternalResource {
                 reachGoal.add(runner);
             }
 
-            for (Entry<StrictHQ, String> entry : entries) {
-                runner.matching(entry.getKey(), entry.getValue());
+            for (Entry<Entry<StrictHQ, String>, Boolean> entry : entries.entrySet()) {
+                runner.matching(entry.getKey().getKey(), entry.getKey().getValue(),
+                    entry.getValue());
             }
         }
     }

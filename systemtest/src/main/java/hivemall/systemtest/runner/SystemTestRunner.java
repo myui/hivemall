@@ -12,12 +12,14 @@ import hivemall.systemtest.model.UploadFileAsNewTableHQ;
 import hivemall.systemtest.model.UploadFileHQ;
 import hivemall.systemtest.model.UploadFileToExistingHQ;
 import hivemall.systemtest.utils.IO;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -132,10 +134,23 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // matching StrictHQ
-    public void matching(StrictHQ hq, String answer) throws Exception {
+    public void matching(StrictHQ hq, String answer, boolean ordered) throws Exception {
         List<String> result = exec(hq);
 
-        Assert.assertArrayEquals(answer.split(IO.RD), result.toArray());
+        if (ordered) {
+            // take order into consideration (like list)
+            Assert.assertThat(Arrays.asList(answer.split(IO.RD)),
+                Matchers.contains(result.toArray()));
+        } else {
+            // not take order into consideration (like multiset)
+            Assert.assertThat(Arrays.asList(answer.split(IO.RD)),
+                Matchers.containsInAnyOrder(result.toArray()));
+        }
+    }
+
+    // matching StrictHQ (ordered == false)
+    public void matching(StrictHQ hq, String answer) throws Exception {
+        matching(hq, answer, false);
     }
 
     List<String> createDB(String dbName) throws Exception {
