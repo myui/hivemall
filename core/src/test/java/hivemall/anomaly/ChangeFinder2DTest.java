@@ -31,7 +31,11 @@ import java.util.zip.GZIPInputStream;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
+import org.apache.commons.math3.distribution.UniformIntegerDistribution;
+import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.math3.random.Well19937c;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -55,13 +59,13 @@ public class ChangeFinder2DTest {
         BufferedReader reader = readFile("cf1d.csv");
         println("x outlier change");
         String line;
-        int numOutliers = 0, numChangepoints = 0;
+        int i = 1, numOutliers = 0, numChangepoints = 0;
         while ((line = reader.readLine()) != null) {
             double d = Double.parseDouble(line);
             x.add(Double.valueOf(d));
 
             cf.update(x, outScores);
-            printf("%f %f %f%n", d, outScores[0], outScores[1]);
+            printf("%d %f %f %f%n", i, d, outScores[0], outScores[1]);
             if (outScores[0] > 10.d) {
                 numOutliers++;
             }
@@ -69,6 +73,7 @@ public class ChangeFinder2DTest {
                 numChangepoints++;
             }
             x.clear();
+            i++;
         }
         Assert.assertTrue("#outliers SHOULD be greater than 10: " + numOutliers, numOutliers > 10);
         Assert.assertTrue("#outliers SHOULD be less than 20: " + numOutliers, numOutliers < 20);
@@ -140,7 +145,7 @@ public class ChangeFinder2DTest {
         final ChangeFinder2D cf = new ChangeFinder2D(params, listOI);
         final double[] outScores = new double[2];
 
-        println("# time x outlier change");
+        println("# time x0 x1 x2 outlier change");
         for (int i = 0; i < examples; i++) {
             double r = rand.nextDouble();
             x[0] = r * poisson[0].sample();
@@ -149,6 +154,65 @@ public class ChangeFinder2DTest {
 
             cf.update(xList, outScores);
             printf("%d %f %f %f %f %f%n", i, x[0], x[1], x[2], outScores[0], outScores[1]);
+        }
+    }
+
+    //@Test
+    public void testSota5D() throws HiveException {
+        final int DIM = 5;
+        final int EXAMPLES = 20001;
+
+        final Double[] x = new Double[DIM];
+        final List<Double> xList = Arrays.asList(x);
+
+        Parameters params = new Parameters();
+        params.r1 = 0.01d;
+        params.k = 10;
+        params.T1 = 10;
+        params.T2 = 10;
+        PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
+        ListObjectInspector listOI = ObjectInspectorFactory.getStandardListObjectInspector(oi);
+        final ChangeFinder2D cf = new ChangeFinder2D(params, listOI);
+        final double[] outScores = new double[2];
+
+        RandomGenerator rng1 = new Well19937c(31L);
+        UniformIntegerDistribution uniform = new UniformIntegerDistribution(rng1, 0, 10);
+        RandomGenerator rng2 = new Well19937c(41L);
+        PoissonDistribution poissonEvent = new PoissonDistribution(rng2, 1000.d,
+            PoissonDistribution.DEFAULT_EPSILON, PoissonDistribution.DEFAULT_MAX_ITERATIONS);
+        NormalDistribution dataGenerator[] = new NormalDistribution[DIM];
+
+        println("# time x0 x1 x2 x3 x4 outlier change");
+        FIN: for (int i = 0; i < EXAMPLES;) {
+            int len = poissonEvent.sample();
+            double data[][] = new double[DIM][len];
+            double mean[] = new double[DIM];
+            double sd[] = new double[DIM];
+            for (int j = 0; j < DIM; j++) {
+                mean[j] = uniform.sample() * 5.d;
+                sd[j] = uniform.sample() / 10.d * 5.d + 1.d;
+                if (i % 5 == 0) {
+                    mean[j] += 50.d;
+                }
+                dataGenerator[j] = new NormalDistribution(new Well19937c(i), mean[j], sd[j]);
+                data[j] = dataGenerator[j].sample(len);
+                data[j][len / (j + 2) + DIM % (j + 1)] = mean[j] + (j + 4) * sd[j];
+            }
+
+            for (int j = 0; j < len; j++) {
+                if (i >= EXAMPLES) {
+                    break FIN;
+                }
+                x[0] = data[0][j];
+                x[1] = data[1][j];
+                x[2] = data[2][j];
+                x[3] = data[3][j];
+                x[4] = data[4][j];
+                cf.update(xList, outScores);
+                printf("%d %f %f %f %f %f %f %f%n", i, x[0], x[1], x[2], x[3], x[4], outScores[0],
+                    outScores[1]);
+                i++;
+            }
         }
     }
 
