@@ -1,4 +1,4 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 public class TableListHQ extends StrictHQ {
     TableListHQ() {}

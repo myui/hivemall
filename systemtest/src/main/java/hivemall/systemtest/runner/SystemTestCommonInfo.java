@@ -1,4 +1,4 @@
-package hivemall.runner;
+package hivemall.systemtest.runner;
 
 public class SystemTestCommonInfo {
     public final String baseDir;

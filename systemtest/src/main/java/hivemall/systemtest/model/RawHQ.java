@@ -1,4 +1,4 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 public class RawHQ extends StrictHQ {
     String hq;

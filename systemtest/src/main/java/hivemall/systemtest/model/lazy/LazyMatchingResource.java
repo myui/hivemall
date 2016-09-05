@@ -1,10 +1,10 @@
-package hivemall.model.lazy;
+package hivemall.systemtest.model.lazy;
 
 import com.klarna.hiverunner.CommandShellEmulation;
 import com.klarna.hiverunner.sql.StatementsSplitter;
-import hivemall.model.HQ;
-import hivemall.model.RawHQ;
-import hivemall.utils.IO;
+import hivemall.systemtest.model.HQ;
+import hivemall.systemtest.model.RawHQ;
+import hivemall.systemtest.utils.IO;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;

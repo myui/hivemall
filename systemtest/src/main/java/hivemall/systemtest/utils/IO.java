@@ -1,4 +1,4 @@
-package hivemall.utils;
+package hivemall.systemtest.utils;
 
 import com.google.common.io.Resources;
 import hivemall.utils.lang.Preconditions;

@@ -1,9 +1,9 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 import com.google.common.io.Resources;
 import com.klarna.hiverunner.CommandShellEmulation;
 import com.klarna.hiverunner.sql.StatementsSplitter;
-import hivemall.model.lazy.LazyMatchingResource;
+import hivemall.systemtest.model.lazy.LazyMatchingResource;
 import hivemall.utils.lang.Preconditions;
 
 import java.io.File;

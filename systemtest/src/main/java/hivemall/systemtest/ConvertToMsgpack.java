@@ -1,4 +1,4 @@
-package hivemall;
+package hivemall.systemtest;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

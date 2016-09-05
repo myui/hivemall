@@ -1,9 +1,9 @@
-package hivemall.runner;
+package hivemall.systemtest.runner;
 
-import hivemall.model.HQ;
-import hivemall.model.RawHQ;
-import hivemall.model.StrictHQ;
-import hivemall.model.lazy.LazyMatchingResource;
+import hivemall.systemtest.model.HQ;
+import hivemall.systemtest.model.RawHQ;
+import hivemall.systemtest.model.StrictHQ;
+import hivemall.systemtest.model.lazy.LazyMatchingResource;
 import hivemall.utils.lang.Preconditions;
 import org.junit.rules.ExternalResource;
 

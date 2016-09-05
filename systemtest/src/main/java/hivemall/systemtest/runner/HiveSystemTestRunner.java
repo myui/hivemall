@@ -1,4 +1,4 @@
-package hivemall.runner;
+package hivemall.systemtest.runner;
 
 import com.klarna.hiverunner.Extractor;
 import com.klarna.hiverunner.HiveServerContainer;
@@ -6,8 +6,8 @@ import com.klarna.hiverunner.HiveServerContext;
 import com.klarna.hiverunner.HiveShell;
 import com.klarna.hiverunner.builder.HiveShellBuilder;
 import com.klarna.hiverunner.config.HiveRunnerConfig;
-import hivemall.model.RawHQ;
-import hivemall.model.UploadFileToExistingHQ;
+import hivemall.systemtest.model.RawHQ;
+import hivemall.systemtest.model.UploadFileToExistingHQ;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;

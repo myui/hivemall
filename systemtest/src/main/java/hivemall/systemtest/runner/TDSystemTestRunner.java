@@ -1,4 +1,4 @@
-package hivemall.runner;
+package hivemall.systemtest.runner;
 
 import com.google.common.base.Function;
 import com.treasuredata.client.ExponentialBackOff;
@@ -10,15 +10,15 @@ import com.treasuredata.client.model.TDJobRequest;
 import com.treasuredata.client.model.TDJobSummary;
 import com.treasuredata.client.model.TDResultFormat;
 import com.treasuredata.client.model.TDTable;
-import hivemall.ConvertToMsgpack;
-import hivemall.model.CreateTableHQ;
-import hivemall.model.DropTableHQ;
-import hivemall.model.HQ;
-import hivemall.model.InsertHQ;
-import hivemall.model.RawHQ;
-import hivemall.model.UploadFileAsNewTableHQ;
-import hivemall.model.UploadFileToExistingHQ;
-import hivemall.utils.IO;
+import hivemall.systemtest.ConvertToMsgpack;
+import hivemall.systemtest.model.CreateTableHQ;
+import hivemall.systemtest.model.DropTableHQ;
+import hivemall.systemtest.model.HQ;
+import hivemall.systemtest.model.InsertHQ;
+import hivemall.systemtest.model.RawHQ;
+import hivemall.systemtest.model.UploadFileAsNewTableHQ;
+import hivemall.systemtest.model.UploadFileToExistingHQ;
+import hivemall.systemtest.utils.IO;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.BufferedReader;

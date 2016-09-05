@@ -1,4 +1,4 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

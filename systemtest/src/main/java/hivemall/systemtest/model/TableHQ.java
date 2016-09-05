@@ -1,4 +1,4 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 abstract public class TableHQ extends StrictHQ {
     public final String tableName;

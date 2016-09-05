@@ -1,4 +1,4 @@
-package hivemall.model;
+package hivemall.systemtest.model;
 
 import hivemall.utils.lang.Preconditions;
 
