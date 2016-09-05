@@ -90,18 +90,37 @@ public class MatrixUtilsTest {
     }
 
     @Test
-    public void testFlatten1d() {
-        RealMatrix[] m1 = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {1, 1.1}),
-                new Array2DRowRealMatrix(new double[] {2, 2.2}),
-                new Array2DRowRealMatrix(new double[] {3, 3.3})};
-        RealMatrix flatten1 = MatrixUtils.flatten(m1);
+    public void testCombineMatrices1d() {
+        RealMatrix[] m1 = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {0, 1}),
+                new Array2DRowRealMatrix(new double[] {2, 3}),
+                new Array2DRowRealMatrix(new double[] {4, 5})};
+        RealMatrix flatten1 = MatrixUtils.combineMatrices(m1);
         double[][] data = flatten1.getData();
-        Assert.assertEquals(1, data.length);
-        Assert.assertArrayEquals(new double[] {1.0, 1.1, 2, 2.2, 3.0, 3.3}, data[0], 0.d);
+        Assert.assertEquals(6, data.length);
+        Assert.assertArrayEquals(new double[] {0}, data[0], 0.d);
+        Assert.assertArrayEquals(new double[] {1}, data[1], 0.d);
+        Assert.assertArrayEquals(new double[] {2}, data[2], 0.d);
+        Assert.assertArrayEquals(new double[] {3}, data[3], 0.d);
+        Assert.assertArrayEquals(new double[] {4}, data[4], 0.d);
+        Assert.assertArrayEquals(new double[] {5}, data[5], 0.d);
     }
 
     @Test
-    public void testFlatten2d() {
+    public void testCombineMatrices2d() {
+        RealMatrix[] m1 = new RealMatrix[] {
+                new Array2DRowRealMatrix(new double[][] {new double[] {1, 2, 3},
+                        new double[] {3, 4, 6}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {7, 8, 9},
+                        new double[] {10, 11, 12}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {13, 14, 15},
+                        new double[] {16, 17, 18}})};
+        RealMatrix flatten1 = MatrixUtils.combineMatrices(m1);
+        Assert.assertEquals(3, flatten1.getColumnDimension());
+        Assert.assertEquals(6, flatten1.getRowDimension());
+    }
+
+    @Test
+    public void testCombineMatrices2dToeplitz() {
         RealMatrix e1 = new Array2DRowRealMatrix(new double[] {1, 1.1});
         RealMatrix e2 = new Array2DRowRealMatrix(new double[] {2, 2.2});
         RealMatrix e2T = e2.transpose();
@@ -128,7 +147,7 @@ public class MatrixUtilsTest {
         // {1.0,1.1}  {2.0,2.2}' {3.0,3.3}'
         // {2.0,2.2}  {1.0,1.1}  {2.0,2.2}'
         // {3.0,3.3}  {2.0,2.2}  {1.0,1.1}
-        RealMatrix flatten1 = MatrixUtils.flatten(toeplitz1, 2);
+        RealMatrix flatten1 = MatrixUtils.combinedMatrices(toeplitz1, 2);
         // 1.0 0.0 2.0 2.2 3.0 3.3
         // 1.1 0.0 0.0 0.0 0.0 0.0
         // 2.0 0.0 1.0 0.0 2.0 2.2

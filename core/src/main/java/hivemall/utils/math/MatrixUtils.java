@@ -17,12 +17,15 @@
  */
 package hivemall.utils.math;
 
+import hivemall.utils.collections.DoubleArrayList;
 import hivemall.utils.lang.Preconditions;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 
 public final class MatrixUtils {
 
@@ -33,7 +36,9 @@ public final class MatrixUtils {
      * 
      * R_j = ∑_{i=1}^{k} A_i R_{j-i} where j = 1..k, R_{-i} = R'_i
      * 
-     * cf. http://www.emptyloop.com/technotes/a%20tutorial%20on%20linear%20prediction%20and%20levinson-durbin.pdf
+     * cf.
+     * http://www.emptyloop.com/technotes/a%20tutorial%20on%20linear%20prediction%20and%20levinson
+     * -durbin.pdf
      * 
      * @param R autocovariance where |R| >= order
      * @param A coefficient to be solved where |A| >= order + 1
@@ -255,8 +260,139 @@ public final class MatrixUtils {
         return toeplitz;
     }
 
+    /**
+     * Construct a Toeplitz matrix.
+     */
     @Nonnull
-    public static RealMatrix flatten(@Nonnull final RealMatrix[][] grid, final int dimensions) {
+    public static double[][] toeplitz(@Nonnull final double[] c) {
+        return toeplitz(c, c.length);
+    }
+
+    /**
+     * Construct a Toeplitz matrix.
+     */
+    @Nonnull
+    public static double[][] toeplitz(@Nonnull final double[] c, final int dim) {
+        Preconditions.checkArgument(dim >= 1, "Invalid dimension: " + dim);
+        Preconditions.checkArgument(c.length >= dim, "|c| must be greather than " + dim + ": "
+                + c.length);
+
+        /*
+         * Toeplitz matrix  (symmetric, invertible, k*dimensions by k*dimensions)
+         *
+         * /C_0     |C_1'    |C_2'     | .  .  .  |C_{k-1}' \
+         * |--------+--------+--------+           +---------|
+         * |C_1     |C_0     |C_1'     |               .    |
+         * |--------+--------+--------+                .    |
+         * |C_2     |C_1     |C_0      |               .    |
+         * |--------+--------+--------+                     |
+         * |   .                         .                  |
+         * |   .                            .               |
+         * |   .                               .            |
+         * |--------+                              +--------|
+         * \C_{k-1} | .  .  .                      |C_0     /
+         */
+        final double c0 = c[0];
+        final double[][] toeplitz = new double[dim][dim];
+        for (int row = 0; row < dim; row++) {
+            toeplitz[row][row] = c0;
+            for (int col = 0; col < dim; col++) {
+                if (row < col) {
+                    toeplitz[row][col] = c[col - row];
+                } else if (row > col) {
+                    toeplitz[row][col] = c[row - col];
+                }
+            }
+        }
+        return toeplitz;
+    }
+
+    @Nonnull
+    public static double[] flatten(@Nonnull final RealMatrix[][] grid) {
+        Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
+        Preconditions.checkArgument(grid[0].length >= 1,
+            "The number of cols must be greather than 1");
+
+        final int rows = grid.length;
+        final int cols = grid[0].length;
+        RealMatrix grid00 = grid[0][0];
+        Preconditions.checkNotNull(grid00);
+        int cellRows = grid00.getRowDimension();
+        int cellCols = grid00.getColumnDimension();
+
+        final DoubleArrayList list = new DoubleArrayList(rows * cols * cellRows * cellCols);
+        final RealMatrixPreservingVisitor visitor = new DefaultRealMatrixPreservingVisitor() {
+            @Override
+            public void visit(int row, int column, double value) {
+                list.add(value);
+            }
+        };
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                RealMatrix cell = grid[row][col];
+                cell.walkInRowOrder(visitor);
+            }
+        }
+
+        return list.toArray();
+    }
+
+    @Nonnull
+    public static double[] flatten(@Nonnull final RealMatrix[] grid) {
+        Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
+
+        final int rows = grid.length;
+        RealMatrix grid0 = grid[0];
+        Preconditions.checkNotNull(grid0);
+        int cellRows = grid0.getRowDimension();
+        int cellCols = grid0.getColumnDimension();
+
+        final DoubleArrayList list = new DoubleArrayList(rows * cellRows * cellCols);
+        final RealMatrixPreservingVisitor visitor = new DefaultRealMatrixPreservingVisitor() {
+            @Override
+            public void visit(int row, int column, double value) {
+                list.add(value);
+            }
+        };
+
+        for (int row = 0; row < rows; row++) {
+            RealMatrix cell = grid[row];
+            cell.walkInRowOrder(visitor);
+        }
+
+        return list.toArray();
+    }
+
+    @Nonnull
+    public static RealMatrix[] unflatten(@Nonnull final double[] data, final int rows,
+            final int cols, final int len) {
+        final RealMatrix[] grid = new RealMatrix[len];
+        int offset = 0;
+        for (int k = 0; k < len; k++) {
+            RealMatrix cell = new BlockRealMatrix(rows, cols);
+            grid[k] = cell;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (offset >= data.length) {
+                        throw new IndexOutOfBoundsException("Offset " + offset
+                                + " exceeded data.length " + data.length);
+                    }
+                    double value = data[offset];
+                    cell.setEntry(i, j, value);
+                    offset++;
+                }
+            }
+        }
+        if (offset != data.length) {
+            throw new IllegalArgumentException("Invalid data for unflatten");
+        }
+        return grid;
+    }
+
+    @Nonnull
+    public static RealMatrix combinedMatrices(@Nonnull final RealMatrix[][] grid,
+            final int dimensions) {
         Preconditions.checkArgument(grid.length >= 1, "The number of rows must be greather than 1");
         Preconditions.checkArgument(grid[0].length >= 1,
             "The number of cols must be greather than 1");
@@ -276,11 +412,9 @@ public final class MatrixUtils {
 
     /**
      * Flatten grid of matrix that has 1 col.
-     * 
-     * @return flattened to a (1, N) matrix where N is the number of elements in the original matrix.
      */
     @Nonnull
-    public static RealMatrix flatten(@Nonnull final RealMatrix[] grid) {
+    public static RealMatrix combineMatrices(@Nonnull final RealMatrix[] grid) {
         Preconditions.checkArgument(grid.length >= 1,
             "The number of rows must be greather than 0: " + grid.length);
 

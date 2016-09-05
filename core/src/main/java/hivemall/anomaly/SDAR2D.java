@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
@@ -127,19 +128,24 @@ public final class SDAR2D {
          * |---|     |---|  |--------+                              +--------|
          * \C_k/     \A_k/  \C_{k-1} | .  .  .                      |C_0     / 
          */
-        RealMatrix[][] rhs = MatrixUtils.toeplitz(C, k);
-        RealMatrix[] lhs = Arrays.copyOfRange(C, 1, k + 1);
-        RealMatrix R = MatrixUtils.flatten(rhs, dims);
-        RealMatrix L = MatrixUtils.flatten(lhs);
+        double[] rhs = MatrixUtils.flatten(Arrays.copyOfRange(C, 0, k));
+        double[][] toeplitz = MatrixUtils.toeplitz(rhs);
+        RealMatrix R = new Array2DRowRealMatrix(toeplitz, false);
+        double[] lhs = MatrixUtils.flatten(Arrays.copyOfRange(C, 1, k + 1));
+        Preconditions.checkArgument(lhs.length == rhs.length, "|LHS| != |RHS|, |LHS|=", lhs.length,
+            ", |RHS|=", rhs.length);
+
         LUDecomposition LU = new LUDecomposition(R);
-        RealMatrix A = LU.getSolver().solve(L);
+        RealVector L = new ArrayRealVector(lhs, false);
+        RealVector solved = LU.getSolver().solve(L);
+        RealMatrix[] A = MatrixUtils.unflatten(solved.toArray(), dims, dims, k);
 
         // estimate x
         // \hat{x} = \hat{µ} + ∑_{i=1}^k A_i (x_{t-i} - \hat{µ})
         RealVector x_hat = _mu.copy();
+
         for (int i = 0; i < k; i++) {
-            int offset = i * dims;
-            RealMatrix Ai = A.getSubMatrix(offset, offset + dims - 1, 0, dims - 1);
+            RealMatrix Ai = A[i];
             x_hat = x_hat.add(Ai.operate(xResidual[i + 1]));
         }
 
