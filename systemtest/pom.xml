@@ -53,4 +53,36 @@
             <version>1.3</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <directory>target</directory>
+        <outputDirectory>target/classes</outputDirectory>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <testOutputDirectory>target/test-classes</testOutputDirectory>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>2.8</version>
+                    <configuration>
+                        <header>${project.parent.basedir}/resources/license-header.txt</header>
+                        <properties>
+                            <currentYear>${build.year}</currentYear>
+                            <copyrightOwner>${project.organization.name}</copyrightOwner>
+                        </properties>
+                        <includes>
+                            <include>src/main/**/*.java</include>
+                            <include>src/test/**/*.java</include>
+                        </includes>
+                        <encoding>UTF-8</encoding>
+                        <headerDefinitions>
+                            <headerDefinition>${project.parent.basedir}/resources/header-definition.xml
+                            </headerDefinition>
+                        </headerDefinitions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
