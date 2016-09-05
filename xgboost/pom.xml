@@ -13,6 +13,11 @@
 	<name>Hivemall XGBoost Integration</name>
 	<packaging>jar</packaging>
 
+	<properties>
+		<xgboost.version>0.60</xgboost.version>
+		<xgboost4j.version>0.10</xgboost4j.version>
+	</properties>
+
 	<dependencies>
 		<!-- provided scope -->
 		<dependency>
@@ -74,7 +79,7 @@
 		<dependency>
 			<groupId>ml.dmlc</groupId>
 			<artifactId>xgboost4j</artifactId>
-			<version>v0.6-0.1</version>
+			<version>${xgboost4j.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -122,11 +127,11 @@
 						<id>install-xgboost</id>
 						<phase>validate</phase>
 						<configuration>
-							<file>${basedir}/lib/xgboost4j-v0.6-0.1.jar</file>
+							<file>${basedir}/lib/xgboost4j-v${xgboost.version}_${xgboost4j.version}.jar</file>
 							<repositoryLayout>default</repositoryLayout>
 							<groupId>ml.dmlc</groupId>
 							<artifactId>xgboost4j</artifactId>
-							<version>v0.6-0.1</version>
+							<version>${xgboost4j.version}</version>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
 						</configuration>
@@ -146,12 +151,31 @@
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
-			<!-- hivemall-xgboost-xx-with-dependencies.jar including minimum dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>2.3</version>
 				<executions>
+					<!-- hivemall-xgboost-xx_xgboost_xx.jar -->
+					<execution>
+						<id>jar-with-portal-binaries</id>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<finalName>${project.artifactId}-${project.version}_xgboost-${xgboost.version}</finalName>
+							<outputDirectory>${project.parent.build.directory}</outputDirectory>
+							<minimizeJar>false</minimizeJar>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<artifactSet>
+								<includes>
+									<include>ml.dmlc:xgboost4j</include>
+								</includes>
+							</artifactSet>
+						</configuration>
+					</execution>
+					<!-- hivemall-xgboost-xx-with-dependencies.jar including minimum dependencies -->
 					<execution>
 						<id>jar-with-dependencies</id>
 						<phase>package</phase>
