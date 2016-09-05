@@ -23,7 +23,9 @@ import hivemall.utils.lang.Preconditions;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
+import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
 
@@ -432,6 +434,19 @@ public final class MatrixUtils {
             combined.setSubMatrix(cell.getData(), row * rowDims, 0);
         }
         return combined;
+    }
+
+    @Nonnull
+    public static RealMatrix inverse(@Nonnull final RealMatrix m) {
+        LUDecomposition LU = new LUDecomposition(m);
+        DecompositionSolver solver = LU.getSolver();
+        return solver.getInverse();
+    }
+
+    @Nonnull
+    public static double det(@Nonnull final RealMatrix m) {
+        LUDecomposition LU = new LUDecomposition(m);
+        return LU.getDeterminant();
     }
 
 }

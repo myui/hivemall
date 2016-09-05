@@ -18,8 +18,8 @@
 package hivemall.anomaly;
 
 import hivemall.utils.lang.Preconditions;
-import hivemall.utils.math.MathUtils;
 import hivemall.utils.math.MatrixUtils;
+import hivemall.utils.math.StatsUtils;
 
 import java.util.Arrays;
 
@@ -114,14 +114,10 @@ public final class SDAR1D {
     }
 
     public double logLoss(final double actual, final double predicted) {
-        double p = MathUtils.pdf(actual, predicted, _sigma);
-        if (p == 0.d) {
-            return 0.d;
-        }
-        return -Math.log(p);
+        return StatsUtils.logLoss(actual, predicted, _sigma);
     }
 
     public double hellingerDistance() {
-        return MathUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
+        return StatsUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
     }
 }

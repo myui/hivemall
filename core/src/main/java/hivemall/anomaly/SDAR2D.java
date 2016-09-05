@@ -18,8 +18,8 @@
 package hivemall.anomaly;
 
 import hivemall.utils.lang.Preconditions;
-import hivemall.utils.math.MathUtils;
 import hivemall.utils.math.MatrixUtils;
+import hivemall.utils.math.StatsUtils;
 
 import java.util.Arrays;
 
@@ -132,11 +132,11 @@ public final class SDAR2D {
         double[][] toeplitz = MatrixUtils.toeplitz(rhs);
         RealMatrix R = new Array2DRowRealMatrix(toeplitz, false);
         double[] lhs = MatrixUtils.flatten(Arrays.copyOfRange(C, 1, k + 1));
+        RealVector L = new ArrayRealVector(lhs, false);
         Preconditions.checkArgument(lhs.length == rhs.length, "|LHS| != |RHS|, |LHS|=", lhs.length,
             ", |RHS|=", rhs.length);
 
         LUDecomposition LU = new LUDecomposition(R);
-        RealVector L = new ArrayRealVector(lhs, false);
         RealVector solved = LU.getSolver().solve(L);
         RealMatrix[] A = MatrixUtils.unflatten(solved.toArray(), dims, dims, k);
 
@@ -159,14 +159,10 @@ public final class SDAR2D {
     }
 
     public double logLoss(@Nonnull final RealVector actual, final RealVector predicted) {
-        double p = MathUtils.pdf(actual, predicted, _sigma);
-        if (p == 0.d) {
-            return 0.d;
-        }
-        return -Math.log(p);
+        return StatsUtils.logLoss(actual, predicted, _sigma);
     }
 
     public double hellingerDistance() {
-        return MathUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
+        return StatsUtils.hellingerDistance(_muOld, _sigmaOld, _mu, _sigma);
     }
 }

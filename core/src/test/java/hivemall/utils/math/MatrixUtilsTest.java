@@ -90,7 +90,7 @@ public class MatrixUtilsTest {
     }
 
     @Test
-    public void testCombineMatrices1d() {
+    public void testCombineMatrices1D() {
         RealMatrix[] m1 = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {0, 1}),
                 new Array2DRowRealMatrix(new double[] {2, 3}),
                 new Array2DRowRealMatrix(new double[] {4, 5})};
@@ -106,10 +106,10 @@ public class MatrixUtilsTest {
     }
 
     @Test
-    public void testCombineMatrices2d() {
+    public void testCombineMatrices2D() {
         RealMatrix[] m1 = new RealMatrix[] {
                 new Array2DRowRealMatrix(new double[][] {new double[] {1, 2, 3},
-                        new double[] {3, 4, 6}}),
+                        new double[] {4, 5, 6}}),
                 new Array2DRowRealMatrix(new double[][] {new double[] {7, 8, 9},
                         new double[] {10, 11, 12}}),
                 new Array2DRowRealMatrix(new double[][] {new double[] {13, 14, 15},
@@ -120,7 +120,7 @@ public class MatrixUtilsTest {
     }
 
     @Test
-    public void testCombineMatrices2dToeplitz() {
+    public void testCombineMatrices2D_Toeplitz() {
         RealMatrix e1 = new Array2DRowRealMatrix(new double[] {1, 1.1});
         RealMatrix e2 = new Array2DRowRealMatrix(new double[] {2, 2.2});
         RealMatrix e2T = e2.transpose();
@@ -156,6 +156,54 @@ public class MatrixUtilsTest {
         // 3.3 0.0 2.2 0.0 1.1 0.0
         Assert.assertEquals(6, flatten1.getRowDimension());
         Assert.assertEquals(6, flatten1.getColumnDimension());
+    }
+
+    @Test
+    public void testFlatten1D() {
+        RealMatrix[] m1 = new RealMatrix[] {new Array2DRowRealMatrix(new double[] {0, 1}),
+                new Array2DRowRealMatrix(new double[] {2, 3}),
+                new Array2DRowRealMatrix(new double[] {4, 5})};
+        double[] actual = MatrixUtils.flatten(m1);
+        Assert.assertArrayEquals(actual, new double[] {0, 1, 2, 3, 4, 5}, 0.d);
+    }
+
+    @Test
+    public void testFlatten2D() {
+        RealMatrix[] m1 = new RealMatrix[] {
+                new Array2DRowRealMatrix(new double[][] {new double[] {1, 2, 3},
+                        new double[] {4, 5, 6}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {7, 8, 9},
+                        new double[] {10, 11, 12}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {13, 14, 15},
+                        new double[] {16, 17, 18}})};
+        double[] actual = MatrixUtils.flatten(m1);
+        double[] expected = new double[18];
+        for (int i = 0; i < expected.length; i++) {
+            expected[i] = i + 1;
+        }
+        Assert.assertArrayEquals(expected, actual, 0.d);
+    }
+
+
+    @Test
+    public void testUnflatten2D() {
+        double[] data = new double[24];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = i + 1;
+        }
+        RealMatrix[] actual = MatrixUtils.unflatten(data, 2, 3, 4);
+
+        RealMatrix[] expected = new RealMatrix[] {
+                new Array2DRowRealMatrix(new double[][] {new double[] {1, 2, 3},
+                        new double[] {4, 5, 6}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {7, 8, 9},
+                        new double[] {10, 11, 12}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {13, 14, 15},
+                        new double[] {16, 17, 18}}),
+                new Array2DRowRealMatrix(new double[][] {new double[] {19, 20, 21},
+                        new double[] {22, 23, 24}})};
+
+        Assert.assertArrayEquals(expected, actual);
     }
 
 }
