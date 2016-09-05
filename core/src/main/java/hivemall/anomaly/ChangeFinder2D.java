@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -104,17 +105,17 @@ final class ChangeFinder2D implements ChangeFinder {
     }
 
     @Nonnull
-    private ArrayRealVector parseX(final Object arg) throws HiveException {
+    private ArrayRealVector parseX(final Object arg) throws UDFArgumentException {
         ArrayRealVector xVec = xRing.head();
         if (xVec == null) {
             double[] data = HiveUtils.asDoubleArray(arg, listOI, elemOI);
             if (data.length == 0) {
-                throw new HiveException("Dimension of x SHOULD be more than zero");
+                throw new UDFArgumentException("Dimension of x SHOULD be more than zero");
             }
             xVec = new ArrayRealVector(data, false);
         } else {
             double[] ref = xVec.getDataRef();
-            HiveUtils.toDoubleArray(arg, listOI, elemOI, ref);
+            HiveUtils.toDoubleArray(arg, listOI, elemOI, ref, 0.d);
         }
         return xVec;
     }

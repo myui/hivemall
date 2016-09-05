@@ -497,7 +497,15 @@ public final class HiveUtils {
     @Nullable
     public static double[] asDoubleArray(@Nullable final Object argObj,
             @Nonnull final ListObjectInspector listOI,
-            @Nonnull final PrimitiveObjectInspector elemOI) {
+            @Nonnull final PrimitiveObjectInspector elemOI) throws UDFArgumentException {
+        return asDoubleArray(argObj, listOI, elemOI, true);
+    }
+
+    @Nullable
+    public static double[] asDoubleArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI,
+            @Nonnull final PrimitiveObjectInspector elemOI, final boolean avoidNull)
+            throws UDFArgumentException {
         if (argObj == null) {
             return null;
         }
@@ -506,7 +514,10 @@ public final class HiveUtils {
         for (int i = 0; i < length; i++) {
             Object o = listOI.getListElement(argObj, i);
             if (o == null) {
-                continue;
+                if (avoidNull) {
+                    continue;
+                }
+                throw new UDFArgumentException("Found null at index " + i);
             }
             double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
             ary[i] = d;
@@ -517,19 +528,47 @@ public final class HiveUtils {
     @Nonnull
     public static void toDoubleArray(@Nullable final Object argObj,
             @Nonnull final ListObjectInspector listOI,
-            @Nonnull final PrimitiveObjectInspector elemOI, @Nonnull final double[] out)
-            throws HiveException {
+            @Nonnull final PrimitiveObjectInspector elemOI, @Nonnull final double[] out,
+            final boolean avoidNull) throws UDFArgumentException {
         if (argObj == null) {
             return;
         }
         final int length = listOI.getListLength(argObj);
         if (out.length != length) {
-            throw new HiveException("Dimension mismatched. Expected: " + out.length + ", Actual: "
-                    + length);
+            throw new UDFArgumentException("Dimension mismatched. Expected: " + out.length
+                    + ", Actual: " + length);
         }
         for (int i = 0; i < length; i++) {
             Object o = listOI.getListElement(argObj, i);
             if (o == null) {
+                if (avoidNull) {
+                    continue;
+                }
+                throw new UDFArgumentException("Found null at index " + i);
+            }
+            double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
+            out[i] = d;
+        }
+        return;
+    }
+
+    @Nonnull
+    public static void toDoubleArray(@Nullable final Object argObj,
+            @Nonnull final ListObjectInspector listOI,
+            @Nonnull final PrimitiveObjectInspector elemOI, @Nonnull final double[] out,
+            final double nullValue) throws UDFArgumentException {
+        if (argObj == null) {
+            return;
+        }
+        final int length = listOI.getListLength(argObj);
+        if (out.length != length) {
+            throw new UDFArgumentException("Dimension mismatched. Expected: " + out.length
+                    + ", Actual: " + length);
+        }
+        for (int i = 0; i < length; i++) {
+            Object o = listOI.getListElement(argObj, i);
+            if (o == null) {
+                out[i] = nullValue;
                 continue;
             }
             double d = PrimitiveObjectInspectorUtils.getDouble(o, elemOI);
