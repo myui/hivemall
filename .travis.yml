@@ -30,7 +30,7 @@ branches:
     - develop
 
 before_install:
-  - mvn validate
+  - mvn validate -Pxgboost
 
 notifications:
   email: false

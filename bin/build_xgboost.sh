@@ -21,7 +21,7 @@ set -eu
 set -o pipefail
 
 # Target commit hash value
-XGBOOST_HASHVAL='cc0c6e22fcf2523ee5659f6f4ddf4bb4fc6483a5'
+XGBOOST_HASHVAL='e6f89a09074b3b25d460a99ecd195fd16b903511'
 
 # Move to a working directory
 WORKING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -48,6 +48,6 @@ git submodule update
 
 # Copy a built binary to the output
 cd jvm-packages
-./create_jni.sh
+ENABLE_STATIC_LINKS=1 ./create_jni.sh
 cp ./lib/libxgboost4j.* "$HIVEMALL_LIB_DIR"
 
