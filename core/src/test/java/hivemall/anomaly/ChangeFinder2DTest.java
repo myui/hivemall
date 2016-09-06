@@ -18,6 +18,7 @@
 package hivemall.anomaly;
 
 import hivemall.anomaly.ChangeFinderUDF.Parameters;
+import hivemall.utils.lang.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -176,13 +177,13 @@ public class ChangeFinder2DTest {
         final double[] outScores = new double[2];
 
         RandomGenerator rng1 = new Well19937c(31L);
-        UniformIntegerDistribution uniform = new UniformIntegerDistribution(rng1, 0, 10);
+        final UniformIntegerDistribution uniform = new UniformIntegerDistribution(rng1, 0, 10);
         RandomGenerator rng2 = new Well19937c(41L);
-        PoissonDistribution poissonEvent = new PoissonDistribution(rng2, 1000.d,
+        final PoissonDistribution poissonEvent = new PoissonDistribution(rng2, 1000.d,
             PoissonDistribution.DEFAULT_EPSILON, PoissonDistribution.DEFAULT_MAX_ITERATIONS);
-        NormalDistribution dataGenerator[] = new NormalDistribution[DIM];
+        final StringBuilder buf = new StringBuilder(256);
 
-        println("# time x0 x1 x2 x3 x4 outlier change");
+        println("# time x0 x1 x2 x3 x4 mean0 mean1 mean2 mean3 mean4 outlier change");
         FIN: for (int i = 0; i < EXAMPLES;) {
             int len = poissonEvent.sample();
             double data[][] = new double[DIM][len];
@@ -194,11 +195,11 @@ public class ChangeFinder2DTest {
                 if (i % 5 == 0) {
                     mean[j] += 50.d;
                 }
-                dataGenerator[j] = new NormalDistribution(new Well19937c(i), mean[j], sd[j]);
-                data[j] = dataGenerator[j].sample(len);
+                NormalDistribution normDist = new NormalDistribution(new Well19937c(i + j),
+                    mean[j], sd[j]);
+                data[j] = normDist.sample(len);
                 data[j][len / (j + 2) + DIM % (j + 1)] = mean[j] + (j + 4) * sd[j];
             }
-
             for (int j = 0; j < len; j++) {
                 if (i >= EXAMPLES) {
                     break FIN;
@@ -209,8 +210,33 @@ public class ChangeFinder2DTest {
                 x[3] = data[3][j];
                 x[4] = data[4][j];
                 cf.update(xList, outScores);
-                printf("%d %f %f %f %f %f %f %f%n", i, x[0], x[1], x[2], x[3], x[4], outScores[0],
-                    outScores[1]);
+                buf.append(i)
+                   .append(' ')
+                   .append(x[0].doubleValue())
+                   .append(' ')
+                   .append(x[1].doubleValue())
+                   .append(' ')
+                   .append(x[2].doubleValue())
+                   .append(' ')
+                   .append(x[3].doubleValue())
+                   .append(' ')
+                   .append(x[4].doubleValue())
+                   .append(' ')
+                   .append(mean[0])
+                   .append(' ')
+                   .append(mean[1])
+                   .append(' ')
+                   .append(mean[2])
+                   .append(' ')
+                   .append(mean[3])
+                   .append(' ')
+                   .append(mean[4])
+                   .append(' ')
+                   .append(outScores[0])
+                   .append(' ')
+                   .append(outScores[1]);
+                println(buf.toString());
+                StringUtils.clear(buf);
                 i++;
             }
         }
