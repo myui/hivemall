@@ -253,6 +253,12 @@ create temporary function to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF'
 drop temporary function quantify;
 create temporary function quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF';
 
+drop temporary function build_bins;
+create temporary function build_bins as 'hivemall.ftvec.binning.BuildBinsUDAF';
+
+drop temporary function feature_binning;
+create temporary function feature_binning as 'hivemall.ftvec.binning.FeatureBinningUDF';
+
 --------------------------
 -- feature transformers --
 --------------------------

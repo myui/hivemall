@@ -224,6 +224,12 @@ sqlContext.sql("CREATE TEMPORARY FUNCTION to_sparse_features AS 'hivemall.ftvec.
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS quantify")
 sqlContext.sql("CREATE TEMPORARY FUNCTION quantify AS 'hivemall.ftvec.conv.QuantifyColumnsUDTF'")
 
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS build_bins")
+sqlContext.sql("CREATE TEMPORARY FUNCTION build_bins AS 'hivemall.ftvec.binning.BuildBinsUDAF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS feature_binning")
+sqlContext.sql("CREATE TEMPORARY FUNCTION feature_binning AS 'hivemall.ftvec.binning.FeatureBinningUDF'")
+
 /**
  * feature transformers
  */
