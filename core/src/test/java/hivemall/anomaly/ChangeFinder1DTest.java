@@ -17,6 +17,7 @@
  */
 package hivemall.anomaly;
 
+import hivemall.anomaly.ChangeFinderUDF.LossFunction;
 import hivemall.anomaly.ChangeFinderUDF.Parameters;
 
 import java.io.BufferedReader;
@@ -39,6 +40,7 @@ public class ChangeFinder1DTest {
     @Test
     public void testCf1d() throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         ChangeFinder1D cf = new ChangeFinder1D(params, oi);
         double[] outScores = new double[2];
@@ -69,6 +71,7 @@ public class ChangeFinder1DTest {
     @Test
     public void testTwitterData() throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         params.r1 = 0.01d;
         params.k = 6;
         params.T1 = 10;

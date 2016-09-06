@@ -28,6 +28,8 @@ import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealMatrixPreservingVisitor;
+import org.apache.commons.math3.linear.SingularMatrixException;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 public final class MatrixUtils {
 
@@ -412,11 +414,8 @@ public final class MatrixUtils {
         return combined;
     }
 
-    /**
-     * Flatten grid of matrix that has 1 col.
-     */
     @Nonnull
-    public static RealMatrix combineMatrices(@Nonnull final RealMatrix[] grid) {
+    public static RealMatrix combinedMatrices(@Nonnull final RealMatrix[] grid) {
         Preconditions.checkArgument(grid.length >= 1,
             "The number of rows must be greather than 0: " + grid.length);
 
@@ -437,16 +436,61 @@ public final class MatrixUtils {
     }
 
     @Nonnull
-    public static RealMatrix inverse(@Nonnull final RealMatrix m) {
+    public static RealMatrix inverse(@Nonnull final RealMatrix m) throws SingularMatrixException {
+        return inverse(m, true);
+    }
+
+    @Nonnull
+    public static RealMatrix inverse(@Nonnull final RealMatrix m, final boolean exact)
+            throws SingularMatrixException {
         LUDecomposition LU = new LUDecomposition(m);
         DecompositionSolver solver = LU.getSolver();
-        return solver.getInverse();
+        final RealMatrix inv;
+        if (exact || solver.isNonSingular()) {
+            inv = solver.getInverse();
+        } else {
+            SingularValueDecomposition SVD = new SingularValueDecomposition(m);
+            inv = SVD.getSolver().getInverse();
+        }
+        return inv;
     }
+
 
     @Nonnull
     public static double det(@Nonnull final RealMatrix m) {
         LUDecomposition LU = new LUDecomposition(m);
         return LU.getDeterminant();
+    }
+
+    /**
+     * L = A x R
+     * 
+     * @return a matrix A that minimizes A x R - L
+     */
+    @Nonnull
+    public static RealMatrix solve(@Nonnull final RealMatrix L, @Nonnull final RealMatrix R)
+            throws SingularMatrixException {
+        return solve(L, R, true);
+    }
+
+    /**
+     * L = A x R
+     * 
+     * @return a matrix A that minimizes A x R - L
+     */
+    @Nonnull
+    public static RealMatrix solve(@Nonnull final RealMatrix L, @Nonnull final RealMatrix R,
+            final boolean exact) throws SingularMatrixException {
+        LUDecomposition LU = new LUDecomposition(R);
+        DecompositionSolver solver = LU.getSolver();
+        final RealMatrix A;
+        if (exact || solver.isNonSingular()) {
+            A = LU.getSolver().solve(L);
+        } else {
+            SingularValueDecomposition SVD = new SingularValueDecomposition(R);
+            A = SVD.getSolver().solve(L);
+        }
+        return A;
     }
 
 }

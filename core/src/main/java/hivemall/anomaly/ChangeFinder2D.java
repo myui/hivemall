@@ -18,6 +18,7 @@
 package hivemall.anomaly;
 
 import hivemall.anomaly.ChangeFinderUDF.ChangeFinder;
+import hivemall.anomaly.ChangeFinderUDF.LossFunction;
 import hivemall.anomaly.ChangeFinderUDF.Parameters;
 import hivemall.utils.collections.DoubleRingBuffer;
 import hivemall.utils.collections.RingBuffer;
@@ -39,6 +40,10 @@ final class ChangeFinder2D implements ChangeFinder {
     private final ListObjectInspector listOI;
     @Nonnull
     private final PrimitiveObjectInspector elemOI;
+    @Nonnull
+    private final LossFunction lossFunc1;
+    @Nonnull
+    private final LossFunction lossFunc2;
 
     @Nonnull
     private final SDAR2D sdar1;
@@ -59,6 +64,8 @@ final class ChangeFinder2D implements ChangeFinder {
             throws UDFArgumentTypeException {
         this.listOI = listOI;
         this.elemOI = HiveUtils.asDoubleCompatibleOI(listOI.getListElementObjectInspector());
+        this.lossFunc1 = params.lossFunc1;
+        this.lossFunc2 = params.lossFunc2;
         int k = params.k;
         this.sdar1 = new SDAR2D(params.r1, k);
         this.sdar2 = new SDAR1D(params.r2, k);
@@ -80,11 +87,7 @@ final class ChangeFinder2D implements ChangeFinder {
         int k1 = xRing.size() - 1;
         RealVector x_hat = sdar1.update(xSeries, k1);
 
-        // <LogLoss>
-        double scoreX = (k1 == 0.d) ? 0.d : sdar1.logLoss(x, x_hat);
-        // <Hellinger distance>
-        // double scoreX = (k1 == 0.d) ? 0.d : sdar1.hellingerDistance();
-
+        double scoreX = (k1 == 0.d) ? 0.d : loss(x, x_hat, lossFunc1);
         // smoothing
         double y = ChangeFinderUDF.smoothing(outlierScores.add(scoreX));
 
@@ -93,15 +96,45 @@ final class ChangeFinder2D implements ChangeFinder {
         int k2 = yRing.size() - 1;
         double y_hat = sdar2.update(ySeries, k2);
 
-        // <LogLoss>
-        double lossY = (k2 == 0.d) ? 0.d : sdar2.logLoss(y, y_hat);
+        double lossY = (k2 == 0.d) ? 0.d : loss(y, y_hat, lossFunc1);
         double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(lossY));
-        // <Hellinger distance>
-        // double distanceY = (k2 == 0.d) ? 0.d : sdar2.hellingerDistance();
-        // double scoreY = ChangeFinderUDF.smoothing(changepointScores.add(distanceY));
 
         outScores[0] = scoreX;
         outScores[1] = scoreY;
+    }
+
+    private double loss(@Nonnull final ArrayRealVector x, @Nonnull final RealVector x_hat,
+            @Nonnull final LossFunction lossFunc) {
+        final double loss;
+        switch (lossFunc) {
+            case hellinger:
+                double h2d = sdar1.hellingerDistance();
+                loss = h2d * 100.d;
+                break;
+            case logloss:
+                loss = sdar1.logLoss(x, x_hat);
+                break;
+            default:
+                throw new IllegalStateException("Unexpected loss function: " + lossFunc);
+        }
+        return loss;
+    }
+
+    private double loss(@Nonnull final double y, @Nonnull final double y_hat,
+            @Nonnull final LossFunction lossFunc) {
+        final double loss;
+        switch (lossFunc) {
+            case hellinger:
+                double h2d = sdar2.hellingerDistance();
+                loss = h2d * 100.d;
+                break;
+            case logloss:
+                loss = sdar2.logLoss(y, y_hat);
+                break;
+            default:
+                throw new IllegalStateException("Unexpected loss function: " + lossFunc);
+        }
+        return loss;
     }
 
     @Nonnull

@@ -91,6 +91,10 @@ public final class ChangeFinderUDF extends UDFWithOptions {
             "y_threshold",
             true,
             "Score threshold (inclusive) for determining change-point existence [default: -1, do not output decision]");
+        opts.addOption("loss1", "lossfunc1", true,
+            "Loss function for outliter scoring [default: hellinger, logloss]");
+        opts.addOption("loss2", "lossfunc2", true,
+            "Loss function for change point scoring [default: hellinger, logloss]");
         return opts;
     }
 
@@ -107,6 +111,10 @@ public final class ChangeFinderUDF extends UDFWithOptions {
             cl.getOptionValue("outlier_threshold"), _params.outlierThreshold);
         this._params.changepointThreshold = Primitives.parseDouble(
             cl.getOptionValue("changepoint_threshold"), _params.changepointThreshold);
+        this._params.lossFunc1 = LossFunction.resolve(cl.getOptionValue("lossfunc1",
+            LossFunction.hellinger.name()));
+        this._params.lossFunc2 = LossFunction.resolve(cl.getOptionValue("lossfunc2",
+            LossFunction.hellinger.name()));
 
         Preconditions.checkArgument(_params.k >= 2, "K must be greater than 1: " + _params.k);
         Preconditions.checkArgument(_params.r1 > 0.d && _params.r1 < 1.d,
@@ -224,8 +232,16 @@ public final class ChangeFinderUDF extends UDFWithOptions {
         int T2 = 7;
         double outlierThreshold = -1d;
         double changepointThreshold = -1d;
+        LossFunction lossFunc1 = LossFunction.hellinger;
+        LossFunction lossFunc2 = LossFunction.hellinger;
 
         Parameters() {}
+
+        void set(@Nonnull LossFunction func) {
+            this.lossFunc1 = func;
+            this.lossFunc2 = func;
+        }
+
     }
 
     public interface ChangeFinder {
@@ -239,6 +255,20 @@ public final class ChangeFinderUDF extends UDFWithOptions {
         }
         int size = scores.size();
         return sum / size;
+    }
+
+    public enum LossFunction {
+        logloss, hellinger;
+
+        static LossFunction resolve(@Nullable final String name) {
+            if (logloss.name().equalsIgnoreCase(name)) {
+                return logloss;
+            } else if (hellinger.name().equalsIgnoreCase(name)) {
+                return hellinger;
+            } else {
+                throw new IllegalArgumentException("Unsupported LossFunction: " + name);
+            }
+        }
     }
 
 }

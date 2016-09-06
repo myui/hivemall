@@ -17,6 +17,7 @@
  */
 package hivemall.anomaly;
 
+import hivemall.anomaly.ChangeFinderUDF.LossFunction;
 import hivemall.anomaly.ChangeFinderUDF.Parameters;
 import hivemall.utils.lang.StringUtils;
 
@@ -51,6 +52,7 @@ public class ChangeFinder2DTest {
     @Test
     public void testCf1d() throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         ListObjectInspector listOI = ObjectInspectorFactory.getStandardListObjectInspector(oi);
         ChangeFinder2D cf = new ChangeFinder2D(params, listOI);
@@ -87,10 +89,11 @@ public class ChangeFinder2DTest {
     @Test
     public void testTwitterData() throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         params.r1 = 0.01d;
         params.k = 6;
         params.T1 = 10;
-        params.T2 = 5;
+        params.T2 = 5;        
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         ListObjectInspector listOI = ObjectInspectorFactory.getStandardListObjectInspector(oi);
         ChangeFinder2D cf = new ChangeFinder2D(params, listOI);
@@ -98,7 +101,7 @@ public class ChangeFinder2DTest {
         List<Double> x = new ArrayList<Double>(1);
 
         BufferedReader reader = readFile("twitter.csv.gz");
-        println("# time x outlier change");
+        println("time x outlier change");
         String line;
         int i = 1, numOutliers = 0, numChangepoints = 0;
         while ((line = reader.readLine()) != null) {
@@ -137,6 +140,7 @@ public class ChangeFinder2DTest {
         final List<Double> xList = Arrays.asList(x);
 
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         params.r1 = 0.01d;
         params.k = 6;
         params.T1 = 10;
@@ -167,6 +171,7 @@ public class ChangeFinder2DTest {
         final List<Double> xList = Arrays.asList(x);
 
         Parameters params = new Parameters();
+        params.set(LossFunction.logloss);
         params.r1 = 0.01d;
         params.k = 10;
         params.T1 = 10;

@@ -176,16 +176,16 @@ public final class StatsUtils {
         RealVector muSub = mu1.subtract(mu2);
         RealMatrix sigmaMean = sigma1.add(sigma2).scalarMultiply(0.5d);
         LUDecomposition LUsigmaMean = new LUDecomposition(sigmaMean);
-        RealMatrix sigmaMeanInv = LUsigmaMean.getSolver().getInverse();
+        double denominator = Math.sqrt(LUsigmaMean.getDeterminant());
+        if (denominator == 0.d) {
+            return 1.d; // avoid divide by zero
+        }
+        RealMatrix sigmaMeanInv = LUsigmaMean.getSolver().getInverse(); // has inverse iff det != 0
         double sigma1Det = MatrixUtils.det(sigma1);
         double sigma2Det = MatrixUtils.det(sigma2);
 
         double numerator = Math.pow(sigma1Det, 0.25d) * Math.pow(sigma2Det, 0.25d)
                 * Math.exp(-0.125d * sigmaMeanInv.preMultiply(muSub).dotProduct(muSub));
-        double denominator = Math.sqrt(LUsigmaMean.getDeterminant());
-        if (denominator == 0.d) {
-            return 1.d;
-        }
         return 1.d - numerator / denominator;
     }
 
