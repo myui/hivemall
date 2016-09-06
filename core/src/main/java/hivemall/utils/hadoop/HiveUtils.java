@@ -165,6 +165,10 @@ public final class HiveUtils {
         return oi.getCategory() == Category.PRIMITIVE;
     }
 
+    public static boolean isStructOI(@Nonnull final ObjectInspector oi) {
+        return oi.getCategory() == Category.STRUCT;
+    }
+
     public static boolean isStringOI(@Nonnull final ObjectInspector oi) {
         String typeName = oi.getTypeName();
         return STRING_TYPE_NAME.equals(typeName);
@@ -229,6 +233,10 @@ public final class HiveUtils {
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
         return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
+    }
+
+    public static boolean isStructTypeInfo(@Nonnull TypeInfo typeInfo) {
+        return typeInfo.getCategory() == ObjectInspector.Category.STRUCT;
     }
 
     public static boolean isNumberTypeInfo(@Nonnull TypeInfo typeInfo) {
