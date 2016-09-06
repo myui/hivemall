@@ -4,12 +4,11 @@
 
 	<parent>
 		<groupId>io.github.myui</groupId>
-		<artifactId>hivemall</artifactId>
+		<artifactId>hivemall-spark</artifactId>
 		<version>0.4.2-rc.2</version>
-		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>hivemall-spark-${spark.version}_${scala.version}</artifactId>
+	<artifactId>hivemall-spark-2.0</artifactId>
 	<name>Hivemall on Spark 2.0</name>
 	<packaging>jar</packaging>
 
