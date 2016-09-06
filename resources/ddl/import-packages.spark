@@ -9,8 +9,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils
+import org.apache.spark.sql.hive.XGBoostOptions
 // Needed for implicit conversions
 import org.apache.spark.sql.hive.HivemallUtils._
-import sqlContext.implicits._
 
-val ft2vec = HivemallUtils.funcVectorizer()

@@ -19,8 +19,13 @@ package org.apache.spark.sql.hive
 
 import java.util.UUID
 
+import scala.collection.mutable
+
+import org.apache.commons.cli.Options
+import org.apache.spark.annotation.{AlphaComponent, Experimental}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.feature.HmFeature
+import org.apache.spark.ml.linalg.{DenseVector => SDV, SparseVector => SSV, Vector => SV}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
@@ -28,7 +33,44 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, Literal, NamedExpr
 import org.apache.spark.sql.catalyst.plans.logical.{Generate, LogicalPlan}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
+import org.apache.spark.sql.hive.source.XGBoostFileFormat
 import org.apache.spark.sql.types._
+
+import hivemall.xgboost.XGBoostUDTF
+
+/**
+ * :: AlphaComponent ::
+ * An utility class to generate a sequence of options used in XGBoost.
+ */
+@AlphaComponent
+case class XGBoostOptions() {
+  private val params: mutable.Map[String, String] = mutable.Map.empty
+  private val options: Options = {
+    new XGBoostUDTF() {
+      def options(): Options = super.getOptions()
+    }.options()
+  }
+
+  private def isValidKey(key: String): Boolean = {
+    // TODO: Is there another way to handle all the XGBoost options?
+    options.hasOption(key) || key == "num_class"
+  }
+
+  def set(key: String, value: String): XGBoostOptions = {
+    require(isValidKey(key), s"non-existing key detected in XGBoost options: ${key}")
+    params.put(key, value)
+    this
+  }
+
+  def help(): Unit = {
+    import scala.collection.JavaConversions._
+    options.getOptions.map { case option => println(option) }
+  }
+
+  override def toString(): String = {
+    params.map { case (key, value) => s"-$key $value" }.mkString(" ")
+  }
+}
 
 /**
  * A wrapper of hivemall for DataFrame.
@@ -39,6 +81,7 @@ import org.apache.spark.sql.types._
  * @groupname regression
  * @groupname classifier
  * @groupname classifier.multiclass
+ * @groupname xgboost
  * @groupname ensemble
  * @groupname knn.similarity
  * @groupname knn.distance
@@ -510,6 +553,117 @@ final class HivemallOps(df: DataFrame) extends Logging {
       df.logicalPlan)
   }
 
+  private val vectorToHivemallFeatures = udf((v: SV) => v match {
+    case dv: SDV => dv.values.zipWithIndex.map { case (value, index) => s"$index:$value" }
+    case sv: SSV => sv.values.zip(sv.indices).map { case (value, index) => s"$index:$value" }
+  })
+
+  private def toHivemallTrainDf(exprs: Column*): DataFrame = {
+    df.select(vectorToHivemallFeatures(exprs(0)), exprs(1)).toDF("features", "label")
+  }
+
+  private def toHivemallTestDf(exprs: Column*): DataFrame = {
+    df.select(exprs(0), vectorToHivemallFeatures(exprs(1)), exprs(2), exprs(3))
+      .toDF("rowid", "features", "model_id", "pred_model")
+  }
+
+  /**
+   * :: Experimental ::
+   * @see hivemall.xgboost.regression.XGBoostRegressionUDTF
+   * @group xgboost
+   */
+  @Experimental
+  @scala.annotation.varargs
+  def train_xgboost_regr(exprs: Column*): DataFrame = withTypedPlan {
+    val trainDf = toHivemallTrainDf(exprs: _*)
+    Generate(HiveGenericUDTF(
+        "train_xgboost_regr",
+        new HiveFunctionWrapper(
+          "hivemall.xgboost.regression.XGBoostRegressionUDTFWrapper"),
+        setMixServs(trainDf("features") :: trainDf("label") :: Nil: _*).map(_.expr)),
+      join = false, outer = false, None,
+      Seq("model_id", "pred_model").map(UnresolvedAttribute(_)),
+      trainDf.logicalPlan)
+  }
+
+  /**
+   * :: Experimental ::
+   * @see hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF
+   * @group xgboost
+   */
+  @Experimental
+  @scala.annotation.varargs
+  def train_xgboost_classifier(exprs: Column*): DataFrame = withTypedPlan {
+    val trainDf = toHivemallTrainDf(exprs: _*)
+    Generate(HiveGenericUDTF(
+        "train_xgboost_classifier",
+        new HiveFunctionWrapper(
+          "hivemall.xgboost.classification.XGBoostBinaryClassifierUDTFWrapper"),
+        setMixServs(trainDf("features") :: trainDf("label") :: Nil: _*).map(_.expr)),
+      join = false, outer = false, None,
+      Seq("model_id", "pred_model").map(UnresolvedAttribute(_)),
+      trainDf.logicalPlan)
+  }
+
+  /**
+   * :: Experimental ::
+   * @see hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF
+   * @group xgboost
+   */
+  @Experimental
+  @scala.annotation.varargs
+  def train_xgboost_multiclass_classifier(exprs: Column*): DataFrame = withTypedPlan {
+    val trainDf = toHivemallTrainDf(exprs: _*)
+    Generate(HiveGenericUDTF(
+        "train_xgboost_multiclass_classifier",
+        new HiveFunctionWrapper(
+          "hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTFWrapper"),
+        setMixServs(trainDf("features") :: trainDf("label") :: Nil: _*).map(_.expr)),
+      join = false, outer = false, None,
+      Seq("model_id", "pred_model").map(UnresolvedAttribute(_)),
+      trainDf.logicalPlan)
+  }
+
+  /**
+   * :: Experimental ::
+   * @see hivemall.xgboost.tools.XGBoostPredictUDTF
+   * @group xgboost
+   */
+  @Experimental
+  @scala.annotation.varargs
+  def xgboost_predict(exprs: Column*): DataFrame = withTypedPlan {
+    val testDf = toHivemallTestDf(exprs: _*)
+    Generate(HiveGenericUDTF(
+        "xgboost_predict",
+        new HiveFunctionWrapper("hivemall.xgboost.tools.XGBoostPredictUDTF"),
+        setMixServs(
+          Seq(testDf("rowid"), testDf("features"), testDf("model_id"), testDf("pred_model")): _*
+        ).map(_.expr)),
+      join = false, outer = false, None,
+      Seq("rowid", "predicted").map(UnresolvedAttribute(_)),
+      testDf.logicalPlan)
+  }
+
+  /**
+   * :: Experimental ::
+   * @see hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF
+   * @group xgboost
+   */
+  @Experimental
+  @scala.annotation.varargs
+  def xgboost_multiclass_predict(exprs: Column*): DataFrame = withTypedPlan {
+    val testDf = toHivemallTestDf(exprs: _*)
+    Generate(HiveGenericUDTF(
+        "xgboost_multiclass_predict",
+        new HiveFunctionWrapper("hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF"),
+        setMixServs(
+          Seq(testDf("rowid"), testDf("features"), testDf("model_id"), testDf("pred_model")): _*
+        ).map(_.expr)),
+      join = false, outer = false, None,
+      Seq("rowid", "label", "probability").map(UnresolvedAttribute(_)),
+      testDf.logicalPlan)
+  }
+
   /**
    * Groups the [[DataFrame]] using the specified columns, so we can run aggregation on them.
    * See [[RelationalGroupedDatasetEx]] for all the available aggregate functions.
@@ -742,6 +896,14 @@ final class HivemallOps(df: DataFrame) extends Logging {
 }
 
 object HivemallOps {
+
+  /**
+   * Model files for libxgboost are loaded as follows;
+   *
+   * import HivemallOps._
+   * val modelDf = sparkSession.read.format(xgboostFormat).load(modelDir.getCanonicalPath)
+   */
+  val xgboost = classOf[XGBoostFileFormat].getName
 
   /**
    * Implicitly inject the [[HivemallOps]] into [[DataFrame]].
@@ -1013,11 +1175,12 @@ object HivemallOps {
    * @see hivemall.ftvec.scaling.RescaleUDF
    * @group ftvec.scaling
    */
-  @scala.annotation.varargs
-  def rescale(exprs: Column*): Column = withExpr {
+  def rescale(value: Column, max: Column, min: Column): Column = withExpr {
     HiveSimpleUDF(
       "rescale",
-      new HiveFunctionWrapper("hivemall.ftvec.scaling.RescaleUDF"), exprs.map(_.expr))
+      new HiveFunctionWrapper("hivemall.ftvec.scaling.RescaleUDF"),
+      (value.cast(FloatType) :: max :: min :: Nil).map(_.expr)
+    )
   }
 
   /**

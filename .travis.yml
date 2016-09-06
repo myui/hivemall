@@ -29,12 +29,16 @@ branches:
     - master
     - develop
 
+before_install:
+  - mvn validate -Pxgboost
+
 notifications:
   email: false
 
 script:
-  - mvn test -Pspark-1.6
-  - mvn test -Pspark-2.0
+  - mvn -q test -Pspark-2.0
+  # test the spark-1.6 module only in this second run
+  - mvn -q test -Pspark-1.6 -Dtest=org.apache.spark.*
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:report

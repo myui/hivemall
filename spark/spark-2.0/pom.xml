@@ -9,15 +9,9 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>hivemall-spark</artifactId>
-	<name>Hivemall on Spark</name>
+	<artifactId>hivemall-spark-${spark.version}_${scala.version}</artifactId>
+	<name>Hivemall on Spark 2.0</name>
 	<packaging>jar</packaging>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scala.version>2.11.8</scala.version>
-		<spark.version>2.0.0</spark.version>
-	</properties>
 
 	<dependencies>
 		<!-- hivemall dependencies -->
@@ -29,7 +23,7 @@
 		</dependency>
 		<dependency>
 			<groupId>io.github.myui</groupId>
-			<artifactId>hivemall-mixserv</artifactId>
+			<artifactId>hivemall-xgboost</artifactId>
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
@@ -39,6 +33,7 @@
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
+
 		<!-- other third-party dependencies -->
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -66,6 +61,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-streaming_2.11</artifactId>
+			<version>${spark.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-mllib_2.11</artifactId>
 			<version>${spark.version}</version>
 			<scope>compile</scope>
@@ -76,7 +77,14 @@
 			<version>1.8</version>
 			<scope>compile</scope>
 		</dependency>
+
 		<!-- test dependencies -->
+		<dependency>
+			<groupId>io.github.myui</groupId>
+			<artifactId>hivemall-mixserv</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>xerial-core</artifactId>
@@ -126,17 +134,17 @@
 					</jvmArgs>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark-xx.jar -->
+			<!-- hivemall-spark_2.11-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.5</version>
 				<configuration>
-					<finalName>${project.artifactId}-v2.0-${project.version}</finalName>
+					<finalName>${project.artifactId}-${project.version}</finalName>
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark-xx-with-dependencies.jar including minimum dependencies -->
+			<!-- hivemall-spark_2.11-xx-with-dependencies.jar including minimum dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -149,17 +157,20 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>${project.artifactId}-v2.0-${project.version}-with-dependencies</finalName>
+							<finalName>${project.artifactId}-${project.version}-with-dependencies</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>false</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<artifactSet>
 								<includes>
 									<include>io.github.myui:hivemall-core</include>
+									<include>io.github.myui:hivemall-xgboost</include>
 									<include>io.github.myui:hivemall-spark-common</include>
 									<include>com.github.haifengl:smile-core</include>
 									<include>com.github.haifengl:smile-math</include>
 									<include>com.github.haifengl:smile-data</include>
+									<include>ml.dmlc:xgboost4j</include>
+									<include>com.esotericsoftware.kryo:kryo</include>
 								</includes>
 							</artifactSet>
 						</configuration>
