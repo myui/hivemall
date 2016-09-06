@@ -139,6 +139,11 @@ public final class DoubleRingBuffer implements Iterable<Double> {
             return d;
         }
 
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
     }
 
 }

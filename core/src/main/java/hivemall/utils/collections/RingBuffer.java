@@ -71,7 +71,7 @@ public final class RingBuffer<T> implements Iterable<T> {
         }
         return this;
     }
-    
+
     @Nullable
     public T head() {
         return ring[head];
@@ -144,6 +144,11 @@ public final class RingBuffer<T> implements Iterable<T> {
             curr = (curr + 1) % capacity;
             i++;
             return d;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
 
     }
