@@ -43,6 +43,7 @@
 	<modules>
 		<module>core</module>
 		<module>nlp</module>
+		<module>xgboost</module>
 		<module>mixserv</module>
 	</modules>
 
@@ -71,20 +72,10 @@
 
 	<profiles>
 		<profile>
-			<id>xgboost</id>
-			<modules>
-				<module>xgboost</module>
-			</modules>
-		</profile>
-		<profile>
 			<id>spark-2.0</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
 			<modules>
 				<module>spark/spark-2.0</module>
 				<module>spark/spark-common</module>
-				<module>xgboost</module>
 			</modules>
 			<properties>
 				<spark.version>2.0.0</spark.version>
@@ -99,6 +90,29 @@
 			<properties>
 				<spark.version>1.6.1</spark.version>
 			</properties>
+		</profile>
+		<profile>
+			<id>compile-xgboost</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>exec-maven-plugin</artifactId>
+						<groupId>org.codehaus.mojo</groupId>
+						<executions>
+							<execution>
+								<id>native</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>./bin/build_xgboost.sh</executable>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 		<profile>
 			<id>doclint-java8-disable</id>
