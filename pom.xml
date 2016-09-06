@@ -88,7 +88,7 @@
 				<module>spark/spark-common</module>
 			</modules>
 			<properties>
-				<spark.version>1.6.1</spark.version>
+				<spark.version>1.6.2</spark.version>
 			</properties>
 		</profile>
 		<profile>
