@@ -98,19 +98,30 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(List<? extends StrictHQ> hqs, String... expecteds) {
-        Preconditions.checkArgument(hqs.size() == expecteds.length,
+    public void set(List<? extends StrictHQ> hqs, List<String> expecteds, List<Boolean> ordereds) {
+        Preconditions.checkArgument(hqs.size() == expecteds.size(),
             "Mismatch between number of queries(%d) and length of answers(%d)", hqs.size(),
-            expecteds.length);
+            expecteds.size());
+        Preconditions.checkArgument(hqs.size() == ordereds.size(),
+            "Mismatch between number of queries(%d) and correspond ordered flags(%d)", hqs.size(),
+            ordereds.size());
 
-        for (int i = 0; i < expecteds.length; i++) {
-            set(hqs.get(i), expecteds[i]);
+        for (int i = 0; i < expecteds.size(); i++) {
+            set(hqs.get(i), expecteds.get(i), ordereds.get(i));
         }
 
         needRun = true;
     }
 
-    public void set(LazyMatchingResource hq, SystemTestCommonInfo ci) {
+    public void set(List<? extends StrictHQ> hqs, List<String> expecteds) {
+        List<Boolean> ordereds = new ArrayList<Boolean>();
+        for (int i = 0; i < hqs.size(); i++) {
+            ordereds.add(false);
+        }
+        set(hqs, expecteds, ordereds);
+    }
+
+    public void set(LazyMatchingResource hq, SystemTestCommonInfo ci, boolean ordered) {
         List<RawHQ> rhqs = hq.toStrict(ci.caseDir);
         String[] answers = hq.getAnswers(ci.answerDir);
 
@@ -119,10 +130,14 @@ public class SystemTestTeam extends ExternalResource {
             answers.length);
 
         for (int i = 0; i < answers.length; i++) {
-            set(rhqs.get(i), answers[i]);
+            set(rhqs.get(i), answers[i], ordered);
         }
 
         needRun = true;
+    }
+
+    public void set(LazyMatchingResource hq, SystemTestCommonInfo ci) {
+        set(hq, ci, false);
     }
 
     public void run() throws Exception {
