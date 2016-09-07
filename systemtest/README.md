@@ -49,29 +49,29 @@ be loaded via constructor of `Runner` by file name.
 and several runner-specific APIs, don't call them via string statement
 * Also you can use low-level API via an instance of `Runner`, independent of `Team`
 * You can use `IO.getFromResourcePath(...)` to get answer whose format is TSV
+* Table created in initialization of runner should be used as immutable, don't neither insert nor update
 * TD client configs in properties file prior to $HOME/.td/td.conf
-
 
 ## Quick example
 
 ```java
 package hivemall;
 // here is several imports
-public class HogeTest {
-    private static SystemTestCommonInfo ci = new SystemTestCommonInfo(HogeTest.class);
+public class QuickExample {
+    private static SystemTestCommonInfo ci = new SystemTestCommonInfo(QuickExample.class);
 
     @ClassRule
     public static HiveSystemTestRunner hRunner = new HiveSystemTestRunner(ci) {
         {
-            initBy(HQ.uploadByResourcePathAsNewTable("people", ci.initDir + "people.tsv",
+            initBy(HQ.uploadByResourcePathAsNewTable("color", ci.initDir + "color.tsv",
                     new LinkedHashMap<String, String>() {
                         {
                             put("name", "string");
-                            put("age", "int");
-                            put("sex", "string");
+                            put("red", "int");
+                            put("green", "int");
+                            put("blue", "int");
                         }
-                    }));
-            initBy(HQ.fromResourcePath(ci.initDir + "init"));
+                    })); // create table `color`, which is marked as immutable, for this test class
         }
     };
 
@@ -80,32 +80,42 @@ public class HogeTest {
 
 
     @Test
-    public void insertAndSelectTest() throws Exception {
-        String tableName = "people0";
+    public void test0() throws Exception {
+        team.set(HQ.fromStatement("SELECT name FROM color WHERE blue = 255 ORDER BY name"), "azure\tblue\tmagenta", true); // ordered test
+        team.run(); // this call is required
+    }
+
+    @Test
+    public void test1() throws Exception {
+        String tableName = "users";
         team.initBy(HQ.createTable(tableName, new LinkedHashMap<String, String>() {
             {
                 put("name", "string");
                 put("age", "int");
-                put("sex", "string");
+                put("favorite_color", "string");
             }
-        }));
-        team.initBy(HQ.insert(tableName, Arrays.asList("name", "age", "sex"), Arrays.asList(
-                new Object[]{"Noah", 46, "Male"}, new Object[]{"Isabella", 20, "Female"})));
-        team.set(HQ.fromStatement("SELECT name FROM people WHERE age = 20"), "Jacob\tIsabella");
-        team.set(HQ.fromStatement("SELECT COUNT(1) FROM " + tableName), "2");
-        team.run();
+        })); // create local table in this test method `users` for each set runner(only hRunner here)
+        team.initBy(HQ.insert(tableName, Arrays.asList("name", "age", "favorite_color"), Arrays.asList(
+                new Object[]{"Karen", 16, "orange"}, new Object[]{"Alice", 17, "pink"}))); // insert into `users`
+        team.set(HQ.fromStatement("SELECT CONCAT('rgb(', red, ',', green, ',', blue, ')') FROM "
+                + tableName + " u LEFT JOIN color c on u.favorite_color = c.name"), "rgb(255,165,0)\trgb(255,192,203)"); // unordered test
+        team.run(); // this call is required
     }
 }
 ```
 
-The above needs `systemtest/src/test/resources/hivemall/HogeTest/init/people.tsv` (`systemtest/src/test/resources/${path/to/package}/${classname}/init/people.tsv`)
+The above needs `systemtest/src/test/resources/hivemall/HogeTest/init/color.tsv` (`systemtest/src/test/resources/${path/to/package}/${classname}/init/color.tsv`)
 
 ```tsv
-Jacob	20	Male
-Mason	22	Male
-Sophia	35	Female
-Ethan	55	Male
-Emma	15	Female
-Noah	46	Male
-Isabella	20	Female
+blue	0	0	255
+lavender	230	230	250
+magenta	255	0	255
+violet	238	130	238
+purple	128	0	128
+azure	240	255	255
+lightseagreen	32	178	170
+orange	255	165	0
+orangered	255	69	0
+red	255	0	0
+pink	255	192	203
 ```
