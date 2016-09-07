@@ -4,7 +4,7 @@
 
 Define `CommonInfo`, `Runner` and `Team` in each your test class.
 
-### `CommonInfo`
+#### `CommonInfo`
 
 * `SystemTestCommonInfo`
 
@@ -12,7 +12,7 @@ Define `CommonInfo`, `Runner` and `Team` in each your test class.
 you can refer to auto-defined path to resources. This should be defined as `private static`.
 
 
-### `Runner`
+#### `Runner`
 
 * `HiveSystemTestRunner`
 * `TDSystemTestRunner`
@@ -23,7 +23,7 @@ with class methods of `HQ`, which are abstract domain-specific hive queries, in 
 of each `Runner`.
 
 
-### `Team`
+#### `Team`
 
 * `SystemTestTeam`
 
@@ -36,12 +36,20 @@ As an alternative method, by `#set(HQ.autoMatchingByFileName(${filename}))` with
 `auto-defined/path/answer/${filename}`, you can do auto matching test.
 
 
+### External properties
+
+You can use external properties at `systemtest/src/test/resources/hivemall/*`, default is `hiverunner.properties`
+for `HiveSystemTestRunner` and `td.properties` for `TDSystemTestRunner`. Also user-defined properties file can
+be loaded via constructor of `Runner` by file name.
+
+
 ## Notice
 
 * DDL and insert statement should be called via class methods of `HQ` because of wrapping hive queries
 and several runner-specific APIs, don't call them via string statement
 * Also you can use low-level API via an instance of `Runner`, independent of `Team`
 * You can use `IO.getFromResourcePath(...)` to get answer whose format is TSV
+* TD client configs in properties file prior to $HOME/.td/td.conf
 
 
 ## Quick example
