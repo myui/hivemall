@@ -257,6 +257,12 @@ CREATE FUNCTION to_sparse as 'hivemall.ftvec.conv.ToSparseFeaturesUDF' USING JAR
 DROP FUNCTION IF EXISTS quantify;
 CREATE FUNCTION quantify as 'hivemall.ftvec.conv.QuantifyColumnsUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS build_bins;
+CREATE FUNCTION build_bins as 'hivemall.ftvec.binning.BuildBinsUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS feature_binning;
+CREATE FUNCTION feature_binning as 'hivemall.ftvec.binning.FeatureBinningUDF' USING JAR '${hivemall_jar}';
+
 --------------------------
 -- feature transformers --
 --------------------------
@@ -575,3 +581,21 @@ CREATE FUNCTION rf_ensemble as 'hivemall.smile.tools.RandomForestEnsembleUDAF' U
 DROP FUNCTION IF EXISTS guess_attribute_types;
 CREATE FUNCTION guess_attribute_types as 'hivemall.smile.tools.GuessAttributesUDF' USING JAR '${hivemall_jar}';
 
+------------------------------
+-- XGBoost related features --
+------------------------------
+
+DROP FUNCTION train_xgboost_regr;
+CREATE FUNCTION train_xgboost_regr AS 'hivemall.xgboost.regression.XGBoostRegressionUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION train_xgboost_classifier;
+CREATE FUNCTION train_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostBinaryClassifierUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION train_multiclass_xgboost_classifier;
+CREATE FUNCTION train_multiclass_xgboost_classifier AS 'hivemall.xgboost.classification.XGBoostMulticlassClassifierUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION xgboost_predict;
+CREATE FUNCTION xgboost_predict AS 'hivemall.xgboost.tools.XGBoostPredictUDTF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION xgboost_multiclass_predict;
+CREATE FUNCTION xgboost_multiclass_predict AS 'hivemall.xgboost.tools.XGBoostMulticlassPredictUDTF' USING JAR '${hivemall_jar}';

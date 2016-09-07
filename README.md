@@ -112,7 +112,7 @@ _My recommendation for is AROW regression, AdaDelta, and Factorization Machine w
 System requirements
 --------------------
 
-* Hive 0.11 or later
+* Hive 0.12 or later
 
 * Java 7 or later
 
@@ -129,7 +129,7 @@ Copyright
 ---------
 
 ```
-Copyright (C) 2015 Makoto YUI
+Copyright (C) 2015-2016 Makoto YUI
 Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)  
 ```
 

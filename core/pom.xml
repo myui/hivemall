@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-exec</artifactId>
-			<version>0.11.0</version>
+			<version>0.12.0</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -89,11 +89,23 @@
 			<artifactId>smile-core</artifactId>
 			<version>1.0.3</version>
 			<scope>compile</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>smile-graph</artifactId>
+					<groupId>com.github.haifengl</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.tukaani</groupId>
 			<artifactId>xz</artifactId>
 			<version>1.5</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
 			<scope>compile</scope>
 		</dependency>
 

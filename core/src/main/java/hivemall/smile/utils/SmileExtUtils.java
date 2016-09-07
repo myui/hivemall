@@ -147,8 +147,8 @@ public final class SmileExtUtils {
             if (labels[i] < 0) {
                 throw new HiveException("Negative class label: " + labels[i]);
             }
-            if (i > 0 && labels[i] - labels[i - 1] > 1) {
-                throw new HiveException("Missing class: " + labels[i] + 1);
+            if (i > 0 && (labels[i] - labels[i - 1]) > 1) {
+                throw new HiveException("Missing class: " + (labels[i - 1] + 1));
             }
         }
 

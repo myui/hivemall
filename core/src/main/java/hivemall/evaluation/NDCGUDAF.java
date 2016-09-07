@@ -39,6 +39,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDoubleObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableIntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
@@ -46,7 +48,7 @@ import org.apache.hadoop.io.LongWritable;
 
 @Description(
         name = "ndcg",
-        value = "_FUNC_(array rankItems, array correctItems [, const boolean binaryResponses = true])"
+        value = "_FUNC_(array rankItems, array correctItems [, const int recommendSize = rankItems.size])"
                 + " - Returns nDCG")
 public final class NDCGUDAF extends AbstractGenericUDAFResolver {
 
@@ -59,17 +61,10 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
             throw new UDFArgumentTypeException(typeInfo.length - 1,
                 "_FUNC_ takes two or three arguments");
         }
-        boolean binaryResponses = true;
-        if (typeInfo.length == 3) {
-            binaryResponses = HiveUtils.isBooleanTypeInfo(typeInfo[2]);
-            if (binaryResponses == false) {
-                throw new UDFArgumentException(
-                    "nDCG computation for Graded Responses is not supported yet");
-            }
-        }
 
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
-        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())) {
+        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo()) &&
+            !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[0]);
         }
@@ -78,13 +73,15 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
             throw new UDFArgumentTypeException(1,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[1]);
         }
+
         return new Evaluator();
     }
 
     public static class Evaluator extends GenericUDAFEvaluator {
 
-        private ListObjectInspector rankedListOI;
-        private ListObjectInspector correctListOI;
+        private ListObjectInspector recommendListOI;
+        private ListObjectInspector truthListOI;
+        private WritableIntObjectInspector recommendSizeOI;
 
         private StructObjectInspector internalMergeOI;
         private StructField countField;
@@ -94,13 +91,16 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public ObjectInspector init(Mode mode, ObjectInspector[] parameters) throws HiveException {
-            assert (parameters.length == 2) : parameters.length;
+            assert (parameters.length == 2 || parameters.length == 3) : parameters.length;
             super.init(mode, parameters);
 
             // initialize input
             if (mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {// from original data
-                this.rankedListOI = (ListObjectInspector) parameters[0];
-                this.correctListOI = (ListObjectInspector) parameters[1];
+                this.recommendListOI = (ListObjectInspector) parameters[0];
+                this.truthListOI = (ListObjectInspector) parameters[1];
+                if (parameters.length == 3) {
+                    this.recommendSizeOI = (WritableIntObjectInspector) parameters[2];
+                }
             } else {// from partial aggregation
                 StructObjectInspector soi = (StructObjectInspector) parameters[0];
                 this.internalMergeOI = soi;
@@ -147,16 +147,58 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
         public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
             NDCGAggregationBuffer myAggr = (NDCGAggregationBuffer) agg;
 
-            List<?> rankedList = rankedListOI.getList(parameters[0]);
-            if (rankedList == null) {
-                rankedList = Collections.emptyList();
+            List<?> recommendList = recommendListOI.getList(parameters[0]);
+            if (recommendList == null) {
+                recommendList = Collections.emptyList();
             }
-            List<?> correctList = correctListOI.getList(parameters[1]);
-            if (correctList == null) {
+            List<?> truthList = truthListOI.getList(parameters[1]);
+            if (truthList == null) {
                 return;
             }
 
-            myAggr.iterate(rankedList, correctList);
+            int recommendSize = recommendList.size();
+            if (parameters.length == 3) {
+                recommendSize = recommendSizeOI.get(parameters[2]);
+            }
+            if (recommendSize < 0 || recommendSize > recommendList.size()) {
+                throw new UDFArgumentException(
+                        "The third argument `int recommendSize` must be in [0, " + recommendList.size() + "]");
+            }
+
+            boolean isBinary = !HiveUtils.isStructOI(recommendListOI.getListElementObjectInspector());
+            double ndcg = 0.0d;
+
+            if (isBinary) {
+                ndcg = BinaryResponsesMeasures.nDCG(recommendList, truthList, recommendSize);
+            } else {
+                // Create a ordered list of relevance scores for recommended items
+                List<Double> recommendRelScoreList = new ArrayList<Double>();
+                StructObjectInspector sOI = (StructObjectInspector) recommendListOI.getListElementObjectInspector();
+                List<?> fieldRefList = sOI.getAllStructFieldRefs();
+                StructField relScoreField = (StructField) fieldRefList.get(0);
+                WritableDoubleObjectInspector relScoreFieldOI =
+                        (WritableDoubleObjectInspector) relScoreField.getFieldObjectInspector();
+                for (int i = 0, n = recommendList.size(); i < n; i++) {
+                    Object structObj = recommendList.get(i);
+                    List<Object> fieldList = sOI.getStructFieldsDataAsList(structObj);
+                    double relScore = (double) relScoreFieldOI.get(fieldList.get(0));
+                    recommendRelScoreList.add(relScore);
+                }
+
+                // Create a ordered list of relevance scores for truth items
+                List<Double> truthRelScoreList = new ArrayList<Double>();
+                WritableDoubleObjectInspector truthRelScoreOI =
+                        (WritableDoubleObjectInspector) truthListOI.getListElementObjectInspector();
+                for (int i = 0, n = truthList.size(); i < n; i++) {
+                    Object relScoreObj = truthList.get(i);
+                    double relScore = (double) truthRelScoreOI.get(relScoreObj);
+                    truthRelScoreList.add(relScore);
+                }
+
+                ndcg = GradedResponsesMeasures.nDCG(recommendRelScoreList, truthRelScoreList, recommendSize);
+            }
+
+            myAggr.iterate(ndcg);
         }
 
         @Override
@@ -217,11 +259,10 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
             return sum / count;
         }
 
-        void iterate(@Nonnull List<?> rankedList, @Nonnull List<?> correctList) {
-            sum += BinaryResponsesMeasures.nDCG(rankedList, correctList);
+        void iterate(@Nonnull double ndcg) {
+            sum += ndcg;
             count++;
         }
-
     }
 
 }

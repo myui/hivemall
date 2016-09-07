@@ -15,3 +15,5 @@ scalastyle-output.xml
 scalastyle.txt
 derby.log
 spark/bin/zinc-*
+*.dylib
+*.so
