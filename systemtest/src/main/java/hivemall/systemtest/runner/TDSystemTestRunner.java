@@ -46,6 +46,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -155,11 +156,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
         logger.info("executing: create database if not exists " + dbName);
 
         client.createDatabaseIfNotExists(dbName);
-        return new ArrayList<String>() {
-            {
-                add("created " + dbName);
-            }
-        };
+        return Collections.singletonList("created " + dbName);
     }
 
     @Override
@@ -167,20 +164,13 @@ public class TDSystemTestRunner extends SystemTestRunner {
         logger.info("executing: drop database if exists " + dbName);
 
         client.deleteDatabaseIfExists(dbName);
-        return new ArrayList<String>() {
-            {
-                add("dropped " + dbName);
-            }
-        };
+        return Collections.singletonList("dropped " + dbName);
     }
 
     @Override
     protected List<String> use(final String dbName) throws Exception {
-        return new ArrayList<String>() {
-            {
-                add("No need to execute `USE` statement on TD, so skipped `USE " + dbName + "`");
-            }
-        };
+        return Collections.singletonList("No need to execute `USE` statement on TD, so skipped `USE "
+                + dbName + "`");
     }
 
     @Override
@@ -205,11 +195,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
         }
         client.createTableIfNotExists(dbName, hq.tableName);
         client.updateTableSchema(dbName, hq.tableName, columns);
-        return new ArrayList<String>() {
-            {
-                add("created " + hq.tableName + " on " + dbName);
-            }
-        };
+        return Collections.singletonList("created " + hq.tableName + " on " + dbName);
     }
 
     @Override
@@ -217,11 +203,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
         logger.info("executing: drop table " + hq.tableName + " if exists on " + dbName);
 
         client.deleteTableIfExists(dbName, hq.tableName);
-        return new ArrayList<String>() {
-            {
-                add("dropped " + hq.tableName);
-            }
-        };
+        return Collections.singletonList("dropped " + hq.tableName);
     }
 
     @Override
@@ -328,11 +310,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
             client.deleteBulkImportSession(sessionName);
         }
 
-        return new ArrayList<String>() {
-            {
-                add("uploaded " + hq.file.getName() + " into " + hq.tableName);
-            }
-        };
+        return Collections.singletonList("uploaded " + hq.file.getName() + " into " + hq.tableName);
     }
 
     @Override
@@ -389,11 +367,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
             client.deleteBulkImportSession(sessionName);
         }
 
-        return new ArrayList<String>() {
-            {
-                add("uploaded " + hq.file.getName() + " into " + hq.tableName);
-            }
-        };
+        return Collections.singletonList("uploaded " + hq.file.getName() + " into " + hq.tableName);
     }
 
     private List<String> getHeaderFromTD(String tableName) {

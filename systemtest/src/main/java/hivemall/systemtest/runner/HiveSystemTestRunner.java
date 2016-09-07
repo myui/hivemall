@@ -30,7 +30,7 @@ import hivemall.systemtest.model.UploadFileToExistingHQ;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -76,6 +76,7 @@ public class HiveSystemTestRunner extends SystemTestRunner {
             };
             HiveServerContext ctx = Extractor.getStandaloneHiveServerContext(tmpFolder, config);
             container = Extractor.getHiveServerContainer(ctx);
+            @SuppressWarnings("serial")
             HiveShellBuilder builder = new HiveShellBuilder() {
                 {
                     putAllProperties(new HashMap<String, String>() {
@@ -129,10 +130,6 @@ public class HiveSystemTestRunner extends SystemTestRunner {
                 throw new Exception("Input csv or tsv");
         }
 
-        return new ArrayList<String>() {
-            {
-                add("uploaded " + hq.file.getName() + " into " + hq.tableName);
-            }
-        };
+        return Collections.singletonList("uploaded " + hq.file.getName() + " into " + hq.tableName);
     }
 }

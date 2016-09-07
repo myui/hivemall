@@ -26,7 +26,7 @@ public class SystemTestCommonInfo {
     public final String dbName;
 
 
-    public SystemTestCommonInfo(Class clazz) {
+    public SystemTestCommonInfo(Class<?> clazz) {
         baseDir = clazz.getName().replace(".", "/");
         caseDir = baseDir + "/case/";
         answerDir = baseDir + "/answer/";
