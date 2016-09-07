@@ -18,6 +18,7 @@
  */
 package hivemall.systemtest.runner;
 
+import com.klarna.hiverunner.CommandShellEmulation;
 import com.klarna.hiverunner.Extractor;
 import com.klarna.hiverunner.HiveServerContainer;
 import com.klarna.hiverunner.HiveServerContext;
@@ -39,8 +40,12 @@ public class HiveSystemTestRunner extends SystemTestRunner {
     private HiveShell hShell;
 
 
+    public HiveSystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
+        super(ci, propertiesFile);
+    }
+
     public HiveSystemTestRunner(SystemTestCommonInfo ci) {
-        super(ci);
+        super(ci, "hiverunner.properties");
     }
 
 
@@ -55,7 +60,18 @@ public class HiveSystemTestRunner extends SystemTestRunner {
             };
             final HiveRunnerConfig config = new HiveRunnerConfig() {
                 {
-                    setHiveExecutionEngine("mr");
+                    // required
+                    setHiveExecutionEngine(props.getProperty("hive.execution.engine", "mr"));
+
+                    // optional
+                    if (props.containsKey("enableTimeout"))
+                        setTimeoutEnabled(Boolean.valueOf(props.getProperty("enableTimeout")));
+                    if (props.containsKey("timeoutRetryLimit"))
+                        setTimeoutRetries(Integer.valueOf(props.getProperty("timeoutRetryLimit")));
+                    if (props.containsKey("timeoutSeconds"))
+                        setTimeoutSeconds(Integer.valueOf(props.getProperty("timeoutSeconds")));
+                    if (props.containsKey("commandShellEmulation"))
+                        setCommandShellEmulation(CommandShellEmulation.valueOf(props.getProperty("commandShellEmulation")));
                 }
             };
             HiveServerContext ctx = Extractor.getStandaloneHiveServerContext(tmpFolder, config);

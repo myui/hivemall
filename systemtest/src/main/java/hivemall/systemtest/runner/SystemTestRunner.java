@@ -18,6 +18,7 @@
  */
 package hivemall.systemtest.runner;
 
+import com.google.common.io.Resources;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
 import hivemall.systemtest.model.HQ;
@@ -36,10 +37,13 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 public abstract class SystemTestRunner extends ExternalResource {
@@ -47,10 +51,27 @@ public abstract class SystemTestRunner extends ExternalResource {
     List<StrictHQ> classInitHqs = new ArrayList<StrictHQ>();
     Set<String> immutableTables = new HashSet<String>();
     final String dbName;
+    final Properties props;
 
 
-    SystemTestRunner(SystemTestCommonInfo ci) {
+    SystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
         this.dbName = formatDBName(ci.dbName);
+
+        final String path = "hivemall/" + propertiesFile;
+        try {
+            InputStream is = null;
+            try {
+                props = new Properties();
+                is = new FileInputStream(Resources.getResource(path).getPath());
+                props.load(is);
+            } finally {
+                if (is != null)
+                    is.close();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to load properties from " + path + ". "
+                    + ex.getMessage());
+        }
     }
 
 

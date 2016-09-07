@@ -48,14 +48,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class TDSystemTestRunner extends SystemTestRunner {
     private TDClient client;
 
+    private int execFinishRetryLimit = 7;
+    private int fileUploadPerformRetryLimit = 7;
+    private int fileUploadCommitBackOff = 5;
+    private int fileUploadCommitRetryLimit = 7;
+
+
+    public TDSystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
+        super(ci, propertiesFile);
+    }
 
     public TDSystemTestRunner(SystemTestCommonInfo ci) {
-        super(ci);
+        super(ci, "td.properties");
     }
 
 
@@ -66,7 +76,26 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
     @Override
     protected void initRunner() {
-        client = TDClient.newClient();
+        // optional
+        if (props.containsKey("execFinishRetryLimit"))
+            execFinishRetryLimit = Integer.valueOf(props.getProperty("execFinishRetryLimit"));
+        if (props.containsKey("fileUploadPerformRetryLimit"))
+            fileUploadPerformRetryLimit = Integer.valueOf(props.getProperty("fileUploadPerformRetryLimit"));
+        if (props.containsKey("fileUploadCommitBackOff"))
+            fileUploadCommitBackOff = Integer.valueOf(props.getProperty("fileUploadCommitBackOff"));
+        if (props.containsKey("fileUploadCommitRetryLimit"))
+            fileUploadCommitRetryLimit = Integer.valueOf(props.getProperty("fileUploadCommitRetryLimit"));
+
+        Properties TDPorps = System.getProperties();
+        for (Map.Entry<Object, Object> e : props.entrySet()) {
+            if (e.getKey().toString().startsWith("td.client.")) {
+                TDPorps.setProperty(e.getKey().toString(), e.getValue().toString());
+            }
+        }
+        System.setProperties(TDPorps);
+
+        client = System.getProperties().size() == TDPorps.size() ? TDClient.newClient() // use $HOME/.td/td.conf
+                : TDClient.newBuilder(false).build(); // use *.properties
     }
 
     @Override
@@ -84,9 +113,17 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
         ExponentialBackOff backOff = new ExponentialBackOff();
         TDJobSummary job = client.jobStatus(id);
+        int nRetries = 0;
         while (!job.getStatus().isFinished()) {
+            if (nRetries > execFinishRetryLimit) {
+                throw new Exception("Exceed standard of finish check retry repetition: "
+                        + execFinishRetryLimit);
+            }
+
             Thread.sleep(backOff.nextWaitTimeMillis());
             job = client.jobStatus(id);
+
+            nRetries++;
         }
 
         return client.jobResult(id, TDResultFormat.TSV, new Function<InputStream, List<String>>() {
@@ -258,18 +295,34 @@ public class TDSystemTestRunner extends SystemTestRunner {
             client.performBulkImportSession(sessionName);
             ExponentialBackOff backOff = new ExponentialBackOff();
             TDBulkImportSession session = client.getBulkImportSession(sessionName);
+            int performNRetries = 0;
             while (session.getStatus() == TDBulkImportSession.ImportStatus.PERFORMING) {
+                if (performNRetries > fileUploadPerformRetryLimit) {
+                    throw new Exception("Exceed standard of perform check retry repetition: "
+                            + fileUploadPerformRetryLimit);
+                }
+
                 logger.debug("Waiting bulk import completion");
                 Thread.sleep(backOff.nextWaitTimeMillis());
                 session = client.getBulkImportSession(sessionName);
+
+                performNRetries++;
             }
 
             client.commitBulkImportSession(sessionName);
             session = client.getBulkImportSession(sessionName);
+            int commitNRetries = 0;
             while (session.getStatus() != TDBulkImportSession.ImportStatus.COMMITTED) {
+                if (commitNRetries > fileUploadCommitRetryLimit) {
+                    throw new Exception("Exceed standard of commit check retry repetition: "
+                            + fileUploadCommitRetryLimit);
+                }
+
                 logger.info("Waiting bulk import perform step completion");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(fileUploadCommitBackOff));
                 session = client.getBulkImportSession(sessionName);
+
+                commitNRetries++;
             }
         } finally {
             client.deleteBulkImportSession(sessionName);
@@ -329,7 +382,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
             session = client.getBulkImportSession(sessionName);
             while (session.getStatus() != TDBulkImportSession.ImportStatus.COMMITTED) {
                 logger.info("Waiting bulk import perform step completion");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(fileUploadCommitBackOff));
                 session = client.getBulkImportSession(sessionName);
             }
         } finally {
