@@ -40,6 +40,8 @@ public class SystemTestTeam extends ExternalResource {
     private List<StrictHQ> initHqs = new ArrayList<StrictHQ>();
     private Map<Entry<StrictHQ, String>, Boolean> entries = new LinkedHashMap<Entry<StrictHQ, String>, Boolean>();
 
+    private boolean needRun = false; // remind `run()`
+
 
     public SystemTestTeam(SystemTestRunner... runners) {
         this.runners.addAll(Arrays.asList(runners));
@@ -48,6 +50,10 @@ public class SystemTestTeam extends ExternalResource {
 
     @Override
     protected void after() {
+        if (needRun) {
+            throw new IllegalStateException("Call `SystemTestTeam#run()`");
+        }
+
         for (SystemTestRunner runner : reachGoal) {
             try {
                 List<String> tables = runner.exec(HQ.tableList());
@@ -70,18 +76,26 @@ public class SystemTestTeam extends ExternalResource {
     // add initialization for each @Test method
     public void initBy(StrictHQ hq) {
         initHqs.add(hq);
+
+        needRun = true;
     }
 
     public void initBy(List<? extends StrictHQ> hqs) {
         initHqs.addAll(hqs);
+
+        needRun = true;
     }
 
     public void set(StrictHQ hq, String expected, boolean ordered) {
         entries.put(pair(hq, expected), ordered);
+
+        needRun = true;
     }
 
     public void set(StrictHQ hq, String expected) {
         entries.put(pair(hq, expected), false);
+
+        needRun = true;
     }
 
     public void set(List<? extends StrictHQ> hqs, String... expecteds) {
@@ -92,6 +106,8 @@ public class SystemTestTeam extends ExternalResource {
         for (int i = 0; i < expecteds.length; i++) {
             set(hqs.get(i), expecteds[i]);
         }
+
+        needRun = true;
     }
 
     public void set(LazyMatchingResource hq, SystemTestCommonInfo ci) {
@@ -105,9 +121,13 @@ public class SystemTestTeam extends ExternalResource {
         for (int i = 0; i < answers.length; i++) {
             set(rhqs.get(i), answers[i]);
         }
+
+        needRun = true;
     }
 
     public void run() throws Exception {
+        needRun = false;
+
         for (SystemTestRunner runner : runners) {
             if (!reachGoal.contains(runner)) {
                 // initialization each @Test methods
