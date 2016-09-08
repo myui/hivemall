@@ -72,21 +72,44 @@ public class QuickExample {
                             put("blue", "int");
                         }
                     })); // create table `color`, which is marked as immutable, for this test class
+                    
+            // add function from hivemall class
+            initBy(HQ.fromStatement("CREATE TEMPORARY FUNCTION hivemall_version as 'hivemall.HivemallVersionUDF'"));
+        }
+    };
+    
+    @ClassRule
+    public static TDSystemTestRunner tRunner = new TDSystemTestRunner(ci) {
+        {
+            initBy(HQ.uploadByResourcePathAsNewTable("color", ci.initDir + "color.tsv",
+                    new LinkedHashMap<String, String>() {
+                        {
+                            put("name", "string");
+                            put("red", "int");
+                            put("green", "int");
+                            put("blue", "int");
+                        }
+                    })); // create table `color`, which is marked as immutable, for this test class
         }
     };
 
     @Rule
-    public SystemTestTeam team = new SystemTestTeam(hRunner);
+    public SystemTestTeam team = new SystemTestTeam(hRunner); // set hRunner as default runner
+    
+    @Rule
+    public ExpectedException predictor = ExpectedException.none(); 
 
 
     @Test
     public void test0() throws Exception {
+        team.add(tRunner, hRunner); // test on HiveRunner -> TD -> HiveRunner (NOTE: state of DB is retained in each runner)
         team.set(HQ.fromStatement("SELECT name FROM color WHERE blue = 255 ORDER BY name"), "azure\tblue\tmagenta", true); // ordered test
         team.run(); // this call is required
     }
 
     @Test
     public void test1() throws Exception {
+        // test on HiveRunner once only
         String tableName = "users";
         team.initBy(HQ.createTable(tableName, new LinkedHashMap<String, String>() {
             {
@@ -101,10 +124,38 @@ public class QuickExample {
                 + tableName + " u LEFT JOIN color c on u.favorite_color = c.name"), "rgb(255,165,0)\trgb(255,192,203)"); // unordered test
         team.run(); // this call is required
     }
+    
+    @Test
+    public void test2() throws Exception {
+        // You can also use runner's raw API directly
+        for(RawHQ q: HQ.fromStatements("SELECT hivemall_version();SELECT hivemall_version();")) {
+            System.out.println(hRunner.exec(q).get(0));
+        }
+        // raw API doesn't require `SystemTestTeam#run()`
+    }
+    
+    @Test
+    public void test3() throws Exception {
+        // test on HiveRunner once only
+        // auto matching by files which name is `test3` in `case/` and `answer/`
+        team.set(HQ.autoMatchingByFileName("test3", ci)); // unordered test
+        team.run(); // this call is required
+    }
+    
+    @Test
+    public void test4() throws Exception {
+        // test on HiveRunner once only
+        predictor.expect(Throwable.class); // you can use systemtest w/ other rules 
+        team.set(HQ.fromStatement("invalid queryyy")); // this query throws an exception
+        team.run(); // this call is required
+        // thrown exception will be caught by `ExpectedException` rule
+    }
 }
 ```
 
-The above needs `systemtest/src/test/resources/hivemall/HogeTest/init/color.tsv` (`systemtest/src/test/resources/${path/to/package}/${classname}/init/color.tsv`)
+The above requires following files
+
+* `systemtest/src/test/resources/hivemall/HogeTest/init/color.tsv` (`systemtest/src/test/resources/${path/to/package}/${className}/init/${fileName}`)
 
 ```tsv
 blue	0	0	255
@@ -118,4 +169,23 @@ orange	255	165	0
 orangered	255	69	0
 red	255	0	0
 pink	255	192	203
+```
+
+* `systemtest/src/test/resources/hivemall/HogeTest/case/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/case/${fileName}`)
+
+```sql
+-- write your hive queries
+-- comments like this and multiple queries in one row are allowed
+SELECT blue FROM color WHERE name = 'lavender';SELECT green FROM color WHERE name LIKE 'orange%' 
+SELECT name FROM color WHERE blue = 255
+```
+
+* `systemtest/src/test/resources/hivemall/HogeTest/answer/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/answer/${fileName}`)
+
+tsv format is required
+
+```tsv
+230
+165    69
+azure    blue    magenta
 ```
