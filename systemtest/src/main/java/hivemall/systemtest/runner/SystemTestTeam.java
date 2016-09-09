@@ -100,10 +100,10 @@ public class SystemTestTeam extends ExternalResource {
 
     public void set(List<? extends StrictHQ> hqs, List<String> expecteds, List<Boolean> ordereds) {
         Preconditions.checkArgument(hqs.size() == expecteds.size(),
-            "Mismatch between number of queries(%d) and length of answers(%d)", hqs.size(),
+            "Mismatch between number of queries(%s) and length of answers(%s)", hqs.size(),
             expecteds.size());
         Preconditions.checkArgument(hqs.size() == ordereds.size(),
-            "Mismatch between number of queries(%d) and correspond ordered flags(%d)", hqs.size(),
+            "Mismatch between number of queries(%s) and correspond ordered flags(%s)", hqs.size(),
             ordereds.size());
 
         for (int i = 0; i < expecteds.size(); i++) {
@@ -126,7 +126,7 @@ public class SystemTestTeam extends ExternalResource {
         String[] answers = hq.getAnswers(ci.answerDir);
 
         Preconditions.checkArgument(rhqs.size() == answers.length,
-            "Mismatch between number of queries(%d) and length of answers(%d)", rhqs.size(),
+            "Mismatch between number of queries(%s) and length of answers(%s)", rhqs.size(),
             answers.length);
 
         for (int i = 0; i < answers.length; i++) {

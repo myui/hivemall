@@ -47,7 +47,7 @@ abstract public class HQ {
 
         Preconditions.checkArgument(
             1 == split.size(),
-            "Detected %d queries, should be exactly one. Use `HQ.fromStatements` for multi queries.",
+            "Detected %s queries, should be exactly one. Use `HQ.fromStatements` for multi queries.",
             split.size());
 
         return new RawHQ(split.get(0));
