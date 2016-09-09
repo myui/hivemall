@@ -51,6 +51,7 @@ and several runner-specific APIs, don't call them via string statement
 * You can use `IO.getFromResourcePath(...)` to get answer whose format is TSV
 * Table created in initialization of runner should be used as immutable, don't neither insert nor update
 * TD client configs in properties file prior to $HOME/.td/td.conf
+* Don't use insert w/ big data, use file upload instead
 
 ## Quick example
 

@@ -32,7 +32,6 @@ import hivemall.systemtest.ConvertToMsgpack;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
 import hivemall.systemtest.model.HQ;
-import hivemall.systemtest.model.InsertHQ;
 import hivemall.systemtest.model.RawHQ;
 import hivemall.systemtest.model.UploadFileAsNewTableHQ;
 import hivemall.systemtest.model.UploadFileToExistingHQ;
@@ -204,34 +203,6 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
         client.deleteTableIfExists(dbName, hq.tableName);
         return Collections.singletonList("dropped " + hq.tableName);
-    }
-
-    @Override
-    // for Hive 0.13.0 or lower
-    // if on 0.14.0 or later, doesn't need following
-    protected List<String> insert(InsertHQ hq) throws Exception {
-        logger.info("executing: insert into " + hq.tableName + " on " + dbName);
-
-        // construct statement based on WITH clause
-        StringBuilder sb = new StringBuilder();
-        sb.append("WITH t AS (");
-        for (Object[] row : hq.data) {
-            sb.append("SELECT ");
-            for (int i = 0; i < hq.header.size(); i++) {
-                sb.append(InsertHQ.serialize(row[i]));
-                sb.append(" ");
-                sb.append(hq.header.get(i));
-                sb.append(",");
-            }
-            sb.deleteCharAt(sb.length() - 1);
-            sb.append(" UNION ALL ");
-        }
-        sb.delete(sb.length() - 11, sb.length());
-        sb.append(") INSERT INTO TABLE ");
-        sb.append(hq.tableName);
-        sb.append(" SELECT * FROM t");
-
-        return exec(HQ.fromStatement(sb.toString()));
     }
 
     @Override

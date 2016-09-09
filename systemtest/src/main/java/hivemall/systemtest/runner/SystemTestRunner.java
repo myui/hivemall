@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -232,8 +233,32 @@ public abstract class SystemTestRunner extends ExternalResource {
     List<String> insert(InsertHQ hq) throws Exception {
         logger.info("executing: insert into " + hq.tableName + " on " + dbName);
 
-        return exec(HQ.fromStatement("INSERT INTO TABLE " + hq.tableName + " VALUES "
-                + hq.getAsValuesFormat()));
+        // *WORKAROUND*
+        // `INSERT INTO TABLE ... VALUES ...`
+        //     cannot use array() and map() with `VALUES` on hiverunner(v3.0.0),
+        //     cannot insert anything on TD(v20160901)
+        // `WITH ... AS (SELECT ...) INSERT INTO TABLE ... SELECT * FROM ...`
+        //     can insert anything on hiverunner(v3.0.0)
+        //     cannot use map<?> on TD(v20160901)
+        StringBuilder sb = new StringBuilder();
+        sb.append("WITH temporary_table_for_with_clause AS (");
+        for (Object[] row : hq.data) {
+            sb.append("SELECT ");
+            for (int i = 0; i < hq.header.size(); i++) {
+                sb.append(serialize(row[i]));
+                sb.append(" ");
+                sb.append(hq.header.get(i));
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(" UNION ALL ");
+        }
+        sb.delete(sb.length() - 11, sb.length());
+        sb.append(") INSERT INTO TABLE ");
+        sb.append(hq.tableName);
+        sb.append(" SELECT * FROM temporary_table_for_with_clause");
+
+        return exec(HQ.fromStatement(sb.toString()));
     }
 
     List<String> uploadFileAsNewTable(UploadFileAsNewTableHQ hq) throws Exception {
@@ -245,4 +270,48 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     abstract List<String> uploadFileToExisting(UploadFileToExistingHQ hq) throws Exception;
+
+    private String serialize(Object val) {
+        // NOTE: this method is low-performance, don't use w/ big data
+        if (val instanceof String) {
+            return "'" + String.valueOf(val) + "'";
+        } else if (val instanceof Object[]) {
+            Object[] objs = (Object[]) val;
+            StringBuilder sb = new StringBuilder();
+            sb.append("array(");
+            for (Object o : objs) {
+                sb.append(serialize(o));
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(")");
+            return sb.toString();
+        } else if (val instanceof List<?>) {
+            List<?> list = (List<?>) val;
+            StringBuilder sb = new StringBuilder();
+            sb.append("array(");
+            for (Object o : list) {
+                sb.append(serialize(o));
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(")");
+            return sb.toString();
+        } else if (val instanceof Map<?, ?>) {
+            Map<?, ?> map = (Map<?, ?>) val;
+            StringBuilder sb = new StringBuilder();
+            sb.append("map(");
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                sb.append(serialize(e.getKey()));
+                sb.append(",");
+                sb.append(serialize(e.getValue()));
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(")");
+            return sb.toString();
+        } else {
+            return String.valueOf(val);
+        }
+    }
 }
