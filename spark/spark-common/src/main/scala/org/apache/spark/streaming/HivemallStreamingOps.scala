@@ -19,16 +19,16 @@ package org.apache.spark.streaming
 
 import scala.reflect.ClassTag
 
-import org.apache.spark.ml.feature.HmLabeledPoint
+import org.apache.spark.ml.feature.HivemallLabeledPoint
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, DataFrame, SQLContext}
 import org.apache.spark.streaming.dstream.DStream
 
-final class HivemallStreamingOps(ds: DStream[HmLabeledPoint]) {
+final class HivemallStreamingOps(ds: DStream[HivemallLabeledPoint]) {
 
   def predict[U: ClassTag](f: DataFrame => DataFrame)(implicit sqlContext: SQLContext)
       : DStream[Row] = {
-    ds.transform[Row] { rdd: RDD[HmLabeledPoint] =>
+    ds.transform[Row] { rdd: RDD[HivemallLabeledPoint] =>
       f(sqlContext.createDataFrame(rdd)).rdd
     }
   }
@@ -39,7 +39,7 @@ object HivemallStreamingOps {
   /**
    * Implicitly inject the [[HivemallStreamingOps]] into [[DStream]].
    */
-  implicit def dataFrameToHivemallStreamingOps(ds: DStream[HmLabeledPoint])
+  implicit def dataFrameToHivemallStreamingOps(ds: DStream[HivemallLabeledPoint])
       : HivemallStreamingOps = {
     new HivemallStreamingOps(ds)
   }

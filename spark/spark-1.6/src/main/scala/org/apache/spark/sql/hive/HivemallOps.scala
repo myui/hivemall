@@ -20,7 +20,7 @@ package org.apache.spark.sql.hive
 import java.util.UUID
 
 import org.apache.spark.Logging
-import org.apache.spark.ml.feature.HmFeature
+import org.apache.spark.ml.feature.HivemallFeature
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.{Expression, Literal, NamedExpression}
@@ -628,7 +628,7 @@ final class HivemallOps(df: DataFrame) extends Logging {
   def explode_array(expr: Column): DataFrame = {
     df.explode(expr) { case Row(v: Seq[_]) =>
       // Type erasure removes the component type in Seq
-      v.map(s => HmFeature(s.asInstanceOf[String]))
+      v.map(s => HivemallFeature(s.asInstanceOf[String]))
     }
   }
 
