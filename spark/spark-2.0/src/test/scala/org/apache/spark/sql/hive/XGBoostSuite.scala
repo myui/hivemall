@@ -18,27 +18,18 @@
 package org.apache.spark.sql.hive
 
 import java.io.File
-import java.nio.charset.StandardCharsets
 
-import com.google.common.io.Files
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
-import org.apache.spark.test.HivemallQueryTest
-import org.apache.spark.util.Utils
+import org.apache.spark.test.VectorQueryTest
 
-final class XGBoostSuite extends HivemallQueryTest {
+import hivemall.xgboost._
 
+final class XGBoostSuite extends VectorQueryTest {
   import hiveContext.implicits._
-
-  private var trainDir: File = _
-  private var testDir: File = _
-
-   // A `libsvm` schema is (Double, ml.linalg.Vector)
-  private var mllibTrainDf: DataFrame = _
-  private var mllibTestDf: DataFrame  = _
 
   private val defaultOptions = XGBoostOptions()
     .set("num_round", "10")
@@ -46,56 +37,9 @@ final class XGBoostSuite extends HivemallQueryTest {
 
   private val numModles = 3
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    val trainLines =
-      """
-        |1 1:1.0 3:2.0 5:3.0
-        |0 2:4.0 4:5.0 6:6.0
-        |1 1:1.1 4:1.0 5:2.3 7:1.0
-        |1 1:1.0 4:1.5 5:2.1 7:1.2
-      """.stripMargin
-    trainDir = Utils.createTempDir()
-    Files.write(trainLines, new File(trainDir, "train-00000"), StandardCharsets.UTF_8)
-    val testLines =
-      """
-        |1 1:1.3 3:2.1 5:2.8
-        |0 2:3.9 4:5.3 6:8.0
-      """.stripMargin
-    testDir = Utils.createTempDir()
-    Files.write(testLines, new File(testDir, "test-00000"), StandardCharsets.UTF_8)
-
-    mllibTrainDf = spark.read.format("libsvm").load(trainDir.getAbsolutePath)
-    // Must be cached because rowid() is deterministic
-    mllibTestDf = spark.read.format("libsvm").load(testDir.getAbsolutePath)
-      .withColumn("rowid", rowid()).cache
-  }
-
-  override def afterAll(): Unit = {
-    try {
-      Utils.deleteRecursively(trainDir)
-      Utils.deleteRecursively(testDir)
-    } finally {
-      super.afterAll()
-    }
-  }
-
-  private def withTempModelDir(f: String => Unit): Unit = {
-    var tempDir: File = null
-    try {
-      tempDir = Utils.createTempDir()
-      f(tempDir.getAbsolutePath + "/xgboost_models")
-    } catch {
-      case e: Throwable => fail(s"Unexpected exception detected: ${e}")
-    } finally {
-      Utils.deleteRecursively(tempDir)
-    }
-  }
-
   private def countModels(dirPath: String): Int = {
     new File(dirPath).listFiles().toSeq.count(_.getName.startsWith("xgbmodel-"))
   }
-
   test("check XGBoost options") {
     assert(s"$defaultOptions" == "-max_depth 4 -num_round 10")
     val errMsg = intercept[IllegalArgumentException] {

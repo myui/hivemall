@@ -17,12 +17,13 @@
 
 package org.apache.spark.sql.hive
 
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.test.HivemallQueryTest
+import org.apache.spark.sql.hive.HivemallUtils._
+import org.apache.spark.test.HivemallFeatureQueryTest
+import org.apache.spark.test.VectorQueryTest
 
-final class HiveUdfSuite extends HivemallQueryTest {
-
+final class HiveUdfWithFeatureSuite extends HivemallFeatureQueryTest {
   import hiveContext.implicits._
   import hiveContext._
 
@@ -73,5 +74,57 @@ final class HiveUdfSuite extends HivemallQueryTest {
     //
     // hiveContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_logregr")
     // hiveContext.reset()
+  }
+}
+
+final class HiveUdfWithVectorSuite extends VectorQueryTest {
+  import hiveContext._
+
+  test("to_hivemall_features") {
+    mllibTrainDf.registerTempTable("mllibTrainDf")
+    hiveContext.udf.register("to_hivemall_features", _to_hivemall_features)
+    checkAnswer(
+      sql(
+        s"""
+           | SELECT to_hivemall_features(features)
+           |   FROM mllibTrainDf
+         """.stripMargin),
+      Seq(
+        Row(Seq("0:1.0", "2:2.0", "4:3.0")),
+        Row(Seq("0:1.0", "3:1.5", "4:2.1", "6:1.2")),
+        Row(Seq("0:1.1", "3:1.0", "4:2.3", "6:1.0")),
+        Row(Seq("1:4.0", "3:5.0", "5:6.0"))
+      )
+    )
+  }
+
+  ignore("append_bias") {
+    mllibTrainDf.registerTempTable("mllibTrainDf")
+    hiveContext.udf.register("append_bias", _append_bias)
+    hiveContext.udf.register("to_hivemall_features", _to_hivemall_features)
+    /**
+     * TODO: This test throws an exception:
+     * Failed to analyze query: org.apache.spark.sql.AnalysisException: cannot resolve
+     *   'UDF(UDF(features))' due to data type mismatch: argument 1 requires vector type,
+     *    however, 'UDF(features)' is of vector type.; line 2 pos 8
+     */
+    checkAnswer(
+      sql(
+        s"""
+           | SELECT to_hivemall_features(append_bias(features))
+           |   FROM mllibTrainDF
+         """.stripMargin),
+       Seq(
+        Row(Seq("0:1.0", "0:1.0", "2:2.0", "4:3.0")),
+        Row(Seq("0:1.0", "0:1.0", "3:1.5", "4:2.1", "6:1.2")),
+        Row(Seq("0:1.0", "0:1.1", "3:1.0", "4:2.3", "6:1.0")),
+        Row(Seq("0:1.0", "1:4.0", "3:5.0", "5:6.0"))
+      )
+    )
+  }
+
+  ignore("explode_vector") {
+    // TODO: Spark-2.0 does not support use-defined generator function in
+    // `org.apache.spark.sql.UDFRegistration`.
   }
 }

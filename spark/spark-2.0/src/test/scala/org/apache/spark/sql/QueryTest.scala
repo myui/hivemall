@@ -35,7 +35,6 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.execution.streaming.MemoryPlan
 import org.apache.spark.sql.types.ObjectType
 
-
 abstract class QueryTest extends PlanTest {
 
   protected def spark: SparkSession

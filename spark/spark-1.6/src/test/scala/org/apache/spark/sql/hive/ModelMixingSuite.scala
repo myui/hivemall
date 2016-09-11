@@ -25,7 +25,7 @@ import java.util.concurrent.{ExecutorService, Executors}
 import org.apache.commons.cli.Options
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.spark.SparkFunSuite
-import org.apache.spark.ml.feature.HmLabeledPoint
+import org.apache.spark.ml.feature.HivemallLabeledPoint
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
@@ -46,7 +46,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
   val a9aLineParser = (line: String) => {
     val elements = line.split(" ")
     val (label, features) = (elements.head, elements.tail)
-    HmLabeledPoint(if (label == "+1") 1.0f else 0.0f, features)
+    HivemallLabeledPoint(if (label == "+1") 1.0f else 0.0f, features)
   }
 
   lazy val trainA9aData: DataFrame =
@@ -63,7 +63,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
   val kdd2010aLineParser = (line: String) => {
     val elements = line.split(" ")
     val (label, features) = (elements.head, elements.tail)
-    HmLabeledPoint(if (label == "1") 1.0f else 0.0f, features)
+    HivemallLabeledPoint(if (label == "1") 1.0f else 0.0f, features)
   }
 
   lazy val trainKdd2010aData: DataFrame =
@@ -93,7 +93,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
   var assignedPort: Int = _
 
   private def getDataFromURI(
-      in: InputStream, lineParseFunc: String => HmLabeledPoint, numPart: Int = 2): DataFrame = {
+      in: InputStream, lineParseFunc: String => HivemallLabeledPoint, numPart: Int = 2): DataFrame = {
     val reader = new BufferedReader(new InputStreamReader(in))
     try {
       // Cache all data because stream closed soon

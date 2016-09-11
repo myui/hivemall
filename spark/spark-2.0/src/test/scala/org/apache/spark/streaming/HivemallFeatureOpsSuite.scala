@@ -19,13 +19,13 @@ package org.apache.spark.streaming
 
 import reflect.ClassTag
 
-import org.apache.spark.ml.feature.HmLabeledPoint
+import org.apache.spark.ml.feature.HivemallLabeledPoint
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.streaming.HivemallStreamingOps._
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.scheduler.StreamInputInfo
-import org.apache.spark.test.HivemallQueryTest
+import org.apache.spark.test.HivemallFeatureQueryTest
 
 /**
  * This is an input stream just for tests.
@@ -59,7 +59,7 @@ private[this] class TestInputStream[T: ClassTag](
   }
 }
 
-final class HivemallOpsSuite extends HivemallQueryTest {
+final class HivemallFeatureOpsSuite extends HivemallFeatureQueryTest {
 
   // This implicit value used in `HivemallStreamingOps`
   implicit val sqlCtx = hiveContext
@@ -92,14 +92,14 @@ final class HivemallOpsSuite extends HivemallQueryTest {
 
     withStreamingContext(new StreamingContext(sqlCtx.sparkContext, Milliseconds(100))) { ssc =>
       val inputData = Seq(
-        Seq(HmLabeledPoint(features = "1:0.6" :: "2:0.1" :: Nil)),
-        Seq(HmLabeledPoint(features = "2:0.9" :: Nil)),
-        Seq(HmLabeledPoint(features = "1:0.2" :: Nil)),
-        Seq(HmLabeledPoint(features = "2:0.1" :: Nil)),
-        Seq(HmLabeledPoint(features = "0:0.6" :: "2:0.4" :: Nil))
+        Seq(HivemallLabeledPoint(features = "1:0.6" :: "2:0.1" :: Nil)),
+        Seq(HivemallLabeledPoint(features = "2:0.9" :: Nil)),
+        Seq(HivemallLabeledPoint(features = "1:0.2" :: Nil)),
+        Seq(HivemallLabeledPoint(features = "2:0.1" :: Nil)),
+        Seq(HivemallLabeledPoint(features = "0:0.6" :: "2:0.4" :: Nil))
       )
 
-      val inputStream = new TestInputStream[HmLabeledPoint](ssc, inputData, 1)
+      val inputStream = new TestInputStream[HivemallLabeledPoint](ssc, inputData, 1)
 
       // Apply predictions on input streams
       val prediction = inputStream.predict { streamDf =>
