@@ -259,6 +259,26 @@
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<id>regex-scala-property</id>
+						<goals>
+							<goal>regex-property</goal>
+						</goals>
+						<configuration>
+							<name>scala.version.parsed</name>
+							<value>${scala.version}</value>
+							<regex>(\d+\.\d+)\.\d+</regex>
+							<replacement>$1</replacement>
+							<failIfNoMatch>true</failIfNoMatch>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<!-- start coveralls -->
 			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
