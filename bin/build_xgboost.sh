@@ -21,7 +21,7 @@ set -eu
 set -o pipefail
 
 # Target commit hash value
-XGBOOST_HASHVAL='85443403310e90bd8a90a1f817841520838b4ac7'
+XGBOOST_HASHVAL='7ab15a0b31c870c7779691639f521df3ccd4a56e'
 
 # Move to a top directory
 if [ "$HIVEMALL_HOME" == "" ]; then
