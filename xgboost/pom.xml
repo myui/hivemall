@@ -127,7 +127,7 @@
 						<id>install-xgboost</id>
 						<phase>validate</phase>
 						<configuration>
-							<file>${basedir}/lib/xgboost4j_${xgboost.version}-${xgboost4j.version}.jar</file>
+							<file>${basedir}/lib/xgboost4j-${xgboost.version}-${xgboost4j.version}.jar</file>
 							<repositoryLayout>default</repositoryLayout>
 							<groupId>ml.dmlc</groupId>
 							<artifactId>xgboost4j</artifactId>
@@ -140,16 +140,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<!-- hivemall-xgboost-xx.jar -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.5</version>
-				<configuration>
-					<finalName>${project.artifactId}-${project.version}</finalName>
-					<outputDirectory>${project.parent.build.directory}</outputDirectory>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -164,7 +154,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>${project.artifactId}_${xgboost.version}-${project.version}</finalName>
+							<finalName>${project.artifactId}-${xgboost.version}-${project.version}</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>false</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
@@ -183,7 +173,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>${project.artifactId}_${xgboost.version}-${project.version}-with-dependencies</finalName>
+							<finalName>${project.artifactId}-${xgboost.version}-${project.version}-with-dependencies</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>true</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
