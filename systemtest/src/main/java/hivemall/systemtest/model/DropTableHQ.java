@@ -18,8 +18,10 @@
  */
 package hivemall.systemtest.model;
 
+import javax.annotation.Nonnull;
+
 public class DropTableHQ extends TableHQ {
-    DropTableHQ(String tableName) {
+    DropTableHQ(@Nonnull final String tableName) {
         super(tableName);
     }
 }

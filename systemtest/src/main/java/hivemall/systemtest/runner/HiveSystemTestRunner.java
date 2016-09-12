@@ -29,6 +29,7 @@ import hivemall.systemtest.model.RawHQ;
 import hivemall.systemtest.model.UploadFileToExistingHQ;
 import org.junit.rules.TemporaryFolder;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,18 +40,16 @@ public class HiveSystemTestRunner extends SystemTestRunner {
     private TemporaryFolder tmpFolder;
     private HiveShell hShell;
 
-
-    public HiveSystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
+    public HiveSystemTestRunner(final SystemTestCommonInfo ci, final String propertiesFile) {
         super(ci, propertiesFile);
     }
 
-    public HiveSystemTestRunner(SystemTestCommonInfo ci) {
+    public HiveSystemTestRunner(final SystemTestCommonInfo ci) {
         super(ci, "hiverunner.properties");
     }
 
-
     @Override
-    protected void initRunner() {
+    void initRunner() {
         try {
             tmpFolder = new TemporaryFolder() {
                 {
@@ -64,20 +63,25 @@ public class HiveSystemTestRunner extends SystemTestRunner {
                     setHiveExecutionEngine(props.getProperty("hive.execution.engine", "mr"));
 
                     // optional
-                    if (props.containsKey("enableTimeout"))
+                    if (props.containsKey("enableTimeout")) {
                         setTimeoutEnabled(Boolean.valueOf(props.getProperty("enableTimeout")));
-                    if (props.containsKey("timeoutRetryLimit"))
+                    }
+                    if (props.containsKey("timeoutRetryLimit")) {
                         setTimeoutRetries(Integer.valueOf(props.getProperty("timeoutRetryLimit")));
-                    if (props.containsKey("timeoutSeconds"))
+                    }
+                    if (props.containsKey("timeoutSeconds")) {
                         setTimeoutSeconds(Integer.valueOf(props.getProperty("timeoutSeconds")));
-                    if (props.containsKey("commandShellEmulation"))
+                    }
+                    if (props.containsKey("commandShellEmulation")) {
                         setCommandShellEmulation(CommandShellEmulation.valueOf(props.getProperty("commandShellEmulation")));
+                    }
                 }
             };
-            HiveServerContext ctx = Extractor.getStandaloneHiveServerContext(tmpFolder, config);
+            final HiveServerContext ctx = Extractor.getStandaloneHiveServerContext(tmpFolder,
+                config);
             container = Extractor.getHiveServerContainer(ctx);
             @SuppressWarnings("serial")
-            HiveShellBuilder builder = new HiveShellBuilder() {
+            final HiveShellBuilder builder = new HiveShellBuilder() {
                 {
                     putAllProperties(new HashMap<String, String>() {
                         {
@@ -98,21 +102,23 @@ public class HiveSystemTestRunner extends SystemTestRunner {
 
     @Override
     protected void finRunner() {
-        if (container != null)
+        if (container != null) {
             container.tearDown();
-        if (tmpFolder != null)
+        }
+        if (tmpFolder != null) {
             tmpFolder.delete();
+        }
     }
 
     @Override
-    protected List<String> exec(RawHQ hq) {
-        logger.info("executing: `" + hq.get() + "`");
+    protected List<String> exec(@Nonnull final RawHQ hq) {
+        logger.info("executing: `" + hq.query + "`");
 
-        return hShell.executeQuery(hq.get());
+        return hShell.executeQuery(hq.query);
     }
 
     @Override
-    List<String> uploadFileToExisting(final UploadFileToExistingHQ hq) throws Exception {
+    List<String> uploadFileToExisting(@Nonnull final UploadFileToExistingHQ hq) throws Exception {
         logger.info("executing: insert " + hq.file.getPath() + " into " + hq.tableName + " on "
                 + dbName);
 

@@ -18,16 +18,13 @@
  */
 package hivemall.systemtest.model;
 
+import javax.annotation.Nonnull;
+
 public class RawHQ extends StrictHQ {
-    String hq;
+    @Nonnull
+    public final String query;
 
-
-    RawHQ(String hq) {
-        this.hq = hq;
-    }
-
-
-    public String get() {
-        return hq;
+    RawHQ(@Nonnull final String query) {
+        this.query = query;
     }
 }

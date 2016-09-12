@@ -18,10 +18,11 @@
  */
 package hivemall.systemtest.model;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 
 public class UploadFileToExistingHQ extends UploadFileHQ {
-    UploadFileToExistingHQ(String tableName, File file) {
+    UploadFileToExistingHQ(@Nonnull final String tableName, @Nonnull final File file) {
         super(tableName, file);
     }
 }

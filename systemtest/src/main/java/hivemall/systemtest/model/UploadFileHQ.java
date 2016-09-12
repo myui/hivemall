@@ -20,6 +20,7 @@ package hivemall.systemtest.model;
 
 import hivemall.utils.lang.Preconditions;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 
 public abstract class UploadFileHQ extends TableHQ {
@@ -27,22 +28,22 @@ public abstract class UploadFileHQ extends TableHQ {
         MSGPACK, CSV, TSV, UNKNOWN
     }
 
+    @Nonnull
     public final File file;
+    @Nonnull
     public final Format format;
 
-
-    UploadFileHQ(String tableName, File file) {
+    UploadFileHQ(@Nonnull final String tableName, @Nonnull final File file) {
         super(tableName);
 
-        Preconditions.checkArgument(file.exists(), "%s is not found", file.getPath());
+        Preconditions.checkArgument(file.exists(), "%s not found", file.getPath());
 
         this.file = file;
         this.format = guessFormat(file);
     }
 
-
-    Format guessFormat(File file) {
-        String fileName = file.getName();
+    private Format guessFormat(File file) {
+        final String fileName = file.getName();
         if (fileName.endsWith(".msgpack.gz")) {
             return Format.MSGPACK;
         } else if (fileName.endsWith(".csv")) {

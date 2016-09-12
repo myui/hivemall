@@ -23,34 +23,41 @@ import com.klarna.hiverunner.sql.StatementsSplitter;
 import hivemall.systemtest.model.HQ;
 import hivemall.systemtest.model.RawHQ;
 import hivemall.systemtest.utils.IO;
+import hivemall.utils.lang.Preconditions;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LazyMatchingResource {
-    private String fileName;
-    private Charset charset;
+    @Nonnull
+    private final String fileName;
+    @Nonnull
+    private final Charset charset;
 
-
-    public LazyMatchingResource(String fileName, Charset charset) {
+    public LazyMatchingResource(@Nonnull final String fileName, @Nonnull final Charset charset) {
         this.fileName = fileName;
         this.charset = charset;
     }
 
+    public List<RawHQ> toStrict(@CheckForNull final String caseDir) {
+        Preconditions.checkNotNull(caseDir, "caseDir");
 
-    public List<RawHQ> toStrict(String caseDir) {
-        String query = IO.getFromResourcePath(caseDir + fileName, charset);
-        String formatted = CommandShellEmulation.HIVE_CLI.transformScript(query);
-        List<String> split = StatementsSplitter.splitStatements(formatted);
-        List<RawHQ> results = new ArrayList<RawHQ>();
+        final String query = IO.getFromResourcePath(caseDir + fileName, charset);
+        final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(query);
+        final List<String> split = StatementsSplitter.splitStatements(formatted);
+        final List<RawHQ> results = new ArrayList<RawHQ>();
         for (String q : split) {
             results.add(HQ.fromStatement(q));
         }
         return results;
     }
 
-    public String[] getAnswers(String answerDir) {
+    public String[] getAnswers(@CheckForNull final String answerDir) {
+        Preconditions.checkNotNull(answerDir, "answerDir");
+
         return IO.getFromResourcePath(answerDir + fileName).split(IO.QD);
     }
 }

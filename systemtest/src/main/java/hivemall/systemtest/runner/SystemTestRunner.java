@@ -19,6 +19,7 @@
 package hivemall.systemtest.runner;
 
 import com.google.common.io.Resources;
+import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
 import hivemall.systemtest.model.HQ;
@@ -31,12 +32,16 @@ import hivemall.systemtest.model.UploadFileAsNewTableHQ;
 import hivemall.systemtest.model.UploadFileHQ;
 import hivemall.systemtest.model.UploadFileToExistingHQ;
 import hivemall.systemtest.utils.IO;
+import hivemall.utils.lang.Preconditions;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -49,14 +54,22 @@ import java.util.Set;
 
 public abstract class SystemTestRunner extends ExternalResource {
     static final Logger logger = LoggerFactory.getLogger(SystemTestRunner.class);
-    List<StrictHQ> classInitHqs = new ArrayList<StrictHQ>();
-    Set<String> immutableTables = new HashSet<String>();
+    @Nonnull
+    final List<StrictHQ> classInitHqs;
+    @Nonnull
+    final Set<String> immutableTables;
+    @Nonnull
     final String dbName;
+    @Nonnull
     final Properties props;
 
+    SystemTestRunner(@CheckForNull SystemTestCommonInfo ci, @CheckForNull String propertiesFile) {
+        Preconditions.checkNotNull(ci, "ci");
+        Preconditions.checkNotNull(propertiesFile, "propertiesFile");
 
-    SystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
-        this.dbName = formatDBName(ci.dbName);
+        classInitHqs = new ArrayList<StrictHQ>();
+        immutableTables = new HashSet<String>();
+        dbName = ci.dbName;
 
         final String path = "hivemall/" + propertiesFile;
         try {
@@ -66,15 +79,15 @@ public abstract class SystemTestRunner extends ExternalResource {
                 is = new FileInputStream(Resources.getResource(path).getPath());
                 props.load(is);
             } finally {
-                if (is != null)
+                if (is != null) {
                     is.close();
+                }
             }
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to load properties from " + path + ". "
+            throw new IllegalArgumentException("Failed to load properties from " + path + ". "
                     + ex.getMessage());
         }
     }
-
 
     @Override
     protected void before() throws Exception {
@@ -87,7 +100,8 @@ public abstract class SystemTestRunner extends ExternalResource {
         try {
             resetDB(); // clean up database
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to clean up temporary database. " + ex.getMessage());
+            throw new QueryExecutionException("Failed to clean up temporary database. "
+                    + ex.getMessage());
         } finally {
             finRunner();
         }
@@ -97,16 +111,16 @@ public abstract class SystemTestRunner extends ExternalResource {
 
     abstract void finRunner();
 
-    public void initBy(StrictHQ hq) {
+    public void initBy(@Nonnull final StrictHQ hq) {
         classInitHqs.add(hq);
     }
 
-    public void initBy(List<? extends StrictHQ> hqs) {
+    public void initBy(@Nonnull final List<? extends StrictHQ> hqs) {
         classInitHqs.addAll(hqs);
     }
 
     // fix to temporary database and user-defined init (should be called per Test class)
-    final void prepareDB() throws Exception {
+    void prepareDB() throws Exception {
         createDB(dbName);
         use(dbName);
         for (StrictHQ q : classInitHqs) {
@@ -122,59 +136,61 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // drop temporary database (should be called per Test class)
-    final void resetDB() throws Exception {
+    void resetDB() throws Exception {
         dropDB(dbName);
     }
 
-    String formatDBName(String dbName) {
-        return dbName;
-    }
-
-    public final boolean isImmutableTable(String tableName) {
+    public final boolean isImmutableTable(final String tableName) {
         return immutableTables.contains(tableName);
     }
 
     // execute StrictHQ
-    public List<String> exec(StrictHQ hq) throws Exception {
-        if (hq instanceof RawHQ)
+    public List<String> exec(@Nonnull final StrictHQ hq) throws Exception {
+        if (hq instanceof RawHQ) {
             return exec((RawHQ) hq);
-        else if (hq instanceof TableHQ)
+        } else if (hq instanceof TableHQ) {
             return exec((TableHQ) hq);
-        else if (hq instanceof TableListHQ)
+        } else if (hq instanceof TableListHQ) {
             return tableList();
-        else
-            throw new RuntimeException("Unexpected query type: " + hq.getClass());
+        } else {
+            throw new IllegalArgumentException("Unexpected query type: " + hq.getClass());
+        }
     }
 
     //// execute RawHQ
-    abstract protected List<String> exec(RawHQ hq) throws Exception;
+    abstract protected List<String> exec(@Nonnull final RawHQ hq) throws Exception;
 
     //// execute TableHQ
-    protected List<String> exec(TableHQ hq) throws Exception {
-        if (hq instanceof CreateTableHQ)
+    List<String> exec(@Nonnull final TableHQ hq) throws Exception {
+        if (hq instanceof CreateTableHQ) {
             return createTable((CreateTableHQ) hq);
-        else if (hq instanceof DropTableHQ)
+        } else if (hq instanceof DropTableHQ) {
             return dropTable((DropTableHQ) hq);
-        else if (hq instanceof InsertHQ)
+        } else if (hq instanceof InsertHQ) {
             return insert((InsertHQ) hq);
-        else if (hq instanceof UploadFileHQ)
+        } else if (hq instanceof UploadFileHQ) {
             return exec((UploadFileHQ) hq);
-        else
-            throw new RuntimeException("Unexpected query type: " + hq.getClass());
+        } else {
+            throw new IllegalArgumentException("Unexpected query type: " + hq.getClass());
+        }
     }
 
     ////// execute UploadFileHQ
-    protected List<String> exec(UploadFileHQ hq) throws Exception {
-        if (hq instanceof UploadFileAsNewTableHQ)
+    List<String> exec(@Nonnull final UploadFileHQ hq) throws Exception {
+        if (hq instanceof UploadFileAsNewTableHQ) {
             return uploadFileAsNewTable((UploadFileAsNewTableHQ) hq);
-        else if (hq instanceof UploadFileToExistingHQ)
+        } else if (hq instanceof UploadFileToExistingHQ) {
             return uploadFileToExisting((UploadFileToExistingHQ) hq);
-        else
-            throw new RuntimeException("Unexpected query type: " + hq.getClass());
+        } else {
+            throw new IllegalArgumentException("Unexpected query type: " + hq.getClass());
+        }
     }
 
     // matching StrictHQ
-    public void matching(StrictHQ hq, String answer, boolean ordered) throws Exception {
+    public void matching(@Nonnull final StrictHQ hq, @CheckForNull final String answer,
+            final boolean ordered) throws Exception {
+        Preconditions.checkNotNull(answer, "answer");
+
         List<String> result = exec(hq);
 
         if (ordered) {
@@ -189,23 +205,24 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // matching StrictHQ (ordered == false)
-    public void matching(StrictHQ hq, String answer) throws Exception {
+    public void matching(@Nonnull final StrictHQ hq, @CheckForNull final String answer)
+            throws Exception {
         matching(hq, answer, false);
     }
 
-    List<String> createDB(String dbName) throws Exception {
+    List<String> createDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: create database if not exists" + dbName);
 
         return exec(HQ.fromStatement("CREATE DATABASE IF NOT EXISTS " + dbName));
     }
 
-    List<String> dropDB(String dbName) throws Exception {
+    List<String> dropDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: drop database if exists " + dbName);
 
         return exec(HQ.fromStatement("DROP DATABASE IF EXISTS " + dbName + " CASCADE"));
     }
 
-    List<String> use(String dbName) throws Exception {
+    List<String> use(@Nonnull final String dbName) throws Exception {
         logger.info("executing: use " + dbName);
 
         return exec(HQ.fromStatement("USE " + dbName));
@@ -217,20 +234,20 @@ public abstract class SystemTestRunner extends ExternalResource {
         return exec(HQ.fromStatement("SHOW TABLES"));
     }
 
-    List<String> createTable(CreateTableHQ hq) throws Exception {
+    List<String> createTable(@Nonnull final CreateTableHQ hq) throws Exception {
         logger.info("executing: create table " + hq.tableName + " if not exists on " + dbName);
 
         return exec(HQ.fromStatement("CREATE TABLE IF NOT EXISTS " + hq.tableName
                 + hq.getTableDeclaration()));
     }
 
-    List<String> dropTable(DropTableHQ hq) throws Exception {
+    List<String> dropTable(@Nonnull final DropTableHQ hq) throws Exception {
         logger.info("executing: drop table " + hq.tableName + " if exists on " + dbName);
 
         return exec(HQ.fromStatement("DROP TABLE IF EXISTS " + hq.tableName));
     }
 
-    List<String> insert(InsertHQ hq) throws Exception {
+    List<String> insert(@Nonnull final InsertHQ hq) throws Exception {
         logger.info("executing: insert into " + hq.tableName + " on " + dbName);
 
         // *WORKAROUND*
@@ -240,7 +257,7 @@ public abstract class SystemTestRunner extends ExternalResource {
         // `WITH ... AS (SELECT ...) INSERT INTO TABLE ... SELECT * FROM ...`
         //     can insert anything on hiverunner(v3.0.0)
         //     cannot use map<?> on TD(v20160901)
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("WITH temporary_table_for_with_clause AS (");
         for (Object[] row : hq.data) {
             sb.append("SELECT ");
@@ -261,7 +278,7 @@ public abstract class SystemTestRunner extends ExternalResource {
         return exec(HQ.fromStatement(sb.toString()));
     }
 
-    List<String> uploadFileAsNewTable(UploadFileAsNewTableHQ hq) throws Exception {
+    List<String> uploadFileAsNewTable(@Nonnull final UploadFileAsNewTableHQ hq) throws Exception {
         logger.info("executing: create " + hq.tableName + " based on " + hq.file.getPath()
                 + " if not exists on " + dbName);
 
@@ -269,15 +286,16 @@ public abstract class SystemTestRunner extends ExternalResource {
         return uploadFileToExisting(HQ.uploadByFullPathToExisting(hq.tableName, hq.file.getPath()));
     }
 
-    abstract List<String> uploadFileToExisting(UploadFileToExistingHQ hq) throws Exception;
+    abstract List<String> uploadFileToExisting(@Nonnull final UploadFileToExistingHQ hq)
+            throws Exception;
 
-    private String serialize(Object val) {
+    private String serialize(@Nullable final Object val) {
         // NOTE: this method is low-performance, don't use w/ big data
         if (val instanceof String) {
             return "'" + String.valueOf(val) + "'";
         } else if (val instanceof Object[]) {
-            Object[] objs = (Object[]) val;
-            StringBuilder sb = new StringBuilder();
+            final Object[] objs = (Object[]) val;
+            final StringBuilder sb = new StringBuilder();
             sb.append("array(");
             for (Object o : objs) {
                 sb.append(serialize(o));
@@ -287,8 +305,8 @@ public abstract class SystemTestRunner extends ExternalResource {
             sb.append(")");
             return sb.toString();
         } else if (val instanceof List<?>) {
-            List<?> list = (List<?>) val;
-            StringBuilder sb = new StringBuilder();
+            final List<?> list = (List<?>) val;
+            final StringBuilder sb = new StringBuilder();
             sb.append("array(");
             for (Object o : list) {
                 sb.append(serialize(o));
@@ -298,8 +316,8 @@ public abstract class SystemTestRunner extends ExternalResource {
             sb.append(")");
             return sb.toString();
         } else if (val instanceof Map<?, ?>) {
-            Map<?, ?> map = (Map<?, ?>) val;
-            StringBuilder sb = new StringBuilder();
+            final Map<?, ?> map = (Map<?, ?>) val;
+            final StringBuilder sb = new StringBuilder();
             sb.append("map(");
             for (Map.Entry<?, ?> e : map.entrySet()) {
                 sb.append(serialize(e.getKey()));

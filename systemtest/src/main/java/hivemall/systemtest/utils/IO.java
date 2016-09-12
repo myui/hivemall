@@ -21,6 +21,7 @@ package hivemall.systemtest.utils;
 import com.google.common.io.Resources;
 import hivemall.utils.lang.Preconditions;
 
+import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,43 +32,47 @@ public class IO {
     public static final String RD = "\t"; // row delimiter
     public static final String QD = "\n"; // query delimiter
 
-
     private IO() {}
 
-
-    public static String getFromFullPath(String fullPath, Charset charset) {
-        Preconditions.checkArgument(new File(fullPath).exists(), "%s is not found", fullPath);
+    public static String getFromFullPath(@CheckForNull final String fullPath, final Charset charset) {
+        Preconditions.checkNotNull(fullPath, "fullPath");
 
         return new String(readAllBytes(fullPath), charset);
     }
 
-    public static String getFromFullPath(String fullPath) {
+    public static String getFromFullPath(@CheckForNull final String fullPath) {
         return getFromFullPath(fullPath, Charset.defaultCharset());
     }
 
-    public static String getFromResourcePath(String resourcePath, Charset charset) {
-        String fullPath = Resources.getResource(resourcePath).getPath();
+    public static String getFromResourcePath(@CheckForNull final String resourcePath,
+            final Charset charset) {
+        Preconditions.checkNotNull(resourcePath, "resourcePath");
+
+        final String fullPath = Resources.getResource(resourcePath).getPath();
         return getFromFullPath(fullPath, charset);
     }
 
-    public static String getFromResourcePath(String resourcePath) {
+    public static String getFromResourcePath(@CheckForNull final String resourcePath) {
         return getFromResourcePath(resourcePath, Charset.defaultCharset());
     }
 
-    private static byte[] readAllBytes(String filePath) {
-        File f = new File(filePath);
+    private static byte[] readAllBytes(final String filePath) {
+        final File file = new File(filePath);
 
-        int len = (int) f.length();
-        byte[] buf = new byte[len];
+        Preconditions.checkArgument(file.exists(), "%s not found", filePath);
+
+        final int len = (int) file.length();
+        final byte[] buf = new byte[len];
 
         InputStream is = null;
         try {
             try {
-                is = new FileInputStream(f);
+                is = new FileInputStream(file);
                 is.read(buf);
             } finally {
-                if (is != null)
+                if (is != null) {
                     is.close();
+                }
             }
         } catch (IOException ex) {
             throw new RuntimeException("Failed to read " + filePath + ". " + ex.getMessage());

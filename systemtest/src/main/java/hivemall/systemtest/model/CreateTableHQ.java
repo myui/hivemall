@@ -18,21 +18,23 @@
  */
 package hivemall.systemtest.model;
 
+import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CreateTableHQ extends TableHQ {
-    public LinkedHashMap<String, String> header;
+    @Nonnull
+    public final LinkedHashMap<String, String> header;
 
-
-    CreateTableHQ(String tableName, LinkedHashMap<String, String> header) {
+    CreateTableHQ(@Nonnull final String tableName,
+            @Nonnull final LinkedHashMap<String, String> header) {
         super(tableName);
+
         this.header = header;
     }
 
-
     public String getTableDeclaration() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("(");
         for (Map.Entry<String, String> e : header.entrySet()) {
             sb.append(e.getKey());

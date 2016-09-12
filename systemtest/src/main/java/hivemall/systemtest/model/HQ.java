@@ -24,6 +24,8 @@ import com.klarna.hiverunner.sql.StatementsSplitter;
 import hivemall.systemtest.model.lazy.LazyMatchingResource;
 import hivemall.utils.lang.Preconditions;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -31,19 +33,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 abstract public class HQ {
-    public static List<RawHQ> fromStatements(String hq) {
-        String formatted = CommandShellEmulation.HIVE_CLI.transformScript(hq);
-        List<String> split = StatementsSplitter.splitStatements(formatted);
-        List<RawHQ> results = new ArrayList<RawHQ>();
-        for (String q : split) {
-            results.add(new RawHQ(q));
-        }
-        return results;
-    }
+    @Nonnull
+    public static RawHQ fromStatement(String query) {
+        Preconditions.checkNotNull(query, "query");
 
-    public static RawHQ fromStatement(String hq) {
-        String formatted = CommandShellEmulation.HIVE_CLI.transformScript(hq);
-        List<String> split = StatementsSplitter.splitStatements(formatted);
+        final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(query);
+        final List<String> split = StatementsSplitter.splitStatements(formatted);
 
         Preconditions.checkArgument(
             1 == split.size(),
@@ -53,55 +48,107 @@ abstract public class HQ {
         return new RawHQ(split.get(0));
     }
 
-    public static LazyMatchingResource autoMatchingByFileName(String fileName, Charset charset) {
+    @Nonnull
+    public static List<RawHQ> fromStatements(@CheckForNull final String queries) {
+        Preconditions.checkNotNull(queries, "queries");
+
+        final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(queries);
+        final List<String> split = StatementsSplitter.splitStatements(formatted);
+        final List<RawHQ> results = new ArrayList<RawHQ>();
+        for (String q : split) {
+            results.add(new RawHQ(q));
+        }
+        return results;
+    }
+
+    @Nonnull
+    public static LazyMatchingResource autoMatchingByFileName(@CheckForNull final String fileName,
+            @CheckForNull final Charset charset) {
+        Preconditions.checkNotNull(fileName, "fileName");
+        Preconditions.checkNotNull(charset, "charset");
+
         return new LazyMatchingResource(fileName, charset);
     }
 
-    public static LazyMatchingResource autoMatchingByFileName(String fileName) {
+    @Nonnull
+    public static LazyMatchingResource autoMatchingByFileName(final String fileName) {
         return autoMatchingByFileName(fileName, Charset.defaultCharset());
     }
 
-    public static List<RawHQ> fromResourcePath(String resourcePath, Charset charset) {
+    @Nonnull
+    public static List<RawHQ> fromResourcePath(final String resourcePath, final Charset charset) {
         return autoMatchingByFileName(resourcePath, charset).toStrict("");
     }
 
-    public static List<RawHQ> fromResourcePath(String resourcePath) {
+    @Nonnull
+    public static List<RawHQ> fromResourcePath(final String resourcePath) {
         return fromResourcePath(resourcePath, Charset.defaultCharset());
     }
 
+    @Nonnull
     public static TableListHQ tableList() {
         return new TableListHQ();
     }
 
-    public static CreateTableHQ createTable(String tableName, LinkedHashMap<String, String> header) {
+    @Nonnull
+    public static CreateTableHQ createTable(@CheckForNull final String tableName,
+            @CheckForNull final LinkedHashMap<String, String> header) {
+        Preconditions.checkNotNull(tableName, "tableName");
+        Preconditions.checkNotNull(header, "header");
+
         return new CreateTableHQ(tableName, header);
     }
 
-    public static DropTableHQ dropTable(String tableName) {
+    @Nonnull
+    public static DropTableHQ dropTable(@CheckForNull final String tableName) {
+        Preconditions.checkNotNull(tableName, "tableName");
+
         return new DropTableHQ(tableName);
     }
 
-    public static InsertHQ insert(String tableName, List<String> header, List<Object[]> data) {
+    @Nonnull
+    public static InsertHQ insert(@CheckForNull final String tableName,
+            @CheckForNull final List<String> header, @CheckForNull final List<Object[]> data) {
+        Preconditions.checkNotNull(tableName, "tableName");
+        Preconditions.checkNotNull(header, "header");
+        Preconditions.checkNotNull(data, "data");
+
         return new InsertHQ(tableName, header, data);
     }
 
-    public static UploadFileToExistingHQ uploadByFullPathToExisting(String tableName,
-            String fullPath) {
+    @Nonnull
+    public static UploadFileToExistingHQ uploadByFullPathToExisting(
+            @CheckForNull final String tableName, @CheckForNull final String fullPath) {
+        Preconditions.checkNotNull(tableName, "tableName");
+        Preconditions.checkNotNull(fullPath, "fullPath");
+
         return new UploadFileToExistingHQ(tableName, new File(fullPath));
     }
 
-    public static UploadFileToExistingHQ uploadByResourcePathToExisting(String tableName,
-            String resourcePath) {
+    @Nonnull
+    public static UploadFileToExistingHQ uploadByResourcePathToExisting(final String tableName,
+            final String resourcePath) {
         return uploadByFullPathToExisting(tableName, Resources.getResource(resourcePath).getPath());
     }
 
-    public static UploadFileAsNewTableHQ uploadByFullPathAsNewTable(String tableName,
-            String fullPath, LinkedHashMap<String, String> header) {
-        return new UploadFileAsNewTableHQ(tableName, new File(fullPath), header);
+    @Nonnull
+    public static UploadFileAsNewTableHQ uploadByFullPathAsNewTable(
+            @CheckForNull final String tableName, @CheckForNull final String fullPath,
+            @CheckForNull final LinkedHashMap<String, String> header) {
+        Preconditions.checkNotNull(tableName, "tableName");
+        Preconditions.checkNotNull(fullPath, "fullPath");
+        Preconditions.checkNotNull(header, "header");
+
+        final File file = new File(fullPath);
+
+        Preconditions.checkArgument(file.exists(), "%s not found", file.getPath());
+
+        return new UploadFileAsNewTableHQ(tableName, file, header);
     }
 
-    public static UploadFileAsNewTableHQ uploadByResourcePathAsNewTable(String tableName,
-            String resourcePath, LinkedHashMap<String, String> header) {
+    @Nonnull
+    public static UploadFileAsNewTableHQ uploadByResourcePathAsNewTable(final String tableName,
+            final String resourcePath, final LinkedHashMap<String, String> header) {
         return uploadByFullPathAsNewTable(tableName, Resources.getResource(resourcePath).getPath(),
             header);
     }

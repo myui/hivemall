@@ -19,5 +19,5 @@
 package hivemall.systemtest.model;
 
 
-abstract public class StrictHQ extends HQ {
+public abstract class StrictHQ extends HQ {
 }

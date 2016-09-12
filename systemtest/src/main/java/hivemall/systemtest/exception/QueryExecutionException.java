@@ -16,32 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hivemall.systemtest.model;
-
-import hivemall.utils.lang.Preconditions;
+package hivemall.systemtest.exception;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
-public class InsertHQ extends TableHQ {
-    @Nonnull
-    public final List<Object[]> data;
-    @Nonnull
-    public final List<String> header;
-
-    InsertHQ(@Nonnull final String tableName, @Nonnull final List<String> header,
-            @Nonnull final List<Object[]> data) {
-        super(tableName);
-
-        int l = 0;
-        for (Object[] objs : data) {
-            Preconditions.checkArgument(objs.length == header.size(),
-                "l.%s : Mismatch between number of elements in row(%s) and length of header(%s)",
-                l, objs.length, header.size());
-            l++;
-        }
-
-        this.data = data;
-        this.header = header;
+public class QueryExecutionException extends RuntimeException {
+    public QueryExecutionException(@Nonnull final String message) {
+        super(message);
     }
 }

@@ -18,6 +18,7 @@
  */
 package hivemall.systemtest.runner;
 
+import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.HQ;
 import hivemall.systemtest.model.RawHQ;
 import hivemall.systemtest.model.StrictHQ;
@@ -25,6 +26,8 @@ import hivemall.systemtest.model.lazy.LazyMatchingResource;
 import hivemall.utils.lang.Preconditions;
 import org.junit.rules.ExternalResource;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,19 +37,26 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SystemTestTeam extends ExternalResource {
-    private List<SystemTestRunner> runners = new ArrayList<SystemTestRunner>();
-    private List<SystemTestRunner> reachGoal = new ArrayList<SystemTestRunner>(); // distinct
+    @Nonnull
+    private final List<SystemTestRunner> runners;
+    @Nonnull
+    private final List<SystemTestRunner> reachGoal;
 
-    private List<StrictHQ> initHqs = new ArrayList<StrictHQ>();
-    private Map<Entry<StrictHQ, String>, Boolean> entries = new LinkedHashMap<Entry<StrictHQ, String>, Boolean>();
+    @Nonnull
+    private final List<StrictHQ> initHqs;
+    @Nonnull
+    private final Map<Entry<StrictHQ, String>, Boolean> entries;
 
     private boolean needRun = false; // remind `run()`
 
+    public SystemTestTeam(final SystemTestRunner... runners) {
+        this.runners = new ArrayList<SystemTestRunner>();
+        this.reachGoal = new ArrayList<SystemTestRunner>(); // distinct
+        this.initHqs = new ArrayList<StrictHQ>();
+        this.entries = new LinkedHashMap<Entry<StrictHQ, String>, Boolean>();
 
-    public SystemTestTeam(SystemTestRunner... runners) {
         this.runners.addAll(Arrays.asList(runners));
     }
-
 
     @Override
     protected void after() {
@@ -56,49 +66,57 @@ public class SystemTestTeam extends ExternalResource {
 
         for (SystemTestRunner runner : reachGoal) {
             try {
-                List<String> tables = runner.exec(HQ.tableList());
+                final List<String> tables = runner.exec(HQ.tableList());
                 for (String t : tables) {
                     if (!runner.isImmutableTable(t)) {
                         runner.exec(HQ.dropTable(t));
                     }
                 }
             } catch (Exception ex) {
-                throw new RuntimeException("Failed to resetPerMethod database. " + ex.getMessage());
+                throw new QueryExecutionException("Failed to resetPerMethod database. "
+                        + ex.getMessage());
             }
         }
     }
 
     // add additional runner for each @Test method
-    public void add(SystemTestRunner... runners) {
+    public void add(final SystemTestRunner... runners) {
         this.runners.addAll(Arrays.asList(runners));
     }
 
     // add initialization for each @Test method
-    public void initBy(StrictHQ hq) {
+    public void initBy(@Nonnull final StrictHQ hq) {
         initHqs.add(hq);
 
         needRun = true;
     }
 
-    public void initBy(List<? extends StrictHQ> hqs) {
+    public void initBy(@Nonnull final List<? extends StrictHQ> hqs) {
         initHqs.addAll(hqs);
 
         needRun = true;
     }
 
-    public void set(StrictHQ hq, String expected, boolean ordered) {
+    public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected, boolean ordered) {
+        Preconditions.checkNotNull(expected, "expected");
+
         entries.put(pair(hq, expected), ordered);
 
         needRun = true;
     }
 
-    public void set(StrictHQ hq, String expected) {
+    public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected) {
+        Preconditions.checkNotNull(expected, "expected");
+
         entries.put(pair(hq, expected), false);
 
         needRun = true;
     }
 
-    public void set(List<? extends StrictHQ> hqs, List<String> expecteds, List<Boolean> ordereds) {
+    public void set(@Nonnull final List<? extends StrictHQ> hqs,
+            @CheckForNull final List<String> expecteds, @CheckForNull final List<Boolean> ordereds) {
+        Preconditions.checkNotNull(expecteds, "expecteds");
+        Preconditions.checkNotNull(ordereds, "ordereds");
         Preconditions.checkArgument(hqs.size() == expecteds.size(),
             "Mismatch between number of queries(%s) and length of answers(%s)", hqs.size(),
             expecteds.size());
@@ -113,17 +131,19 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(List<? extends StrictHQ> hqs, List<String> expecteds) {
-        List<Boolean> ordereds = new ArrayList<Boolean>();
+    public void set(@Nonnull final List<? extends StrictHQ> hqs,
+            @CheckForNull final List<String> expecteds) {
+        final List<Boolean> ordereds = new ArrayList<Boolean>();
         for (int i = 0; i < hqs.size(); i++) {
             ordereds.add(false);
         }
         set(hqs, expecteds, ordereds);
     }
 
-    public void set(LazyMatchingResource hq, SystemTestCommonInfo ci, boolean ordered) {
-        List<RawHQ> rhqs = hq.toStrict(ci.caseDir);
-        String[] answers = hq.getAnswers(ci.answerDir);
+    public void set(@Nonnull final LazyMatchingResource hq,
+            @CheckForNull final SystemTestCommonInfo ci, final boolean ordered) {
+        final List<RawHQ> rhqs = hq.toStrict(ci.caseDir);
+        final String[] answers = hq.getAnswers(ci.answerDir);
 
         Preconditions.checkArgument(rhqs.size() == answers.length,
             "Mismatch between number of queries(%s) and length of answers(%s)", rhqs.size(),
@@ -136,7 +156,7 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(LazyMatchingResource hq, SystemTestCommonInfo ci) {
+    public void set(@Nonnull final LazyMatchingResource hq, final SystemTestCommonInfo ci) {
         set(hq, ci, false);
     }
 

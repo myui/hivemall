@@ -18,11 +18,13 @@
  */
 package hivemall.systemtest.model;
 
-abstract public class TableHQ extends StrictHQ {
+import javax.annotation.Nonnull;
+
+public abstract class TableHQ extends StrictHQ {
+    @Nonnull
     public final String tableName;
 
-
-    TableHQ(String tableName) {
+    TableHQ(@Nonnull final String tableName) {
         this.tableName = tableName;
     }
 }

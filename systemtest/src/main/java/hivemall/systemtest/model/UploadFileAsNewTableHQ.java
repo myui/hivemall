@@ -18,19 +18,17 @@
  */
 package hivemall.systemtest.model;
 
-import hivemall.utils.lang.Preconditions;
-
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.LinkedHashMap;
 
 public class UploadFileAsNewTableHQ extends UploadFileHQ {
+    @Nonnull
     public final LinkedHashMap<String, String> header;
 
-
-    UploadFileAsNewTableHQ(String tableName, File file, LinkedHashMap<String, String> header) {
+    UploadFileAsNewTableHQ(@Nonnull final String tableName, @Nonnull final File file,
+            @Nonnull final LinkedHashMap<String, String> header) {
         super(tableName, file);
-
-        Preconditions.checkArgument(file.exists(), "%s is not found", file.getPath());
 
         this.header = header;
     }

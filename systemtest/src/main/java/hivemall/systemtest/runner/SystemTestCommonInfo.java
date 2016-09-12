@@ -18,19 +18,25 @@
  */
 package hivemall.systemtest.runner;
 
+import javax.annotation.Nonnull;
+
 public class SystemTestCommonInfo {
+    @Nonnull
     public final String baseDir;
+    @Nonnull
     public final String caseDir;
+    @Nonnull
     public final String answerDir;
+    @Nonnull
     public final String initDir;
+    @Nonnull
     public final String dbName;
 
-
-    public SystemTestCommonInfo(Class<?> clazz) {
+    public SystemTestCommonInfo(@Nonnull final Class<?> clazz) {
         baseDir = clazz.getName().replace(".", "/");
         caseDir = baseDir + "/case/";
         answerDir = baseDir + "/answer/";
         initDir = baseDir + "/init/";
-        dbName = clazz.getName().replace(".", "_");
+        dbName = clazz.getName().replace(".", "_").toLowerCase();
     }
 }

@@ -29,6 +29,7 @@ import com.treasuredata.client.model.TDJobSummary;
 import com.treasuredata.client.model.TDResultFormat;
 import com.treasuredata.client.model.TDTable;
 import hivemall.systemtest.ConvertToMsgpack;
+import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
 import hivemall.systemtest.model.HQ;
@@ -38,6 +39,7 @@ import hivemall.systemtest.model.UploadFileToExistingHQ;
 import hivemall.systemtest.utils.IO;
 import org.apache.commons.csv.CSVFormat;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -59,34 +61,31 @@ public class TDSystemTestRunner extends SystemTestRunner {
     private int fileUploadCommitBackOff = 5;
     private int fileUploadCommitRetryLimit = 7;
 
-
-    public TDSystemTestRunner(SystemTestCommonInfo ci, String propertiesFile) {
+    public TDSystemTestRunner(final SystemTestCommonInfo ci, final String propertiesFile) {
         super(ci, propertiesFile);
     }
 
-    public TDSystemTestRunner(SystemTestCommonInfo ci) {
+    public TDSystemTestRunner(final SystemTestCommonInfo ci) {
         super(ci, "td.properties");
-    }
-
-
-    @Override
-    String formatDBName(String name) {
-        return name.toLowerCase();
     }
 
     @Override
     protected void initRunner() {
         // optional
-        if (props.containsKey("execFinishRetryLimit"))
+        if (props.containsKey("execFinishRetryLimit")) {
             execFinishRetryLimit = Integer.valueOf(props.getProperty("execFinishRetryLimit"));
-        if (props.containsKey("fileUploadPerformRetryLimit"))
+        }
+        if (props.containsKey("fileUploadPerformRetryLimit")) {
             fileUploadPerformRetryLimit = Integer.valueOf(props.getProperty("fileUploadPerformRetryLimit"));
-        if (props.containsKey("fileUploadCommitBackOff"))
+        }
+        if (props.containsKey("fileUploadCommitBackOff")) {
             fileUploadCommitBackOff = Integer.valueOf(props.getProperty("fileUploadCommitBackOff"));
-        if (props.containsKey("fileUploadCommitRetryLimit"))
+        }
+        if (props.containsKey("fileUploadCommitRetryLimit")) {
             fileUploadCommitRetryLimit = Integer.valueOf(props.getProperty("fileUploadCommitRetryLimit"));
+        }
 
-        Properties TDPorps = System.getProperties();
+        final Properties TDPorps = System.getProperties();
         for (Map.Entry<Object, Object> e : props.entrySet()) {
             if (e.getKey().toString().startsWith("td.client.")) {
                 TDPorps.setProperty(e.getKey().toString(), e.getValue().toString());
@@ -100,18 +99,19 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
     @Override
     protected void finRunner() {
-        if (client != null)
+        if (client != null) {
             client.close();
+        }
     }
 
     @Override
-    protected List<String> exec(RawHQ hq) throws Exception {
-        logger.info("executing: `" + hq.get() + "`");
+    protected List<String> exec(@Nonnull final RawHQ hq) throws Exception {
+        logger.info("executing: `" + hq.query + "`");
 
-        TDJobRequest req = TDJobRequest.newHiveQuery(dbName, hq.get());
-        String id = client.submit(req);
+        final TDJobRequest req = TDJobRequest.newHiveQuery(dbName, hq.query);
+        final String id = client.submit(req);
 
-        ExponentialBackOff backOff = new ExponentialBackOff();
+        final ExponentialBackOff backOff = new ExponentialBackOff();
         TDJobSummary job = client.jobStatus(id);
         int nRetries = 0;
         while (!job.getStatus().isFinished()) {
@@ -129,7 +129,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
         return client.jobResult(id, TDResultFormat.TSV, new Function<InputStream, List<String>>() {
             @Override
             public List<String> apply(InputStream input) {
-                List<String> results = new ArrayList<String>();
+                final List<String> results = new ArrayList<String>();
                 BufferedReader reader = null;
                 try {
                     try {
@@ -139,11 +139,13 @@ public class TDSystemTestRunner extends SystemTestRunner {
                             results.addAll(Arrays.asList(line.split(IO.RD)));
                         }
                     } finally {
-                        if (reader != null)
+                        if (reader != null) {
                             reader.close();
+                        }
                     }
                 } catch (IOException ex) {
-                    throw new RuntimeException("Failed to read results from TD. " + ex.getMessage());
+                    throw new QueryExecutionException("Failed to read results from TD. "
+                            + ex.getMessage());
                 }
                 return results;
             }
@@ -151,7 +153,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> createDB(final String dbName) throws Exception {
+    protected List<String> createDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: create database if not exists " + dbName);
 
         client.createDatabaseIfNotExists(dbName);
@@ -159,7 +161,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> dropDB(final String dbName) throws Exception {
+    protected List<String> dropDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: drop database if exists " + dbName);
 
         client.deleteDatabaseIfExists(dbName);
@@ -167,7 +169,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> use(final String dbName) throws Exception {
+    protected List<String> use(@Nonnull final String dbName) throws Exception {
         return Collections.singletonList("No need to execute `USE` statement on TD, so skipped `USE "
                 + dbName + "`");
     }
@@ -176,8 +178,8 @@ public class TDSystemTestRunner extends SystemTestRunner {
     protected List<String> tableList() throws Exception {
         logger.info("executing: show tables on " + dbName);
 
-        List<TDTable> tables = client.listTables(dbName);
-        List<String> result = new ArrayList<String>();
+        final List<TDTable> tables = client.listTables(dbName);
+        final List<String> result = new ArrayList<String>();
         for (TDTable t : tables) {
             result.add(t.getName());
         }
@@ -185,10 +187,10 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> createTable(final CreateTableHQ hq) throws Exception {
+    protected List<String> createTable(@Nonnull final CreateTableHQ hq) throws Exception {
         logger.info("executing: create table " + hq.tableName + " if not exists on " + dbName);
 
-        List<TDColumn> columns = new ArrayList<TDColumn>();
+        final List<TDColumn> columns = new ArrayList<TDColumn>();
         for (Map.Entry<String, String> e : hq.header.entrySet()) {
             columns.add(new TDColumn(e.getKey(), TDColumnType.parseColumnType(e.getValue())));
         }
@@ -198,7 +200,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> dropTable(final DropTableHQ hq) throws Exception {
+    protected List<String> dropTable(@Nonnull final DropTableHQ hq) throws Exception {
         logger.info("executing: drop table " + hq.tableName + " if exists on " + dbName);
 
         client.deleteTableIfExists(dbName, hq.tableName);
@@ -206,14 +208,15 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> uploadFileAsNewTable(final UploadFileAsNewTableHQ hq) throws Exception {
+    protected List<String> uploadFileAsNewTable(@Nonnull final UploadFileAsNewTableHQ hq)
+            throws Exception {
         logger.info("executing: create " + hq.tableName + " based on " + hq.file.getPath()
                 + " if not exists on " + dbName);
 
         createTable(HQ.createTable(hq.tableName, hq.header));
 
-        String sessionName = "session-" + String.valueOf(System.currentTimeMillis());
-        String partName = "part-of-" + String.valueOf(sessionName);
+        final String sessionName = "session-" + String.valueOf(System.currentTimeMillis());
+        final String partName = "part-of-" + String.valueOf(sessionName);
         client.createBulkImportSession(sessionName, dbName, hq.tableName);
 
         try {
@@ -223,7 +226,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
                     client.uploadBulkImportPart(sessionName, partName, hq.file);
                     break;
                 case CSV: {
-                    File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
+                    final File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
                     to.deleteOnExit();
 
                     client.uploadBulkImportPart(sessionName, partName,
@@ -232,7 +235,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
                     break;
                 }
                 case TSV: {
-                    File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
+                    final File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
                     to.deleteOnExit();
 
                     client.uploadBulkImportPart(sessionName, partName,
@@ -246,7 +249,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
             client.freezeBulkImportSession(sessionName);
             client.performBulkImportSession(sessionName);
-            ExponentialBackOff backOff = new ExponentialBackOff();
+            final ExponentialBackOff backOff = new ExponentialBackOff();
             TDBulkImportSession session = client.getBulkImportSession(sessionName);
             int performNRetries = 0;
             while (session.getStatus() == TDBulkImportSession.ImportStatus.PERFORMING) {
@@ -285,12 +288,13 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> uploadFileToExisting(final UploadFileToExistingHQ hq) throws Exception {
+    protected List<String> uploadFileToExisting(@Nonnull final UploadFileToExistingHQ hq)
+            throws Exception {
         logger.info("executing: insert " + hq.file.getPath() + " into " + hq.tableName + " on "
                 + dbName);
 
-        String sessionName = "session-" + String.valueOf(System.currentTimeMillis());
-        String partName = "part-of-" + String.valueOf(sessionName);
+        final String sessionName = "session-" + String.valueOf(System.currentTimeMillis());
+        final String partName = "part-of-" + String.valueOf(sessionName);
         client.createBulkImportSession(sessionName, dbName, hq.tableName);
 
         try {
@@ -319,7 +323,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
 
             client.freezeBulkImportSession(sessionName);
             client.performBulkImportSession(sessionName);
-            ExponentialBackOff backOff = new ExponentialBackOff();
+            final ExponentialBackOff backOff = new ExponentialBackOff();
             TDBulkImportSession session = client.getBulkImportSession(sessionName);
             while (session.getStatus() == TDBulkImportSession.ImportStatus.PERFORMING) {
                 logger.debug("Waiting bulk import completion");
@@ -341,8 +345,8 @@ public class TDSystemTestRunner extends SystemTestRunner {
         return Collections.singletonList("uploaded " + hq.file.getName() + " into " + hq.tableName);
     }
 
-    private List<String> getHeaderFromTD(String tableName) {
-        List<String> header = new ArrayList<String>();
+    private List<String> getHeaderFromTD(@Nonnull final String tableName) {
+        final List<String> header = new ArrayList<String>();
         for (TDTable t : client.listTables(dbName)) {
             if (t.getName().equals(tableName)) {
                 List<TDColumn> cols = t.getColumns();
