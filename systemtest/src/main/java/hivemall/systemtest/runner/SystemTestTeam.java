@@ -163,6 +163,10 @@ public class SystemTestTeam extends ExternalResource {
     public void run() throws Exception {
         needRun = false;
 
+        if (runners.size() == 0) {
+            throw new IllegalStateException("Set at least one runner.");
+        }
+
         for (SystemTestRunner runner : runners) {
             if (!reachGoal.contains(runner)) {
                 // initialization each @Test methods
