@@ -20,7 +20,7 @@ package hivemall.systemtest.model;
 
 import javax.annotation.Nonnull;
 
-public abstract class TableHQ extends StrictHQ {
+public abstract class TableHQ implements HQBase {
     @Nonnull
     public final String tableName;
 

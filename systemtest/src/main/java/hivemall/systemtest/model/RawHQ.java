@@ -20,7 +20,7 @@ package hivemall.systemtest.model;
 
 import javax.annotation.Nonnull;
 
-public class RawHQ extends StrictHQ {
+public class RawHQ implements HQBase {
     @Nonnull
     public final String query;
 

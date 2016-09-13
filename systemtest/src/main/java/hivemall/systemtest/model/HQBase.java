@@ -18,6 +18,5 @@
  */
 package hivemall.systemtest.model;
 
-
-public abstract class StrictHQ extends HQ {
+public interface HQBase {
 }

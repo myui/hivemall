@@ -20,8 +20,8 @@ package hivemall.systemtest.runner;
 
 import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.HQ;
+import hivemall.systemtest.model.HQBase;
 import hivemall.systemtest.model.RawHQ;
-import hivemall.systemtest.model.StrictHQ;
 import hivemall.systemtest.model.lazy.LazyMatchingResource;
 import hivemall.utils.lang.Preconditions;
 import org.junit.rules.ExternalResource;
@@ -43,17 +43,17 @@ public class SystemTestTeam extends ExternalResource {
     private final List<SystemTestRunner> reachGoal;
 
     @Nonnull
-    private final List<StrictHQ> initHqs;
+    private final List<HQBase> initHqs;
     @Nonnull
-    private final Map<Entry<StrictHQ, String>, Boolean> entries;
+    private final Map<Entry<HQBase, String>, Boolean> entries;
 
     private boolean needRun = false; // remind `run()`
 
     public SystemTestTeam(final SystemTestRunner... runners) {
         this.runners = new ArrayList<SystemTestRunner>();
         this.reachGoal = new ArrayList<SystemTestRunner>(); // distinct
-        this.initHqs = new ArrayList<StrictHQ>();
-        this.entries = new LinkedHashMap<Entry<StrictHQ, String>, Boolean>();
+        this.initHqs = new ArrayList<HQBase>();
+        this.entries = new LinkedHashMap<Entry<HQBase, String>, Boolean>();
 
         this.runners.addAll(Arrays.asList(runners));
     }
@@ -85,19 +85,19 @@ public class SystemTestTeam extends ExternalResource {
     }
 
     // add initialization for each @Test method
-    public void initBy(@Nonnull final StrictHQ hq) {
+    public void initBy(@Nonnull final HQBase hq) {
         initHqs.add(hq);
 
         needRun = true;
     }
 
-    public void initBy(@Nonnull final List<? extends StrictHQ> hqs) {
+    public void initBy(@Nonnull final List<? extends HQBase> hqs) {
         initHqs.addAll(hqs);
 
         needRun = true;
     }
 
-    public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected, boolean ordered) {
+    public void set(@Nonnull final HQBase hq, @CheckForNull final String expected, boolean ordered) {
         Preconditions.checkNotNull(expected);
 
         entries.put(pair(hq, expected), ordered);
@@ -105,7 +105,7 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected) {
+    public void set(@Nonnull final HQBase hq, @CheckForNull final String expected) {
         Preconditions.checkNotNull(expected);
 
         entries.put(pair(hq, expected), false);
@@ -113,7 +113,7 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(@Nonnull final List<? extends StrictHQ> hqs,
+    public void set(@Nonnull final List<? extends HQBase> hqs,
             @CheckForNull final List<String> expecteds, @CheckForNull final List<Boolean> ordereds) {
         Preconditions.checkNotNull(expecteds);
         Preconditions.checkNotNull(ordereds);
@@ -131,7 +131,7 @@ public class SystemTestTeam extends ExternalResource {
         needRun = true;
     }
 
-    public void set(@Nonnull final List<? extends StrictHQ> hqs,
+    public void set(@Nonnull final List<? extends HQBase> hqs,
             @CheckForNull final List<String> expecteds) {
         final List<Boolean> ordereds = new ArrayList<Boolean>();
         for (int i = 0; i < hqs.size(); i++) {
@@ -170,20 +170,20 @@ public class SystemTestTeam extends ExternalResource {
         for (SystemTestRunner runner : runners) {
             if (!reachGoal.contains(runner)) {
                 // initialization each @Test methods
-                for (StrictHQ q : initHqs) {
+                for (HQBase q : initHqs) {
                     runner.exec(q);
                 }
                 reachGoal.add(runner);
             }
 
-            for (Entry<Entry<StrictHQ, String>, Boolean> entry : entries.entrySet()) {
+            for (Entry<Entry<HQBase, String>, Boolean> entry : entries.entrySet()) {
                 runner.matching(entry.getKey().getKey(), entry.getKey().getValue(),
                     entry.getValue());
             }
         }
     }
 
-    private Entry<StrictHQ, String> pair(StrictHQ hq, String answer) {
-        return new SimpleEntry<StrictHQ, String>(hq, answer);
+    private Entry<HQBase, String> pair(HQBase hq, String answer) {
+        return new SimpleEntry<HQBase, String>(hq, answer);
     }
 }

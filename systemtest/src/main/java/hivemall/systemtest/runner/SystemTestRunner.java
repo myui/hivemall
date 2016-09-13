@@ -23,9 +23,9 @@ import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
 import hivemall.systemtest.model.HQ;
+import hivemall.systemtest.model.HQBase;
 import hivemall.systemtest.model.InsertHQ;
 import hivemall.systemtest.model.RawHQ;
-import hivemall.systemtest.model.StrictHQ;
 import hivemall.systemtest.model.TableHQ;
 import hivemall.systemtest.model.TableListHQ;
 import hivemall.systemtest.model.UploadFileAsNewTableHQ;
@@ -55,7 +55,7 @@ import java.util.Set;
 public abstract class SystemTestRunner extends ExternalResource {
     static final Logger logger = LoggerFactory.getLogger(SystemTestRunner.class);
     @Nonnull
-    final List<StrictHQ> classInitHqs;
+    final List<HQBase> classInitHqs;
     @Nonnull
     final Set<String> immutableTables;
     @Nonnull
@@ -67,7 +67,7 @@ public abstract class SystemTestRunner extends ExternalResource {
         Preconditions.checkNotNull(ci);
         Preconditions.checkNotNull(propertiesFile);
 
-        classInitHqs = new ArrayList<StrictHQ>();
+        classInitHqs = new ArrayList<HQBase>();
         immutableTables = new HashSet<String>();
         dbName = ci.dbName;
 
@@ -111,11 +111,11 @@ public abstract class SystemTestRunner extends ExternalResource {
 
     abstract void finRunner();
 
-    public void initBy(@Nonnull final StrictHQ hq) {
+    public void initBy(@Nonnull final HQBase hq) {
         classInitHqs.add(hq);
     }
 
-    public void initBy(@Nonnull final List<? extends StrictHQ> hqs) {
+    public void initBy(@Nonnull final List<? extends HQBase> hqs) {
         classInitHqs.addAll(hqs);
     }
 
@@ -123,7 +123,7 @@ public abstract class SystemTestRunner extends ExternalResource {
     void prepareDB() throws Exception {
         createDB(dbName);
         use(dbName);
-        for (StrictHQ q : classInitHqs) {
+        for (HQBase q : classInitHqs) {
             exec(q);
 
             if (q instanceof CreateTableHQ) {
@@ -144,8 +144,8 @@ public abstract class SystemTestRunner extends ExternalResource {
         return immutableTables.contains(tableName);
     }
 
-    // execute StrictHQ
-    public List<String> exec(@Nonnull final StrictHQ hq) throws Exception {
+    // execute HQBase
+    public List<String> exec(@Nonnull final HQBase hq) throws Exception {
         if (hq instanceof RawHQ) {
             return exec((RawHQ) hq);
         } else if (hq instanceof TableHQ) {
@@ -186,8 +186,8 @@ public abstract class SystemTestRunner extends ExternalResource {
         }
     }
 
-    // matching StrictHQ
-    public void matching(@Nonnull final StrictHQ hq, @CheckForNull final String answer,
+    // matching HQBase
+    public void matching(@Nonnull final HQBase hq, @CheckForNull final String answer,
             final boolean ordered) throws Exception {
         Preconditions.checkNotNull(answer);
 
@@ -204,8 +204,8 @@ public abstract class SystemTestRunner extends ExternalResource {
         }
     }
 
-    // matching StrictHQ (ordered == false)
-    public void matching(@Nonnull final StrictHQ hq, @CheckForNull final String answer)
+    // matching HQBase (ordered == false)
+    public void matching(@Nonnull final HQBase hq, @CheckForNull final String answer)
             throws Exception {
         matching(hq, answer, false);
     }

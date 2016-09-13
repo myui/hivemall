@@ -36,7 +36,7 @@ import java.io.FileReader;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
-public class ConvertToMsgpack {
+public class MsgpackConverter {
     @Nonnull
     private final File file;
     @Nonnull
@@ -44,11 +44,11 @@ public class ConvertToMsgpack {
     @Nonnull
     private final CSVFormat format;
 
-    public ConvertToMsgpack(@CheckForNull File file, @CheckForNull List<String> header,
+    public MsgpackConverter(@CheckForNull File file, @CheckForNull List<String> header,
             @CheckForNull CSVFormat format) {
-        Preconditions.checkNotNull(file, "file");
-        Preconditions.checkNotNull(header, "header");
-        Preconditions.checkNotNull(format, "format");
+        Preconditions.checkNotNull(file);
+        Preconditions.checkNotNull(header);
+        Preconditions.checkNotNull(format);
         Preconditions.checkArgument(file.exists(), "%s not found", file.getPath());
 
         this.file = file;
@@ -93,7 +93,7 @@ public class ConvertToMsgpack {
     }
 
     public File asFile(@CheckForNull File to, final boolean needTimeColumn) throws Exception {
-        Preconditions.checkNotNull(to, "to");
+        Preconditions.checkNotNull(to);
         Preconditions.checkArgument(to.exists(), "%s not found", to.getPath());
 
         FileOutputStream os = null;

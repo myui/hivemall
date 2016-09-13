@@ -32,7 +32,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public abstract class HQ {
+/**
+ * Domain-specific Hive Query Factory
+ */
+public class HQ {
+
+    private HQ() {}
 
     @Nonnull
     public static RawHQ fromStatement(String query) {

@@ -18,6 +18,6 @@
  */
 package hivemall.systemtest.model;
 
-public class TableListHQ extends StrictHQ {
+public class TableListHQ implements HQBase {
     TableListHQ() {}
 }
