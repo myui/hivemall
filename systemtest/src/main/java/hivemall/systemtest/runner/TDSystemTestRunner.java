@@ -28,7 +28,7 @@ import com.treasuredata.client.model.TDJobRequest;
 import com.treasuredata.client.model.TDJobSummary;
 import com.treasuredata.client.model.TDResultFormat;
 import com.treasuredata.client.model.TDTable;
-import hivemall.systemtest.ConvertToMsgpack;
+import hivemall.systemtest.MsgpackConverter;
 import hivemall.systemtest.exception.QueryExecutionException;
 import hivemall.systemtest.model.CreateTableHQ;
 import hivemall.systemtest.model.DropTableHQ;
@@ -230,7 +230,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
                     to.deleteOnExit();
 
                     client.uploadBulkImportPart(sessionName, partName,
-                        new ConvertToMsgpack(hq.file, new ArrayList<String>(hq.header.keySet()),
+                        new MsgpackConverter(hq.file, new ArrayList<String>(hq.header.keySet()),
                             CSVFormat.DEFAULT).asFile(to));
                     break;
                 }
@@ -239,7 +239,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
                     to.deleteOnExit();
 
                     client.uploadBulkImportPart(sessionName, partName,
-                        new ConvertToMsgpack(hq.file, new ArrayList<String>(hq.header.keySet()),
+                        new MsgpackConverter(hq.file, new ArrayList<String>(hq.header.keySet()),
                             CSVFormat.TDF).asFile(to));
                     break;
                 }
@@ -306,14 +306,14 @@ public class TDSystemTestRunner extends SystemTestRunner {
                 case CSV: {
                     File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
                     to.deleteOnExit();
-                    client.uploadBulkImportPart(sessionName, partName, new ConvertToMsgpack(
+                    client.uploadBulkImportPart(sessionName, partName, new MsgpackConverter(
                         hq.file, getHeaderFromTD(hq.tableName), CSVFormat.DEFAULT).asFile(to));
                     break;
                 }
                 case TSV: {
                     File to = File.createTempFile(hq.file.getName(), ".msgpack.gz");
                     to.deleteOnExit();
-                    client.uploadBulkImportPart(sessionName, partName, new ConvertToMsgpack(
+                    client.uploadBulkImportPart(sessionName, partName, new MsgpackConverter(
                         hq.file, getHeaderFromTD(hq.tableName), CSVFormat.TDF).asFile(to));
                     break;
                 }

@@ -64,8 +64,8 @@ public abstract class SystemTestRunner extends ExternalResource {
     final Properties props;
 
     SystemTestRunner(@CheckForNull SystemTestCommonInfo ci, @CheckForNull String propertiesFile) {
-        Preconditions.checkNotNull(ci, "ci");
-        Preconditions.checkNotNull(propertiesFile, "propertiesFile");
+        Preconditions.checkNotNull(ci);
+        Preconditions.checkNotNull(propertiesFile);
 
         classInitHqs = new ArrayList<StrictHQ>();
         immutableTables = new HashSet<String>();
@@ -189,7 +189,7 @@ public abstract class SystemTestRunner extends ExternalResource {
     // matching StrictHQ
     public void matching(@Nonnull final StrictHQ hq, @CheckForNull final String answer,
             final boolean ordered) throws Exception {
-        Preconditions.checkNotNull(answer, "answer");
+        Preconditions.checkNotNull(answer);
 
         List<String> result = exec(hq);
 

@@ -43,7 +43,7 @@ public class LazyMatchingResource {
     }
 
     public List<RawHQ> toStrict(@CheckForNull final String caseDir) {
-        Preconditions.checkNotNull(caseDir, "caseDir");
+        Preconditions.checkNotNull(caseDir);
 
         final String query = IO.getFromResourcePath(caseDir + fileName, charset);
         final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(query);
@@ -56,7 +56,7 @@ public class LazyMatchingResource {
     }
 
     public String[] getAnswers(@CheckForNull final String answerDir) {
-        Preconditions.checkNotNull(answerDir, "answerDir");
+        Preconditions.checkNotNull(answerDir);
 
         return IO.getFromResourcePath(answerDir + fileName).split(IO.QD);
     }

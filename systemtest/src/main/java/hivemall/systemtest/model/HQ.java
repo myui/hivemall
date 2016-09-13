@@ -32,10 +32,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-abstract public class HQ {
+public abstract class HQ {
+
     @Nonnull
     public static RawHQ fromStatement(String query) {
-        Preconditions.checkNotNull(query, "query");
+        Preconditions.checkNotNull(query);
 
         final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(query);
         final List<String> split = StatementsSplitter.splitStatements(formatted);
@@ -50,7 +51,7 @@ abstract public class HQ {
 
     @Nonnull
     public static List<RawHQ> fromStatements(@CheckForNull final String queries) {
-        Preconditions.checkNotNull(queries, "queries");
+        Preconditions.checkNotNull(queries);
 
         final String formatted = CommandShellEmulation.HIVE_CLI.transformScript(queries);
         final List<String> split = StatementsSplitter.splitStatements(formatted);
@@ -64,8 +65,8 @@ abstract public class HQ {
     @Nonnull
     public static LazyMatchingResource autoMatchingByFileName(@CheckForNull final String fileName,
             @CheckForNull final Charset charset) {
-        Preconditions.checkNotNull(fileName, "fileName");
-        Preconditions.checkNotNull(charset, "charset");
+        Preconditions.checkNotNull(fileName);
+        Preconditions.checkNotNull(charset);
 
         return new LazyMatchingResource(fileName, charset);
     }
@@ -93,15 +94,15 @@ abstract public class HQ {
     @Nonnull
     public static CreateTableHQ createTable(@CheckForNull final String tableName,
             @CheckForNull final LinkedHashMap<String, String> header) {
-        Preconditions.checkNotNull(tableName, "tableName");
-        Preconditions.checkNotNull(header, "header");
+        Preconditions.checkNotNull(tableName);
+        Preconditions.checkNotNull(header);
 
         return new CreateTableHQ(tableName, header);
     }
 
     @Nonnull
     public static DropTableHQ dropTable(@CheckForNull final String tableName) {
-        Preconditions.checkNotNull(tableName, "tableName");
+        Preconditions.checkNotNull(tableName);
 
         return new DropTableHQ(tableName);
     }
@@ -109,9 +110,9 @@ abstract public class HQ {
     @Nonnull
     public static InsertHQ insert(@CheckForNull final String tableName,
             @CheckForNull final List<String> header, @CheckForNull final List<Object[]> data) {
-        Preconditions.checkNotNull(tableName, "tableName");
-        Preconditions.checkNotNull(header, "header");
-        Preconditions.checkNotNull(data, "data");
+        Preconditions.checkNotNull(tableName);
+        Preconditions.checkNotNull(header);
+        Preconditions.checkNotNull(data);
 
         return new InsertHQ(tableName, header, data);
     }
@@ -119,8 +120,8 @@ abstract public class HQ {
     @Nonnull
     public static UploadFileToExistingHQ uploadByFullPathToExisting(
             @CheckForNull final String tableName, @CheckForNull final String fullPath) {
-        Preconditions.checkNotNull(tableName, "tableName");
-        Preconditions.checkNotNull(fullPath, "fullPath");
+        Preconditions.checkNotNull(tableName);
+        Preconditions.checkNotNull(fullPath);
 
         return new UploadFileToExistingHQ(tableName, new File(fullPath));
     }
@@ -135,9 +136,9 @@ abstract public class HQ {
     public static UploadFileAsNewTableHQ uploadByFullPathAsNewTable(
             @CheckForNull final String tableName, @CheckForNull final String fullPath,
             @CheckForNull final LinkedHashMap<String, String> header) {
-        Preconditions.checkNotNull(tableName, "tableName");
-        Preconditions.checkNotNull(fullPath, "fullPath");
-        Preconditions.checkNotNull(header, "header");
+        Preconditions.checkNotNull(tableName);
+        Preconditions.checkNotNull(fullPath);
+        Preconditions.checkNotNull(header);
 
         final File file = new File(fullPath);
 

@@ -35,7 +35,7 @@ public class IO {
     private IO() {}
 
     public static String getFromFullPath(@CheckForNull final String fullPath, final Charset charset) {
-        Preconditions.checkNotNull(fullPath, "fullPath");
+        Preconditions.checkNotNull(fullPath);
 
         return new String(readAllBytes(fullPath), charset);
     }
@@ -46,7 +46,7 @@ public class IO {
 
     public static String getFromResourcePath(@CheckForNull final String resourcePath,
             final Charset charset) {
-        Preconditions.checkNotNull(resourcePath, "resourcePath");
+        Preconditions.checkNotNull(resourcePath);
 
         final String fullPath = Resources.getResource(resourcePath).getPath();
         return getFromFullPath(fullPath, charset);

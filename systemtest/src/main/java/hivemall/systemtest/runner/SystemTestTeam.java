@@ -98,7 +98,7 @@ public class SystemTestTeam extends ExternalResource {
     }
 
     public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected, boolean ordered) {
-        Preconditions.checkNotNull(expected, "expected");
+        Preconditions.checkNotNull(expected);
 
         entries.put(pair(hq, expected), ordered);
 
@@ -106,7 +106,7 @@ public class SystemTestTeam extends ExternalResource {
     }
 
     public void set(@Nonnull final StrictHQ hq, @CheckForNull final String expected) {
-        Preconditions.checkNotNull(expected, "expected");
+        Preconditions.checkNotNull(expected);
 
         entries.put(pair(hq, expected), false);
 
@@ -115,8 +115,8 @@ public class SystemTestTeam extends ExternalResource {
 
     public void set(@Nonnull final List<? extends StrictHQ> hqs,
             @CheckForNull final List<String> expecteds, @CheckForNull final List<Boolean> ordereds) {
-        Preconditions.checkNotNull(expecteds, "expecteds");
-        Preconditions.checkNotNull(ordereds, "ordereds");
+        Preconditions.checkNotNull(expecteds);
+        Preconditions.checkNotNull(ordereds);
         Preconditions.checkArgument(hqs.size() == expecteds.size(),
             "Mismatch between number of queries(%s) and length of answers(%s)", hqs.size(),
             expecteds.size());
