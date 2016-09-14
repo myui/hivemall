@@ -282,11 +282,11 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       // TODO: Use `toDF`
       val rowRdd = hiveContext.sparkContext.parallelize(
           Row("a", "1", 0.5) ::
-          Row("a", "2", 0.6) ::
-          Row("a", "3", 0.8) ::
-          Row("b", "4", 0.3) ::
           Row("b", "5", 0.1) ::
+          Row("a", "3", 0.8) ::
           Row("c", "6", 0.3) ::
+          Row("b", "4", 0.3) ::
+          Row("a", "2", 0.6) ::
           Nil
         )
       hiveContext.createDataFrame(
@@ -300,8 +300,9 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     }
 
     // Compute top-1 rows for each group
-    val top1 = groupedData.each_top_k(
-      1, groupedData.col("group"), groupedData.col("value"), groupedData.col("attr"))
+    val top1 = groupedData
+      .repartition("group")
+      .each_top_k(1, groupedData.col("group"), groupedData.col("value"), groupedData.col("attr"))
 
     assert(top1.select(top1.col("attr")).collect.toSet ===
       Set(Row("3"), Row("4"), Row("6")))

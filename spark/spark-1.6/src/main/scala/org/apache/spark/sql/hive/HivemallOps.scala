@@ -640,13 +640,13 @@ final class HivemallOps(df: DataFrame) extends Logging {
    * @group misc
    */
   def each_top_k(k: Column, group: Column, value: Column, args: Column*): DataFrame = {
+    val clusterDf = df.repartition(group).sortWithinPartitions(group)
     Generate(HiveGenericUDTF(
       new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
       (Seq(k, group, value) ++ args).map(_.expr)),
     join = false, outer = false, None,
     (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
-    // Repartition rows by the given `group` column
-    df.repartition(group).logicalPlan)
+    clusterDf.logicalPlan)
   }
 
   /**

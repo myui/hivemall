@@ -281,11 +281,11 @@ final class HivemallOpsSuite extends HivemallQueryTest {
       // TODO: Use `toDF`
       val rowRdd = hiveContext.sparkContext.parallelize(
           Row("a", "1", 0.5) ::
-          Row("a", "2", 0.6) ::
-          Row("a", "3", 0.8) ::
-          Row("b", "4", 0.3) ::
           Row("b", "5", 0.1) ::
+          Row("a", "3", 0.8) ::
           Row("c", "6", 0.3) ::
+          Row("b", "4", 0.3) ::
+          Row("a", "2", 0.6) ::
           Nil
         )
       hiveContext.createDataFrame(
