@@ -17,7 +17,6 @@
 
 package org.apache.spark.sql.hive
 
-import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.test.HivemallFeatureQueryTest
@@ -43,7 +42,7 @@ final class HiveUdfWithFeatureSuite extends HivemallFeatureQueryTest {
   }
 
   test("train_logregr") {
-    TinyTrainData.registerTempTable("TinyTrainData")
+    TinyTrainData.createOrReplaceTempView("TinyTrainData")
     sql(s"""
          | CREATE TEMPORARY FUNCTION train_logregr
          |   AS '${classOf[hivemall.regression.LogressUDTF].getName}'
@@ -75,13 +74,49 @@ final class HiveUdfWithFeatureSuite extends HivemallFeatureQueryTest {
     // hiveContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_logregr")
     // hiveContext.reset()
   }
+
+  test("each_top_k") {
+    val testDf = Seq(
+      ("a", "1", 0.5, Array(0, 1, 2)),
+      ("b", "5", 0.1, Array(3)),
+      ("a", "3", 0.8, Array(2, 5)),
+      ("c", "6", 0.3, Array(1, 3)),
+      ("b", "4", 0.3, Array(2)),
+      ("a", "2", 0.6, Array(1))
+    ).toDF("key", "value", "score", "data")
+
+    import testDf.sqlContext.implicits._
+    testDf.repartition($"key").sortWithinPartitions($"key").createOrReplaceTempView("TestData")
+    sql(s"""
+         | CREATE TEMPORARY FUNCTION each_top_k
+         |   AS '${classOf[hivemall.tools.EachTopKUDTF].getName}'
+       """.stripMargin)
+
+    // Compute top-1 rows for each group
+    checkAnswer(
+      sql("SELECT each_top_k(1, key, score, key, value) FROM TestData"),
+      Row(1, 0.8, "a", "3") ::
+      Row(1, 0.3, "b", "4") ::
+      Row(1, 0.3, "c", "6") ::
+      Nil
+    )
+
+    // Compute reverse top-1 rows for each group
+    checkAnswer(
+      sql("SELECT each_top_k(-1, key, score, key, value) FROM TestData"),
+      Row(1, 0.5, "a", "1") ::
+      Row(1, 0.1, "b", "5") ::
+      Row(1, 0.3, "c", "6") ::
+      Nil
+    )
+  }
 }
 
 final class HiveUdfWithVectorSuite extends VectorQueryTest {
   import hiveContext._
 
   test("to_hivemall_features") {
-    mllibTrainDf.registerTempTable("mllibTrainDf")
+    mllibTrainDf.createOrReplaceTempView("mllibTrainDf")
     hiveContext.udf.register("to_hivemall_features", _to_hivemall_features)
     checkAnswer(
       sql(
@@ -99,7 +134,7 @@ final class HiveUdfWithVectorSuite extends VectorQueryTest {
   }
 
   ignore("append_bias") {
-    mllibTrainDf.registerTempTable("mllibTrainDf")
+    mllibTrainDf.createOrReplaceTempView("mllibTrainDf")
     hiveContext.udf.register("append_bias", _append_bias)
     hiveContext.udf.register("to_hivemall_features", _to_hivemall_features)
     /**

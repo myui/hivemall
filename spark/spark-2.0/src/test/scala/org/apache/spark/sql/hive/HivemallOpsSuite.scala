@@ -19,7 +19,7 @@ package org.apache.spark.sql.hive
 
 import scala.collection.mutable.Seq
 
-import org.apache.spark.sql.{Column, Row}
+import org.apache.spark.sql.{AnalysisException, Column, Row}
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
@@ -277,35 +277,53 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
   }
 
   test("misc - each_top_k") {
-    // import hiveContext.implicits._
-    val groupedData = {
-      // TODO: Use `toDF`
-      val rowRdd = hiveContext.sparkContext.parallelize(
-          Row("a", "1", 0.5) ::
-          Row("b", "5", 0.1) ::
-          Row("a", "3", 0.8) ::
-          Row("c", "6", 0.3) ::
-          Row("b", "4", 0.3) ::
-          Row("a", "2", 0.6) ::
-          Nil
-        )
-      hiveContext.createDataFrame(
-        rowRdd,
-        StructType(
-          StructField("group", StringType, true) ::
-          StructField("attr", StringType, true) ::
-          StructField("value", DoubleType, true) ::
-          Nil)
-        )
-    }
+    import hiveContext.implicits._
+    val testDf = Seq(
+      ("a", "1", 0.5, Array(0, 1, 2)),
+      ("b", "5", 0.1, Array(3)),
+      ("a", "3", 0.8, Array(2, 5)),
+      ("c", "6", 0.3, Array(1, 3)),
+      ("b", "4", 0.3, Array(2)),
+      ("a", "2", 0.6, Array(1))
+    ).toDF("key", "value", "score", "data")
 
     // Compute top-1 rows for each group
-    val top1 = groupedData
-      .repartition("group")
-      .each_top_k(1, groupedData.col("group"), groupedData.col("value"), groupedData.col("attr"))
+    checkAnswer(
+      testDf.each_top_k(1, "key", "score", "key", "value"),
+      Row(1, "a", "3") ::
+      Row(1, "b", "4") ::
+      Row(1, "c", "6") ::
+      Nil
+    )
+    checkAnswer(
+      testDf.each_top_k(1, $"key", $"score", $"key", $"value"),
+      Row(1, "a", "3") ::
+      Row(1, "b", "4") ::
+      Row(1, "c", "6") ::
+      Nil
+    )
 
-    assert(top1.select(top1.col("attr")).collect.toSet ===
-      Set(Row("3"), Row("4"), Row("6")))
+    // Compute reverse top-1 rows for each group
+    checkAnswer(
+      testDf.each_top_k(-1, "key", "score", "key", "value"),
+      Row(1, "a", "1") ::
+      Row(1, "b", "5") ::
+      Row(1, "c", "6") ::
+      Nil
+    )
+    checkAnswer(
+      testDf.each_top_k(-1, $"key", $"score", $"key", $"value"),
+      Row(1, "a", "1") ::
+      Row(1, "b", "5") ::
+      Row(1, "c", "6") ::
+      Nil
+    )
+
+    // Check if some exceptions thrown in case of some conditions
+    assert(intercept[AnalysisException] { testDf.each_top_k(0.1, $"key", $"score") }
+      .getMessage contains "`k` must be integer, however")
+    assert(intercept[AnalysisException] { testDf.each_top_k(1, "key", "data") }
+      .getMessage contains "must have a comparable type")
   }
 
   /**
