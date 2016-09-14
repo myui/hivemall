@@ -32,7 +32,7 @@ import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.hive.test.TestHive
 import org.apache.spark.sql.hive.test.TestHive.implicits._
 import org.apache.spark.sql.{Column, DataFrame, Row}
-import org.apache.spark.test.TestUtils.{benchmark, invokeFunc}
+import org.apache.spark.test.TestUtils
 import org.scalatest.BeforeAndAfter
 
 import hivemall.mix.server.MixServer
@@ -139,7 +139,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
     mixServExec = null
   }
 
-  benchmark("model mixing test w/ regression") {
+  TestUtils.benchmark("model mixing test w/ regression") {
     Seq(
       "train_adadelta",
       "train_adagrad",
@@ -155,7 +155,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
       // Build a model
       val model = {
         val groupId = s"${TestHive.sparkContext.applicationId}-${UUID.randomUUID}"
-        val res = invokeFunc(new HivemallOps(trainA9aData.part_amplify(1)), func,
+        val res = TestUtils.invokeFunc(new HivemallOps(trainA9aData.part_amplify(1)), func,
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {
@@ -199,7 +199,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
     }
   }
 
-  benchmark("model mixing test w/ binary classification") {
+  TestUtils.benchmark("model mixing test w/ binary classification") {
     Seq(
       "train_perceptron",
       "train_pa",
@@ -215,7 +215,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
       // Build a model
       val model = {
         val groupId = s"${TestHive.sparkContext.applicationId}-${UUID.randomUUID}"
-        val res = invokeFunc(new HivemallOps(trainKdd2010aData.part_amplify(1)), func,
+        val res = TestUtils.invokeFunc(new HivemallOps(trainKdd2010aData.part_amplify(1)), func,
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {

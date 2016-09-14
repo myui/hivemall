@@ -1308,11 +1308,9 @@ object HivemallOps {
    * @see hivemall.tools.math.SigmoidUDF
    * @group misc
    */
-  @scala.annotation.varargs
-  def sigmoid(exprs: Column*): Column = {
-    val value = exprs.head
+  def sigmoid(expr: Column): Column = {
     val one: () => Literal = () => Literal.create(1.0, DoubleType)
-    Column(one()) / (Column(one()) + exp(-value))
+    Column(one()) / (Column(one()) + exp(-expr))
   }
 
   /**
