@@ -18,14 +18,67 @@
 package org.apache.spark.sql.hive.benchmark
 
 import org.apache.spark.SparkFunSuite
+import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.plans.logical.{Generate, LogicalPlan}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.hive.HiveGenericUDTF
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession, functions}
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.hive.HiveGenericUDF
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
 import org.apache.spark.test.TestUtils
 import org.apache.spark.util.Benchmark
+
+import org.apache.spark.sql.hive.HivemallUtils._
+
+class HiveFuncWrapper(df: DataFrame) {
+
+  def each_top_k(k: Column, group: Column, value: Column, args: Column*)
+    : DataFrame = withTypedPlan {
+    val clusterDf= df.repartition(group).sortWithinPartitions(group)
+    Generate(HiveGenericUDTF(
+      "each_top_k",
+      new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
+      (Seq(k, group, value) ++ args).map(_.expr)),
+    join = false, outer = false, None,
+    (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
+    clusterDf.logicalPlan)
+  }
+
+  /**
+   * A convenient function to wrap a logical plan and produce a DataFrame.
+   */
+  @inline private[this] def withTypedPlan(logicalPlan: => LogicalPlan): DataFrame = {
+    val queryExecution = df.sparkSession.sessionState.executePlan(logicalPlan)
+    val outputSchema = queryExecution.sparkPlan.schema
+    new Dataset[Row](df.sparkSession, queryExecution, RowEncoder(outputSchema))
+  }
+}
+
+object HiveFuncWrapper {
+
+  /**
+   * Implicitly inject the [[HiveFuncWrapper]] into [[DataFrame]].
+   */
+  implicit def dataFrameToHiveFuncWrapper(df: DataFrame): HiveFuncWrapper =
+    new HiveFuncWrapper(df)
+
+  def sigmoid(exprs: Column*): Column = withExpr {
+    HiveGenericUDF("sigmoid",
+      new HiveFunctionWrapper("hivemall.tools.math.SigmoidGenericUDF"),
+      exprs.map(_.expr))
+  }
+
+  /**
+   * A convenient function to wrap an expression and produce a Column.
+   */
+  @inline private def withExpr(expr: Expression): Column = Column(expr)
+}
 
 class MiscBenchmark extends SparkFunSuite {
 
@@ -35,6 +88,14 @@ class MiscBenchmark extends SparkFunSuite {
     .config("spark.sql.shuffle.partitions", 1)
     .config("spark.sql.codegen.wholeStage", true)
     .getOrCreate()
+
+  val numIters = 3
+
+  private def addBenchmarkCase(name: String, df: DataFrame)(implicit benchmark: Benchmark): Unit = {
+    benchmark.addCase(name, numIters) { _ =>
+      df.queryExecution.executedPlan(0).execute().foreach(x => Unit)
+    }
+  }
 
   TestUtils.benchmark("closure/exprs/spark-udf/hive-udf") {
     /**
@@ -50,19 +111,16 @@ class MiscBenchmark extends SparkFunSuite {
      */
     import sparkSession.sqlContext.implicits._
     val N = 100L << 18
-    val numIters = 3
-    val benchmark = new Benchmark("sigmoid functions", N)
-    val schema = StructType(StructField("value", DoubleType) :: Nil)
+    implicit val benchmark = new Benchmark("sigmoid", N)
+    val schema = StructType(
+      StructField("value", DoubleType) :: Nil
+    )
     val testDf = sparkSession.createDataFrame(
       sparkSession.range(N).map(_.toDouble).map(Row(_))(RowEncoder(schema)).rdd,
       schema
     )
     testDf.cache.count // Cached
-    def addBenchmarkCase(name: String, df: DataFrame): Unit = {
-      benchmark.addCase(name, numIters) { _ =>
-        df.queryExecution.executedPlan(0).execute().foreach(x => Unit)
-      }
-    }
+
     def sigmoidExprs(expr: Column): Column = {
       val one: () => Literal = () => Literal.create(1.0, DoubleType)
       Column(one()) / (Column(one()) + functions.exp(-expr))
@@ -71,27 +129,78 @@ class MiscBenchmark extends SparkFunSuite {
       "exprs",
       testDf.select(sigmoidExprs($"value"))
     )
+
     addBenchmarkCase(
       "closure",
       testDf.map { d =>
         Row(1.0 / (1.0 + Math.exp(-d.getDouble(0))))
       }(RowEncoder(schema))
     )
+
     val sigmoidUdf = functions.udf((d: Double) => 1.0 / (1.0 + Math.exp(-d)))
     addBenchmarkCase(
       "spark-udf",
       testDf.select(sigmoidUdf($"value"))
     )
-    def sigmoidHiveUdf(exprs: Column*): Column = {
-      val udf = HiveGenericUDF("sigmoid",
-        new HiveFunctionWrapper("hivemall.tools.math.SigmoidGenericUDF"),
-        exprs.map(_.expr))
-      Column(udf)
-    }
     addBenchmarkCase(
       "hive-udf",
-      testDf.select(sigmoidHiveUdf($"value"))
+      testDf.select(HiveFuncWrapper.sigmoid($"value"))
     )
+
+    benchmark.run()
+  }
+
+  TestUtils.benchmark("top-k query") {
+    /**
+     * Java HotSpot(TM) 64-Bit Server VM 1.8.0_31-b13 on Mac OS X 10.10.2
+     * Intel(R) Core(TM) i7-4578U CPU @ 3.00GHz
+     *
+     * top-k (k=8):            Best/Avg Time(ms)    Rate(M/s)   Per Row(ns)   Relative
+     * -------------------------------------------------------------------------------
+     * rank                       57267 / 59267          0.5        2184.5       1.0X
+     * each_top_k                 40415 / 44812          0.6        1541.7       1.4X
+     */
+    import sparkSession.sqlContext.implicits._
+    import HiveFuncWrapper._
+    val N = 100L << 18
+    val topK = 8
+    val numGroup = 3
+    implicit val benchmark = new Benchmark(s"top-k (k=$topK)", N)
+    val schema = StructType(
+      StructField("key", IntegerType) ::
+      StructField("score", DoubleType) ::
+      StructField("value", StringType) ::
+      Nil
+    )
+    val testDf = {
+      val df = sparkSession.createDataFrame(
+        sparkSession.sparkContext.range(0, N).map(_.toInt).map { d =>
+          Row(d % numGroup, scala.util.Random.nextDouble(), s"group-${d % numGroup}")
+        },
+        schema
+      )
+      // Test data are clustered by group keys
+      df.repartition($"key").sortWithinPartitions($"key")
+    }
+    testDf.cache.count // Cached
+
+    addBenchmarkCase(
+      "rank",
+      testDf.withColumn(
+        "rank", rank().over(Window.partitionBy($"key").orderBy($"score".desc))
+      ).where($"rank" <= topK)
+    )
+
+    addBenchmarkCase(
+      "each_top_k",
+      // TODO: If $"value" given, it throws `AnalysisException`. Why?
+      // testDf.each_top_k(10, $"key", $"score", $"value")
+      // org.apache.spark.sql.catalyst.analysis.UnresolvedException: Invalid call to name
+      //   on unresolved object, tree: unresolvedalias('value, None)
+      // at org.apache.spark.sql.catalyst.analysis.UnresolvedAlias.name(unresolved.scala:339)
+      testDf.each_top_k(topK, $"key", $"score", testDf("value"))
+    )
+
     benchmark.run()
   }
 }

@@ -818,18 +818,19 @@ final class HivemallOps(df: DataFrame) extends Logging {
   }
 
   /**
-   * Returns a top-`k` records for each `group`.
+   * Returns `top-k` records for each `group`.
    * @group misc
    */
-  def each_top_k(k: Column, group: Column, value: Column, args: Column*): DataFrame = withTypedPlan {
+  def each_top_k(k: Column, group: Column, value: Column, args: Column*)
+    : DataFrame = withTypedPlan {
+    val clusterDf = df.repartition(group).sortWithinPartitions(group)
     Generate(HiveGenericUDTF(
       "each_top_k",
       new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
       (Seq(k, group, value) ++ args).map(_.expr)),
     join = false, outer = false, None,
     (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
-    // Repartition rows by the given `group` column
-    df.repartition(group).logicalPlan)
+    clusterDf.logicalPlan)
   }
 
   /**
@@ -890,7 +891,6 @@ final class HivemallOps(df: DataFrame) extends Logging {
     }
   }
 
-
   @inline private[this] def toHivemallFeatureDf(exprs: Column*): Seq[Column] = {
     df.select(exprs: _*).queryExecution.analyzed.schema.zip(exprs).map {
       case (StructField(_, _: VectorUDT, _, _), c) => to_hivemall_features(c)
@@ -898,7 +898,9 @@ final class HivemallOps(df: DataFrame) extends Logging {
     }
   }
 
-  /** A convenient function to wrap a logical plan and produce a DataFrame . */
+  /**
+   * A convenient function to wrap a logical plan and produce a DataFrame.
+   */
   @inline private[this] def withTypedPlan(logicalPlan: => LogicalPlan): DataFrame = {
     val queryExecution = df.sparkSession.sessionState.executePlan(logicalPlan)
     val outputSchema = queryExecution.sparkPlan.schema
@@ -1321,6 +1323,8 @@ object HivemallOps {
     HiveGenericUDF("rowid", new HiveFunctionWrapper("hivemall.tools.mapred.RowIdUDFWrapper"), Nil)
   }.as("rowid")
 
-  /** A convenient function to wrap an expression and produce a Column. */
+  /**
+   * A convenient function to wrap an expression and produce a Column.
+   */
   @inline private def withExpr(expr: Expression): Column = Column(expr)
 }
