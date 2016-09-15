@@ -1,7 +1,8 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
+ * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,8 +64,8 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
         }
 
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
-        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo()) &&
-            !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
+        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())
+                && !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[0]);
         }
@@ -162,7 +163,8 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
             }
             if (recommendSize < 0 || recommendSize > recommendList.size()) {
                 throw new UDFArgumentException(
-                        "The third argument `int recommendSize` must be in [0, " + recommendList.size() + "]");
+                    "The third argument `int recommendSize` must be in [0, " + recommendList.size()
+                            + "]");
             }
 
             boolean isBinary = !HiveUtils.isStructOI(recommendListOI.getListElementObjectInspector());
@@ -176,8 +178,7 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
                 StructObjectInspector sOI = (StructObjectInspector) recommendListOI.getListElementObjectInspector();
                 List<?> fieldRefList = sOI.getAllStructFieldRefs();
                 StructField relScoreField = (StructField) fieldRefList.get(0);
-                WritableDoubleObjectInspector relScoreFieldOI =
-                        (WritableDoubleObjectInspector) relScoreField.getFieldObjectInspector();
+                WritableDoubleObjectInspector relScoreFieldOI = (WritableDoubleObjectInspector) relScoreField.getFieldObjectInspector();
                 for (int i = 0, n = recommendList.size(); i < n; i++) {
                     Object structObj = recommendList.get(i);
                     List<Object> fieldList = sOI.getStructFieldsDataAsList(structObj);
@@ -187,15 +188,15 @@ public final class NDCGUDAF extends AbstractGenericUDAFResolver {
 
                 // Create a ordered list of relevance scores for truth items
                 List<Double> truthRelScoreList = new ArrayList<Double>();
-                WritableDoubleObjectInspector truthRelScoreOI =
-                        (WritableDoubleObjectInspector) truthListOI.getListElementObjectInspector();
+                WritableDoubleObjectInspector truthRelScoreOI = (WritableDoubleObjectInspector) truthListOI.getListElementObjectInspector();
                 for (int i = 0, n = truthList.size(); i < n; i++) {
                     Object relScoreObj = truthList.get(i);
                     double relScore = (double) truthRelScoreOI.get(relScoreObj);
                     truthRelScoreList.add(relScore);
                 }
 
-                ndcg = GradedResponsesMeasures.nDCG(recommendRelScoreList, truthRelScoreList, recommendSize);
+                ndcg = GradedResponsesMeasures.nDCG(recommendRelScoreList, truthRelScoreList,
+                    recommendSize);
             }
 
             myAggr.iterate(ndcg);

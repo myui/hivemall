@@ -1,7 +1,8 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
+ * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +57,8 @@ public final class RecallUDAF extends AbstractGenericUDAFResolver {
         }
 
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
-        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo()) &&
-            !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
+        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())
+                && !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[0]);
         }
@@ -155,7 +156,8 @@ public final class RecallUDAF extends AbstractGenericUDAFResolver {
             }
             if (recommendSize < 0 || recommendSize > recommendList.size()) {
                 throw new UDFArgumentException(
-                        "The third argument `int recommendSize` must be in [0, " + recommendList.size() + "]");
+                    "The third argument `int recommendSize` must be in [0, " + recommendList.size()
+                            + "]");
             }
 
             myAggr.iterate(recommendList, truthList, recommendSize);
@@ -219,7 +221,8 @@ public final class RecallUDAF extends AbstractGenericUDAFResolver {
             return sum / count;
         }
 
-        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList, @Nonnull int recommendSize) {
+        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList,
+                @Nonnull int recommendSize) {
             sum += BinaryResponsesMeasures.Recall(recommendList, truthList, recommendSize);
             count++;
         }

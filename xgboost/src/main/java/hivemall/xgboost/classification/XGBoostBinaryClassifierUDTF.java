@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,12 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import hivemall.xgboost.XGBoostUDTF;
 
 /**
- * A XGBoost binary classification and the document is as follows;
- *  - https://github.com/dmlc/xgboost/tree/master/demo/binary_classification
+ * A XGBoost binary classification and the document is as follows; -
+ * https://github.com/dmlc/xgboost/tree/master/demo/binary_classification
  */
 @Description(
-    name = "train_xgboost_classifier",
-    value = "_FUNC_(string[] features, double target [, string options]) - Returns a relation consisting of <string model_id, array<byte> pred_model>"
-)
+        name = "train_xgboost_classifier",
+        value = "_FUNC_(string[] features, double target [, string options]) - Returns a relation consisting of <string model_id, array<byte> pred_model>")
 public class XGBoostBinaryClassifierUDTF extends XGBoostUDTF {
 
     public XGBoostBinaryClassifierUDTF() {}
@@ -43,7 +42,7 @@ public class XGBoostBinaryClassifierUDTF extends XGBoostUDTF {
 
     @Override
     public void checkTargetValue(double target) throws HiveException {
-        if(!(Double.compare(target, 0.0) == 0|| Double.compare(target, 1.0) == 0)) {
+        if (!(Double.compare(target, 0.0) == 0 || Double.compare(target, 1.0) == 0)) {
             throw new HiveException("target must be 0.0 or 1.0: " + target);
         }
     }

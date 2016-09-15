@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Description(
-    name = "xgboost_multiclass_predict",
-    value = "_FUNC_(string rowid, string[] features, string model_id, array<byte> pred_model [, string options]) "
-                + "- Returns a prediction result as (string rowid, int label, float probability)"
-)
+        name = "xgboost_multiclass_predict",
+        value = "_FUNC_(string rowid, string[] features, string model_id, array<byte> pred_model [, string options]) "
+                + "- Returns a prediction result as (string rowid, int label, float probability)")
 public final class XGBoostMulticlassPredictUDTF extends hivemall.xgboost.XGBoostPredictUDTF {
 
     public XGBoostMulticlassPredictUDTF() {}
@@ -51,16 +50,15 @@ public final class XGBoostMulticlassPredictUDTF extends hivemall.xgboost.XGBoost
     }
 
     @Override
-    public void forwardPredicted(
-            final List<LabeledPointWithRowId> testData,
+    public void forwardPredicted(final List<LabeledPointWithRowId> testData,
             final float[][] predicted) throws HiveException {
-        assert(predicted.length == testData.size());
-        for(int i = 0; i < testData.size(); i++) {
-            assert(predicted[i].length > 1);
+        assert (predicted.length == testData.size());
+        for (int i = 0; i < testData.size(); i++) {
+            assert (predicted[i].length > 1);
             final String rowId = testData.get(i).rowId;
-            for(int j = 0; j < predicted[i].length; j++) {
+            for (int j = 0; j < predicted[i].length; j++) {
                 float prob = predicted[i][j];
-                forward(new Object[]{rowId, j, prob});
+                forward(new Object[] {rowId, j, prob});
             }
         }
     }

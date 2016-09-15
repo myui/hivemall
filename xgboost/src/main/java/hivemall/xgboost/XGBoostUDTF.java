@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,8 +41,8 @@ import hivemall.utils.hadoop.HadoopUtils;
 import hivemall.utils.hadoop.HiveUtils;
 
 /**
- * This is a base class to handle the options for XGBoost and provide
- * common functions among various tasks.
+ * This is a base class to handle the options for XGBoost and provide common functions among various
+ * tasks.
  */
 public abstract class XGBoostUDTF extends UDTFWithOptions {
     private static final Log logger = LogFactory.getLog(XGBoostUDTF.class);
@@ -104,33 +104,49 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
         final Options opts = new Options();
 
         /** General parameters */
-        opts.addOption("booster", true, "Set a booster to use, gbtree or gblinear. [default: gbree]");
+        opts.addOption("booster", true,
+            "Set a booster to use, gbtree or gblinear. [default: gbree]");
         opts.addOption("num_round", true, "Number of boosting iterations [default: 8]");
-        opts.addOption("silent", true, "0 means printing running messages, 1 means silent mode [default: 1]");
-        opts.addOption("nthread", true, "Number of parallel threads used to run xgboost [default: 1]");
-        opts.addOption("num_pbuffer", true, "Size of prediction buffer [set automatically by xgboost]");
-        opts.addOption("num_feature", true, "Feature dimension used in boosting [default: set automatically by xgboost]");
+        opts.addOption("silent", true,
+            "0 means printing running messages, 1 means silent mode [default: 1]");
+        opts.addOption("nthread", true,
+            "Number of parallel threads used to run xgboost [default: 1]");
+        opts.addOption("num_pbuffer", true,
+            "Size of prediction buffer [set automatically by xgboost]");
+        opts.addOption("num_feature", true,
+            "Feature dimension used in boosting [default: set automatically by xgboost]");
 
         /** Parameters for both boosters */
         opts.addOption("alpha", true, "L1 regularization term on weights [default: 0.0]");
-        opts.addOption("lambda", true, "L2 regularization term on weights [default: 1.0 for gbtree, 0.0 for gblinear]");
+        opts.addOption("lambda", true,
+            "L2 regularization term on weights [default: 1.0 for gbtree, 0.0 for gblinear]");
 
         /** Parameters for Tree Booster */
-        opts.addOption("eta", true, "Step size shrinkage used in update to prevents overfitting [default: 0.3]");
-        opts.addOption("gamma", true, "Minimum loss reduction required to make a further partition on a leaf node of the tree [default: 0.0]");
+        opts.addOption("eta", true,
+            "Step size shrinkage used in update to prevents overfitting [default: 0.3]");
+        opts.addOption(
+            "gamma",
+            true,
+            "Minimum loss reduction required to make a further partition on a leaf node of the tree [default: 0.0]");
         opts.addOption("max_depth", true, "Max depth of decision tree [default: 6]");
-        opts.addOption("min_child_weight", true, "Minimum sum of instance weight(hessian) needed in a child [default: 1]");
-        opts.addOption("max_delta_step", true, "Maximum delta step we allow each tree's weight estimation to be [default: 0]");
+        opts.addOption("min_child_weight", true,
+            "Minimum sum of instance weight(hessian) needed in a child [default: 1]");
+        opts.addOption("max_delta_step", true,
+            "Maximum delta step we allow each tree's weight estimation to be [default: 0]");
         opts.addOption("subsample", true, "Subsample ratio of the training instance [default: 1.0]");
-        opts.addOption("colsample_bytree", true, "Subsample ratio of columns when constructing each tree [default: 1.0]");
-        opts.addOption("colsample_bylevel", true, "Subsample ratio of columns for each split, in each level [default: 1.0]");
+        opts.addOption("colsample_bytree", true,
+            "Subsample ratio of columns when constructing each tree [default: 1.0]");
+        opts.addOption("colsample_bylevel", true,
+            "Subsample ratio of columns for each split, in each level [default: 1.0]");
 
         /** Parameters for Linear Booster */
         opts.addOption("lambda_bias", true, "L2 regularization term on bias [default: 0.0]");
 
         /** Learning Task Parameters */
-        opts.addOption("base_score", true, "Initial prediction score of all instances, global bias [default: 0.5]");
-        opts.addOption("eval_metric", true, "Evaluation metrics for validation data [default according to objective]");
+        opts.addOption("base_score", true,
+            "Initial prediction score of all instances, global bias [default: 0.5]");
+        opts.addOption("eval_metric", true,
+            "Evaluation metrics for validation data [default according to objective]");
 
         return opts;
     }
@@ -138,7 +154,7 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
     @Override
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         CommandLine cl = null;
-        if(argOIs.length >= 3) {
+        if (argOIs.length >= 3) {
             final String rawArgs = HiveUtils.getConstString(argOIs[2]);
             cl = this.parseOptions(rawArgs);
 
@@ -181,7 +197,8 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
                 params.put("max_depth", Integer.valueOf(cl.getOptionValue("max_depth")));
             }
             if (cl.hasOption("min_child_weight")) {
-                params.put("min_child_weight", Integer.valueOf(cl.getOptionValue("min_child_weight")));
+                params.put("min_child_weight",
+                    Integer.valueOf(cl.getOptionValue("min_child_weight")));
             }
             if (cl.hasOption("max_delta_step")) {
                 params.put("max_delta_step", Integer.valueOf(cl.getOptionValue("max_delta_step")));
@@ -193,7 +210,8 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
                 params.put("colsamle_bytree", Double.valueOf(cl.getOptionValue("colsample_bytree")));
             }
             if (cl.hasOption("colsample_bylevel")) {
-                params.put("colsamle_bylevel", Double.valueOf(cl.getOptionValue("colsample_bylevel")));
+                params.put("colsamle_bylevel",
+                    Double.valueOf(cl.getOptionValue("colsample_bylevel")));
             }
 
             /** Parameters for Linear Booster */
@@ -249,36 +267,34 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        if(args[0] != null) {
+        if (args[0] != null) {
             // TODO: Need to support dense inputs
             final List<String> features = (List<String>) featureListOI.getList(args[0]);
             double target = PrimitiveObjectInspectorUtils.getDouble(args[1], this.targetOI);
             checkTargetValue(target);
             final LabeledPoint point = XGBoostUtils.parseFeatures(target, features);
-            if(point != null) {
+            if (point != null) {
                 this.featuresList.add(point);
             }
         }
     }
 
     /**
-     * Need to override this for a Spark wrapper because `MapredContext`
-     * does not work in there.
+     * Need to override this for a Spark wrapper because `MapredContext` does not work in there.
      */
     protected String generateUniqueModelId() {
         return "xgbmodel-" + String.valueOf(HadoopUtils.getTaskId());
     }
 
-    private static Booster createXGBooster(
-            final Map<String, Object> params,
+    private static Booster createXGBooster(final Map<String, Object> params,
             final List<LabeledPoint> input) throws XGBoostError {
         try {
             Class<?>[] args = {Map.class, DMatrix[].class};
             Constructor<Booster> ctor;
             ctor = Booster.class.getDeclaredConstructor(args);
             ctor.setAccessible(true);
-            return ctor.newInstance(
-                    new Object[]{params, new DMatrix[]{new DMatrix(input.iterator(), "")}});
+            return ctor.newInstance(new Object[] {params,
+                    new DMatrix[] {new DMatrix(input.iterator(), "")}});
         } catch (InstantiationException e) {
             // Catch java reflection error as fast as possible
             e.printStackTrace();
@@ -300,7 +316,7 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
             final DMatrix trainData = new DMatrix(featuresList.iterator(), "");
             final Booster booster = createXGBooster(params, featuresList);
             int num_round = (Integer) params.get("num_round");
-            for(int i = 0; i < num_round; i++) {
+            for (int i = 0; i < num_round; i++) {
                 booster.update(trainData, i);
             }
 
@@ -308,7 +324,7 @@ public abstract class XGBoostUDTF extends UDTFWithOptions {
             final String modelId = generateUniqueModelId();
             final byte[] predModel = booster.toByteArray();
             logger.info("model_id:" + modelId.toString() + " size:" + predModel.length);
-            forward(new Object[]{modelId, predModel});
+            forward(new Object[] {modelId, predModel});
         } catch (Exception e) {
             throw new HiveException(e.getMessage());
         }
