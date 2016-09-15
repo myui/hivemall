@@ -825,12 +825,12 @@ final class HivemallOps(df: DataFrame) extends Logging {
     : DataFrame = withTypedPlan {
     val clusterDf = df.repartition(group).sortWithinPartitions(group)
     Generate(HiveGenericUDTF(
-      "each_top_k",
-      new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
-      (Seq(k, group, value) ++ args).map(_.expr)),
-    join = false, outer = false, None,
-    (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
-    clusterDf.logicalPlan)
+        "each_top_k",
+        new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
+        (Seq(k, group, value) ++ args).map(_.expr)),
+      join = false, outer = false, None,
+      (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
+      clusterDf.logicalPlan)
   }
 
   /**
