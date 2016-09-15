@@ -1,7 +1,8 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
+ * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +31,8 @@ public class GradedResponsesMeasuresTest {
         List<Double> recommendTopRelScoreList = Arrays.asList(5.0, 2.0, 4.0, 1.0, 3.0);
         List<Double> truthTopRelScoreList = Arrays.asList(5.0, 4.0, 3.0);
 
-        double actual = GradedResponsesMeasures.nDCG(recommendTopRelScoreList, truthTopRelScoreList, 3);
+        double actual = GradedResponsesMeasures.nDCG(recommendTopRelScoreList,
+            truthTopRelScoreList, 3);
         Assert.assertEquals(0.918770780535d, actual, 0.0001d);
 
         actual = GradedResponsesMeasures.nDCG(recommendTopRelScoreList, truthTopRelScoreList, 2);

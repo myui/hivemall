@@ -1,7 +1,8 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
+ * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +94,7 @@ public class ChangeFinder2DTest {
         params.r1 = 0.01d;
         params.k = 6;
         params.T1 = 10;
-        params.T2 = 5;        
+        params.T2 = 5;
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         ListObjectInspector listOI = ObjectInspectorFactory.getStandardListObjectInspector(oi);
         ChangeFinder2D cf = new ChangeFinder2D(params, listOI);

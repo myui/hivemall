@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Description(
-    name = "xgboost_predict",
-    value = "_FUNC_(string rowid, string[] features, string model_id, array<byte> pred_model [, string options]) "
-                + "- Returns a prediction result as (string rowid, float predicted)"
-)
+        name = "xgboost_predict",
+        value = "_FUNC_(string rowid, string[] features, string model_id, array<byte> pred_model [, string options]) "
+                + "- Returns a prediction result as (string rowid, float predicted)")
 public final class XGBoostPredictUDTF extends hivemall.xgboost.XGBoostPredictUDTF {
 
     public XGBoostPredictUDTF() {}
@@ -49,15 +48,14 @@ public final class XGBoostPredictUDTF extends hivemall.xgboost.XGBoostPredictUDT
     }
 
     @Override
-    public void forwardPredicted(
-            final List<LabeledPointWithRowId> testData,
+    public void forwardPredicted(final List<LabeledPointWithRowId> testData,
             final float[][] predicted) throws HiveException {
-        assert(predicted.length == testData.size());
-        for(int i = 0; i < testData.size(); i++) {
-            assert(predicted[i].length == 1);
+        assert (predicted.length == testData.size());
+        for (int i = 0; i < testData.size(); i++) {
+            assert (predicted[i].length == 1);
             final String rowId = testData.get(i).rowId;
             float p = predicted[i][0];
-            forward(new Object[]{rowId, p});
+            forward(new Object[] {rowId, p});
         }
     }
 

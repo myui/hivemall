@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,13 +87,13 @@ public abstract class XGBoostPredictUDTF extends UDTFWithOptions {
     protected CommandLine processOptions(ObjectInspector[] argOIs) throws UDFArgumentException {
         int _batch_size = 128;
         CommandLine cl = null;
-        if(argOIs.length >= 5) {
+        if (argOIs.length >= 5) {
             String rawArgs = HiveUtils.getConstString(argOIs[4]);
             cl = this.parseOptions(rawArgs);
             _batch_size = Primitives.parseInt(cl.getOptionValue("_batch_size"), _batch_size);
-            if(_batch_size < 1) {
-                throw new IllegalArgumentException(
-                        "batch_size must be greater than 0: " + _batch_size);
+            if (_batch_size < 1) {
+                throw new IllegalArgumentException("batch_size must be greater than 0: "
+                        + _batch_size);
             }
         }
         this.batch_size = _batch_size;
@@ -103,13 +103,12 @@ public abstract class XGBoostPredictUDTF extends UDTFWithOptions {
     /** Override this to output predicted results depending on a taks type */
     abstract public StructObjectInspector getReturnOI();
 
-    abstract public void forwardPredicted(
-            final List<LabeledPointWithRowId> testData,
+    abstract public void forwardPredicted(final List<LabeledPointWithRowId> testData,
             final float[][] predicted) throws HiveException;
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
-        if(argOIs.length != 4 && argOIs.length != 5) {
+        if (argOIs.length != 4 && argOIs.length != 5) {
             throw new UDFArgumentException(this.getClass().getSimpleName()
                     + " takes 4 or 5 arguments: string rowid, string[] features, string model_id,"
                     + " array<byte> pred_model [, string options]: " + argOIs.length);
@@ -128,9 +127,10 @@ public abstract class XGBoostPredictUDTF extends UDTFWithOptions {
         }
     }
 
-    private static DMatrix createDMatrix(final List<LabeledPointWithRowId> data) throws XGBoostError {
+    private static DMatrix createDMatrix(final List<LabeledPointWithRowId> data)
+            throws XGBoostError {
         final List<LabeledPoint> points = new ArrayList(data.size());
-        for(LabeledPointWithRowId d : data) {
+        for (LabeledPointWithRowId d : data) {
             points.add(d.point);
         }
         return new DMatrix(points.iterator(), "");
@@ -158,22 +158,23 @@ public abstract class XGBoostPredictUDTF extends UDTFWithOptions {
 
     @Override
     public void process(Object[] args) throws HiveException {
-        if(args[1] != null) {
+        if (args[1] != null) {
             final String rowId = PrimitiveObjectInspectorUtils.getString(args[0], rowIdOI);
             final List<String> features = (List<String>) featureListOI.getList(args[1]);
             final String modelId = PrimitiveObjectInspectorUtils.getString(args[2], modelIdOI);
-            if(!mapToModel.containsKey(modelId)) {
-                final byte[] predModel = PrimitiveObjectInspectorUtils.getBinary(args[3], modelOI).getBytes();
+            if (!mapToModel.containsKey(modelId)) {
+                final byte[] predModel = PrimitiveObjectInspectorUtils.getBinary(args[3], modelOI)
+                                                                      .getBytes();
                 mapToModel.put(modelId, initXgBooster(predModel));
             }
             final LabeledPoint point = XGBoostUtils.parseFeatures(0.f, features);
-            if(point != null) {
-                if(!rowBuffer.containsKey(modelId)) {
+            if (point != null) {
+                if (!rowBuffer.containsKey(modelId)) {
                     rowBuffer.put(modelId, new ArrayList());
                 }
                 final List<LabeledPointWithRowId> buf = rowBuffer.get(modelId);
                 buf.add(createLabeledPoint(rowId, point));
-                if(buf.size() >= batch_size) {
+                if (buf.size() >= batch_size) {
                     predictAndFlush(mapToModel.get(modelId), buf);
                 }
             }
@@ -182,7 +183,7 @@ public abstract class XGBoostPredictUDTF extends UDTFWithOptions {
 
     @Override
     public void close() throws HiveException {
-        for(Entry<String, List<LabeledPointWithRowId>> e : rowBuffer.entrySet()) {
+        for (Entry<String, List<LabeledPointWithRowId>> e : rowBuffer.entrySet()) {
             predictAndFlush(mapToModel.get(e.getKey()), e.getValue());
         }
     }

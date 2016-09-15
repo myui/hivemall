@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +28,8 @@ import org.apache.hadoop.io.Text;
 
 /**
  * @see <a href=
- *      "http://mathworld.wolfram.com/NormalizedVector.html>http://mathworld.wolfram.com/NormalizedVector.html
- *      < / a >
+ *      "http://mathworld.wolfram.com/NormalizedVector.html>http://mathworld.wolfram.com/NormalizedVector.h
+ *      t m l < / a >
  */
 @Description(name = "l2_normalize", value = "_FUNC_(ftvec string) - Returned a L2 normalized value")
 @UDFType(deterministic = true, stateful = false)
