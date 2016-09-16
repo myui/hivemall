@@ -4,18 +4,19 @@ Hivemall: Hive scalable machine learning library
 [![Coversity](https://scan.coverity.com/projects/4549/badge.svg)](https://scan.coverity.com/projects/4549)
 [![Documentation Status](https://readthedocs.org/projects/hivemall-docs/badge/?version=latest)](https://readthedocs.org/projects/hivemall-docs/?badge=latest)
 [![License](http://img.shields.io/:license-Apache_v2-blue.svg)](https://github.com/myui/hivemall/blob/master/LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/myui/hivemall/badge.svg)](https://coveralls.io/github/myui/hivemall)
 
 Hivemall is a scalable machine learning library that runs on Apache Hive.
 Hivemall is designed to be scalable to the number of training instances as well as the number of training features.
 
-![logo](https://raw.github.com/myui/hivemall/master/resources/hivemall-logo_s.png "Hivemall's cute(!?) logo")
+![logo](https://raw.github.com/myui/hivemall/master/resources/logo-design-hivemall-color.png)
 
 Supported Algorithms
 --------------------
 
 Hivemall provides machine learning functionality as well as feature engineering functions through UDFs/UDAFs/UDTFs of Hive. 
 
-## Binary Classfication
+## Binary Classification
 
 * [Perceptron](http://en.wikipedia.org/wiki/Perceptron)
 
@@ -33,7 +34,7 @@ Hivemall provides machine learning functionality as well as feature engineering 
 
 _My recommendation is AROW, SCW1, AdaGradRDA, and Factorization Machine while it depends._
 
-## Multi-class Classfication
+## Multi-class Classification
 
 * [Perceptron](http://en.wikipedia.org/wiki/Perceptron)
 
@@ -91,7 +92,7 @@ _My recommendation for is AROW regression, AdaDelta, and Factorization Machine w
 
 ## Natural Language Processing
 
-* English/Japanese Text Tokenzier
+* English/Japanese Text Tokenizer
 
 ## Feature engineering
   
