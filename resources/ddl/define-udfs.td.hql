@@ -78,6 +78,7 @@ create temporary function bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDT
 create temporary function item_pairs_sampling as 'hivemall.ftvec.ranking.ItemPairsSamplingUDTF';
 create temporary function populate_not_in as 'hivemall.ftvec.ranking.PopulateNotInUDTF';
 create temporary function tf as 'hivemall.ftvec.text.TermFrequencyUDAF';
+create temporary function onehot_encoding as 'hivemall.ftvec.OnehotEncodingUDAF';
 create temporary function logress as 'hivemall.regression.LogressUDTF';
 create temporary function train_logistic_regr as 'hivemall.regression.LogressUDTF';
 create temporary function train_pa1_regr as 'hivemall.regression.PassiveAggressiveRegressionUDTF';
