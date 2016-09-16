@@ -189,8 +189,7 @@ public final class HiveUtils {
         return BOOLEAN_TYPE_NAME.equals(typeName);
     }
 
-    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI)
-            throws UDFArgumentTypeException {
+    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI) {
         if (argOI.getCategory() != Category.PRIMITIVE) {
             return false;
         }
@@ -229,6 +228,10 @@ public final class HiveUtils {
     public static boolean isListOI(@Nonnull final ObjectInspector oi) {
         Category category = oi.getCategory();
         return category == Category.LIST;
+    }
+
+    public static boolean isNumberListOI(@Nonnull final ObjectInspector oi){
+        return isListOI(oi) && isNumberOI(((ListObjectInspector)oi).getListElementObjectInspector());
     }
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
