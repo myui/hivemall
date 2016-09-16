@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
@@ -673,6 +674,14 @@ public final class HiveUtils {
             throw new UDFArgumentException("Argument type must be BIGINT: " + argOI.getTypeName());
         }
         return (LongObjectInspector) argOI;
+    }
+
+    public static DoubleObjectInspector asDoubleOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!DOUBLE_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be DOUBLE: " + argOI.getTypeName());
+        }
+        return (DoubleObjectInspector) argOI;
     }
 
     public static PrimitiveObjectInspector asIntCompatibleOI(@Nonnull final ObjectInspector argOI)
