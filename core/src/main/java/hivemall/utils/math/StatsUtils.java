@@ -22,6 +22,7 @@ import hivemall.utils.lang.Preconditions;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -189,4 +190,52 @@ public final class StatsUtils {
         return 1.d - numerator / denominator;
     }
 
+    /**
+     * @param expected mean vector whose value is expected
+     * @param observed mean vector whose value is observed
+     * @return chi2-value
+     */
+    public static double chiSquare(@Nonnull final double[] expected, @Nonnull final double[] observed) {
+        Preconditions.checkArgument(expected.length == observed.length);
+
+        double sumExpected = 0.0D;
+        double sumObserved = 0.0D;
+
+        for (int ratio = 0; ratio < observed.length; ++ratio) {
+            sumExpected += expected[ratio];
+            sumObserved += observed[ratio];
+        }
+
+        double var15 = 1.0D;
+        boolean rescale = false;
+        if (Math.abs(sumExpected - sumObserved) > 1.0E-5D) {
+            var15 = sumObserved / sumExpected;
+            rescale = true;
+        }
+
+        double sumSq = 0.0D;
+
+        for (int i = 0; i < observed.length; ++i) {
+            double dev;
+            if (rescale) {
+                dev = observed[i] - var15 * expected[i];
+                sumSq += dev * dev / (var15 * expected[i]);
+            } else {
+                dev = observed[i] - expected[i];
+                sumSq += dev * dev / expected[i];
+            }
+        }
+
+        return sumSq;
+    }
+
+    /**
+     * @param expected means vector whose value is expected
+     * @param observed means vector whose value is observed
+     * @return p-value
+     */
+    public static double chiSquareTest(@Nonnull final double[] expected,@Nonnull final double[] observed) {
+        ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)expected.length - 1.0D);
+        return 1.0D - distribution.cumulativeProbability(chiSquare(expected, observed));
+    }
 }
