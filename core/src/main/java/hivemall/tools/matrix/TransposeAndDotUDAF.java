@@ -81,7 +81,7 @@ public final class TransposeAndDotUDAF extends AbstractGenericUDAFResolver {
             public void reset() {
                 if (aggMatrix != null) {
                     for (double[] row : aggMatrix) {
-                        Arrays.fill(row, 0.0);
+                        Arrays.fill(row, 0.d);
                     }
                 }
             }

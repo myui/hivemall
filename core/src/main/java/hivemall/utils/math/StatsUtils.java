@@ -198,22 +198,22 @@ public final class StatsUtils {
     public static double chiSquare(@Nonnull final double[] expected, @Nonnull final double[] observed) {
         Preconditions.checkArgument(expected.length == observed.length);
 
-        double sumExpected = 0.0D;
-        double sumObserved = 0.0D;
+        double sumExpected = 0.d;
+        double sumObserved = 0.d;
 
         for (int ratio = 0; ratio < observed.length; ++ratio) {
             sumExpected += expected[ratio];
             sumObserved += observed[ratio];
         }
 
-        double var15 = 1.0D;
+        double var15 = 1.d;
         boolean rescale = false;
-        if (Math.abs(sumExpected - sumObserved) > 1.0E-5D) {
+        if (Math.abs(sumExpected - sumObserved) > 1.e-5) {
             var15 = sumObserved / sumExpected;
             rescale = true;
         }
 
-        double sumSq = 0.0D;
+        double sumSq = 0.d;
 
         for (int i = 0; i < observed.length; ++i) {
             double dev;
@@ -235,7 +235,7 @@ public final class StatsUtils {
      * @return p-value
      */
     public static double chiSquareTest(@Nonnull final double[] expected,@Nonnull final double[] observed) {
-        ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)expected.length - 1.0D);
-        return 1.0D - distribution.cumulativeProbability(chiSquare(expected, observed));
+        ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)expected.length - 1.d);
+        return 1.d - distribution.cumulativeProbability(chiSquare(expected, observed));
     }
 }
