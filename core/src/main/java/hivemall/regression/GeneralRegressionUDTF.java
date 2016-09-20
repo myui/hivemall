@@ -40,6 +40,7 @@ public class GeneralRegressionUDTF extends RegressionBaseUDTF {
     protected final Map<String, String> optimizerOptions;
 
     public GeneralRegressionUDTF() {
+        super(true); // This enables new model interfaces
         this.optimizerOptions = new HashMap<String, String>();
         // Set default values
         optimizerOptions.put("optimizer", "adadelta");

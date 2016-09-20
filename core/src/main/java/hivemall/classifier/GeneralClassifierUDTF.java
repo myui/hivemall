@@ -39,6 +39,7 @@ public class GeneralClassifierUDTF extends BinaryOnlineClassifierUDTF {
     protected final Map<String, String> optimizerOptions;
 
     public GeneralClassifierUDTF() {
+        super(true); // This enables new model interfaces
         this.optimizerOptions = new HashMap<String, String>();
         // Set default values
         optimizerOptions.put("optimizer", "adagrad");

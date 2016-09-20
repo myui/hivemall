@@ -18,9 +18,9 @@
  */
 package hivemall.mix.server;
 
-import hivemall.model.DenseModel;
+import hivemall.model.NewDenseModel;
 import hivemall.model.PredictionModel;
-import hivemall.model.SparseModel;
+import hivemall.model.NewSparseModel;
 import hivemall.model.WeightValue;
 import hivemall.mix.MixMessage.MixEventName;
 import hivemall.mix.client.MixClient;
@@ -55,7 +55,7 @@ public class MixServerTest extends HivemallTestBase {
 
         waitForState(server, ServerState.RUNNING);
 
-        PredictionModel model = new DenseModel(16777216);
+        PredictionModel model = new NewDenseModel(16777216);
         model.configureClock();
         MixClient client = null;
         try {
@@ -93,7 +93,7 @@ public class MixServerTest extends HivemallTestBase {
 
         waitForState(server, ServerState.RUNNING);
 
-        PredictionModel model = new DenseModel(16777216);
+        PredictionModel model = new NewDenseModel(16777216);
         model.configureClock();
         MixClient client = null;
         try {
@@ -151,7 +151,7 @@ public class MixServerTest extends HivemallTestBase {
     }
 
     private static void invokeClient(String groupId, int serverPort) throws InterruptedException {
-        PredictionModel model = new DenseModel(16777216);
+        PredictionModel model = new NewDenseModel(16777216);
         model.configureClock();
         MixClient client = null;
         try {
@@ -298,8 +298,8 @@ public class MixServerTest extends HivemallTestBase {
 
     private static void invokeClient01(String groupId, int serverPort, boolean denseModel, boolean cancelMix)
             throws InterruptedException {
-        PredictionModel model = denseModel ? new DenseModel(100)
-                : new SparseModel(100, false);
+        PredictionModel model = denseModel ? new NewDenseModel(100)
+                : new NewSparseModel(100, false);
         model.configureClock();
         MixClient client = null;
         try {

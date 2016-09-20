@@ -18,8 +18,6 @@
  */
 package hivemall.model;
 
-import hivemall.model.WeightValue.WeightValueParamsF1;
-import hivemall.model.WeightValue.WeightValueParamsF2;
 import hivemall.model.WeightValue.WeightValueWithCovar;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
@@ -28,35 +26,27 @@ import hivemall.utils.lang.HalfFloat;
 import hivemall.utils.math.MathUtils;
 
 import java.util.Arrays;
-
 import javax.annotation.Nonnull;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
-    private static final Log logger = LogFactory.getLog(SpaceEfficientDenseModel.class);
+public final class NewSpaceEfficientDenseModel extends AbstractPredictionModel {
+    private static final Log logger = LogFactory.getLog(NewSpaceEfficientDenseModel.class);
 
     private int size;
     private short[] weights;
     private short[] covars;
 
-    // optional value for adagrad
-    private float[] sum_of_squared_gradients;
-    // optional value for adadelta
-    private float[] sum_of_squared_delta_x;
-    // optional value for adagrad+rda
-    private float[] sum_of_gradients;
-
     // optional value for MIX
     private short[] clocks;
     private byte[] deltaUpdates;
 
-    public SpaceEfficientDenseModel(int ndims) {
+    public NewSpaceEfficientDenseModel(int ndims) {
         this(ndims, false);
     }
 
-    public SpaceEfficientDenseModel(int ndims, boolean withCovar) {
+    public NewSpaceEfficientDenseModel(int ndims, boolean withCovar) {
         super();
         int size = ndims + 1;
         this.size = size;
@@ -68,9 +58,6 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         } else {
             this.covars = null;
         }
-        this.sum_of_squared_gradients = null;
-        this.sum_of_squared_delta_x = null;
-        this.sum_of_gradients = null;
         this.clocks = null;
         this.deltaUpdates = null;
     }
@@ -87,17 +74,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
 
     @Override
     public void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x,
-            boolean sum_of_gradients) {
-        if (sum_of_squared_gradients) {
-            this.sum_of_squared_gradients = new float[size];
-        }
-        if (sum_of_squared_delta_x) {
-            this.sum_of_squared_delta_x = new float[size];
-        }
-        if (sum_of_gradients) {
-            this.sum_of_gradients = new float[size];
-        }
-    }
+            boolean sum_of_gradients) {}
 
     @Override
     public void configureClock() {
@@ -126,8 +103,11 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         return HalfFloat.halfFloatToFloat(covars[i]);
     }
 
-    private void setWeight(final int i, final float v) {
-        HalfFloat.checkRange(v);
+    private void _setWeight(final int i, final float v) {
+        if(Math.abs(v) >= HalfFloat.MAX_FLOAT) {
+            throw new IllegalArgumentException("Acceptable maximum weight is "
+                    + HalfFloat.MAX_FLOAT + ": " + v);
+        }
         weights[i] = HalfFloat.floatToHalfFloat(v);
     }
 
@@ -149,16 +129,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
                 this.covars = Arrays.copyOf(covars, newSize);
                 Arrays.fill(covars, oldSize, newSize, HalfFloat.ONE);
             }
-            if (sum_of_squared_gradients != null) {
-                this.sum_of_squared_gradients = Arrays.copyOf(sum_of_squared_gradients, newSize);
-            }
-            if (sum_of_squared_delta_x != null) {
-                this.sum_of_squared_delta_x = Arrays.copyOf(sum_of_squared_delta_x, newSize);
-            }
-            if (sum_of_gradients != null) {
-                this.sum_of_gradients = Arrays.copyOf(sum_of_gradients, newSize);
-            }
-            if (clocks != null) {
+            if(clocks != null) {
                 this.clocks = Arrays.copyOf(clocks, newSize);
                 this.deltaUpdates = Arrays.copyOf(deltaUpdates, newSize);
             }
@@ -172,17 +143,8 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         if (i >= size) {
             return null;
         }
-        if (sum_of_squared_gradients != null) {
-            if (sum_of_squared_delta_x != null) {
-                return (T) new WeightValueParamsF2(getWeight(i), sum_of_squared_gradients[i],
-                    sum_of_squared_delta_x[i]);
-            } else if (sum_of_gradients != null) {
-                return (T) new WeightValueParamsF2(getWeight(i), sum_of_squared_gradients[i],
-                    sum_of_gradients[i]);
-            } else {
-                return (T) new WeightValueParamsF1(getWeight(i), sum_of_squared_gradients[i]);
-            }
-        } else if (covars != null) {
+
+        if(covars != null) {
             return (T) new WeightValueWithCovar(getWeight(i), getCovar(i));
         } else {
             return (T) new WeightValue(getWeight(i));
@@ -194,21 +156,12 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         int i = HiveUtils.parseInt(feature);
         ensureCapacity(i);
         float weight = value.get();
-        setWeight(i, weight);
+        _setWeight(i, weight);
         float covar = 1.f;
         boolean hasCovar = value.hasCovariance();
         if (hasCovar) {
             covar = value.getCovariance();
             setCovar(i, covar);
-        }
-        if (sum_of_squared_gradients != null) {
-            sum_of_squared_gradients[i] = value.getSumOfSquaredGradients();
-        }
-        if (sum_of_squared_delta_x != null) {
-            sum_of_squared_delta_x[i] = value.getSumOfSquaredDeltaX();
-        }
-        if (sum_of_gradients != null) {
-            sum_of_gradients[i] = value.getSumOfGradients();
         }
         short clock = 0;
         int delta = 0;
@@ -229,18 +182,9 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
         if (i >= size) {
             return;
         }
-        setWeight(i, 0.f);
-        if (covars != null) {
+        _setWeight(i, 0.f);
+        if(covars != null) {
             setCovar(i, 1.f);
-        }
-        if (sum_of_squared_gradients != null) {
-            sum_of_squared_gradients[i] = 0.f;
-        }
-        if (sum_of_squared_delta_x != null) {
-            sum_of_squared_delta_x[i] = 0.f;
-        }
-        if (sum_of_gradients != null) {
-            sum_of_gradients[i] = 0.f;
         }
         // avoid clock/delta
     }
@@ -255,8 +199,10 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     }
 
     @Override
-    public void setWeight(@Nonnull Object feature, float value) {
-        throw new UnsupportedOperationException();
+    public void setWeight(Object feature, float value) {
+        int i = HiveUtils.parseInt(feature);
+        ensureCapacity(i);
+        _setWeight(i, value);
     }
 
     @Override
@@ -272,7 +218,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     protected void _set(Object feature, float weight, short clock) {
         int i = ((Integer) feature).intValue();
         ensureCapacity(i);
-        setWeight(i, weight);
+        _setWeight(i, weight);
         clocks[i] = clock;
         deltaUpdates[i] = 0;
     }
@@ -281,7 +227,7 @@ public final class SpaceEfficientDenseModel extends AbstractPredictionModel {
     protected void _set(Object feature, float weight, float covar, short clock) {
         int i = ((Integer) feature).intValue();
         ensureCapacity(i);
-        setWeight(i, weight);
+        _setWeight(i, weight);
         setCovar(i, covar);
         clocks[i] = clock;
         deltaUpdates[i] = 0;

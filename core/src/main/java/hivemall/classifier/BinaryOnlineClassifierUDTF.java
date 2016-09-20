@@ -60,6 +60,16 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     protected Optimizer optimizerImpl;
     protected int count;
 
+    private boolean enableNewModel;
+
+    public BinaryOnlineClassifierUDTF() {
+        this.enableNewModel = false;
+    }
+
+    public BinaryOnlineClassifierUDTF(boolean enableNewModel) {
+        this.enableNewModel = enableNewModel;
+    }
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length < 2) {

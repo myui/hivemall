@@ -18,12 +18,12 @@
  */
 package hivemall.regression;
 
-import hivemall.optimizer.LossFunctions;
 import hivemall.common.OnlineVariance;
 import hivemall.model.FeatureValue;
 import hivemall.model.IWeightValue;
 import hivemall.model.PredictionResult;
 import hivemall.model.WeightValue.WeightValueWithCovar;
+import hivemall.optimizer.LossFunctions;
 
 import javax.annotation.Nonnull;
 

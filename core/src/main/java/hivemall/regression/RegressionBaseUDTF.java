@@ -72,6 +72,16 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
     protected transient Map<Object, FloatAccumulator> accumulated;
     protected int sampled;
 
+    private boolean enableNewModel;
+
+    public RegressionBaseUDTF() {
+        this.enableNewModel = false;
+    }
+
+    public RegressionBaseUDTF(boolean enableNewModel) {
+        this.enableNewModel = enableNewModel;
+    }
+
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
         if (argOIs.length < 2) {
@@ -85,7 +95,7 @@ public abstract class RegressionBaseUDTF extends LearnerBaseUDTF {
 
         PrimitiveObjectInspector featureOutputOI = dense_model ? PrimitiveObjectInspectorFactory.javaIntObjectInspector
                 : featureInputOI;
-        this.model = createModel();
+        this.model = enableNewModel? createNewModel(null) : createModel();
         if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }

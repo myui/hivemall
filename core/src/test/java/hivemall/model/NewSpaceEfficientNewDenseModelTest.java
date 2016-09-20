@@ -26,15 +26,15 @@ import java.util.Random;
 
 import org.junit.Test;
 
-public class SpaceEfficientDenseModelTest {
+public class NewSpaceEfficientNewDenseModelTest {
 
     @Test
     public void testGetSet() {
         final int size = 1 << 12;
 
-        final SpaceEfficientDenseModel model1 = new SpaceEfficientDenseModel(size);
+        final NewSpaceEfficientDenseModel model1 = new NewSpaceEfficientDenseModel(size);
         //model1.configureClock();
-        final DenseModel model2 = new DenseModel(size);
+        final NewDenseModel model2 = new NewDenseModel(size);
         //model2.configureClock();
 
         final Random rand = new Random();

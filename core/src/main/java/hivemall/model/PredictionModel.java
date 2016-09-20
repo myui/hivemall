@@ -34,6 +34,9 @@ public interface PredictionModel extends MixedModel {
 
     boolean hasCovariance();
 
+    void configureParams(boolean sum_of_squared_gradients, boolean sum_of_squared_delta_x,
+            boolean sum_of_gradients);
+
     void configureClock();
 
     boolean hasClock();

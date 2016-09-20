@@ -25,6 +25,9 @@ import hivemall.model.DenseModel;
 import hivemall.model.PredictionModel;
 import hivemall.model.SpaceEfficientDenseModel;
 import hivemall.model.SparseModel;
+import hivemall.model.NewDenseModel;
+import hivemall.model.NewSparseModel;
+import hivemall.model.NewSpaceEfficientDenseModel;
 import hivemall.model.SynchronizedModelWrapper;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
@@ -187,6 +190,36 @@ public abstract class LearnerBaseUDTF extends UDTFWithOptions {
             logger.info("Build a sparse model with initial with " + initModelSize
                     + " initial dimensions");
             model = new SparseModel(initModelSize, useCovar);
+        }
+        if (mixConnectInfo != null) {
+            model.configureClock();
+            model = new SynchronizedModelWrapper(model);
+            MixClient client = configureMixClient(mixConnectInfo, label, model);
+            model.configureMix(client, mixCancel);
+            this.mixClient = client;
+        }
+        assert (model != null);
+        return model;
+    }
+
+    protected PredictionModel createNewModel(String label) {
+        PredictionModel model;
+        final boolean useCovar = useCovariance();
+        if (dense_model) {
+            if (disable_halffloat == false && model_dims > 16777216) {
+                logger.info("Build a space efficient dense model with " + model_dims
+                        + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
+                model = new NewSpaceEfficientDenseModel(model_dims, useCovar);
+            } else {
+                logger.info("Build a dense model with initial with " + model_dims
+                        + " initial dimensions" + (useCovar ? " w/ covariances" : ""));
+                model = new NewDenseModel(model_dims, useCovar);
+            }
+        } else {
+            int initModelSize = getInitialModelSize();
+            logger.info("Build a sparse model with initial with " + initModelSize
+                    + " initial dimensions");
+            model = new NewSparseModel(initModelSize, useCovar);
         }
         if (mixConnectInfo != null) {
             model.configureClock();
