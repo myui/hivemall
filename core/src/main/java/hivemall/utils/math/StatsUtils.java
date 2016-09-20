@@ -29,6 +29,9 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
+import java.util.AbstractMap;
+import java.util.Map;
+
 public final class StatsUtils {
 
     private StatsUtils() {}
@@ -191,24 +194,24 @@ public final class StatsUtils {
     }
 
     /**
-     * @param expected mean vector whose value is expected
      * @param observed mean vector whose value is observed
-     * @return chi2-value
+     * @param expected mean vector whose value is expected
+     * @return chi2 value
      */
-    public static double chiSquare(@Nonnull final double[] expected, @Nonnull final double[] observed) {
-        Preconditions.checkArgument(expected.length == observed.length);
+    public static double chiSquare(@Nonnull final double[] observed, @Nonnull final double[] expected) {
+        Preconditions.checkArgument(observed.length == expected.length);
 
-        double sumExpected = 0.d;
         double sumObserved = 0.d;
+        double sumExpected = 0.d;
 
         for (int ratio = 0; ratio < observed.length; ++ratio) {
-            sumExpected += expected[ratio];
             sumObserved += observed[ratio];
+            sumExpected += expected[ratio];
         }
 
         double var15 = 1.d;
         boolean rescale = false;
-        if (Math.abs(sumExpected - sumObserved) > 1.e-5) {
+        if (Math.abs(sumObserved - sumExpected) > 1.e-5) {
             var15 = sumObserved / sumExpected;
             rescale = true;
         }
@@ -230,12 +233,36 @@ public final class StatsUtils {
     }
 
     /**
-     * @param expected means vector whose value is expected
      * @param observed means vector whose value is observed
-     * @return p-value
+     * @param expected means vector whose value is expected
+     * @return p value
      */
-    public static double chiSquareTest(@Nonnull final double[] expected,@Nonnull final double[] observed) {
+    public static double chiSquareTest(@Nonnull final double[] observed, @Nonnull final double[]  expected) {
         ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)expected.length - 1.d);
-        return 1.d - distribution.cumulativeProbability(chiSquare(expected, observed));
+        return 1.d - distribution.cumulativeProbability(chiSquare(observed,expected));
+    }
+
+    /**
+     * This method offers effective calculation for multiple entries rather than calculation individually
+     * @param observeds means matrix whose values are observed
+     * @param expecteds means matrix
+     * @return (chi2 value[], p value[])
+     */
+    public static Map.Entry<double[],double[]> chiSquares(@Nonnull final double[][] observeds, @Nonnull final double[][]  expecteds){
+        Preconditions.checkArgument(observeds.length == expecteds.length);
+
+        final int len = expecteds.length;
+        final int lenOfEach = expecteds[0].length;
+
+        final ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)lenOfEach - 1.d);
+
+        final double[] chi2s = new double[len];
+        final double[] ps = new double[len];
+        for(int i=0;i<len;i++){
+            chi2s[i] = chiSquare(observeds[i],expecteds[i]);
+            ps[i] = 1.d - distribution.cumulativeProbability(chi2s[i]);
+        }
+
+        return new AbstractMap.SimpleEntry<double[], double[]>(chi2s,ps);
     }
 }
