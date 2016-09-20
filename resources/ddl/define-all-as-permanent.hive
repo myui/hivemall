@@ -202,6 +202,13 @@ CREATE FUNCTION zscore as 'hivemall.ftvec.scaling.ZScoreUDF' USING JAR '${hivema
 DROP FUNCTION IF EXISTS l2_normalize;
 CREATE FUNCTION l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';
 
+-------------------------
+-- selection functions --
+-------------------------
+
+DROP FUNCTION IF EXISTS chi_square;
+CREATE FUNCTION chi_square as 'hivemall.ftvec.selection.ChiSquareUDF' USING JAR '${hivemall_jar}';
+
 --------------------
 -- misc functions --
 --------------------
@@ -364,6 +371,9 @@ CREATE FUNCTION subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF' US
 DROP FUNCTION IF EXISTS subarray_startwith;
 CREATE FUNCTION subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS subarray_by_indices;
+CREATE FUNCTION subarray_by_indices as 'hivemall.tools.array.SubarrayByIndicesUDF' USING JAR '${hivemall_jar}';
+
 DROP FUNCTION IF EXISTS array_concat;
 CREATE FUNCTION array_concat as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
@@ -379,6 +389,9 @@ CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF' USING JA
 
 DROP FUNCTION IF EXISTS array_sum;
 CREATE FUNCTION array_sum as 'hivemall.tools.array.ArraySumUDAF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION array_top_k_indices;
+CREATE FUNCTION array_top_k_indices as 'hivemall.tools.array.ArrayTopKIndicesUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS to_string_array;
 CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
@@ -434,6 +447,13 @@ CREATE FUNCTION to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap' USING JA
 
 DROP FUNCTION IF EXISTS sigmoid;
 CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidGenericUDF' USING JAR '${hivemall_jar}';
+
+----------------------
+-- Matrix functions --
+----------------------
+
+DROP FUNCTION IF EXISTS transpose_and_dot;
+CREATE FUNCTION transpose_and_dot as 'hivemall.tools.matrix.TransposeAndDotUDAF' USING JAR '${hivemall_jar}';
 
 ----------------------
 -- mapred functions --

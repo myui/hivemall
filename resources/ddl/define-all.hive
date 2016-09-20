@@ -198,6 +198,13 @@ create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 drop temporary function l2_normalize;
 create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 
+-------------------------
+-- selection functions --
+-------------------------
+
+drop temporary function chi_square;
+create temporary function chi_square as 'hivemall.ftvec.selection.ChiSquareUDF';
+
 -----------------------------------
 -- Feature engineering functions --
 -----------------------------------
@@ -360,6 +367,9 @@ create temporary function subarray_endwith as 'hivemall.tools.array.SubarrayEndW
 drop temporary function subarray_startwith;
 create temporary function subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF';
 
+drop temporary function subarray_by_indices;
+create temporary function subarray_by_indices as 'hivemall.tools.array.SubarrayByIndicesUDF';
+
 drop temporary function array_concat;
 create temporary function array_concat as 'hivemall.tools.array.ArrayConcatUDF';
 
@@ -375,6 +385,9 @@ create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF
 
 drop temporary function array_sum;
 create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
+
+drop temporary function array_top_k_indices;
+create temporary function array_top_k_indices as 'hivemall.tools.array.ArrayTopKIndicesUDF';
 
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
@@ -430,6 +443,13 @@ create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap
 
 drop temporary function sigmoid;
 create temporary function sigmoid as 'hivemall.tools.math.SigmoidGenericUDF';
+
+----------------------
+-- Matrix functions --
+----------------------
+
+drop temporary function transpose_and_dot;
+create temporary function transpose_and_dot as 'hivemall.tools.matrix.TransposeAndDotUDAF';
 
 ----------------------
 -- mapred functions --
