@@ -235,6 +235,10 @@ public final class HiveUtils {
         return isListOI(oi) && isNumberOI(((ListObjectInspector)oi).getListElementObjectInspector());
     }
 
+    public static boolean isNumberListListOI(@Nonnull final ObjectInspector oi) {
+        return isListOI(oi) && isNumberListOI(((ListObjectInspector)oi).getListElementObjectInspector());
+    }
+
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
         return typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE;
     }
