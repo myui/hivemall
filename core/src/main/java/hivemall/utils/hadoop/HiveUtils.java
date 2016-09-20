@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,12 +231,14 @@ public final class HiveUtils {
         return category == Category.LIST;
     }
 
-    public static boolean isNumberListOI(@Nonnull final ObjectInspector oi){
-        return isListOI(oi) && isNumberOI(((ListObjectInspector)oi).getListElementObjectInspector());
+    public static boolean isNumberListOI(@Nonnull final ObjectInspector oi) {
+        return isListOI(oi)
+                && isNumberOI(((ListObjectInspector) oi).getListElementObjectInspector());
     }
 
     public static boolean isNumberListListOI(@Nonnull final ObjectInspector oi) {
-        return isListOI(oi) && isNumberListOI(((ListObjectInspector)oi).getListElementObjectInspector());
+        return isListOI(oi)
+                && isNumberListOI(((ListObjectInspector) oi).getListElementObjectInspector());
     }
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {

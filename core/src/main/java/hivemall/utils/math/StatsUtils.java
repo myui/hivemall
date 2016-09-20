@@ -1,7 +1,7 @@
 /*
  * Hivemall: Hive scalable Machine Learning Library
  *
- * Copyright (C) 2015 Makoto YUI
+ * Copyright (C) 2016 Makoto YUI
  * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -198,7 +198,8 @@ public final class StatsUtils {
      * @param expected mean vector whose value is expected
      * @return chi2 value
      */
-    public static double chiSquare(@Nonnull final double[] observed, @Nonnull final double[] expected) {
+    public static double chiSquare(@Nonnull final double[] observed,
+            @Nonnull final double[] expected) {
         Preconditions.checkArgument(observed.length == expected.length);
 
         double sumObserved = 0.d;
@@ -237,32 +238,38 @@ public final class StatsUtils {
      * @param expected means vector whose value is expected
      * @return p value
      */
-    public static double chiSquareTest(@Nonnull final double[] observed, @Nonnull final double[]  expected) {
-        ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)expected.length - 1.d);
-        return 1.d - distribution.cumulativeProbability(chiSquare(observed,expected));
+    public static double chiSquareTest(@Nonnull final double[] observed,
+            @Nonnull final double[] expected) {
+        ChiSquaredDistribution distribution = new ChiSquaredDistribution(null,
+            (double) expected.length - 1.d);
+        return 1.d - distribution.cumulativeProbability(chiSquare(observed, expected));
     }
 
     /**
-     * This method offers effective calculation for multiple entries rather than calculation individually
+     * This method offers effective calculation for multiple entries rather than calculation
+     * individually
+     * 
      * @param observeds means matrix whose values are observed
      * @param expecteds means matrix
      * @return (chi2 value[], p value[])
      */
-    public static Map.Entry<double[],double[]> chiSquares(@Nonnull final double[][] observeds, @Nonnull final double[][]  expecteds){
+    public static Map.Entry<double[], double[]> chiSquares(@Nonnull final double[][] observeds,
+            @Nonnull final double[][] expecteds) {
         Preconditions.checkArgument(observeds.length == expecteds.length);
 
         final int len = expecteds.length;
         final int lenOfEach = expecteds[0].length;
 
-        final ChiSquaredDistribution distribution = new ChiSquaredDistribution(null, (double)lenOfEach - 1.d);
+        final ChiSquaredDistribution distribution = new ChiSquaredDistribution(null,
+            (double) lenOfEach - 1.d);
 
         final double[] chi2s = new double[len];
         final double[] ps = new double[len];
-        for(int i=0;i<len;i++){
-            chi2s[i] = chiSquare(observeds[i],expecteds[i]);
+        for (int i = 0; i < len; i++) {
+            chi2s[i] = chiSquare(observeds[i], expecteds[i]);
             ps[i] = 1.d - distribution.cumulativeProbability(chi2s[i]);
         }
 
-        return new AbstractMap.SimpleEntry<double[], double[]>(chi2s,ps);
+        return new AbstractMap.SimpleEntry<double[], double[]>(chi2s, ps);
     }
 }
