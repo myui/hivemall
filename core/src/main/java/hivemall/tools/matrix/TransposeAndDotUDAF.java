@@ -70,7 +70,7 @@ public final class TransposeAndDotUDAF extends AbstractGenericUDAFResolver {
         return new TransposeAndDotUDAFEvaluator();
     }
 
-    private static final class TransposeAndDotUDAFEvaluator extends GenericUDAFEvaluator {
+    static final class TransposeAndDotUDAFEvaluator extends GenericUDAFEvaluator {
         // PARTIAL1 and COMPLETE
         private ListObjectInspector matrix0RowOI;
         private PrimitiveObjectInspector matrix0ElOI;
