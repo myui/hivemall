@@ -367,9 +367,6 @@ create temporary function subarray_endwith as 'hivemall.tools.array.SubarrayEndW
 drop temporary function subarray_startwith;
 create temporary function subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF';
 
-drop temporary function subarray_by_indices;
-create temporary function subarray_by_indices as 'hivemall.tools.array.SubarrayByIndicesUDF';
-
 drop temporary function array_concat;
 create temporary function array_concat as 'hivemall.tools.array.ArrayConcatUDF';
 
@@ -386,14 +383,14 @@ create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF
 drop temporary function array_sum;
 create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 
-drop temporary function array_top_k_indices;
-create temporary function array_top_k_indices as 'hivemall.tools.array.ArrayTopKIndicesUDF';
-
 drop temporary function to_string_array;
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
 
 drop temporary function array_intersect;
 create temporary function array_intersect as 'hivemall.tools.array.ArrayIntersectUDF';
+
+drop temporary function select_k_best;
+create temporary function select_k_best as 'hivemall.tools.array.SelectKBestUDF';
 
 -----------------------------
 -- bit operation functions --

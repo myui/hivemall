@@ -371,9 +371,6 @@ CREATE FUNCTION subarray_endwith as 'hivemall.tools.array.SubarrayEndWithUDF' US
 DROP FUNCTION IF EXISTS subarray_startwith;
 CREATE FUNCTION subarray_startwith as 'hivemall.tools.array.SubarrayStartWithUDF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION IF EXISTS subarray_by_indices;
-CREATE FUNCTION subarray_by_indices as 'hivemall.tools.array.SubarrayByIndicesUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS array_concat;
 CREATE FUNCTION array_concat as 'hivemall.tools.array.ArrayConcatUDF' USING JAR '${hivemall_jar}';
 
@@ -390,14 +387,14 @@ CREATE FUNCTION array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF' USING JA
 DROP FUNCTION IF EXISTS array_sum;
 CREATE FUNCTION array_sum as 'hivemall.tools.array.ArraySumUDAF' USING JAR '${hivemall_jar}';
 
-DROP FUNCTION array_top_k_indices;
-CREATE FUNCTION array_top_k_indices as 'hivemall.tools.array.ArrayTopKIndicesUDF' USING JAR '${hivemall_jar}';
-
 DROP FUNCTION IF EXISTS to_string_array;
 CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING JAR '${hivemall_jar}';
 
 DROP FUNCTION IF EXISTS array_intersect;
 CREATE FUNCTION array_intersect as 'hivemall.tools.array.ArrayIntersectUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS select_k_best;
+CREATE FUNCTION select_k_best as 'hivemall.tools.array.SelectKBestUDF' USING JAR '${hivemall_jar}';
 
 -----------------------------
 -- bit operation functions --

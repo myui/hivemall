@@ -316,9 +316,6 @@ sqlContext.sql("CREATE TEMPORARY FUNCTION subarray_endwith AS 'hivemall.tools.ar
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS subarray_startwith")
 sqlContext.sql("CREATE TEMPORARY FUNCTION subarray_startwith AS 'hivemall.tools.array.SubarrayStartWithUDF'")
 
-sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS subarray_by_indices")
-sqlContext.sql("CREATE TEMPORARY FUNCTION subarray_by_indices AS 'hivemall.tools.array.SubarrayByIndicesUDF'")
-
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS collect_all")
 sqlContext.sql("CREATE TEMPORARY FUNCTION collect_all AS 'hivemall.tools.array.CollectAllUDAF'")
 
@@ -331,8 +328,8 @@ sqlContext.sql("CREATE TEMPORARY FUNCTION subarray AS 'hivemall.tools.array.Suba
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_avg")
 sqlContext.sql("CREATE TEMPORARY FUNCTION array_avg AS 'hivemall.tools.array.ArrayAvgGenericUDAF'")
 
-sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_top_k_indices")
-sqlContext.sql("CREATE TEMPORARY FUNCTION array_top_k_indices AS 'hivemall.tools.array.ArrayTopKIndicesUDF'")
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS select_k_best")
+sqlContext.sql("CREATE TEMPORARY FUNCTION select_k_best AS 'hivemall.tools.array.SelectKBestUDF'")
 
 /**
  * compression functions
