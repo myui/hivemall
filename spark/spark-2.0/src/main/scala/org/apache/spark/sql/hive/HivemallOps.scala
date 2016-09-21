@@ -38,7 +38,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
 /**
- * A Hivemall wrapper some utility functions for DataFrame.
+ * Hivemall wrapper and some utility functions for DataFrame.
  *
  * @groupname regression
  * @groupname classifier

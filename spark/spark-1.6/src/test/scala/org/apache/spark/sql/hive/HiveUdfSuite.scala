@@ -73,4 +73,40 @@ final class HiveUdfSuite extends HivemallQueryTest {
     // hiveContext.sql("DROP TEMPORARY FUNCTION IF EXISTS train_logregr")
     // hiveContext.reset()
   }
+
+  test("each_top_k") {
+    val testDf = Seq(
+      ("a", "1", 0.5, Array(0, 1, 2)),
+      ("b", "5", 0.1, Array(3)),
+      ("a", "3", 0.8, Array(2, 5)),
+      ("c", "6", 0.3, Array(1, 3)),
+      ("b", "4", 0.3, Array(2)),
+      ("a", "2", 0.6, Array(1))
+    ).toDF("key", "value", "score", "data")
+
+    import testDf.sqlContext.implicits._
+    testDf.repartition($"key").sortWithinPartitions($"key").registerTempTable("TestData")
+    sql(s"""
+         | CREATE TEMPORARY FUNCTION each_top_k
+         |   AS '${classOf[hivemall.tools.EachTopKUDTF].getName}'
+       """.stripMargin)
+
+    // Compute top-1 rows for each group
+    assert(
+      sql("SELECT each_top_k(1, key, score, key, value) FROM TestData").collect.toSet ===
+      Set(
+        Row(1, 0.8, "a", "3"),
+        Row(1, 0.3, "b", "4"),
+        Row(1, 0.3, "c", "6")
+      ))
+
+    // Compute reverse top-1 rows for each group
+    assert(
+      sql("SELECT each_top_k(-1, key, score, key, value) FROM TestData").collect.toSet ===
+      Set(
+        Row(1, 0.5, "a", "1"),
+        Row(1, 0.1, "b", "5"),
+        Row(1, 0.3, "c", "6")
+      ))
+  }
 }
