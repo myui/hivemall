@@ -262,7 +262,7 @@ public final class StatsUtils {
      * @param expecteds means positive matrix
      * @return (chi2 value[], p value[])
      */
-    public static Map.Entry<double[], double[]> chiSquares(@Nonnull final double[][] observeds,
+    public static Map.Entry<double[], double[]> chiSquare(@Nonnull final double[][] observeds,
             @Nonnull final double[][] expecteds) {
         Preconditions.checkArgument(observeds.length == expecteds.length);
 

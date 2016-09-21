@@ -129,7 +129,7 @@ public class ChiSquareUDF extends GenericUDF {
             }
         }
 
-        final Map.Entry<double[], double[]> chi2 = StatsUtils.chiSquares(observed, expected);
+        final Map.Entry<double[], double[]> chi2 = StatsUtils.chiSquare(observed, expected);
 
         final Object[] result = new Object[2];
         result[0] = WritableUtils.toWritableList(chi2.getKey());
