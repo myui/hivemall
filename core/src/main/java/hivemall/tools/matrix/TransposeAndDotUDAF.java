@@ -127,33 +127,37 @@ public final class TransposeAndDotUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public AbstractAggregationBuffer getNewAggregationBuffer() throws HiveException {
-            TransposeAndDotAggregationBuffer myAgg = new TransposeAndDotAggregationBuffer();
+            final TransposeAndDotAggregationBuffer myAgg = new TransposeAndDotAggregationBuffer();
             reset(myAgg);
             return myAgg;
         }
 
         @Override
         public void reset(AggregationBuffer agg) throws HiveException {
-            TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
+            final TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
             myAgg.reset();
         }
 
         @Override
         public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
-            TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
+            final Object matrix0RowObj = parameters[0];
+            final Object matrix1RowObj = parameters[1];
 
+            Preconditions.checkNotNull(matrix0RowObj);
+            Preconditions.checkNotNull(matrix1RowObj);
+
+            final TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
+
+            // init
             if (matrix0Row == null) {
-                matrix0Row = new double[matrix0RowOI.getListLength(parameters[0])];
+                matrix0Row = new double[matrix0RowOI.getListLength(matrix0RowObj)];
             }
             if (matrix1Row == null) {
-                matrix1Row = new double[matrix1RowOI.getListLength(parameters[1])];
+                matrix1Row = new double[matrix1RowOI.getListLength(matrix1RowObj)];
             }
 
-            HiveUtils.toDoubleArray(parameters[0], matrix0RowOI, matrix0ElOI, matrix0Row, false);
-            HiveUtils.toDoubleArray(parameters[1], matrix1RowOI, matrix1ElOI, matrix1Row, false);
-
-            Preconditions.checkNotNull(matrix0Row);
-            Preconditions.checkNotNull(matrix1Row);
+            HiveUtils.toDoubleArray(matrix0RowObj, matrix0RowOI, matrix0ElOI, matrix0Row, false);
+            HiveUtils.toDoubleArray(matrix1RowObj, matrix1RowOI, matrix1ElOI, matrix1Row, false);
 
             if (myAgg.aggMatrix == null) {
                 myAgg.init(matrix0Row.length, matrix1Row.length);
@@ -172,9 +176,9 @@ public final class TransposeAndDotUDAF extends AbstractGenericUDAFResolver {
                 return;
             }
 
-            TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
+            final TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
 
-            List matrix = aggMatrixOI.getList(other);
+            final List matrix = aggMatrixOI.getList(other);
             final int n = matrix.size();
             final double[] row = new double[aggMatrixRowOI.getListLength(matrix.get(0))];
             for (int i = 0; i < n; i++) {
@@ -197,9 +201,9 @@ public final class TransposeAndDotUDAF extends AbstractGenericUDAFResolver {
 
         @Override
         public Object terminate(AggregationBuffer agg) throws HiveException {
-            TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
+            final TransposeAndDotAggregationBuffer myAgg = (TransposeAndDotAggregationBuffer) agg;
 
-            List<List<DoubleWritable>> result = new ArrayList<List<DoubleWritable>>();
+            final List<List<DoubleWritable>> result = new ArrayList<List<DoubleWritable>>();
             for (double[] row : myAgg.aggMatrix) {
                 result.add(WritableUtils.toWritableList(row));
             }
