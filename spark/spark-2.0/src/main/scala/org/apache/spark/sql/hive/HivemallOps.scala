@@ -29,8 +29,9 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.catalyst.expressions.{Expression, Literal, NamedExpression, UserDefinedGenerator}
-import org.apache.spark.sql.catalyst.plans.logical.{Generate, LogicalPlan}
+import org.apache.spark.sql.catalyst.expressions.{EachTopK, Expression, Literal, NamedExpression, UserDefinedGenerator}
+import org.apache.spark.sql.catalyst.plans.logical.{Generate, LogicalPlan, Project}
+import org.apache.spark.sql.catalyst.util._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
@@ -820,17 +821,37 @@ final class HivemallOps(df: DataFrame) extends Logging {
   /**
    * Returns `top-k` records for each `group`.
    * @group misc
+   * @since 0.5.0
    */
-  def each_top_k(k: Column, group: Column, value: Column, args: Column*)
+  def each_top_k(k: Int, group: String, score: String, args: String*)
     : DataFrame = withTypedPlan {
     val clusterDf = df.repartition(group).sortWithinPartitions(group)
-    Generate(HiveGenericUDTF(
-      "each_top_k",
-      new HiveFunctionWrapper("hivemall.tools.EachTopKUDTF"),
-      (Seq(k, group, value) ++ args).map(_.expr)),
-    join = false, outer = false, None,
-    (Seq("rank", "key") ++ args.map(_.named.name)).map(UnresolvedAttribute(_)),
-    clusterDf.logicalPlan)
+    val childrenAttributes = clusterDf.logicalPlan.output
+    val generator = Generate(
+      EachTopK(
+        k,
+        clusterDf.resolve(group),
+        clusterDf.resolve(score),
+        childrenAttributes
+      ),
+      join = false, outer = false, None,
+      (Seq("rank") ++ childrenAttributes.map(_.name)).map(UnresolvedAttribute(_)),
+      clusterDf.logicalPlan)
+    val attributes = generator.generatedSet
+    val projectList = (Seq("rank") ++ args).map(s => attributes.find(_.name == s).get)
+    Project(projectList, generator)
+  }
+
+  @deprecated("use each_top_k(Int, String, String, String*) instead", "0.5.0")
+  def each_top_k(k: Column, group: Column, value: Column, args: Column*): DataFrame = {
+    val kInt = k.expr match {
+      case Literal(v: Any, IntegerType) => v.asInstanceOf[Int]
+      case e => throw new AnalysisException("`k` must be integer, however " + e)
+    }
+    val groupStr = usePrettyExpression(group.expr).sql
+    val valueStr = usePrettyExpression(value.expr).sql
+    val argStrs = args.map(c => usePrettyExpression(c.expr).sql)
+    each_top_k(kInt, groupStr, valueStr, argStrs: _*)
   }
 
   /**
