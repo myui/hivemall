@@ -202,8 +202,8 @@ create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2Normalizatio
 -- selection functions --
 -------------------------
 
-drop temporary function chi_square;
-create temporary function chi_square as 'hivemall.ftvec.selection.ChiSquareUDF';
+drop temporary function chi2;
+create temporary function chi2 as 'hivemall.ftvec.selection.ChiSquareUDF';
 
 -----------------------------------
 -- Feature engineering functions --

@@ -206,8 +206,8 @@ CREATE FUNCTION l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USIN
 -- selection functions --
 -------------------------
 
-DROP FUNCTION IF EXISTS chi_square;
-CREATE FUNCTION chi_square as 'hivemall.ftvec.selection.ChiSquareUDF' USING JAR '${hivemall_jar}';
+DROP FUNCTION IF EXISTS chi2;
+CREATE FUNCTION chi2 as 'hivemall.ftvec.selection.ChiSquareUDF' USING JAR '${hivemall_jar}';
 
 --------------------
 -- misc functions --
