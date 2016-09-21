@@ -102,7 +102,7 @@ public class ChiSquareUDF extends GenericUDF {
         // explode and transpose matrix
         for (int i = 0; i < nClasses; i++) {
             final Object observedObjRow = observedObj.get(i);
-            final Object expectedObjRow = observedObj.get(i);
+            final Object expectedObjRow = expectedObj.get(i);
 
             Preconditions.checkNotNull(observedObjRow);
             Preconditions.checkNotNull(expectedObjRow);
