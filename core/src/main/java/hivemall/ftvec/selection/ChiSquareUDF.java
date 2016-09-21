@@ -50,6 +50,12 @@ public class ChiSquareUDF extends GenericUDF {
     private ListObjectInspector expectedRowOI;
     private PrimitiveObjectInspector expectedElOI;
 
+    private int nFeatures = -1;
+    private double[] observedRow = null; // to reuse
+    private double[] expectedRow = null; // to reuse
+    private double[][] observed = null; // shape = (#features, #classes)
+    private double[][] expected = null; // shape = (#features, #classes)
+
     @Override
     public ObjectInspector initialize(ObjectInspector[] OIs) throws UDFArgumentException {
         if (OIs.length != 2) {
@@ -75,12 +81,12 @@ public class ChiSquareUDF extends GenericUDF {
         expectedRowOI = HiveUtils.asListOI(expectedOI.getListElementObjectInspector());
         expectedElOI = HiveUtils.asDoubleCompatibleOI(expectedRowOI.getListElementObjectInspector());
 
-        List<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+        final List<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
 
         return ObjectInspectorFactory.getStandardStructObjectInspector(
-            Arrays.asList("chi2_vals", "p_vals"), fieldOIs);
+            Arrays.asList("chi2", "pvalue"), fieldOIs);
     }
 
     @Override
@@ -93,28 +99,28 @@ public class ChiSquareUDF extends GenericUDF {
         final int nClasses = observedObj.size();
         Preconditions.checkArgument(nClasses == expectedObj.size()); // same #rows
 
-        int nFeatures = -1;
-        double[] observedRow = null; // to reuse
-        double[] expectedRow = null; // to reuse
-        double[][] observed = null; // shape = (#features, #classes)
-        double[][] expected = null; // shape = (#features, #classes)
-
         // explode and transpose matrix
         for (int i = 0; i < nClasses; i++) {
-            if (i == 0) {
+            final Object observedObjRow = observedObj.get(i);
+            final Object expectedObjRow = observedObj.get(i);
+
+            Preconditions.checkNotNull(observedObjRow);
+            Preconditions.checkNotNull(expectedObjRow);
+
+            if (observedRow == null) {
                 // init
-                observedRow = HiveUtils.asDoubleArray(observedObj.get(i), observedRowOI,
-                    observedElOI, false);
-                expectedRow = HiveUtils.asDoubleArray(expectedObj.get(i), expectedRowOI,
-                    expectedElOI, false);
+                observedRow = HiveUtils.asDoubleArray(observedObjRow, observedRowOI, observedElOI,
+                    false);
+                expectedRow = HiveUtils.asDoubleArray(expectedObjRow, expectedRowOI, expectedElOI,
+                    false);
                 nFeatures = observedRow.length;
                 observed = new double[nFeatures][nClasses];
                 expected = new double[nFeatures][nClasses];
             } else {
-                HiveUtils.toDoubleArray(observedObj.get(i), observedRowOI, observedElOI,
-                    observedRow, false);
-                HiveUtils.toDoubleArray(expectedObj.get(i), expectedRowOI, expectedElOI,
-                    expectedRow, false);
+                HiveUtils.toDoubleArray(observedObjRow, observedRowOI, observedElOI, observedRow,
+                    false);
+                HiveUtils.toDoubleArray(expectedObjRow, expectedRowOI, expectedElOI, expectedRow,
+                    false);
             }
 
             for (int j = 0; j < nFeatures; j++) {
