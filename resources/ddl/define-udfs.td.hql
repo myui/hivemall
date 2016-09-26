@@ -51,6 +51,7 @@ create temporary function rescale as 'hivemall.ftvec.scaling.RescaleUDF';
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 create temporary function chi2 as 'hivemall.ftvec.selection.ChiSquareUDF';
+create temporary function snr as 'hivemall.ftvec.selection.SignalNoiseRatioUDAF';
 create temporary function amplify as 'hivemall.ftvec.amplify.AmplifierUDTF';
 create temporary function rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF';
 create temporary function add_bias as 'hivemall.ftvec.AddBiasUDF';
