@@ -288,6 +288,9 @@ CREATE FUNCTION quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeatu
 DROP FUNCTION IF EXISTS binarize_label;
 CREATE FUNCTION binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS onehot_encoding;
+CREATE FUNCTION onehot_encoding as 'hivemall.ftvec.trans.OnehotEncodingUDAF' USING JAR '${hivemall_jar}';
+
 ------------------------------
 -- ranking helper functions --
 ------------------------------

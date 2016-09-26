@@ -229,9 +229,6 @@ create temporary function feature as 'hivemall.ftvec.FeatureUDF';
 drop temporary function feature_index;
 create temporary function feature_index as 'hivemall.ftvec.FeatureIndexUDF';
 
-drop temporary function onehot_encoding;
-create temporary function onehot_encoding as 'hivemall.ftvec.OnehotEncodingUDAF';
-
 ----------------------------------
 -- feature converting functions --
 ----------------------------------
@@ -286,6 +283,9 @@ create temporary function quantitative_features as 'hivemall.ftvec.trans.Quantit
 
 drop temporary function binarize_label;
 create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
+
+drop temporary function onehot_encoding;
+create temporary function onehot_encoding as 'hivemall.ftvec.trans.OnehotEncodingUDAF';
 
 ------------------------------
 -- ranking helper functions --
