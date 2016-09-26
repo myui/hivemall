@@ -55,6 +55,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
@@ -159,6 +160,14 @@ public final class HiveUtils {
             }
         }
         return Arrays.asList(ary);
+    }
+    
+    @Nonnull
+    public static StructObjectInspector asStructOI(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
+        if(oi.getCategory() != Category.STRUCT) {
+            throw new UDFArgumentException("Expected Struct OI but got: " + oi.getTypeName());
+        }
+        return (StructObjectInspector) oi;        
     }
 
     public static boolean isPrimitiveOI(@Nonnull final ObjectInspector oi) {

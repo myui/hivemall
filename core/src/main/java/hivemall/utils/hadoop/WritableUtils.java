@@ -18,12 +18,18 @@
  */
 package hivemall.utils.hadoop;
 
+import hivemall.utils.lang.Preconditions;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.ByteWritable;
 import org.apache.hadoop.io.BytesWritable;
@@ -192,6 +198,15 @@ public final class WritableUtils {
             return new BytesWritable((byte[]) object);
         }
         return new BytesWritable(object.toString().getBytes());
+    }
+
+    @Nonnull
+    public static Writable copyToWritable(@Nonnull final Object obj,
+            @CheckForNull final PrimitiveObjectInspector oi) {
+        Preconditions.checkNotNull(oi);
+        Object ret = ObjectInspectorUtils.copyToStandardObject(obj, oi,
+            ObjectInspectorCopyOption.WRITABLE);
+        return (Writable) ret;
     }
 
 }

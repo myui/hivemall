@@ -37,6 +37,9 @@ public final class MapredContextAccessor {
 
     @Nonnull
     public static MapredContext create(boolean isMap, @Nullable JobConf jobConf) {
+        if (jobConf == null) {
+            jobConf = new JobConf(false); // null is not allowed in Hive v0.13
+        }
         return MapredContext.init(isMap, jobConf);
     }
 

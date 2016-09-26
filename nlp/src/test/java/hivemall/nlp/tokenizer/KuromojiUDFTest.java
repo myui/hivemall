@@ -27,8 +27,8 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,8 +56,10 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
+        PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+        stringType.setTypeName("string");
         argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
-            PrimitiveCategory.STRING, null);
+            stringType, null);
         udf.initialize(argOIs);
         udf.close();
     }
@@ -68,8 +70,10 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
+        PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+        stringType.setTypeName("string");
         argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
-            PrimitiveCategory.STRING, new Text("normal"));
+            stringType, new Text("normal"));
         udf.initialize(argOIs);
         udf.close();
     }
@@ -81,8 +85,10 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
+        PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+        stringType.setTypeName("string");
         argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
-            PrimitiveCategory.STRING, new Text("unsupported mode"));
+            stringType, new Text("unsupported mode"));
         udf.initialize(argOIs);
         udf.close();
     }
@@ -94,8 +100,10 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
+        PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+        stringType.setTypeName("string");
         argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
-            PrimitiveCategory.STRING, null);
+            stringType, null);
         // stopWords
         argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
@@ -110,8 +118,10 @@ public class KuromojiUDFTest {
         // line
         argOIs[0] = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
         // mode
+        PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+        stringType.setTypeName("string");
         argOIs[1] = PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
-            PrimitiveCategory.STRING, null);
+            stringType, null);
         // stopWords
         argOIs[2] = ObjectInspectorFactory.getStandardConstantListObjectInspector(
             PrimitiveObjectInspectorFactory.javaStringObjectInspector, null);
@@ -135,6 +145,9 @@ public class KuromojiUDFTest {
             public Text get() throws HiveException {
                 return new Text("クロモジのJapaneseAnalyzerを使ってみる。テスト。");
             }
+
+            @Override
+            public void prepare(int arg) throws HiveException {}
         };
         List<Text> tokens = udf.evaluate(args);
         Assert.assertNotNull(tokens);
@@ -155,6 +168,9 @@ public class KuromojiUDFTest {
             public Text get() throws HiveException {
                 return new Text("クロモジのJapaneseAnalyzerを使ってみる。テスト。");
             }
+
+            @Override
+            public void prepare(int arg) throws HiveException {}
         };
         List<Text> tokens = udf.evaluate(args);
         Assert.assertNotNull(tokens);
@@ -164,6 +180,9 @@ public class KuromojiUDFTest {
             public Text get() throws HiveException {
                 return new Text("クロモジのJapaneseAnalyzerを使ってみる。");
             }
+
+            @Override
+            public void prepare(int arg) throws HiveException {}
         };
         tokens = udf.evaluate(args);
         Assert.assertNotNull(tokens);

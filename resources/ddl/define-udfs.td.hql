@@ -74,6 +74,7 @@ create temporary function indexed_features as 'hivemall.ftvec.trans.IndexedFeatu
 create temporary function quantified_features as 'hivemall.ftvec.trans.QuantifiedFeaturesUDTF';
 create temporary function quantitative_features as 'hivemall.ftvec.trans.QuantitativeFeaturesUDF';
 create temporary function binarize_label as 'hivemall.ftvec.trans.BinarizeLabelUDTF';
+create temporary function onehot_encoding as 'hivemall.ftvec.trans.OnehotEncodingUDAF';
 create temporary function bpr_sampling as 'hivemall.ftvec.ranking.BprSamplingUDTF';
 create temporary function item_pairs_sampling as 'hivemall.ftvec.ranking.ItemPairsSamplingUDTF';
 create temporary function populate_not_in as 'hivemall.ftvec.ranking.PopulateNotInUDTF';

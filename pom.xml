@@ -53,6 +53,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<protobuf.version>2.5.0</protobuf.version>
 		<protoc.path>${env.PROTOC_PATH}</protoc.path>
+		<hive.version>0.13.0</hive.version>
 		<scala.version>2.11.8</scala.version>
 	</properties>
 

@@ -22,29 +22,53 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public final class Identifier<E> implements Serializable {
+public final class Identifier<T> implements Serializable {
     private static final long serialVersionUID = 7949630590734361716L;
 
-    private final Map<E, Integer> counts;
+    private final Map<T, Integer> counts;
     private int sequence;
 
     public Identifier() {
-        this.counts = new HashMap<E, Integer>(512);
-        this.sequence = -1;
+        this(0);
     }
 
-    public int valueOf(E key) {
+    public Identifier(int initSeq) {
+        this.counts = new HashMap<>(512);
+        this.sequence = initSeq;
+    }
+
+    public int valueOf(@Nonnull T key) {
         Integer count = counts.get(key);
         if (count == null) {
+            int id = sequence;
+            counts.put(key, Integer.valueOf(id));
             ++sequence;
-            counts.put(key, Integer.valueOf(sequence));
-            return sequence;
+            return id;
         } else {
             return count.intValue();
         }
+    }
+
+    public void put(@Nonnull T key) {
+        Integer count = counts.get(key);
+        if (count != null) {
+            return;
+        }
+        int id = sequence;
+        counts.put(key, Integer.valueOf(id));
+        ++sequence;
+    }
+
+    public Map<T, Integer> getMap() {
+        return counts;
+    }
+
+    public int size() {
+        return sequence;
     }
 
 }
