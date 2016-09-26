@@ -116,11 +116,9 @@ _My recommendation for is AROW regression, AdaDelta, and Factorization Machine w
 System requirements
 --------------------
 
-* Hive 0.12 or later
+* Hive 0.13 or later
 
 * Java 7 or later
-
-  _Note: It would work for Java 6 except hivemall-nlp but we recommend to use Java 7 or later._
 
 Basic Usage
 ------------
