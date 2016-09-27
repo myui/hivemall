@@ -17,8 +17,8 @@
  */
 package hivemall.anomaly;
 
-import hivemall.anomaly.SSTChangePointUDF.SSTChangePointInterface;
-import hivemall.anomaly.SSTChangePointUDF.Parameters;
+import hivemall.anomaly.SingularSpectrumTransformUDF.SingularSpectrumTransformInterface;
+import hivemall.anomaly.SingularSpectrumTransformUDF.Parameters;
 import hivemall.utils.collections.DoubleRingBuffer;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -31,7 +31,7 @@ import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 
-final class SSTChangePoint implements SSTChangePointInterface {
+final class SingularSpectrumTransform implements SingularSpectrumTransformInterface {
 
     @Nonnull
     private final PrimitiveObjectInspector oi;
@@ -56,7 +56,7 @@ final class SSTChangePoint implements SSTChangePointInterface {
     @Nonnull
     private final double[] xSeries;
 
-    SSTChangePoint(@Nonnull Parameters params, @Nonnull PrimitiveObjectInspector oi) {
+    SingularSpectrumTransform(@Nonnull Parameters params, @Nonnull PrimitiveObjectInspector oi) {
         this.oi = oi;
 
         this.window = params.w;

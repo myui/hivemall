@@ -17,7 +17,7 @@
  */
 package hivemall.anomaly;
 
-import hivemall.anomaly.SSTChangePointUDF.Parameters;
+import hivemall.anomaly.SingularSpectrumTransformUDF.Parameters;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,14 +33,14 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SSTChangePointTest {
+public class SingularSpectrumTransformTest {
     private static final boolean DEBUG = false;
 
     @Test
     public void testSST() throws IOException, HiveException {
         Parameters params = new Parameters();
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        SSTChangePoint sst = new SSTChangePoint(params, oi);
+        SingularSpectrumTransform sst = new SingularSpectrumTransform(params, oi);
         double[] outScores = new double[1];
 
         BufferedReader reader = readFile("cf1d.csv");
@@ -65,7 +65,7 @@ public class SSTChangePointTest {
     public void testTwitterData() throws IOException, HiveException {
         Parameters params = new Parameters();
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
-        SSTChangePoint sst = new SSTChangePoint(params, oi);
+        SingularSpectrumTransform sst = new SingularSpectrumTransform(params, oi);
         double[] outScores = new double[1];
 
         BufferedReader reader = readFile("twitter.csv.gz");
@@ -101,7 +101,7 @@ public class SSTChangePointTest {
 
     @Nonnull
     private static BufferedReader readFile(@Nonnull String fileName) throws IOException {
-        InputStream is = SSTChangePointTest.class.getResourceAsStream(fileName);
+        InputStream is = SingularSpectrumTransformTest.class.getResourceAsStream(fileName);
         if (fileName.endsWith(".gz")) {
             is = new GZIPInputStream(is);
         }

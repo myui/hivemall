@@ -42,14 +42,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 @Description(
-        name = "sst_changepoint",
+        name = "sst",
         value = "_FUNC_(double|array<double> x [, const string options])"
                 + " - Returns change-point scores and decisions using Singular Spectrum Transformation (SST)."
                 + " It will return a tuple <double changepoint_score [, boolean is_changepoint]>")
-public final class SSTChangePointUDF extends UDFWithOptions {
+public final class SingularSpectrumTransformUDF extends UDFWithOptions {
 
     private transient Parameters _params;
-    private transient SSTChangePoint _sst;
+    private transient SingularSpectrumTransform _sst;
 
     private transient double[] _scores;
     private transient Object[] _result;
@@ -57,7 +57,7 @@ public final class SSTChangePointUDF extends UDFWithOptions {
     @Nullable
     private transient BooleanWritable _isChangepoint = null;
 
-    public SSTChangePointUDF() {}
+    public SingularSpectrumTransformUDF() {}
 
     // Visible for testing
     Parameters getParameters() {
@@ -123,7 +123,7 @@ public final class SSTChangePointUDF extends UDFWithOptions {
 
         ObjectInspector argOI0 = argOIs[0];
         PrimitiveObjectInspector xOI = HiveUtils.asDoubleCompatibleOI(argOI0);
-        this._sst = new SSTChangePoint(_params, xOI);
+        this._sst = new SingularSpectrumTransform(_params, xOI);
 
         this._scores = new double[1];
 
@@ -190,7 +190,7 @@ public final class SSTChangePointUDF extends UDFWithOptions {
         Parameters() {}
     }
 
-    public interface SSTChangePointInterface {
+    public interface SingularSpectrumTransformInterface {
         void update(@Nonnull Object arg, @Nonnull double[] outScores) throws HiveException;
     }
 
