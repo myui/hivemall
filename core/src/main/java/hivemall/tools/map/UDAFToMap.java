@@ -88,24 +88,30 @@ public class UDAFToMap extends AbstractGenericUDAFResolver {
                 ObjectInspectorUtils.getStandardObjectInspector(inputValueOI));
         }
 
-        static class MapAggregationBuffer implements AggregationBuffer {
+        static class MapAggregationBuffer extends AbstractAggregationBuffer {
             Map<Object, Object> container;
+
+            MapAggregationBuffer() {
+                super();
+            }
         }
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             ((MapAggregationBuffer) agg).container = new HashMap<Object, Object>(64);
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
+        public MapAggregationBuffer getNewAggregationBuffer() throws HiveException {
             MapAggregationBuffer ret = new MapAggregationBuffer();
             reset(ret);
             return ret;
         }
 
         @Override
-        public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
+                Object[] parameters) throws HiveException {
             assert (parameters.length == 2);
             Object key = parameters[0];
             Object value = parameters[1];
@@ -117,13 +123,15 @@ public class UDAFToMap extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Map<Object, Object> terminatePartial(AggregationBuffer agg) throws HiveException {
+        public Map<Object, Object> terminatePartial(
+                @SuppressWarnings("deprecation") AggregationBuffer agg) throws HiveException {
             MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
             return myagg.container;
         }
 
         @Override
-        public void merge(AggregationBuffer agg, Object partial) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object partial)
+                throws HiveException {
             MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
             Map<?, ?> partialResult = internalMergeOI.getMap(partial);
             for (Map.Entry<?, ?> entry : partialResult.entrySet()) {
@@ -132,7 +140,8 @@ public class UDAFToMap extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Map<Object, Object> terminate(AggregationBuffer agg) throws HiveException {
+        public Map<Object, Object> terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MapAggregationBuffer myagg = (MapAggregationBuffer) agg;
             return myagg.container;
         }

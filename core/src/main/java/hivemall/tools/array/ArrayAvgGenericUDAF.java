@@ -33,7 +33,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AbstractAggregationBuffer;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -128,20 +128,22 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
-            AggregationBuffer aggr = new ArrayAvgAggregationBuffer();
+        public ArrayAvgAggregationBuffer getNewAggregationBuffer() throws HiveException {
+            ArrayAvgAggregationBuffer aggr = new ArrayAvgAggregationBuffer();
             reset(aggr);
             return aggr;
         }
 
         @Override
-        public void reset(AggregationBuffer aggr) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer aggr)
+                throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
             myAggr.reset();
         }
 
         @Override
-        public void iterate(AggregationBuffer aggr, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer aggr,
+                Object[] parameters) throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
             Object tuple = parameters[0];
@@ -151,7 +153,8 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Object terminatePartial(AggregationBuffer aggr) throws HiveException {
+        public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer aggr)
+                throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
             if (myAggr._size == -1) {
                 return null;
@@ -166,7 +169,8 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer aggr, Object partial) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer aggr, Object partial)
+                throws HiveException {
             if (partial != null) {
                 ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
@@ -194,7 +198,8 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public List<FloatWritable> terminate(AggregationBuffer aggr) throws HiveException {
+        public List<FloatWritable> terminate(@SuppressWarnings("deprecation") AggregationBuffer aggr)
+                throws HiveException {
             ArrayAvgAggregationBuffer myAggr = (ArrayAvgAggregationBuffer) aggr;
 
             final int size = myAggr._size;
@@ -215,14 +220,16 @@ public final class ArrayAvgGenericUDAF extends AbstractGenericUDAFResolver {
         }
     }
 
-    public static class ArrayAvgAggregationBuffer implements AggregationBuffer {
+    public static class ArrayAvgAggregationBuffer extends AbstractAggregationBuffer {
 
         int _size;
         // note that primitive array cannot be serialized by JDK serializer
         double[] _sum;
         long[] _count;
 
-        public ArrayAvgAggregationBuffer() {}
+        public ArrayAvgAggregationBuffer() {
+            super();
+        }
 
         void reset() {
             this._size = -1;

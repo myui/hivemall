@@ -74,7 +74,8 @@ public class UDAFToOrderedMap extends UDAFToMap {
     public static class NaturalOrdereMapEvaluator extends UDAFToMapEvaluator {
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             ((MapAggregationBuffer) agg).container = new TreeMap<Object, Object>();
         }
 
@@ -83,7 +84,8 @@ public class UDAFToOrderedMap extends UDAFToMap {
     public static class ReverseOrdereMapEvaluator extends UDAFToMapEvaluator {
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             ((MapAggregationBuffer) agg).container = new TreeMap<Object, Object>(
                 Collections.reverseOrder());
         }

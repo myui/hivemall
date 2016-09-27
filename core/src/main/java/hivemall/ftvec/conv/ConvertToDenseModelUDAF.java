@@ -27,6 +27,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 
+@SuppressWarnings("deprecation")
 @Description(
         name = "conv2dense",
         value = "_FUNC_(int feature, float weight, int nDims) - Return a dense model in array<float>")

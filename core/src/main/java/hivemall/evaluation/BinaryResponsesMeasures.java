@@ -25,10 +25,7 @@ import javax.annotation.Nonnull;
 /**
  * Binary responses measures for item recommendation (i.e. ranking problems)
  *
- * References:
- *   B. McFee and G. R. Lanckriet. "Metric Learning to Rank" ICML 2010.
- *   MyMediaLite http://mymedialite.net/
- *   LibRec http://www.librec.net/
+ * References: B. McFee and G. R. Lanckriet. "Metric Learning to Rank" ICML 2010.
  */
 public final class BinaryResponsesMeasures {
 
@@ -42,8 +39,8 @@ public final class BinaryResponsesMeasures {
      * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
      * @return nDCG
      */
-    public static double nDCG(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                              @Nonnull final int recommendSize) {
+    public static double nDCG(@Nonnull final List<?> rankedList,
+            @Nonnull final List<?> groundTruth, @Nonnull final int recommendSize) {
         double dcg = 0.d;
         double idcg = IDCG(Math.min(recommendSize, groundTruth.size()));
 
@@ -81,8 +78,8 @@ public final class BinaryResponsesMeasures {
      * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
      * @return Precision
      */
-    public static double Precision(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                                  @Nonnull final int recommendSize) {
+    public static double Precision(@Nonnull final List<?> rankedList,
+            @Nonnull final List<?> groundTruth, @Nonnull final int recommendSize) {
         return (double) countTruePositive(rankedList, groundTruth, recommendSize) / recommendSize;
     }
 
@@ -94,9 +91,10 @@ public final class BinaryResponsesMeasures {
      * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
      * @return Recall
      */
-    public static double Recall(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                                  @Nonnull final int recommendSize) {
-        return (double) countTruePositive(rankedList, groundTruth, recommendSize) / groundTruth.size();
+    public static double Recall(@Nonnull final List<?> rankedList,
+            @Nonnull final List<?> groundTruth, @Nonnull final int recommendSize) {
+        return (double) countTruePositive(rankedList, groundTruth, recommendSize)
+                / groundTruth.size();
     }
 
     /**
@@ -107,7 +105,8 @@ public final class BinaryResponsesMeasures {
      * @param recommendSize top-`recommendSize` items in `rankedList` are recommended
      * @return number of true positives
      */
-    public static int countTruePositive(final List<?> rankedList, final List<?> groundTruth, final int recommendSize) {
+    public static int countTruePositive(final List<?> rankedList, final List<?> groundTruth,
+            final int recommendSize) {
         int nTruePositive = 0;
 
         for (int i = 0, n = recommendSize; i < n; i++) {
@@ -129,7 +128,7 @@ public final class BinaryResponsesMeasures {
      * @return MRR
      */
     public static double MRR(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                             @Nonnull final int recommendSize) {
+            @Nonnull final int recommendSize) {
         for (int i = 0, n = recommendSize; i < n; i++) {
             Object item_id = rankedList.get(i);
             if (groundTruth.contains(item_id)) {
@@ -149,7 +148,7 @@ public final class BinaryResponsesMeasures {
      * @return MAP
      */
     public static double MAP(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                             @Nonnull final int recommendSize) {
+            @Nonnull final int recommendSize) {
         int nTruePositive = 0;
         double sumPrecision = 0.0;
 
@@ -158,7 +157,7 @@ public final class BinaryResponsesMeasures {
             Object item_id = rankedList.get(i);
             if (groundTruth.contains(item_id)) {
                 nTruePositive++;
-                sumPrecision +=  nTruePositive / (i + 1.0);
+                sumPrecision += nTruePositive / (i + 1.0);
             }
         }
 
@@ -174,7 +173,7 @@ public final class BinaryResponsesMeasures {
      * @return AUC
      */
     public static double AUC(@Nonnull final List<?> rankedList, @Nonnull final List<?> groundTruth,
-                             @Nonnull final int recommendSize) {
+            @Nonnull final int recommendSize) {
         int nTruePositive = 0, nCorrectPairs = 0;
 
         // count # of pairs of items that are ranked in the correct order (i.e. TP > FP)

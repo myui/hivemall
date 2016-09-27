@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,11 @@ package hivemall.ftvec.binning;
 
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
+import hivemall.utils.lang.Preconditions;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -43,13 +47,11 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableBooleanOb
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDoubleObjectInspector;
 import org.apache.hadoop.io.BooleanWritable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Description(
         name = "build_bins",
-        value = "_FUNC_(int|bigint|float|double weight, const int num_of_bins[, const boolean auto_shrink = false]) - Return quantiles representing bins: array<double>")
-public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
+        value = "_FUNC_(int|bigint|float|double weight, const int num_of_bins[, const boolean auto_shrink = false])"
+                + " - Return quantiles representing bins: array<double>")
+public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
     private static final int idxOfCol = 0;
     private static final int idxOfNumOfBins = 1;
     private static final int idxOfAutoShrink = 2;
@@ -117,7 +119,6 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
         return new BuildBinsUDAFEvaluator();
     }
 
-
     private static class BuildBinsUDAFEvaluator extends GenericUDAFEvaluator {
         private PrimitiveObjectInspector weightOI;
         private StructObjectInspector structOI;
@@ -136,10 +137,12 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
 
 
         @AggregationType(estimable = true)
-        static class BuildBinsAggregationBuffer extends AbstractAggregationBuffer {
+        static final class BuildBinsAggregationBuffer extends AbstractAggregationBuffer {
             boolean autoShrink;
             NumericHistogram histogram; // histogram used for quantile approximation
             double[] quantiles; // the quantiles requested
+
+            BuildBinsAggregationBuffer() {}
 
             @Override
             public int estimate() {
@@ -148,7 +151,6 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
                         + 4; // autoShrink
             }
         }
-
 
         @Override
         public ObjectInspector init(Mode mode, ObjectInspector[] OIs) throws HiveException {
@@ -214,7 +216,8 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             BuildBinsAggregationBuffer result = (BuildBinsAggregationBuffer) agg;
             result.histogram.reset();
             result.quantiles = null;
@@ -225,7 +228,8 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
+                Object[] parameters) throws HiveException {
             assert (parameters.length == 2 || parameters.length == 3);
             if (parameters[0] == null || parameters[1] == null) {
                 return;
@@ -238,7 +242,8 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer agg, Object other) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object other)
+                throws HiveException {
             if (other == null)
                 return;
 
@@ -246,7 +251,8 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
 
             myagg.autoShrink = autoShrinkOI.get(structOI.getStructFieldData(other, autoShrinkField));
 
-            List histogram = ((LazyBinaryArray) structOI.getStructFieldData(other, histogramField)).getList();
+            List<?> histogram = ((LazyBinaryArray) structOI.getStructFieldData(other,
+                histogramField)).getList();
 
             myagg.histogram.merge(histogram, histogramElOI);
 
@@ -256,13 +262,15 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
                 myagg.quantiles = quantiles;
         }
 
+        @SuppressWarnings("serial")
         @Override
-        public Object terminatePartial(AggregationBuffer agg) throws HiveException {
+        public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
             Object[] partialResult = new Object[3];
             partialResult[0] = new BooleanWritable(myagg.autoShrink);
             partialResult[1] = myagg.histogram.serialize();
-            partialResult[2] = myagg.quantiles != null ? WritableUtils.toWritableList(myagg.quantiles)
+            partialResult[2] = (myagg.quantiles != null) ? WritableUtils.toWritableList(myagg.quantiles)
                     : new ArrayList<DoubleWritable>() {
                         {
                             add(new DoubleWritable(0));
@@ -272,14 +280,15 @@ public class BuildBinsUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Object terminate(AggregationBuffer agg) throws HiveException {
+        public Object terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
 
             if (myagg.histogram.getUsedBins() < 1) { // SQL standard - return null for zero elements
                 return null;
             } else {
-                ArrayList<DoubleWritable> result = new ArrayList<DoubleWritable>();
-                assert (myagg.quantiles != null);
+                List<DoubleWritable> result = new ArrayList<DoubleWritable>();
+                Preconditions.checkNotNull(myagg.quantiles);
 
                 double prev = Double.NEGATIVE_INFINITY;
 

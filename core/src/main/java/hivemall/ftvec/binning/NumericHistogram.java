@@ -2,7 +2,6 @@
  * Hivemall: Hive scalable Machine Learning Library
  *
  * Copyright (C) 2015 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +17,15 @@
  */
 package hivemall.ftvec.binning;
 
+import hivemall.utils.lang.SizeOf;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
-import hivemall.utils.lang.SizeOf;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
-
 
 /**
  * **THIS CLASS IS IMPORTED FROM HIVE 2.1.0 FOR COMPATIBILITY**
@@ -38,20 +36,20 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspe
  * 849--872. Although there are no approximation guarantees, it appears to work well with adequate
  * data and a large (e.g., 20-80) number of histogram bins.
  */
-public class NumericHistogram {
+public final class NumericHistogram {
     /**
      * The Coord class defines a histogram bin, which is just an (x,y) pair.
      */
-    static class Coord implements Comparable {
+    static final class Coord implements Comparable<Coord> {
         double x;
         double y;
 
-        public int compareTo(Object other) {
-            return Double.compare(x, ((Coord) other).x);
+        Coord() {}
+
+        public int compareTo(Coord other) {
+            return Double.compare(x, other.x);
         }
     }
-
-    ;
 
     // Class variables
     private int nbins;
@@ -122,7 +120,7 @@ public class NumericHistogram {
      * @param other A serialized histogram created by the serialize() method
      * @see #merge
      */
-    public void merge(List other, DoubleObjectInspector doi) {
+    public void merge(List<?> other, DoubleObjectInspector doi) {
         if (other == null) {
             return;
         }
@@ -165,7 +163,6 @@ public class NumericHistogram {
             trim();
         }
     }
-
 
     /**
      * Adds a new data point to the histogram approximation. Make sure you have called either
@@ -241,12 +238,6 @@ public class NumericHistogram {
 
             // Merge the two closest bins into their average x location, weighted by their heights.
             // The height of the new bin is the sum of the heights of the old bins.
-            // double d = bins[smallestdiffloc].y + bins[smallestdiffloc+1].y;
-            // bins[smallestdiffloc].x *= bins[smallestdiffloc].y / d;
-            // bins[smallestdiffloc].x += bins[smallestdiffloc+1].x / d *
-            //   bins[smallestdiffloc+1].y;
-            // bins[smallestdiffloc].y = d;
-
             double d = bins.get(smallestdiffloc).y + bins.get(smallestdiffloc + 1).y;
             Coord smallestdiffbin = bins.get(smallestdiffloc);
             smallestdiffbin.x *= smallestdiffbin.y / d;
@@ -336,4 +327,5 @@ public class NumericHistogram {
         length += sizeOfLengthForRandom; // Random
         return length;
     }
+
 }

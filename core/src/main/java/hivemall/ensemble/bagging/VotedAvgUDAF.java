@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@SuppressWarnings("deprecation")
 @Description(name = "voted_avg",
         value = "_FUNC_(double value) - Returns an averaged value by bagging for classification")
 public final class VotedAvgUDAF extends UDAF {
