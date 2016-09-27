@@ -83,24 +83,30 @@ public final class BitsCollectUDAF extends AbstractGenericUDAFResolver {
             return outputOI;
         }
 
-        static class ArrayAggregationBuffer implements AggregationBuffer {
+        static class ArrayAggregationBuffer extends AbstractAggregationBuffer {
             BitSet bitset;
+
+            ArrayAggregationBuffer() {
+                super();
+            }
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
+        public ArrayAggregationBuffer getNewAggregationBuffer() throws HiveException {
             ArrayAggregationBuffer ret = new ArrayAggregationBuffer();
             reset(ret);
             return ret;
         }
 
         @Override
-        public void reset(AggregationBuffer aggr) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer aggr)
+                throws HiveException {
             ((ArrayAggregationBuffer) aggr).bitset = new BitSet();
         }
 
         @Override
-        public void iterate(AggregationBuffer aggr, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer aggr,
+                Object[] parameters) throws HiveException {
             assert (parameters.length == 1);
             Object arg = parameters[0];
             if (arg != null) {
@@ -115,7 +121,8 @@ public final class BitsCollectUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public List<LongWritable> terminatePartial(AggregationBuffer aggr) throws HiveException {
+        public List<LongWritable> terminatePartial(
+                @SuppressWarnings("deprecation") AggregationBuffer aggr) throws HiveException {
             ArrayAggregationBuffer agg = (ArrayAggregationBuffer) aggr;
             long[] array = agg.bitset.toLongArray();
             if (agg.bitset == null || agg.bitset.isEmpty()) {
@@ -125,7 +132,8 @@ public final class BitsCollectUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer aggr, Object other) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer aggr, Object other)
+                throws HiveException {
             if (other == null) {
                 return;
             }
@@ -136,7 +144,8 @@ public final class BitsCollectUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public List<LongWritable> terminate(AggregationBuffer aggr) throws HiveException {
+        public List<LongWritable> terminate(@SuppressWarnings("deprecation") AggregationBuffer aggr)
+                throws HiveException {
             ArrayAggregationBuffer agg = (ArrayAggregationBuffer) aggr;
             long[] longs = agg.bitset.toLongArray();
             return WritableUtils.toWritableList(longs);

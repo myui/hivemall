@@ -34,7 +34,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AbstractAggregationBuffer;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryArray;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -155,13 +155,15 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             FMPredictAggregationBuffer buf = (FMPredictAggregationBuffer) agg;
             buf.reset();
         }
 
         @Override
-        public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
+                Object[] parameters) throws HiveException {
             if (parameters[0] == null) {
                 return;
             }
@@ -180,7 +182,8 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public Object terminatePartial(AggregationBuffer agg) throws HiveException {
+        public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             FMPredictAggregationBuffer buf = (FMPredictAggregationBuffer) agg;
 
             final Object[] partialResult = new Object[3];
@@ -193,7 +196,8 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer agg, Object partial) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object partial)
+                throws HiveException {
             if (partial == null) {
                 return;
             }
@@ -221,7 +225,8 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public DoubleWritable terminate(AggregationBuffer agg) throws HiveException {
+        public DoubleWritable terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             FMPredictAggregationBuffer buf = (FMPredictAggregationBuffer) agg;
             double predict = buf.getPrediction();
             return new DoubleWritable(predict);
@@ -229,13 +234,15 @@ public final class FMPredictGenericUDAF extends AbstractGenericUDAFResolver {
 
     }
 
-    public static class FMPredictAggregationBuffer implements AggregationBuffer {
+    public static class FMPredictAggregationBuffer extends AbstractAggregationBuffer {
 
         private double ret;
         private double[] sumVjXj;
         private double[] sumV2X2;
 
-        FMPredictAggregationBuffer() {}
+        FMPredictAggregationBuffer() {
+            super();
+        }
 
         void reset() {
             this.ret = 0.d;

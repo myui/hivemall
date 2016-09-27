@@ -119,8 +119,12 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
             return ObjectInspectorUtils.getStandardObjectInspector(inputStructOI);
         }
 
-        static class MaxAgg implements AggregationBuffer {
+        static class MaxAgg extends AbstractAggregationBuffer {
             Object[] objects;
+
+            MaxAgg() {
+                super();
+            }
 
             void reset() {
                 this.objects = null;
@@ -135,23 +139,27 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MaxAgg maxagg = (MaxAgg) agg;
             maxagg.reset();
         }
 
         @Override
-        public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
+                Object[] parameters) throws HiveException {
             merge(agg, parameters);
         }
 
         @Override
-        public List<Object> terminatePartial(AggregationBuffer agg) throws HiveException {
+        public List<Object> terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             return terminate(agg);
         }
 
         @Override
-        public void merge(AggregationBuffer agg, Object partial) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object partial)
+                throws HiveException {
             if (partial == null) {
                 return;
             }
@@ -191,7 +199,8 @@ public final class MaxRowUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public List<Object> terminate(AggregationBuffer agg) throws HiveException {
+        public List<Object> terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MaxAgg maxagg = (MaxAgg) agg;
             return Arrays.asList(maxagg.objects);
         }

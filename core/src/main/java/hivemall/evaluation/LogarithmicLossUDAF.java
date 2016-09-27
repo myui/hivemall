@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@SuppressWarnings("deprecation")
 @Description(name = "logloss",
         value = "_FUNC_(double predicted, double actual) - Return a Logrithmic Loss")
 public final class LogarithmicLossUDAF extends UDAF {

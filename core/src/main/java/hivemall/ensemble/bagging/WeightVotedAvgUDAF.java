@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@SuppressWarnings("deprecation")
 @Description(
         name = "weight_voted_avg",
         value = "_FUNC_(expr) - Returns an averaged value by considering sum of positive/negative weights")

@@ -18,6 +18,13 @@
 package hivemall.evaluation;
 
 import hivemall.utils.hadoop.HiveUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
@@ -25,19 +32,18 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AbstractAggregationBuffer;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
-import org.apache.hadoop.hive.serde2.objectinspector.*;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableIntObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.LongWritable;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Description(
         name = "average_precision",
@@ -56,8 +62,8 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
         }
 
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
-        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo()) &&
-            !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
+        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())
+                && !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[0]);
         }
@@ -124,20 +130,22 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
-            AggregationBuffer myAggr = new MAPAggregationBuffer();
+        public MAPAggregationBuffer getNewAggregationBuffer() throws HiveException {
+            MAPAggregationBuffer myAggr = new MAPAggregationBuffer();
             reset(myAggr);
             return myAggr;
         }
 
         @Override
-        public void reset(AggregationBuffer agg) throws HiveException {
+        public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MAPAggregationBuffer myAggr = (MAPAggregationBuffer) agg;
             myAggr.reset();
         }
 
         @Override
-        public void iterate(AggregationBuffer agg, Object[] parameters) throws HiveException {
+        public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
+                Object[] parameters) throws HiveException {
             MAPAggregationBuffer myAggr = (MAPAggregationBuffer) agg;
 
             List<?> recommendList = recommendListOI.getList(parameters[0]);
@@ -155,14 +163,16 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
             }
             if (recommendSize < 0 || recommendSize > recommendList.size()) {
                 throw new UDFArgumentException(
-                        "The third argument `int recommendSize` must be in [0, " + recommendList.size() + "]");
+                    "The third argument `int recommendSize` must be in [0, " + recommendList.size()
+                            + "]");
             }
 
             myAggr.iterate(recommendList, truthList, recommendSize);
         }
 
         @Override
-        public Object terminatePartial(AggregationBuffer agg) throws HiveException {
+        public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MAPAggregationBuffer myAggr = (MAPAggregationBuffer) agg;
 
             Object[] partialResult = new Object[2];
@@ -172,7 +182,8 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public void merge(AggregationBuffer agg, Object partial) throws HiveException {
+        public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object partial)
+                throws HiveException {
             if (partial == null) {
                 return;
             }
@@ -187,7 +198,8 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public DoubleWritable terminate(AggregationBuffer agg) throws HiveException {
+        public DoubleWritable terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
+                throws HiveException {
             MAPAggregationBuffer myAggr = (MAPAggregationBuffer) agg;
             double result = myAggr.get();
             return new DoubleWritable(result);
@@ -195,12 +207,14 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
 
     }
 
-    public static class MAPAggregationBuffer implements AggregationBuffer {
+    public static class MAPAggregationBuffer extends AbstractAggregationBuffer {
 
         double sum;
         long count;
 
-        public MAPAggregationBuffer() {}
+        public MAPAggregationBuffer() {
+            super();
+        }
 
         void reset() {
             this.sum = 0.d;
@@ -219,7 +233,8 @@ public final class MAPUDAF extends AbstractGenericUDAFResolver {
             return sum / count;
         }
 
-        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList, @Nonnull int recommendSize) {
+        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList,
+                @Nonnull int recommendSize) {
             sum += BinaryResponsesMeasures.MAP(recommendList, truthList, recommendSize);
             count++;
         }

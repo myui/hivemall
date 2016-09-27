@@ -25,6 +25,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.Text;
 
+@SuppressWarnings("deprecation")
 @Description(name = "max_label",
         value = "_FUNC_(double value, string label) - Returns a label that has the maximum value")
 public final class MaxValueLabelUDAF extends UDAF {

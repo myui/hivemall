@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@SuppressWarnings("deprecation")
 @Description(name = "rmse",
         value = "_FUNC_(double predicted, double actual) - Return a Root Mean Squared Error")
 public final class RootMeanSquaredErrorUDAF extends UDAF {

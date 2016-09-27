@@ -30,10 +30,7 @@ import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
 
 /**
- * A wrapper of hivemall for DataFrame.
- * This class only supports the parts of functions available in `scripts/ddl/define-udfs.sh`.
- * Those who'd like to use more functions this class does not support
- * let us know in a github issue tracker.
+ * Hivemall wrapper and some utility functions for DataFrame.
  *
  * @groupname regression
  * @groupname classifier
