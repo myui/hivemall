@@ -18,8 +18,9 @@
  */
 package hivemall.evaluation;
 
-import javax.annotation.Nonnull;
 import java.util.List;
+
+import javax.annotation.Nonnull;
 
 /**
  * Utility class of various measures.
@@ -31,9 +32,7 @@ public final class GradedResponsesMeasures {
     private GradedResponsesMeasures() {}
 
     public static double nDCG(@Nonnull final List<Double> recommendTopRelScoreList,
-                              @Nonnull final List<Double> truthTopRelScoreList,
-                              @Nonnull final int recommendSize) {
-
+            @Nonnull final List<Double> truthTopRelScoreList, @Nonnull final int recommendSize) {
         double dcg = DCG(recommendTopRelScoreList, recommendSize);
         double idcg = DCG(truthTopRelScoreList, recommendSize);
         return dcg / idcg;

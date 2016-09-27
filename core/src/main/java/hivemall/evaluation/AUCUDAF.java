@@ -18,6 +18,13 @@
 package hivemall.evaluation;
 
 import hivemall.utils.hadoop.HiveUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
@@ -25,20 +32,20 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.AbstractGenericUDAFResolver;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AbstractAggregationBuffer;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
-import org.apache.hadoop.hive.serde2.objectinspector.*;
+import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableIntObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.io.LongWritable;
 
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+@SuppressWarnings("deprecation")
 @Description(
         name = "auc",
         value = "_FUNC_(array rankItems, array correctItems [, const int recommendSize = rankItems.size])"
@@ -56,8 +63,8 @@ public final class AUCUDAF extends AbstractGenericUDAFResolver {
         }
 
         ListTypeInfo arg1type = HiveUtils.asListTypeInfo(typeInfo[0]);
-        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo()) &&
-            !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
+        if (!HiveUtils.isPrimitiveTypeInfo(arg1type.getListElementTypeInfo())
+                && !HiveUtils.isStructTypeInfo(arg1type.getListElementTypeInfo())) {
             throw new UDFArgumentTypeException(0,
                 "The first argument `array rankItems` is invalid form: " + typeInfo[0]);
         }
@@ -155,7 +162,8 @@ public final class AUCUDAF extends AbstractGenericUDAFResolver {
             }
             if (recommendSize < 0 || recommendSize > recommendList.size()) {
                 throw new UDFArgumentException(
-                        "The third argument `int recommendSize` must be in [0, " + recommendList.size() + "]");
+                    "The third argument `int recommendSize` must be in [0, " + recommendList.size()
+                            + "]");
             }
 
             myAggr.iterate(recommendList, truthList, recommendSize);
@@ -195,12 +203,14 @@ public final class AUCUDAF extends AbstractGenericUDAFResolver {
 
     }
 
-    public static class AUCAggregationBuffer implements AggregationBuffer {
+    public static class AUCAggregationBuffer extends AbstractAggregationBuffer {
 
         double sum;
         long count;
 
-        public AUCAggregationBuffer() {}
+        public AUCAggregationBuffer() {
+            super();
+        }
 
         void reset() {
             this.sum = 0.d;
@@ -219,7 +229,8 @@ public final class AUCUDAF extends AbstractGenericUDAFResolver {
             return sum / count;
         }
 
-        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList, @Nonnull int recommendSize) {
+        void iterate(@Nonnull List<?> recommendList, @Nonnull List<?> truthList,
+                @Nonnull int recommendSize) {
             sum += BinaryResponsesMeasures.AUC(recommendList, truthList, recommendSize);
             count++;
         }

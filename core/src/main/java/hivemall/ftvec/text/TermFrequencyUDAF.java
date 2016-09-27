@@ -29,6 +29,7 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 
+@SuppressWarnings("deprecation")
 @Description(name = "tf",
         value = "_FUNC_(string text) - Return a term frequency in <string, float>")
 public final class TermFrequencyUDAF extends UDAF {

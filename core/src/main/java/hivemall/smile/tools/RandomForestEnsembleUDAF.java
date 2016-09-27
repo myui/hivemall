@@ -29,6 +29,7 @@ import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 
+@SuppressWarnings("deprecation")
 @Description(name = "rf_ensemble",
         value = "_FUNC_(int y) - Returns emsebled prediction results of Random Forest classifiers")
 public final class RandomForestEnsembleUDAF extends UDAF {

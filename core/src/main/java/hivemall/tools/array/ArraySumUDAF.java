@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 
+@SuppressWarnings("deprecation")
 @Description(name = "array_sum", value = "_FUNC_(array<number>) - Returns an array<double>"
         + " in which each element is summed up")
 public final class ArraySumUDAF extends UDAF {

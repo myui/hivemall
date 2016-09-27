@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.ql.exec.UDAF;
 import org.apache.hadoop.hive.ql.exec.UDAFEvaluator;
 import org.apache.hadoop.io.FloatWritable;
 
+@SuppressWarnings("deprecation")
 @Description(
         name = "argmin_kld",
         value = "_FUNC_(float mean, float covar) - Returns mean or covar that minimize a KL-distance among distributions",
