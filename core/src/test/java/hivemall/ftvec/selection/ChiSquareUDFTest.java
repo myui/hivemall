@@ -69,12 +69,12 @@ public class ChiSquareUDFTest {
             result1[i] = Double.valueOf(((List) result[1]).get(i).toString());
         }
 
-        final double[] answer0 = new double[] {10.817820878493995, 3.5944990176817315,
-                116.16984746363957, 67.24482558215503};
-        final double[] answer1 = new double[] {0.004476514990225833, 0.16575416718561453, 0.d,
-                2.55351295663786e-15};
+        // compare with results by scikit-learn
+        final double[] answer0 = new double[] {10.81782088, 3.59449902, 116.16984746, 67.24482759};
+        final double[] answer1 = new double[] {4.47651499e-03, 1.65754167e-01, 5.94344354e-26,
+                2.50017968e-15};
 
-        Assert.assertArrayEquals(answer0, result0, 0.d);
-        Assert.assertArrayEquals(answer1, result1, 0.d);
+        Assert.assertArrayEquals(answer0, result0, 1e-5);
+        Assert.assertArrayEquals(answer1, result1, 1e-5);
     }
 }
