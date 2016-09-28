@@ -21,7 +21,6 @@ package hivemall.ftvec.selection;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.lang.Preconditions;
-import org.apache.commons.math3.util.FastMath;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -193,7 +192,7 @@ public class SignalNoiseRatioUDAF extends AbstractGenericUDAFResolver {
 
             int clazz = -1;
             for (int i = 0; i < nClasses; i++) {
-                int label = PrimitiveObjectInspectorUtils.getInt(labels.get(i), labelOI);
+                final int label = PrimitiveObjectInspectorUtils.getInt(labels.get(i), labelOI);
                 if (label == 1 && clazz == -1) {
                     clazz = i;
                 } else if (label == 1) {
@@ -255,6 +254,12 @@ public class SignalNoiseRatioUDAF extends AbstractGenericUDAFResolver {
             for (int i = 0; i < nClasses; i++) {
                 final long n = myAgg.ns[i];
                 final long m = PrimitiveObjectInspectorUtils.getLong(ns.get(i), nOI);
+
+                // no need to merge class `i`
+                if (m == 0) {
+                    continue;
+                }
+
                 final List means = meansOI.getList(meanss.get(i));
                 final List variances = variancesOI.getList(variancess.get(i));
 
@@ -266,10 +271,19 @@ public class SignalNoiseRatioUDAF extends AbstractGenericUDAFResolver {
                     final double varianceN = myAgg.variancess[i][j];
                     final double varianceM = PrimitiveObjectInspectorUtils.getDouble(
                         variances.get(j), varianceOI);
-                    myAgg.meanss[i][j] = (n * meanN + m * meanM) / (double) (n + m);
-                    myAgg.variancess[i][j] = (varianceN * (n - 1) + varianceM * (m - 1) + FastMath.pow(
-                        meanN - meanM, 2) * n * m / (n + m))
-                            / (n + m - 1);
+
+                    if (n == 0) {
+                        // only assign `other` into `myAgg`
+                        myAgg.meanss[i][j] = meanM;
+                        myAgg.variancess[i][j] = varianceM;
+                    } else {
+                        // merge by Chan's method
+                        // http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+                        myAgg.meanss[i][j] = (n * meanN + m * meanM) / (double) (n + m);
+                        myAgg.variancess[i][j] = (varianceN * (n - 1) + varianceM * (m - 1) + Math.pow(
+                            meanN - meanM, 2) * n * m / (n + m))
+                                / (n + m - 1);
+                    }
                 }
             }
         }
@@ -302,25 +316,33 @@ public class SignalNoiseRatioUDAF extends AbstractGenericUDAFResolver {
 
             // calc SNR between classes each feature
             final double[] result = new double[nFeatures];
-            final double[] sds = new double[nClasses]; // memo
+            final double[] sds = new double[nClasses]; // for memorization
             for (int i = 0; i < nFeatures; i++) {
-                sds[0] = FastMath.sqrt(myAgg.variancess[0][i]);
+                sds[0] = Math.sqrt(myAgg.variancess[0][i]);
                 for (int j = 1; j < nClasses; j++) {
-                    sds[j] = FastMath.sqrt(myAgg.variancess[j][i]);
-                    if (Double.isNaN(sds[j])) {
+                    sds[j] = Math.sqrt(myAgg.variancess[j][i]);
+                    // `ns[j] == 0` means no feature entry belongs to class `j`, skip
+                    if (myAgg.ns[j] == 0) {
                         continue;
                     }
                     for (int k = 0; k < j; k++) {
-                        if (Double.isNaN(sds[k])) {
+                        // avoid comparing between classes having only single entry
+                        if (myAgg.ns[k] == 0 || (myAgg.ns[j] == 1 && myAgg.ns[k] == 1)) {
                             continue;
                         }
-                        result[i] += FastMath.abs(myAgg.meanss[j][i] - myAgg.meanss[k][i])
+
+                        // SUM(snr) GROUP BY feature
+                        final double snr = Math.abs(myAgg.meanss[j][i] - myAgg.meanss[k][i])
                                 / (sds[j] + sds[k]);
+                        // if `NaN`(when diff between means and both sds are zero, IOW, all related values are equal),
+                        // regard feature `i` as meaningless between class `j` and `k` and skip
+                        if (!Double.isNaN(snr)) {
+                            result[i] += snr; // accept `Infinity`
+                        }
                     }
                 }
             }
 
-            // SUM(snr) GROUP BY feature
             return WritableUtils.toWritableList(result);
         }
     }
