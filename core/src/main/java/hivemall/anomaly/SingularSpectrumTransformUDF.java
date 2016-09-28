@@ -41,6 +41,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * Change-point detection based on Singular Spectrum Transformation (SST).
+ *
+ * References:
+ * <ul>
+ * <li>T. Ide and K. Inoue,
+ * "Knowledge Discovery from Heterogeneous Dynamic Systems using Change-Point Correlations", SDM'05.</li>
+ * <li>T. Ide and K. Tsuda, "Change-point detection using Krylov subspace learning", SDM'07.</li>
+ * </ul>
+ */
+
 @Description(
         name = "sst",
         value = "_FUNC_(double|array<double> x [, const string options])"
