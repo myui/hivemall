@@ -740,7 +740,8 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
     // | 1  2  3 |T    | 5  6  7 |
     // | 3  4  5 |  *  | 7  8  9 |
-    val df0 = Seq((1, Seq(1, 2, 3), Seq(5, 6, 7)), (1, Seq(3, 4, 5), Seq(7, 8, 9))).toDF.as("c0", "arg0", "arg1")
+    val df0 = Seq((1, Seq(1, 2, 3), Seq(5, 6, 7)), (1, Seq(3, 4, 5), Seq(7, 8, 9)))
+      .toDF("c0", "arg0", "arg1")
 
     df0.groupby($"c0").transpose_and_dot("arg0", "arg1").collect() shouldEqual
       Seq(Row(1, Seq(Seq(26.0, 30.0, 34.0), Seq(38.0, 44.0, 50.0), Seq(50.0, 58.0, 66.0))))

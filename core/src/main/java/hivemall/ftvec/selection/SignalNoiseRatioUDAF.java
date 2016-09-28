@@ -335,7 +335,7 @@ public class SignalNoiseRatioUDAF extends AbstractGenericUDAFResolver {
                         final double snr = Math.abs(myAgg.meanss[j][i] - myAgg.meanss[k][i])
                                 / (sds[j] + sds[k]);
                         // if `NaN`(when diff between means and both sds are zero, IOW, all related values are equal),
-                        // regard feature `i` as meaningless between class `j` and `k` and skip
+                        // regard feature `i` as meaningless between class `j` and `k`, skip
                         if (!Double.isNaN(snr)) {
                             result[i] += snr; // accept `Infinity`
                         }
