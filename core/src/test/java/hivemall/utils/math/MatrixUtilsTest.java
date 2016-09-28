@@ -19,6 +19,7 @@ package hivemall.utils.math;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -205,4 +206,70 @@ public class MatrixUtilsTest {
         Assert.assertArrayEquals(expected, actual);
     }
 
+    @Test
+    public void testPower1() {
+        RealMatrix A = new Array2DRowRealMatrix(new double[][] {new double[] {1, 2, 3}, new double[] {4, 5, 6}});
+
+        double[] x = new double[3];
+        x[0] = Math.random();
+        x[1] = Math.random();
+        x[2] = Math.random();
+
+        double[] u = new double[2];
+        double[] v = new double[3];
+
+        double s = MatrixUtils.power1(A, x, 2, u, v);
+
+        SingularValueDecomposition svdA = new SingularValueDecomposition(A);
+
+        Assert.assertArrayEquals(svdA.getU().getColumn(0), u, 0.001d);
+        Assert.assertArrayEquals(svdA.getV().getColumn(0), v, 0.001d);
+        Assert.assertEquals(svdA.getSingularValues()[0], s, 0.001d);
+    }
+
+    @Test
+    public void testLanczosTridiagonalization() {
+        // Symmetric matrix
+        RealMatrix C = new Array2DRowRealMatrix(new double[][] {
+                                new double[] {1, 2, 3, 4}, new double[] {2, 1, 4, 3},
+                                new double[] {3, 4, 1, 2}, new double[] {4, 3, 2, 1}});
+
+        // naive initial vector
+        double[] a = new double[] {1, 1, 1, 1};
+
+        RealMatrix actual = new Array2DRowRealMatrix(new double[4][4]);
+        MatrixUtils.lanczosTridiagonalization(C, a, actual);
+
+        RealMatrix expected = new Array2DRowRealMatrix(new double[][] {
+                                new double[] {40, 60, 0, 0}, new double[] {60, 10, 120, 0},
+                                new double[] {0, 120, 10, 120}, new double[] {0, 0, 120, 10}});
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testTridiagonalEigen() {
+        // Tridiagonal Matrix
+        RealMatrix T = new Array2DRowRealMatrix(new double[][] {
+                new double[] {40, 60, 0, 0}, new double[] {60, 10, 120, 0},
+                new double[] {0, 120, 10, 120}, new double[] {0, 0, 120, 10}});
+
+        double[] eigvals = new double[4];
+        RealMatrix eigvecs = new Array2DRowRealMatrix(new double[4][4]);
+
+        MatrixUtils.tridiagonalEigen(T, 2, eigvals, eigvecs);
+
+        RealMatrix actual = eigvecs.multiply(eigvecs.transpose());
+
+        RealMatrix expected = new Array2DRowRealMatrix(new double[4][4]);
+        for (int i = 0; i < 4; i++) {
+            expected.setEntry(i, i, 1);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                Assert.assertEquals(expected.getEntry(i, j), actual.getEntry(i, j), 0.001d);
+            }
+        }
+    }
 }

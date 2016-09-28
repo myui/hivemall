@@ -89,6 +89,8 @@ public final class SingularSpectrumTransformUDF extends UDFWithOptions {
             "Number of singular vectors (i.e. principal components) [default: 3]");
         opts.addOption("k", "n_dim", true,
             "Number of dimensions for the Krylov subspaces [default: 5 (`2*r` if `r` is even, `2*r-1` otherwise)]");
+        opts.addOption("score", "scorefunc", true,
+            "Score function [default: svd, ika]");
         opts.addOption("th", "threshold", true,
             "Score threshold (inclusive) for determining change-point existence [default: -1, do not output decision]");
         return opts;
@@ -105,6 +107,12 @@ public final class SingularSpectrumTransformUDF extends UDFWithOptions {
         this._params.r = Primitives.parseInt(cl.getOptionValue("r"), _params.r);
         this._params.k = Primitives.parseInt(
             cl.getOptionValue("k"), (_params.r % 2 == 0) ? (2 * _params.r) : (2 * _params.r - 1));
+
+        this._params.scoreFunc = ScoreFunction.resolve(cl.getOptionValue("scorefunc", ScoreFunction.svd.name()));
+        if ((_params.w != _params.n || _params.w != _params.m) && _params.scoreFunc == ScoreFunction.ika) {
+            throw new UDFArgumentException("IKA-based efficient SST requires w = n = m");
+        }
+
         this._params.changepointThreshold = Primitives.parseDouble(
             cl.getOptionValue("th"), _params.changepointThreshold);
 
@@ -196,13 +204,32 @@ public final class SingularSpectrumTransformUDF extends UDFWithOptions {
         int g = -30;
         int r = 3;
         int k = 5;
+        ScoreFunction scoreFunc = ScoreFunction.svd;
         double changepointThreshold = -1.d;
 
         Parameters() {}
+
+        void set(@Nonnull ScoreFunction func) {
+            this.scoreFunc = func;
+        }
     }
 
     public interface SingularSpectrumTransformInterface {
         void update(@Nonnull Object arg, @Nonnull double[] outScores) throws HiveException;
+    }
+
+    public enum ScoreFunction {
+        svd, ika;
+
+        static ScoreFunction resolve(@Nullable final String name) {
+            if (svd.name().equalsIgnoreCase(name)) {
+                return svd;
+            } else if (ika.name().equalsIgnoreCase(name)) {
+                return ika;
+            } else {
+                throw new IllegalArgumentException("Unsupported ScoreFunction: " + name);
+            }
+        }
     }
 
 }

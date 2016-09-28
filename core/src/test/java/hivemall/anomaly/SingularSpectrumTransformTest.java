@@ -17,6 +17,7 @@
  */
 package hivemall.anomaly;
 
+import hivemall.anomaly.SingularSpectrumTransformUDF.ScoreFunction;
 import hivemall.anomaly.SingularSpectrumTransformUDF.Parameters;
 
 import java.io.BufferedReader;
@@ -37,8 +38,45 @@ public class SingularSpectrumTransformTest {
     private static final boolean DEBUG = false;
 
     @Test
-    public void testSST() throws IOException, HiveException {
+    public void testSVDSST() throws IOException, HiveException {
+        int numChangepoints = detectSST(ScoreFunction.svd, 0.95d);
+        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
+            numChangepoints > 0);
+        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
+            numChangepoints < 5);
+    }
+
+    @Test
+    public void testIKASST() throws IOException, HiveException {
+        int numChangepoints = detectSST(ScoreFunction.ika, 0.65d);
+        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
+                numChangepoints > 0);
+        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
+                numChangepoints < 5);
+    }
+
+    @Test
+    public void testSVDTwitterData() throws IOException, HiveException {
+        int numChangepoints = detectTwitterData(ScoreFunction.svd, 0.005d);
+        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
+            numChangepoints > 0);
+        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
+            numChangepoints < 5);
+    }
+
+    @Test
+    public void testIKATwitterData() throws IOException, HiveException {
+        int numChangepoints = detectTwitterData(ScoreFunction.ika, 0.0175d);
+        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
+                numChangepoints > 0);
+        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
+                numChangepoints < 5);
+    }
+
+    private static int detectSST(@Nonnull final ScoreFunction scoreFunc,
+             @Nonnull final double threshold) throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(scoreFunc);
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         SingularSpectrumTransform sst = new SingularSpectrumTransform(params, oi);
         double[] outScores = new double[1];
@@ -51,19 +89,18 @@ public class SingularSpectrumTransformTest {
             double x = Double.parseDouble(line);
             sst.update(x, outScores);
             printf("%f %f%n", x, outScores[0]);
-            if (outScores[0] > 0.95d) {
+            if (outScores[0] > threshold) {
                 numChangepoints++;
             }
         }
-        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
-            numChangepoints > 0);
-        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
-            numChangepoints < 5);
+
+        return numChangepoints;
     }
 
-    @Test
-    public void testTwitterData() throws IOException, HiveException {
+    private static int detectTwitterData(@Nonnull final ScoreFunction scoreFunc,
+             @Nonnull final double threshold) throws IOException, HiveException {
         Parameters params = new Parameters();
+        params.set(scoreFunc);
         PrimitiveObjectInspector oi = PrimitiveObjectInspectorFactory.javaDoubleObjectInspector;
         SingularSpectrumTransform sst = new SingularSpectrumTransform(params, oi);
         double[] outScores = new double[1];
@@ -76,15 +113,13 @@ public class SingularSpectrumTransformTest {
             double x = Double.parseDouble(line);
             sst.update(x, outScores);
             printf("%d %f %f%n", i, x, outScores[0]);
-            if (outScores[0] > 0.005d) {
+            if (outScores[0] > threshold) {
                 numChangepoints++;
             }
             i++;
         }
-        Assert.assertTrue("#changepoints SHOULD be greater than 0: " + numChangepoints,
-            numChangepoints > 0);
-        Assert.assertTrue("#changepoints SHOULD be less than 5: " + numChangepoints,
-            numChangepoints < 5);
+
+        return numChangepoints;
     }
 
     private static void println(String msg) {
