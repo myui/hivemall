@@ -55,6 +55,7 @@
 		<protoc.path>${env.PROTOC_PATH}</protoc.path>
 		<hive.version>0.13.0</hive.version>
 		<scala.version>2.11.8</scala.version>
+		<dependency.locations.enabled>false</dependency.locations.enabled>
 	</properties>
 
 	<repositories>
@@ -315,6 +316,22 @@
 				</configuration>
 			</plugin>
 			<!-- end sonatype deploy -->
+
+            <!-- start mvn site -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-site-plugin</artifactId>
+              <version>3.5.1</version>
+              <dependencies>
+                <dependency>
+                  <groupId>org.apache.maven.doxia</groupId>
+                  <artifactId>doxia-module-markdown</artifactId>
+                  <version>1.7</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+            <!-- end mvn site -->
+
 		</plugins>
 	</build>
 

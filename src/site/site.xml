@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+	Licensed to the Apache Software Foundation (ASF) under one
+	or more contributor license agreements. See the NOTICE file
+	distributed with this work for additional information
+	regarding copyright ownership. The ASF licenses this file
+	to you under the Apache License, Version 2.0 (the
+	"License"); you may not use this file except in compliance
+	with the License. You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+
+-->
+<project name="Apache Hivemall" xmlns="http://maven.apache.org/DECORATION/1.7.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/DECORATION/1.7.0 http://maven.apache.org/xsd/decoration-1.7.0.xsd">
+
+	<skin>
+		<groupId>org.apache.maven.skins</groupId>
+		<artifactId>maven-fluido-skin</artifactId>
+		<version>1.5</version>
+	</skin>
+
+	<custom>
+		<fluidoSkin>
+			<topBarEnabled>true</topBarEnabled>
+			<navBarStyle>navbar-inverse</navBarStyle>
+			<topBarIcon>
+				<name>Apache Hivemall</name>
+				<alt>Apache Hivemall</alt>
+				<src>/images/topbar-logo.png</src>
+				<href>/index.html</href>
+			</topBarIcon>
+			<sideBarEnabled>false</sideBarEnabled>
+			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
+			<gitHub>
+				<projectId>apache/maven-skins</projectId>
+				<ribbonOrientation>right</ribbonOrientation>
+				<ribbonColor>red</ribbonColor>
+			</gitHub>
+			<twitter>
+				<user>ApacheHivemall</user>
+				<showUser>true</showUser>
+				<showFollowers>false</showFollowers>
+			</twitter>
+			<facebookLike />
+			<skipGenerationDate>true</skipGenerationDate>
+		</fluidoSkin>
+	</custom>
+
+	<bannerLeft>
+		<name>Apache Hivemall</name>
+		<src>/images/hivemall-logo.png</src>
+		<alt>Apache Sirona logo</alt>
+		<href>http://sirona.incubator.apache.org</href>
+	</bannerLeft>
+
+	<!-- <googleAnalyticsAccountId>UA-xxxx</googleAnalyticsAccountId> -->
+
+	<publishDate format="yyyy-MM-dd" position="right" />
+	<version position="right" />
+
+	<poweredBy>
+		<logo name="Apache Incubator" href="http://incubator.apache.org/projects/hivemall.html"
+			img="http://incubator.apache.org/images/egg-logo.png" />
+	</poweredBy>
+
+	<body>
+
+		<head>
+	       <![CDATA[
+	       <link rel="icon" href="./images/hivemall-favicon.ico"/>
+	       <script type="text/javascript" src="./js/misc.js"></script>
+	       ]]>
+	    </head>
+
+		<menu name="Project">
+			<item name="Home" href="/index.html" />
+			<item name="API" href="/apidocs/index.html" />
+			<item name="Implementations" href="/implementations.html" />
+			<item name="User Guide" href="/userguide.html" />
+			<item name="Download" href="/download.html" />
+			<item name="Contributing" href="/contributing.html" />
+			<item name="Team" href="/team-list.html" />
+		</menu>
+
+		<menu name="Developer Resources">
+			<item name="Mailing Lists" href="/mail-lists.html" />
+			<item name="Source (Git)"
+				href="https://git-wip-us.apache.org/repos/asf/incubator-commonsrdf.git" />
+			<item name="Source (GitHub mirror)" href="https://github.com/apache/incubator-commonsrdf/" />
+			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/COMMONSRDF" />
+		</menu>
+
+		<menu ref="reports" inherit="top" />
+
+		<menu name="ASF">
+			<item name="How Apache Works" href="http://www.apache.org/foundation/how-it-works.html" />
+			<item name="Foundation" href="http://www.apache.org/foundation/" />
+			<item name="Sponsoring Apache" href="http://www.apache.org/foundation/sponsorship.html" />
+			<item name="Thanks" href="http://www.apache.org/foundation/thanks.html" />
+		</menu>
+
+		<breadcrumbs>
+			<item name="Apache" href="http://www.apache.org/" />
+			<item name="Sirona" href="http://sirona.incubator.apache.org" />
+		</breadcrumbs>
+
+		<footer><![CDATA[
+			<p>
+                Apache Sirona, Apache, the Apache feather logo, and the Apache Sirona project logos are trademarks of The Apache Software Foundation.
+                All other marks mentioned may be trademarks or registered trademarks of their respective owners.
+			</p>
+			<p>
+			  <small>
+                Apache Sirona is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator.
+                Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, 
+                and decision making process have stabilized in a manner consistent with other successful ASF projects. 
+                While incubation status is not necessarily a reflection of the completeness or stability of the code, 
+                it does indicate that the project has yet to be fully endorsed by the ASF.
+			  </small>
+			</p>
+		]]></footer>
+
+	</body>
+
+</project>
