@@ -14,11 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$(document).ready(function() {
-   $(".carousel-inner").swiperight(function() {
-       $(this).parent().carousel('prev');
-   });
-   $(".carousel-inner").swipeleft(function() {
-       $(this).parent().carousel('next');
-   });
+$(document).ready(function(){
+    $('#screenshots-carousel').carousel({
+        interval: 4000
+    });
+
+    $('#carousel-prev' ).on("click", function(){
+        $('#screenshots-carousel').carousel('prev');
+    });
+
+    $('#carousel-next' ).on("click", function(){
+        $('#screenshots-carousel').carousel('next');
+    });
 });

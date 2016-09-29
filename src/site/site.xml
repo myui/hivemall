@@ -35,7 +35,7 @@
 			<topBarIcon>
 				<name>Apache Hivemall</name>
 				<alt>Apache Hivemall</alt>
-				<src>/images/topbar-logo.png</src>
+				<src>/images/hivemall-logo-small.png</src>
 				<href>/index.html</href>
 			</topBarIcon>
 			<sideBarEnabled>false</sideBarEnabled>
@@ -55,15 +55,6 @@
 		</fluidoSkin>
 	</custom>
 
-	<bannerLeft>
-		<name>Apache Hivemall</name>
-		<src>/images/hivemall-logo.png</src>
-		<alt>Apache Sirona logo</alt>
-		<href>http://sirona.incubator.apache.org</href>
-	</bannerLeft>
-
-	<!-- <googleAnalyticsAccountId>UA-xxxx</googleAnalyticsAccountId> -->
-
 	<publishDate format="yyyy-MM-dd" position="right" />
 	<version position="right" />
 
@@ -73,13 +64,6 @@
 	</poweredBy>
 
 	<body>
-
-		<head>
-	       <![CDATA[
-	       <link rel="icon" href="./images/hivemall-favicon.ico"/>
-	       <script type="text/javascript" src="./js/misc.js"></script>
-	       ]]>
-	    </head>
 
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
@@ -110,17 +94,17 @@
 
 		<breadcrumbs>
 			<item name="Apache" href="http://www.apache.org/" />
-			<item name="Sirona" href="http://sirona.incubator.apache.org" />
+			<item name="Hivemall" href="http://hivemall.incubator.apache.org" />
 		</breadcrumbs>
 
 		<footer><![CDATA[
 			<p>
-                Apache Sirona, Apache, the Apache feather logo, and the Apache Sirona project logos are trademarks of The Apache Software Foundation.
+                Apache Hivemall, Apache, the Apache feather logo, and the Apache Hivemall project logos are trademarks of The Apache Software Foundation.
                 All other marks mentioned may be trademarks or registered trademarks of their respective owners.
 			</p>
 			<p>
 			  <small>
-                Apache Sirona is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator.
+                Apache Hivemall is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator.
                 Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, 
                 and decision making process have stabilized in a manner consistent with other successful ASF projects. 
                 While incubation status is not necessarily a reflection of the completeness or stability of the code, 
