@@ -66,6 +66,7 @@
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<testOutputDirectory>target/test-classes</testOutputDirectory>
 		<plugins>
+			<!-- For resolving spark binary incompatibility -->
 			<plugin>
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>3.0.0</version>
