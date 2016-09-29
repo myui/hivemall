@@ -90,7 +90,7 @@
 
 		<breadcrumbs>
 			<item name="Apache" href="http://www.apache.org/" />
-			<item name="Apache Hivemall" href="/index.html" />
+			<item name="Apache Hivemall" href="http://hivemall.incubator.apache.org" />
 		</breadcrumbs>
 
 		<footer><![CDATA[
