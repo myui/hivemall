@@ -13,6 +13,12 @@
 	<name>Hivemall on Spark 1.6</name>
 	<packaging>jar</packaging>
 
+	<properties>
+		<PermGen>64m</PermGen>
+		<MaxPermGen>1024m</MaxPermGen>
+		<CodeCacheSize>512m</CodeCacheSize>
+	</properties>
+
 	<dependencies>
 		<!-- hivemall dependencies -->
 		<dependency>
@@ -28,7 +34,7 @@
 			<scope>compile</scope>
 		</dependency>
 
-		<!-- other third-party dependencies -->
+		<!-- third-party dependencies -->
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
@@ -36,40 +42,42 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_2.11</artifactId>
-			<version>${spark.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql_2.11</artifactId>
-			<version>${spark.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-hive_2.11</artifactId>
-			<version>${spark.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-streaming_2.11</artifactId>
-			<version>${spark.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-mllib_2.11</artifactId>
-			<version>${spark.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
 			<version>1.8</version>
 			<scope>compile</scope>
+		</dependency>
+
+		<!-- other provided dependencies -->
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-sql_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-hive_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-streaming_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-mllib_${scala.binary.version}</artifactId>
+			<version>${spark.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- test dependencies -->
@@ -87,7 +95,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.11</artifactId>
+			<artifactId>scalatest_${scala.binary.version}</artifactId>
 			<version>2.2.4</version>
 			<scope>test</scope>
 		</dependency>
@@ -96,29 +104,9 @@
 	<build>
 		<directory>target</directory>
 		<outputDirectory>target/classes</outputDirectory>
-		<finalName>${project.artifactId}-${spark.version.parsed}_${scala.version.parsed}-${project.version}</finalName>
+		<finalName>${project.artifactId}-${spark.binary.version}_${scala.binary.version}-${project.version}</finalName>
 		<testOutputDirectory>target/test-classes</testOutputDirectory>
 		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>regex-spark-property</id>
-						<goals>
-							<goal>regex-property</goal>
-						</goals>
-						<configuration>
-							<name>spark.version.parsed</name>
-							<value>${spark.version}</value>
-							<regex>(\d+\.\d+)\.\d+</regex>
-							<replacement>$1</replacement>
-							<failIfNoMatch>true</failIfNoMatch>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 			<!-- For incremental compilation -->
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
@@ -126,8 +114,16 @@
 				<version>3.2.2</version>
 				<executions>
 					<execution>
+						<id>scala-compile-first</id>
+						<phase>process-resources</phase>
 						<goals>
 							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>scala-test-compile-first</id>
+						<phase>process-test-resources</phase>
+						<goals>
 							<goal>testCompile</goal>
 						</goals>
 					</execution>
@@ -145,20 +141,23 @@
 					<jvmArgs>
 						<jvmArg>-Xms1024m</jvmArg>
 						<jvmArg>-Xmx1024m</jvmArg>
+						<jvmArg>-XX:PermSize=${PermGen}</jvmArg>
+						<jvmArg>-XX:MaxPermSize=${MaxPermGen}</jvmArg>
+						<jvmArg>-XX:ReservedCodeCacheSize=${CodeCacheSize}</jvmArg>
 					</jvmArgs>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark_2.11-xx.jar -->
+			<!-- hivemall-spark_xx-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.5</version>
 				<configuration>
-					<finalName>${project.artifactId}-${spark.version.parsed}_${scala.version.parsed}-${project.version}</finalName>
+					<finalName>${project.artifactId}-${spark.binary.version}_${scala.binary.version}-${project.version}</finalName>
 					<outputDirectory>${project.parent.build.directory}</outputDirectory>
 				</configuration>
 			</plugin>
-			<!-- hivemall-spark_2.11-xx-with-dependencies.jar including minimum dependencies -->
+			<!-- hivemall-spark_xx-xx-with-dependencies.jar including minimum dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -171,7 +170,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>${project.artifactId}-${spark.version.parsed}_${scala.version.parsed}-${project.version}-with-dependencies</finalName>
+							<finalName>${project.artifactId}-${spark.binary.version}_${scala.binary.version}-${project.version}-with-dependencies</finalName>
 							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 							<minimizeJar>false</minimizeJar>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
@@ -188,7 +187,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- disable surefire -->
+			<!-- disable surefire because there is no java test -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -202,11 +201,32 @@
 				<groupId>org.scalatest</groupId>
 				<artifactId>scalatest-maven-plugin</artifactId>
 				<version>1.0</version>
+				<!-- Note config is repeated in surefire config -->
 				<configuration>
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
-					<filereports>WDF TestSuite.txt</filereports>
-					<argLine>-Xms256m -Xmx1024m -XX:MaxPermSize=1024m -XX:+CMSClassUnloadingEnabled</argLine>
+					<filereports>SparkTestSuite.txt</filereports>
+					<argLine>-ea -Xmx3g -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=${CodeCacheSize}</argLine>
+					<stderr/>
+					<environmentVariables>
+						<SPARK_PREPEND_CLASSES>1</SPARK_PREPEND_CLASSES>
+						<SPARK_SCALA_VERSION>${scala.binary.version}</SPARK_SCALA_VERSION>
+						<SPARK_TESTING>1</SPARK_TESTING>
+						<JAVA_HOME>${env.JAVA_HOME}</JAVA_HOME>
+					</environmentVariables>
+					<systemProperties>
+						<log4j.configuration>file:src/test/resources/log4j.properties</log4j.configuration>
+						<derby.system.durability>test</derby.system.durability>
+						<java.awt.headless>true</java.awt.headless>
+						<java.io.tmpdir>${project.build.directory}/tmp</java.io.tmpdir>
+						<spark.testing>1</spark.testing>
+						<spark.ui.enabled>false</spark.ui.enabled>
+						<spark.ui.showConsoleProgress>false</spark.ui.showConsoleProgress>
+						<spark.unsafe.exceptionOnMemoryLeak>true</spark.unsafe.exceptionOnMemoryLeak>
+						<!-- Needed by sql/hive tests. -->
+						<test.src.tables>__not_used__</test.src.tables>
+					</systemProperties>
+					<tagsToExclude>${test.exclude.tags}</tagsToExclude>
 				</configuration>
 				<executions>
 					<execution>
