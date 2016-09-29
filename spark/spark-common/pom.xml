@@ -14,8 +14,9 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<scala.version>2.11.8</scala.version>
+		<PermGen>64m</PermGen>
+		<MaxPermGen>1024m</MaxPermGen>
+		<CodeCacheSize>512m</CodeCacheSize>
 	</properties>
 
 	<dependencies>
@@ -26,26 +27,27 @@
 			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
+
+		<!-- other provided dependencies -->
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql_2.11</artifactId>
+			<artifactId>spark-sql_${scala.binary.version}</artifactId>
 			<version>${spark.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-hive_2.11</artifactId>
+			<artifactId>spark-hive_${scala.binary.version}</artifactId>
 			<version>${spark.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-streaming_2.11</artifactId>
+			<artifactId>spark-streaming_${scala.binary.version}</artifactId>
 			<version>${spark.version}</version>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 
-		<!-- other third-party dependencies -->
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
@@ -86,8 +88,16 @@
 				<version>3.2.2</version>
 				<executions>
 					<execution>
+						<id>scala-compile-first</id>
+						<phase>process-resources</phase>
 						<goals>
 							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>scala-test-compile-first</id>
+						<phase>process-test-resources</phase>
+						<goals>
 							<goal>testCompile</goal>
 						</goals>
 					</execution>
@@ -105,6 +115,9 @@
 					<jvmArgs>
 						<jvmArg>-Xms1024m</jvmArg>
 						<jvmArg>-Xmx1024m</jvmArg>
+						<jvmArg>-XX:PermSize=${PermGen}</jvmArg>
+						<jvmArg>-XX:MaxPermSize=${MaxPermGen}</jvmArg>
+						<jvmArg>-XX:ReservedCodeCacheSize=${CodeCacheSize}</jvmArg>
 					</jvmArgs>
 				</configuration>
 			</plugin>
