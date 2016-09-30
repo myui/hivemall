@@ -50,6 +50,8 @@ create temporary function powered_features as 'hivemall.ftvec.pairing.PoweredFea
 create temporary function rescale as 'hivemall.ftvec.scaling.RescaleUDF';
 create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
+create temporary function chi2 as 'hivemall.ftvec.selection.ChiSquareUDF';
+create temporary function snr as 'hivemall.ftvec.selection.SignalNoiseRatioUDAF';
 create temporary function amplify as 'hivemall.ftvec.amplify.AmplifierUDTF';
 create temporary function rand_amplify as 'hivemall.ftvec.amplify.RandomAmplifierUDTF';
 create temporary function add_bias as 'hivemall.ftvec.AddBiasUDF';
@@ -101,6 +103,7 @@ create temporary function array_avg as 'hivemall.tools.array.ArrayAvgGenericUDAF
 create temporary function array_sum as 'hivemall.tools.array.ArraySumUDAF';
 create temporary function to_string_array as 'hivemall.tools.array.ToStringArrayUDF';
 create temporary function array_intersect as 'hivemall.tools.array.ArrayIntersectUDF';
+create temporary function select_k_best as 'hivemall.tools.array.SelectKBestUDF';
 create temporary function bits_collect as 'hivemall.tools.bits.BitsCollectUDAF';
 create temporary function to_bits as 'hivemall.tools.bits.ToBitsUDF';
 create temporary function unbits as 'hivemall.tools.bits.UnBitsUDF';
@@ -112,6 +115,7 @@ create temporary function map_tail_n as 'hivemall.tools.map.MapTailNUDF';
 create temporary function to_map as 'hivemall.tools.map.UDAFToMap';
 create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap';
 create temporary function sigmoid as 'hivemall.tools.math.SigmoidGenericUDF';
+create temporary function transpose_and_dot as 'hivemall.tools.matrix.TransposeAndDotUDAF';
 create temporary function taskid as 'hivemall.tools.mapred.TaskIdUDF';
 create temporary function jobid as 'hivemall.tools.mapred.JobIdUDF';
 create temporary function rowid as 'hivemall.tools.mapred.RowIdUDF';

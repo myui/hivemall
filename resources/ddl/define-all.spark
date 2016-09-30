@@ -184,6 +184,16 @@ sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS normalize")
 sqlContext.sql("CREATE TEMPORARY FUNCTION normalize AS 'hivemall.ftvec.scaling.L2NormalizationUDF'")
 
 /**
+ * selection functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS chi2")
+sqlContext.sql("CREATE TEMPORARY FUNCTION chi2 AS 'hivemall.ftvec.selection.ChiSquareUDF'")
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS snr")
+sqlContext.sql("CREATE TEMPORARY FUNCTION snr AS 'hivemall.ftvec.selection.SignalNoiseRatioUDAF'")
+
+/**
  * misc functions
  */
 
@@ -321,6 +331,9 @@ sqlContext.sql("CREATE TEMPORARY FUNCTION subarray AS 'hivemall.tools.array.Suba
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS array_avg")
 sqlContext.sql("CREATE TEMPORARY FUNCTION array_avg AS 'hivemall.tools.array.ArrayAvgGenericUDAF'")
 
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS select_k_best")
+sqlContext.sql("CREATE TEMPORARY FUNCTION select_k_best AS 'hivemall.tools.array.SelectKBestUDF'")
+
 /**
  * compression functions
  */
@@ -353,6 +366,13 @@ sqlContext.sql("CREATE TEMPORARY FUNCTION to_ordered_map AS 'hivemall.tools.map.
 
 sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS sigmoid")
 sqlContext.sql("CREATE TEMPORARY FUNCTION sigmoid AS 'hivemall.tools.math.SigmoidGenericUDF'")
+
+/**
+ * Matrix functions
+ */
+
+sqlContext.sql("DROP TEMPORARY FUNCTION IF EXISTS transpose_and_dot")
+sqlContext.sql("CREATE TEMPORARY FUNCTION transpose_and_dot AS 'hivemall.tools.matrix.TransposeAndDotUDAF'")
 
 /**
  * mapred functions
