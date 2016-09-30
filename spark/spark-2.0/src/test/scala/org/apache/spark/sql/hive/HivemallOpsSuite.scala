@@ -23,7 +23,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{AnalysisException, Column, Row, functions}
 import org.apache.spark.test.TestDoubleWrapper._
 import org.apache.spark.test.{HivemallFeatureQueryTest, TestUtils, VectorQueryTest}
-import org.scalatest.Matchers._
 
 final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
@@ -188,7 +187,6 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
   test("ftvec.selection - chi2") {
     import hiveContext.implicits._
-    implicit val doubleEquality = org.scalactic.TolerantNumerics.tolerantDoubleEquality(1e-5)
 
     // see also hivemall.ftvec.selection.ChiSquareUDFTest
     val df = Seq(
@@ -203,17 +201,17 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       .toDF("arg0", "arg1")
 
     val result = df.select(chi2(df("arg0"), df("arg1"))).collect
-    result should have length 1
+    assert(result.length == 1)
     val chi2Val = result.head.getAs[Row](0).getAs[Seq[Double]](0)
     val pVal = result.head.getAs[Row](0).getAs[Seq[Double]](1)
 
     (chi2Val, Seq(10.81782088, 3.59449902, 116.16984746, 67.24482759))
       .zipped
-      .foreach((actual, expected) => actual shouldEqual expected)
+      .foreach((actual, expected) => assert(actual ~== expected))
 
     (pVal, Seq(4.47651499e-03, 1.65754167e-01, 5.94344354e-26, 2.50017968e-15))
       .zipped
-      .foreach((actual, expected) => actual shouldEqual expected)
+      .foreach((actual, expected) => assert(actual ~== expected))
   }
 
   test("ftvec.conv - quantify") {
@@ -393,8 +391,8 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val data = Seq(Seq(0, 1, 3), Seq(2, 4, 1), Seq(5, 4, 9))
     val df = data.map(d => (d, Seq(3, 1, 2), 2)).toDF("features", "importance_list", "k")
 
-    df.select(select_k_best(df("features"), df("importance_list"), df("k"))).collect shouldEqual
-      data.map(s => Row(Seq(s(0).toDouble, s(2).toDouble)))
+    checkAnswer(df.select(select_k_best(df("features"), df("importance_list"), df("k"))),
+      data.map(s => Row(Seq(s(0).toDouble, s(2).toDouble))))
   }
 
   test("misc - sigmoid") {
@@ -689,7 +687,6 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
   test("user-defined aggregators for ftvec.selection") {
     import hiveContext.implicits._
-    implicit val doubleEquality = org.scalactic.TolerantNumerics.tolerantDoubleEquality(1e-5)
 
     // see also hivemall.ftvec.selection.SignalNoiseRatioUDAFTest
     // binary class
@@ -711,7 +708,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val row0 = df0.groupby($"c0").snr("arg0", "arg1").collect
     (row0(0).getAs[Seq[Double]](1), Seq(4.38425236, 0.26390002, 15.83984511, 26.87005769))
       .zipped
-      .foreach((actual, expected) => actual shouldEqual expected)
+      .foreach((actual, expected) => assert(actual ~== expected))
 
     // multiple class
     // +-----------------+-------+
@@ -732,7 +729,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val row1 = df1.groupby($"c0").snr("arg0", "arg1").collect
     (row1(0).getAs[Seq[Double]](1), Seq(8.43181818, 1.32121212, 42.94949495, 33.80952381))
       .zipped
-      .foreach((actual, expected) => actual shouldEqual expected)
+      .foreach((actual, expected) => assert(actual ~== expected))
   }
 
   test("user-defined aggregators for tools.matrix") {
