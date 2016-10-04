@@ -264,4 +264,16 @@ final class GroupedDataEx protected[sql](
       .toAggregateExpression()
     toDF((Alias(udaf, udaf.prettyString)() :: Nil).toSeq)
   }
+
+  /**
+   * @see hivemall.ftvec.trans.OnehotEncodingUDAF
+   */
+  def onehot_encoding(features: String*): DataFrame = {
+    val udaf = HiveUDAFFunction(
+        new HiveFunctionWrapper("hivemall.ftvec.trans.OnehotEncodingUDAF"),
+        features.map(df.col(_).expr),
+        isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyString)()))
+  }
 }
