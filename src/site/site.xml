@@ -41,7 +41,7 @@
 			<sideBarEnabled>false</sideBarEnabled>
 			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
 			<gitHub>
-				<projectId>apache/maven-skins</projectId>
+				<projectId>apache/incubator-hivemall</projectId>
 				<ribbonOrientation>right</ribbonOrientation>
 				<ribbonColor>red</ribbonColor>
 			</gitHub>
@@ -50,7 +50,6 @@
 				<showUser>true</showUser>
 				<showFollowers>false</showFollowers>
 			</twitter>
-			<facebookLike />
 			<skipGenerationDate>true</skipGenerationDate>
 		</fluidoSkin>
 	</custom>
@@ -67,20 +66,13 @@
 
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
-			<item name="API" href="/apidocs/index.html" />
-			<item name="Implementations" href="/implementations.html" />
-			<item name="User Guide" href="/userguide.html" />
-			<item name="Download" href="/download.html" />
-			<item name="Contributing" href="/contributing.html" />
-			<item name="Team" href="/team-list.html" />
+			<item name="Documentation" href="http://hivemall-docs.readthedocs.io/en/latest/" />
 		</menu>
 
 		<menu name="Developer Resources">
 			<item name="Mailing Lists" href="/mail-lists.html" />
-			<item name="Source (Git)"
-				href="https://git-wip-us.apache.org/repos/asf/incubator-commonsrdf.git" />
-			<item name="Source (GitHub mirror)" href="https://github.com/apache/incubator-commonsrdf/" />
-			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/COMMONSRDF" />
+			<item name="Source (Git)" href="/source-code.html" />
+			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/HIVEMALL" />
 		</menu>
 
 		<menu ref="reports" inherit="top" />
@@ -94,7 +86,7 @@
 
 		<breadcrumbs>
 			<item name="Apache" href="http://www.apache.org/" />
-			<item name="Hivemall" href="http://hivemall.incubator.apache.org" />
+			<item name="Apache Hivemall" href="/index.html" />
 		</breadcrumbs>
 
 		<footer><![CDATA[

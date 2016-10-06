@@ -17,5 +17,8 @@
 	limitations under the License.
 
 -->
-# Hivemall Overview
+# Source (Git)
 
+* Git : https://git-wip-us.apache.org/repos/asf?p=incubator-hivemall.git
+* Git (Mirror) : https://github.com/apache/incubator-hivemall
+* Documentation (Mirror) : https://github.com/apache/incubator-hivemall-site

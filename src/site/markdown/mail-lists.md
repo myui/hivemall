@@ -17,5 +17,8 @@
 	limitations under the License.
 
 -->
-# Hivemall Overview
+# Mailing Lists
 
+* dev : dev@hivemall.incubator.apache.org
+* commits : commits@hivemall.incubator.apache.org
+* user : user@hivemall.incubator.apache.org

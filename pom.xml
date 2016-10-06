@@ -43,7 +43,7 @@
 	<modules>
 		<module>core</module>
 		<module>nlp</module>
-		<module>xgboost</module>
+		<!--<module>xgboost</module>-->
 		<module>mixserv</module>
 	</modules>
 
