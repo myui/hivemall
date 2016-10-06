@@ -66,6 +66,7 @@
 
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
+			<item name="Overview" href="/overview.html" />
 			<item name="Documentation" href="http://hivemall-docs.readthedocs.io/en/latest/" />
 		</menu>
 
