@@ -44,7 +44,6 @@ import org.apache.spark.unsafe.types.UTF8String
  * @groupname classifier
  * @groupname classifier.multiclass
  * @groupname xgboost
- * @groupname ensemble
  * @groupname knn.similarity
  * @groupname knn.distance
  * @groupname knn.lsh
@@ -638,39 +637,6 @@ final class HivemallOps(df: DataFrame) extends Logging {
       join = false, outer = false, None,
       Seq("rowid", "label", "probability").map(UnresolvedAttribute(_)),
       df.logicalPlan)
-  }
-
-  /**
-   * Groups the [[DataFrame]] using the specified columns, so we can run aggregation on them.
-   * See [[RelationalGroupedDatasetEx]] for all the available aggregate functions.
-   *
-   * TODO: This class bypasses the original GroupData
-   * so as to support user-defined aggregations.
-   * Need a more smart injection into existing DataFrame APIs.
-   *
-   * A list of added Hivemall UDAF:
-   *  - voted_avg
-   *  - weight_voted_avg
-   *  - argmin_kld
-   *  - max_label
-   *  - maxrow
-   *  - f1score
-   *  - mae
-   *  - mse
-   *  - rmse
-   *
-   * @groupname ensemble
-   */
-  @scala.annotation.varargs
-  def groupby(cols: Column*): RelationalGroupedDatasetEx = {
-    new RelationalGroupedDatasetEx(df, cols.map(_.expr), RelationalGroupedDataset.GroupByType)
-  }
-
-  @scala.annotation.varargs
-  def groupby(col1: String, cols: String*): RelationalGroupedDatasetEx = {
-    val colNames: Seq[String] = col1 +: cols
-    new RelationalGroupedDatasetEx(df, colNames.map(colName => df(colName).expr),
-      RelationalGroupedDataset.GroupByType)
   }
 
   /**

@@ -28,6 +28,7 @@ import org.apache.spark.SparkFunSuite
 import org.apache.spark.ml.feature.HivemallLabeledPoint
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.hive.HivemallOps._
+import org.apache.spark.sql.hive.HivemallGroupedDataset._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.hive.test.TestHive
 import org.apache.spark.sql.hive.test.TestHive.implicits._
@@ -159,9 +160,9 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {
-          res.groupby("feature").agg("weight"->"avg")
+          res.groupBy("feature").agg("weight"->"avg")
         } else {
-          res.groupby("feature").argmin_kld("weight", "conv")
+          res.groupBy("feature").argmin_kld("weight", "conv")
         }
       }.as("feature", "weight")
 
@@ -178,13 +179,13 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
       val predict = testDf_exploded
         .join(model, testDf_exploded("feature") === model("feature"), "LEFT_OUTER")
         .select($"rowid", ($"weight" * $"value").as("value"))
-        .groupby("rowid").sum("value")
+        .groupBy("rowid").sum("value")
         .as("rowid", "predicted")
 
       // Evaluation
       val eval = predict
         .join(testDf, predict("rowid") === testDf("rowid"))
-        .groupby()
+        .groupBy()
         .agg(Map("target"->"avg", "predicted"->"avg"))
         .as("target", "predicted")
 
@@ -219,9 +220,9 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {
-          res.groupby("feature").agg("weight"->"avg")
+          res.groupBy("feature").agg("weight"->"avg")
         } else {
-          res.groupby("feature").argmin_kld("weight", "conv")
+          res.groupBy("feature").argmin_kld("weight", "conv")
         }
       }.as("feature", "weight")
 
@@ -238,7 +239,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
       val predict = testDf_exploded
         .join(model, testDf_exploded("feature") === model("feature"), "LEFT_OUTER")
         .select($"rowid", ($"weight" * $"value").as("value"))
-        .groupby("rowid").sum("value")
+        .groupBy("rowid").sum("value")
         .select($"rowid", when(sigmoid($"sum(value)") > 0.50, 1.0).otherwise(0.0))
         .as("rowid", "predicted")
 
