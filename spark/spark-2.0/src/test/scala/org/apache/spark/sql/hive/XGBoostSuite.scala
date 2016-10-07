@@ -22,6 +22,7 @@ import java.io.File
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.hive.HivemallOps._
+import org.apache.spark.sql.hive.HivemallGroupedDataset._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
 import org.apache.spark.test.VectorQueryTest
@@ -117,7 +118,7 @@ final class XGBoostSuite extends VectorQueryTest {
       val model = hiveContext.sparkSession.read.format(xgboost).load(tempDir)
       val predict = model.join(mllibTestDf)
         .xgboost_multiclass_predict($"rowid", $"features", $"model_id", $"pred_model")
-        .groupby("rowid").max_label("probability", "label")
+        .groupBy("rowid").max_label("probability", "label")
         .toDF("rowid", "predicted")
 
       val result = predict.join(mllibTestDf, predict("rowid") === mllibTestDf("rowid"), "INNER")
