@@ -157,6 +157,16 @@ public final class SynchronizedModelWrapper implements PredictionModel {
     }
 
     @Override
+    public void setWeight(Object feature, float value) {
+        try {
+            lock.lock();
+            model.setWeight(feature, value);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public float getCovariance(Object feature) {
         try {
             lock.lock();

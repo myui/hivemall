@@ -25,7 +25,7 @@ import javax.annotation.Nonnegative;
 public interface IWeightValue extends Copyable<IWeightValue> {
 
     public enum WeightValueType {
-        NoParams, ParamsF1, ParamsF2, ParamsCovar;
+        NoParams, ParamsF1, ParamsF2, ParamsF3, ParamsCovar;
     }
 
     WeightValueType getType();
@@ -44,9 +44,23 @@ public interface IWeightValue extends Copyable<IWeightValue> {
 
     float getSumOfSquaredGradients();
 
+    void setSumOfSquaredGradients(float value);
+
     float getSumOfSquaredDeltaX();
 
+    void setSumOfSquaredDeltaX(float value);
+
     float getSumOfGradients();
+
+    void setSumOfGradients(float value);
+
+    float getM();
+
+    void setM(float value);
+
+    float getV();
+
+    void setV(float value);
 
     /**
      * @return whether touched in training or not

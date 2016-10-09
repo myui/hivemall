@@ -18,7 +18,7 @@
  */
 package hivemall.mf;
 
-import hivemall.common.EtaEstimator;
+import hivemall.optimizer.EtaEstimator;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;

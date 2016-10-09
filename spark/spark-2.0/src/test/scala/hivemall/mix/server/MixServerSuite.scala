@@ -23,7 +23,7 @@ import java.util.logging.Logger
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-import hivemall.model.{DenseModel, PredictionModel, WeightValue}
+import hivemall.model.{NewDenseModel, PredictionModel, WeightValue}
 import hivemall.mix.MixMessage.MixEventName
 import hivemall.mix.client.MixClient
 import hivemall.mix.server.MixServer.ServerState
@@ -95,7 +95,7 @@ class MixServerSuite extends FunSuite with BeforeAndAfter {
         ignore(testName) {
           val clients = Executors.newCachedThreadPool()
           val numClients = nclient
-          val models = (0 until numClients).map(i => new DenseModel(ndims, false))
+          val models = (0 until numClients).map(i => new NewDenseModel(ndims, false))
           (0 until numClients).map { i =>
             clients.submit(new Runnable() {
               override def run(): Unit = {

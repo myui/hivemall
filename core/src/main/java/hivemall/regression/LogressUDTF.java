@@ -18,8 +18,8 @@
  */
 package hivemall.regression;
 
-import hivemall.common.EtaEstimator;
-import hivemall.common.LossFunctions;
+import hivemall.optimizer.EtaEstimator;
+import hivemall.optimizer.LossFunctions;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -28,6 +28,10 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+/**
+ * @deprecated Use {@link hivemall.regression.GeneralRegressionUDTF} instead
+ */
+@Deprecated
 @Description(
         name = "logress",
         value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"
@@ -73,7 +77,7 @@ public final class LogressUDTF extends RegressionBaseUDTF {
     }
 
     @Override
-    protected float computeUpdate(final float target, final float predicted) {
+    protected float computeGradient(final float target, final float predicted) {
         float eta = etaEstimator.eta(count);
         float gradient = LossFunctions.logisticLoss(target, predicted);
         return eta * gradient;

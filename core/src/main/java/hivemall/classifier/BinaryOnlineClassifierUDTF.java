@@ -25,6 +25,7 @@ import hivemall.model.PredictionModel;
 import hivemall.model.PredictionResult;
 import hivemall.model.WeightValue;
 import hivemall.model.WeightValue.WeightValueWithCovar;
+import hivemall.optimizer.Optimizer;
 import hivemall.utils.collections.IMapIterator;
 import hivemall.utils.hadoop.HiveUtils;
 
@@ -56,7 +57,18 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
     private boolean parseFeature;
 
     protected PredictionModel model;
+    protected Optimizer optimizerImpl;
     protected int count;
+
+    private boolean enableNewModel;
+
+    public BinaryOnlineClassifierUDTF() {
+        this.enableNewModel = false;
+    }
+
+    public BinaryOnlineClassifierUDTF(boolean enableNewModel) {
+        this.enableNewModel = enableNewModel;
+    }
 
     @Override
     public StructObjectInspector initialize(ObjectInspector[] argOIs) throws UDFArgumentException {
@@ -76,6 +88,7 @@ public abstract class BinaryOnlineClassifierUDTF extends LearnerBaseUDTF {
         if (preloadedModelFile != null) {
             loadPredictionModel(model, preloadedModelFile, featureOutputOI);
         }
+        this.optimizerImpl = createOptimizer();
 
         this.count = 0;
         return getReturnOI(featureOutputOI);

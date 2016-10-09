@@ -18,7 +18,7 @@
  */
 package hivemall.fm;
 
-import hivemall.common.EtaEstimator;
+import hivemall.optimizer.EtaEstimator;
 import hivemall.utils.lang.NumberUtils;
 import hivemall.utils.math.MathUtils;
 

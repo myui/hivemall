@@ -18,10 +18,10 @@
  */
 package hivemall.classifier;
 
-import hivemall.common.LossFunctions;
 import hivemall.model.FeatureValue;
 import hivemall.model.IWeightValue;
 import hivemall.model.WeightValue.WeightValueParamsF2;
+import hivemall.optimizer.LossFunctions;
 import hivemall.utils.lang.Primitives;
 
 import javax.annotation.Nonnull;
@@ -33,6 +33,10 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
+/**
+ * @deprecated Use {@link hivemall.classifier.GeneralClassifierUDTF} instead
+ */
+@Deprecated
 @Description(name = "train_adagrad_rda",
         value = "_FUNC_(list<string|int|bigint> features, int label [, const string options])"
                 + " - Returns a relation consists of <string|int|bigint feature, float weight>",

@@ -21,6 +21,7 @@ package hivemall.fm;
 import hivemall.fm.FMHyperParameters.FFMHyperParameters;
 import hivemall.utils.collections.DoubleArray3D;
 import hivemall.utils.collections.IntArrayList;
+import hivemall.optimizer.EtaEstimator;
 import hivemall.utils.lang.NumberUtils;
 
 import java.util.Arrays;

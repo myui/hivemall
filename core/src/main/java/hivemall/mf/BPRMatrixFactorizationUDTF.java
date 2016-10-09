@@ -20,7 +20,7 @@ package hivemall.mf;
 
 import hivemall.UDTFWithOptions;
 import hivemall.common.ConversionState;
-import hivemall.common.EtaEstimator;
+import hivemall.optimizer.EtaEstimator;
 import hivemall.mf.FactorizedModel.RankInitScheme;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.io.FileUtils;

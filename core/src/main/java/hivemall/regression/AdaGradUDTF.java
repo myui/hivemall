@@ -18,10 +18,10 @@
  */
 package hivemall.regression;
 
-import hivemall.common.LossFunctions;
 import hivemall.model.FeatureValue;
 import hivemall.model.IWeightValue;
 import hivemall.model.WeightValue.WeightValueParamsF1;
+import hivemall.optimizer.LossFunctions;
 import hivemall.utils.lang.Primitives;
 
 import javax.annotation.Nonnull;
@@ -36,7 +36,10 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 
 /**
  * ADAGRAD algorithm with element-wise adaptive learning rates.
+ *
+ * @deprecated Use {@link hivemall.regression.GeneralRegressionUDTF} instead
  */
+@Deprecated
 @Description(
         name = "train_adagrad_regr",
         value = "_FUNC_(array<int|bigint|string> features, float target [, constant string options])"

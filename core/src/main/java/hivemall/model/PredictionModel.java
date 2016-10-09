@@ -56,6 +56,8 @@ public interface PredictionModel extends MixedModel {
 
     float getWeight(@Nonnull Object feature);
 
+    void setWeight(@Nonnull Object feature, float value);
+
     float getCovariance(@Nonnull Object feature);
 
     <K, V extends IWeightValue> IMapIterator<K, V> entries();
