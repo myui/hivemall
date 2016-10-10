@@ -401,7 +401,8 @@ final class HivemallOps(df: DataFrame) extends Logging {
   @scala.annotation.varargs
   def train_multiclass_pa1(exprs: Column*): DataFrame = {
      Generate(HiveGenericUDTF(
-        new HiveFunctionWrapper("hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA1"),
+        new HiveFunctionWrapper(
+          "hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA1"),
         setMixServs(exprs: _*).map(_.expr)),
       join = false, outer = false, None,
       Seq("label", "feature", "weight").map(UnresolvedAttribute(_)),
@@ -415,7 +416,8 @@ final class HivemallOps(df: DataFrame) extends Logging {
   @scala.annotation.varargs
   def train_multiclass_pa2(exprs: Column*): DataFrame = {
      Generate(HiveGenericUDTF(
-        new HiveFunctionWrapper("hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2"),
+        new HiveFunctionWrapper(
+          "hivemall.classifier.multiclass.MulticlassPassiveAggressiveUDTF$PA2"),
         setMixServs(exprs: _*).map(_.expr)),
       join = false, outer = false, None,
       Seq("label", "feature", "weight").map(UnresolvedAttribute(_)),
@@ -457,7 +459,8 @@ final class HivemallOps(df: DataFrame) extends Logging {
   @scala.annotation.varargs
   def train_multiclass_scw(exprs: Column*): DataFrame = {
      Generate(HiveGenericUDTF(
-        new HiveFunctionWrapper("hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1"),
+        new HiveFunctionWrapper(
+          "hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW1"),
         setMixServs(exprs: _*).map(_.expr)),
       join = false, outer = false, None,
       Seq("label", "feature", "weight", "conv").map(UnresolvedAttribute(_)),
@@ -471,7 +474,8 @@ final class HivemallOps(df: DataFrame) extends Logging {
   @scala.annotation.varargs
   def train_multiclass_scw2(exprs: Column*): DataFrame = {
      Generate(HiveGenericUDTF(
-        new HiveFunctionWrapper("hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2"),
+        new HiveFunctionWrapper(
+          "hivemall.classifier.multiclass.MulticlassSoftConfidenceWeightedUDTF$SCW2"),
         setMixServs(exprs: _*).map(_.expr)),
       join = false, outer = false, None,
       Seq("label", "feature", "weight", "conv").map(UnresolvedAttribute(_)),
@@ -692,9 +696,11 @@ final class HivemallOps(df: DataFrame) extends Logging {
       val groupId = df.sqlContext.sparkContext.applicationId + "-" + UUID.randomUUID
       logInfo(s"set '${mixes}' as default mix servers (session: ${groupId})")
       exprs.size match {
-        case 2 => exprs :+ Column(Literal.create(s"-mix ${mixes} -mix_session ${groupId}", StringType))
+        case 2 =>
+          exprs :+ Column(Literal.create(s"-mix ${mixes} -mix_session ${groupId}", StringType))
         /** TODO: Add codes in the case where exprs.size == 3. */
-        case _ => exprs
+        case _ =>
+          exprs
       }
     } else {
       exprs

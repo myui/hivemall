@@ -17,16 +17,14 @@
 
 package org.apache.spark.sql.hive
 
-import org.apache.spark.sql.hive.HivemallGroupedDataset
 import org.apache.spark.sql.{AnalysisException, Column, Row}
 import org.apache.spark.sql.functions
+import org.apache.spark.sql.hive.HivemallGroupedDataset._
 import org.apache.spark.sql.hive.HivemallOps._
-import HivemallGroupedDataset._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
-import org.apache.spark.test.HivemallFeatureQueryTest
+import org.apache.spark.test.{HivemallFeatureQueryTest, TestUtils, VectorQueryTest}
 import org.apache.spark.test.TestDoubleWrapper._
-import org.apache.spark.test.{TestUtils, VectorQueryTest}
 
 final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
@@ -109,12 +107,12 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     assert(row(0).getDouble(0) ~== 0.1)
   }
 
-  test("ftvec - explode_array") {
-    import hiveContext.implicits._
-    // assert(TinyTrainData.explode_array("features")
-    //     .select($"feature").collect.toSet
-    //   === Set(Row("1:0.8"), Row("2:0.2"), Row("2:0.7"), Row("1:0.9")))
-  }
+  // test("ftvec - explode_array") {
+  //   import hiveContext.implicits._
+  //   assert(TinyTrainData.explode_array("features")
+  //       .select($"feature").collect.toSet
+  //     === Set(Row("1:0.8"), Row("2:0.2"), Row("2:0.7"), Row("1:0.9")))
+  // }
 
   test("ftvec - add_feature_index") {
     // import hiveContext.implicits._
@@ -147,9 +145,9 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val intFloatMapData = {
       // TODO: Use `toDF`
       val rowRdd = hiveContext.sparkContext.parallelize(
-          Row(Map(1->0.3f, 2->0.1f, 3->0.5f)) ::
-          Row(Map(2->0.4f, 1->0.2f)) ::
-          Row(Map(2->0.4f, 3->0.2f, 1->0.1f, 4->0.6f)) ::
+          Row(Map(1 -> 0.3f, 2 -> 0.1f, 3 -> 0.5f)) ::
+          Row(Map(2 -> 0.4f, 1 -> 0.2f)) ::
+          Row(Map(2 -> 0.4f, 3 -> 0.2f, 1 -> 0.1f, 4 -> 0.6f)) ::
           Nil
         )
       hiveContext.createDataFrame(
@@ -208,7 +206,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
   ignore("ftvec.conv") {
     import hiveContext.implicits._
 
-    val df1 = Seq((0.0, "1:0.1" :: "3:0.3" :: Nil), (1,0, "2:0.2" :: Nil)).toDF("a", "b")
+    val df1 = Seq((0.0, "1:0.1" :: "3:0.3" :: Nil), (1, 0, "2:0.2" :: Nil)).toDF("a", "b")
     assert(df1.select(to_dense_features(df1("b"), 3)).collect.toSet
       === Set(Row(Array(0.1f, 0.0f, 0.3f)), Array(0.0f, 0.2f, 0.0f)))
 
@@ -256,18 +254,18 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
      *
      * The test throw an exception below:
      *
-     * [info] - hivemall_version *** FAILED ***
-     * [info]   org.apache.spark.sql.AnalysisException:
+     * - hivemall_version *** FAILED ***
+     *  org.apache.spark.sql.AnalysisException:
      *    Cannot resolve column name "HiveSimpleUDF#hivemall.HivemallVersionUDF()" among
      *    (HiveSimpleUDF#hivemall.Hivemall VersionUDF());
-     * [info]   at org.apache.spark.sql.DataFrame$$anonfun$resolve$1.apply(DataFrame.scala:159)
-     * [info]   at org.apache.spark.sql.DataFrame$$anonfun$resolve$1.apply(DataFrame.scala:159)
-     * [info]   at scala.Option.getOrElse(Option.scala:120)
-     * [info]   at org.apache.spark.sql.DataFrame.resolve(DataFrame.scala:158)
-     * [info]   at org.apache.spark.sql.DataFrame$$anonfun$30.apply(DataFrame.scala:1227)
-     * [info]   at org.apache.spark.sql.DataFrame$$anonfun$30.apply(DataFrame.scala:1227)
-     * [info]   at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:244)
-     * ...
+     *   at org.apache.spark.sql.DataFrame$$anonfun$resolve$1.apply(DataFrame.scala:159)
+     *   at org.apache.spark.sql.DataFrame$$anonfun$resolve$1.apply(DataFrame.scala:159)
+     *   at scala.Option.getOrElse(Option.scala:120)
+     *   at org.apache.spark.sql.DataFrame.resolve(DataFrame.scala:158)
+     *   at org.apache.spark.sql.DataFrame$$anonfun$30.apply(DataFrame.scala:1227)
+     *   at org.apache.spark.sql.DataFrame$$anonfun$30.apply(DataFrame.scala:1227)
+     *   at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:244)
+     *   ...
      */
   }
 
@@ -330,9 +328,11 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
    * This test fails because;
    *
    * Cause: java.lang.OutOfMemoryError: Java heap space
-   * at hivemall.smile.tools.RandomForestEnsembleUDAF$Result.<init>(RandomForestEnsembleUDAF.java:128)
-   * at hivemall.smile.tools.RandomForestEnsembleUDAF$RandomForestPredictUDAFEvaluator.terminate(RandomForestEnsembleUDAF.java:91)
-   * at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+   *  at hivemall.smile.tools.RandomForestEnsembleUDAF$Result.<init>
+   *    (RandomForestEnsembleUDAF.java:128)
+   *  at hivemall.smile.tools.RandomForestEnsembleUDAF$RandomForestPredictUDAFEvaluator
+   *    .terminate(RandomForestEnsembleUDAF.java:91)
+   *  at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
    */
   ignore("misc - tree_predict") {
     import hiveContext.implicits._
@@ -366,10 +366,11 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
      * TODO: SigmodUDF only accepts floating-point types in spark-v1.5.0?
      * This test throws an exception below:
      *
-     * [info]   org.apache.spark.sql.catalyst.analysis.UnresolvedException:
+     * org.apache.spark.sql.catalyst.analysis.UnresolvedException:
      *    Invalid call to dataType on unresolved object, tree: 'data
-     * [info]   at org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute.dataType(unresolved.scala:59)
-     * [info]   at org.apache.spark.sql.hive.HiveSimpleUDF$$anonfun$method$1.apply(hiveUDFs.scala:119)
+     *  at org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute.dataType
+     *    (unresolved.scala:59)
+     *  at org.apache.spark.sql.hive.HiveSimpleUDF$$anonfun$method$1.apply(hiveUDFs.scala:119)
      * ...
      */
     val rows = DummyInputData.select(sigmoid($"c0")).collect
@@ -463,7 +464,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       val res = TestUtils.invokeFunc(new HivemallOps(LargeRegrTrainData),
         func, Seq(add_bias($"features"), $"label"))
       if (!res.columns.contains("conv")) {
-        res.groupBy("feature").agg("weight"->"avg")
+        res.groupBy("feature").agg("weight" -> "avg")
       } else {
         res.groupBy("feature").argmin_kld("weight", "conv")
       }
@@ -489,7 +490,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val eval = predict
       .join(testDf, predict("rowid") === testDf("rowid"))
       .groupBy()
-      .agg(Map("target"->"avg", "predicted"->"avg"))
+      .agg(Map("target" -> "avg", "predicted" -> "avg"))
       .as("target", "predicted")
 
     val diff = eval.map {
@@ -508,7 +509,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       val res = TestUtils.invokeFunc(new HivemallOps(LargeClassifierTrainData),
         func, Seq(add_bias($"features"), $"label"))
       if (!res.columns.contains("conv")) {
-        res.groupBy("feature").agg("weight"->"avg")
+        res.groupBy("feature").agg("weight" -> "avg")
       } else {
         res.groupBy("feature").argmin_kld("weight", "conv")
       }
@@ -712,7 +713,7 @@ final class HivemallOpsWithVectorSuite extends VectorQueryTest {
   test("train_logregr") {
     checkAnswer(
       mllibTrainDf.train_logregr($"features", $"label")
-        .groupBy("feature").agg("weight"->"avg")
+        .groupBy("feature").agg("weight" -> "avg")
         .select($"feature"),
       Seq(0, 1, 2, 3, 4, 5, 6).map(v => Row(s"$v"))
     )

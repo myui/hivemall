@@ -31,7 +31,7 @@ object TestUtils extends Logging {
     }
   }
 
-  def expectResult(res: Boolean, errMsg: String) = if (res) {
+  def expectResult(res: Boolean, errMsg: String): Unit = if (res) {
     logWarning(errMsg)
   }
 
@@ -55,5 +55,7 @@ class TestDoubleWrapper(d: Double) {
 }
 
 object TestDoubleWrapper {
-  @inline implicit def toTestDoubleWrapper(d: Double) = new TestDoubleWrapper(d)
+  @inline implicit def toTestDoubleWrapper(d: Double): TestDoubleWrapper = {
+    new TestDoubleWrapper(d)
+  }
 }

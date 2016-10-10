@@ -20,26 +20,25 @@ package org.apache.spark.sql.hive
 import java.io.{BufferedInputStream, BufferedReader, InputStream, InputStreamReader}
 import java.net.URL
 import java.util.UUID
-import java.util.concurrent.{ExecutorService, Executors}
+import java.util.concurrent.{Executors, ExecutorService}
 
+import hivemall.mix.server.MixServer
+import hivemall.utils.lang.CommandLineUtils
+import hivemall.utils.net.NetUtils
 import org.apache.commons.cli.Options
 import org.apache.commons.compress.compressors.CompressorStreamFactory
+import org.scalatest.BeforeAndAfter
+
 import org.apache.spark.SparkFunSuite
 import org.apache.spark.ml.feature.HivemallLabeledPoint
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.functions.when
-import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallGroupedDataset._
+import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.hive.test.TestHive
 import org.apache.spark.sql.hive.test.TestHive.implicits._
-import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.test.TestUtils
-import org.scalatest.BeforeAndAfter
-
-import hivemall.mix.server.MixServer
-import hivemall.mix.server.MixServer.ServerState
-import hivemall.utils.lang.CommandLineUtils
-import hivemall.utils.net.NetUtils
 
 final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
 
@@ -128,11 +127,11 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
     mixServExec = Executors.newSingleThreadExecutor()
     mixServExec.submit(server)
     var retry = 0
-    while (server.getState() != ServerState.RUNNING && retry < 32) {
+    while (server.getState() != MixServer.ServerState.RUNNING && retry < 32) {
       Thread.sleep(100L)
       retry += 1
     }
-    assert(ServerState.RUNNING == server.getState)
+    assert(MixServer.ServerState.RUNNING == server.getState)
   }
 
   after {
@@ -160,7 +159,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {
-          res.groupBy("feature").agg("weight"->"avg")
+          res.groupBy("feature").agg("weight" -> "avg")
         } else {
           res.groupBy("feature").argmin_kld("weight", "conv")
         }
@@ -186,13 +185,14 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
       val eval = predict
         .join(testDf, predict("rowid") === testDf("rowid"))
         .groupBy()
-        .agg(Map("target"->"avg", "predicted"->"avg"))
+        .agg(Map("target" -> "avg", "predicted" -> "avg"))
         .as("target", "predicted")
 
       val (target, predicted) = eval.map {
         case Row(target: Double, predicted: Double) => (target, predicted)
       }.first
 
+      // scalastyle:off println
       println(s"func:${func} target:${target} predicted:${predicted} "
         + s"diff:${Math.abs(target - predicted)}")
 
@@ -220,7 +220,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
           Seq[Column](add_bias($"features"), $"label",
             s"-mix localhost:${assignedPort} -mix_session ${groupId} -mix_threshold 2 -mix_cancel"))
         if (!res.columns.contains("conv")) {
-          res.groupBy("feature").agg("weight"->"avg")
+          res.groupBy("feature").agg("weight" -> "avg")
         } else {
           res.groupBy("feature").argmin_kld("weight", "conv")
         }
@@ -248,6 +248,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
         .join(testDf, predict("rowid") === testDf("rowid"))
         .where($"target" === $"predicted")
 
+      // scalastyle:off println
       println(s"func:${func} precision:${(eval.count + 0.0) / predict.count}")
 
       testDf.unpersist()
@@ -258,7 +259,7 @@ final class ModelMixingSuite extends SparkFunSuite with BeforeAndAfter {
 
 object FileIterator {
 
-  def apply[A](f: => A) = new Iterator[A] {
+  def apply[A](f: => A): Iterator[A] = new Iterator[A] {
     var opt = Option(f)
     def hasNext = opt.nonEmpty
     def next() = {

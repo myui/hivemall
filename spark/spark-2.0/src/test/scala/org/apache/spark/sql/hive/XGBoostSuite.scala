@@ -19,15 +19,15 @@ package org.apache.spark.sql.hive
 
 import java.io.File
 
+import hivemall.xgboost._
+
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallGroupedDataset._
+import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
 import org.apache.spark.test.VectorQueryTest
-
-import hivemall.xgboost._
 
 final class XGBoostSuite extends VectorQueryTest {
   import hiveContext.implicits._
