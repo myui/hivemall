@@ -44,7 +44,7 @@
 			<sideBarEnabled>false</sideBarEnabled>
 			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
 			<gitHub>
-				<projectId>apache/maven-skins</projectId>
+				<projectId>apache/incubator-hivemall</projectId>
 				<ribbonOrientation>right</ribbonOrientation>
 				<ribbonColor>red</ribbonColor>
 			</gitHub>
@@ -71,8 +71,7 @@
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
 			<item name="API" href="/apidocs/index.html" />
-			<item name="Implementations" href="/implementations.html" />
-			<item name="User Guide" href="/userguide.html" />			
+			<item name="User Guide" href="/userguide.html" />
 			<item name="Download" href="/download.html" />
 			<item name="FAQ" href="/faq.html" />
 			<item name="Contributing" href="/contributing.html" />
@@ -81,10 +80,8 @@
 
 		<menu name="Developer Resources">
 			<item name="Mailing Lists" href="/mail-lists.html" />
-			<item name="Source (Git)"
-				href="https://git-wip-us.apache.org/repos/asf/incubator-commonsrdf.git" />
-			<item name="Source (GitHub mirror)" href="https://github.com/apache/incubator-commonsrdf/" />
-			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/COMMONSRDF" />
+			<item name="Source (Git)" href="/source-code.html" />
+			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/HIVEMALL" />
 		</menu>
 
 		<menu ref="reports" inherit="top" />
@@ -95,6 +92,7 @@
 			<item name="Sponsoring Apache" href="http://www.apache.org/foundation/sponsorship.html" />
 			<item name="Thanks" href="http://www.apache.org/foundation/thanks.html" />
 		</menu>
+
 
 		<footer><![CDATA[
 			<p>
