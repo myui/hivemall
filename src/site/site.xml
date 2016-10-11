@@ -32,12 +32,15 @@
 		<fluidoSkin>
 			<topBarEnabled>true</topBarEnabled>
 			<navBarStyle>navbar-inverse</navBarStyle>
+			<!--
+            <topBarContainerStyle>width: 80%;</topBarContainerStyle>
 			<topBarIcon>
 				<name>Apache Hivemall</name>
 				<alt>Apache Hivemall</alt>
 				<src>/images/hivemall-logo-small.png</src>
 				<href>/index.html</href>
 			</topBarIcon>
+			-->
 			<sideBarEnabled>false</sideBarEnabled>
 			<sourceLineNumbersEnabled>true</sourceLineNumbersEnabled>
 			<gitHub>
@@ -45,18 +48,18 @@
 				<ribbonOrientation>right</ribbonOrientation>
 				<ribbonColor>red</ribbonColor>
 			</gitHub>
+            <facebookLike />
 			<twitter>
 				<user>ApacheHivemall</user>
 				<showUser>true</showUser>
 				<showFollowers>false</showFollowers>
 			</twitter>
-			<facebookLike />
 			<skipGenerationDate>true</skipGenerationDate>
 		</fluidoSkin>
 	</custom>
 
-	<publishDate format="yyyy-MM-dd" position="right" />
-	<version position="right" />
+	<publishDate format="yyyy-MM-dd" position="left" />
+	<version position="left" />
 
 	<poweredBy>
 		<logo name="Apache Incubator" href="http://incubator.apache.org/projects/hivemall.html"
@@ -69,8 +72,9 @@
 			<item name="Home" href="/index.html" />
 			<item name="API" href="/apidocs/index.html" />
 			<item name="Implementations" href="/implementations.html" />
-			<item name="User Guide" href="/userguide.html" />
+			<item name="User Guide" href="/userguide.html" />			
 			<item name="Download" href="/download.html" />
+			<item name="FAQ" href="/faq.html" />
 			<item name="Contributing" href="/contributing.html" />
 			<item name="Team" href="/team-list.html" />
 		</menu>
@@ -92,11 +96,6 @@
 			<item name="Thanks" href="http://www.apache.org/foundation/thanks.html" />
 		</menu>
 
-		<breadcrumbs>
-			<item name="Apache" href="http://www.apache.org/" />
-			<item name="Hivemall" href="http://hivemall.incubator.apache.org" />
-		</breadcrumbs>
-
 		<footer><![CDATA[
 			<p>
                 Apache Hivemall, Apache, the Apache feather logo, and the Apache Hivemall project logos are trademarks of The Apache Software Foundation.
@@ -104,7 +103,7 @@
 			</p>
 			<p>
 			  <small>
-                Apache Hivemall is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator.
+                Apache Hivemall is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by <a href="http://incubator.apache.org/">the Apache Incubator</a>.
                 Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, 
                 and decision making process have stabilized in a manner consistent with other successful ASF projects. 
                 While incubation status is not necessarily a reflection of the completeness or stability of the code, 
