@@ -6,7 +6,7 @@
 	<artifactId>hivemall</artifactId>
 	<version>0.4.2-rc.2</version>
 
-	<name>Hivemall</name>
+	<name>Apache Hivemall</name>
 	<description>Scalable Machine Learning Library for Apache Hive</description>
 	<url>https://github.com/myui/hivemall/</url>
 	<inceptionYear>2013</inceptionYear>
@@ -43,7 +43,7 @@
 	<modules>
 		<module>core</module>
 		<module>nlp</module>
-		<module>xgboost</module>
+		<!--<module>xgboost</module>-->
 		<module>mixserv</module>
 	</modules>
 
