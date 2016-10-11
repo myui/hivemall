@@ -41,7 +41,7 @@ case class HivemallLabeledPoint(label: Float = 0.0f, features: Seq[String]) {
 object HivemallLabeledPoint {
 
   // Simple parser for HivemallLabeledPoint
-  def parse(s: String) = {
+  def parse(s: String): HivemallLabeledPoint = {
     val (label, features) = s.indexOf(',') match {
       case d if d > 0 => (s.substring(0, d), s.substring(d + 1))
       case _ => ("0.0", "[]") // Dummy

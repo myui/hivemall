@@ -22,8 +22,7 @@ import java.io.IOException
 import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FSDataInputStream
-import org.apache.hadoop.fs.{FileStatus, Path}
+import org.apache.hadoop.fs.{FileStatus, FSDataInputStream, Path}
 import org.apache.hadoop.io.IOUtils
 import org.apache.hadoop.mapreduce._
 
@@ -46,7 +45,7 @@ private[source] final class XGBoostOutputWriter(
   private val hadoopConf = new SerializableConfiguration(new Configuration())
 
   override def write(row: Row): Unit = {
-    val modelId= row.getString(0)
+    val modelId = row.getString(0)
     val model = row.get(1).asInstanceOf[Array[Byte]]
     val filePath = new Path(new URI(s"$path/$modelId"))
     val fs = filePath.getFileSystem(hadoopConf.value)

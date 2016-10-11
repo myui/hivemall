@@ -298,6 +298,30 @@
 				</configuration>
 			</plugin>
 			<!-- end sonatype deploy -->
+			<plugin>
+				<groupId>org.scalastyle</groupId>
+				<artifactId>scalastyle-maven-plugin</artifactId>
+				<version>0.8.0</version>
+				<configuration>
+					<verbose>false</verbose>
+					<failOnViolation>true</failOnViolation>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<failOnWarning>false</failOnWarning>
+					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
+					<configLocation>spark/spark-common/scalastyle-config.xml</configLocation>
+					<outputFile>${basedir}/target/scalastyle-output.xml</outputFile>
+					<inputEncoding>${project.build.sourceEncoding}</inputEncoding>
+					<outputEncoding>${project.reporting.outputEncoding}</outputEncoding>
+				</configuration>
+				<executions>
+					<execution>
+					<goals>
+						<goal>check</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

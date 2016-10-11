@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 
 import com.google.common.io.Files
+
 import org.apache.spark.sql.{DataFrame, QueryTest}
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.test.TestHiveSingleton
@@ -35,9 +36,9 @@ abstract class VectorQueryTest extends QueryTest with TestHiveSingleton {
   private var trainDir: File = _
   private var testDir: File = _
 
-   // A `libsvm` schema is (Double, ml.linalg.Vector)
+  // A `libsvm` schema is (Double, ml.linalg.Vector)
   protected var mllibTrainDf: DataFrame = _
-  protected var mllibTestDf: DataFrame  = _
+  protected var mllibTestDf: DataFrame = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()

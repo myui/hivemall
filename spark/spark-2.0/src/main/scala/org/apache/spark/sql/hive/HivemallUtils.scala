@@ -19,11 +19,11 @@ package org.apache.spark.sql.hive
 
 import org.apache.spark.ml.linalg.{DenseVector => SDV, SparseVector => SSV, Vector => SV}
 import org.apache.spark.mllib.linalg.{BLAS, Vector, Vectors}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, DataFrame, Row}
 
 object HivemallUtils {
 
@@ -35,20 +35,20 @@ object HivemallUtils {
    * This class must be in o.a.spark.sql._ because
    * a Column class is private.
    */
-  @inline implicit def toBooleanLiteral(i: Boolean) = Column(Literal.create(i, BooleanType))
-  @inline implicit def toIntLiteral(i: Int) = Column(Literal.create(i, IntegerType))
-  @inline implicit def toFloatLiteral(i: Float) = Column(Literal.create(i, FloatType))
-  @inline implicit def toDoubleLiteral(i: Double) = Column(Literal.create(i, DoubleType))
-  @inline implicit def toStringLiteral(i: String) = Column(Literal.create(i, StringType))
-  @inline implicit def toIntArrayLiteral(i: Seq[Int]) =
+  @inline implicit def toBooleanLiteral(i: Boolean): Column = Column(Literal.create(i, BooleanType))
+  @inline implicit def toIntLiteral(i: Int): Column = Column(Literal.create(i, IntegerType))
+  @inline implicit def toFloatLiteral(i: Float): Column = Column(Literal.create(i, FloatType))
+  @inline implicit def toDoubleLiteral(i: Double): Column = Column(Literal.create(i, DoubleType))
+  @inline implicit def toStringLiteral(i: String): Column = Column(Literal.create(i, StringType))
+  @inline implicit def toIntArrayLiteral(i: Seq[Int]): Column =
     Column(Literal.create(i, ArrayType(IntegerType)))
-  @inline implicit def toStringArrayLiteral(i: Seq[String]) =
+  @inline implicit def toStringArrayLiteral(i: Seq[String]): Column =
     Column(Literal.create(i, ArrayType(StringType)))
 
   /**
    * Transforms `org.apache.spark.ml.linalg.Vector` into Hivemall features.
    */
-  def to_hivemall_features = udf(_to_hivemall_features)
+  def to_hivemall_features: UserDefinedFunction = udf(_to_hivemall_features)
 
   private[hive] def _to_hivemall_features = (v: SV) => v match {
     case dv: SDV =>
@@ -67,7 +67,7 @@ object HivemallUtils {
    * Returns a new vector with `1.0` (bias) appended to the input vector.
    * @group ftvec
    */
-  def append_bias = udf(_append_bias)
+  def append_bias: UserDefinedFunction = udf(_append_bias)
 
   private[hive] def _append_bias = (v: SV) => v match {
     case dv: SDV =>

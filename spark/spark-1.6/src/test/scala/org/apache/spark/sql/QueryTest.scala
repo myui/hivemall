@@ -187,8 +187,8 @@ abstract class QueryTest extends PlanTest {
   }
 
   /**
-    * Asserts that a given [[Queryable]] does not have missing inputs in all the analyzed plans.
-    */
+   * Asserts that a given [[Queryable]] does not have missing inputs in all the analyzed plans.
+   */
   def assertEmptyMissingInput(query: Queryable): Unit = {
     assert(query.queryExecution.analyzed.missingInput.isEmpty,
       s"The analyzed logical plan has missing inputs: ${query.queryExecution.analyzed}")

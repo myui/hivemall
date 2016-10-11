@@ -21,7 +21,7 @@ import org.apache.spark.sql.{AnalysisException, DataFrame, GroupedData}
 import org.apache.spark.sql.catalyst.analysis.{Star, UnresolvedAlias, UnresolvedAttribute, UnresolvedFunction}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
-import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Cube, Rollup, Pivot}
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Cube, Pivot, Rollup}
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
 
@@ -169,7 +169,7 @@ final class GroupedDataEx protected[sql](
   }
 
   /**
-   * @see hivemall.ensemble.MaxValueLabelUDAF"
+   * @see hivemall.ensemble.MaxValueLabelUDAF
    */
   def max_label(score: String, label: String): DataFrame = {
     // checkType(score, NumericType)
