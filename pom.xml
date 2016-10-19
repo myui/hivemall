@@ -63,7 +63,7 @@
 	</mailingLists>
 
 	<developers>
-	   <!-- Initial Committers -->
+		<!-- Initial Committers -->
 		<developer>
 			<id>myui</id>
 			<name>Makoto Yui</name>
@@ -194,7 +194,7 @@
 		</developer>
 	</developers>
 
-    <!--
+	<!--
 	<contributors>
 		<contributor>
 		</contributor>
@@ -462,7 +462,7 @@
 				</configuration>
 			</plugin>
 			<!-- end sonatype deploy -->
-            <!-- start mvn site -->
+			<!-- start mvn site -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
@@ -475,7 +475,7 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-            <!-- end mvn site -->
+			<!-- end mvn site -->
 			<plugin>
 				<groupId>org.scalastyle</groupId>
 				<artifactId>scalastyle-maven-plugin</artifactId>
@@ -494,9 +494,9 @@
 				</configuration>
 				<executions>
 					<execution>
-					<goals>
-						<goal>check</goal>
-					</goals>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
@@ -521,7 +521,7 @@
 		</plugins>
 	</reporting>
     -->
- 
+
 	<issueManagement>
 		<url>https://issues.apache.org/jira/browse/HIVEMALL/</url>
 		<system>JIRA</system>
