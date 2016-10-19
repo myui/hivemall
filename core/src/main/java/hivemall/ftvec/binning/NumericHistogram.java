@@ -18,14 +18,13 @@
 package hivemall.ftvec.binning;
 
 import hivemall.utils.lang.SizeOf;
+import org.apache.hadoop.hive.serde2.io.DoubleWritable;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import org.apache.hadoop.hive.serde2.io.DoubleWritable;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 
 /**
  * **THIS CLASS IS IMPORTED FROM HIVE 2.1.0 FOR COMPATIBILITY**

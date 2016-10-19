@@ -18,18 +18,17 @@
 package hivemall.mix.server
 
 import java.util.Random
-import java.util.concurrent.{TimeUnit, ExecutorService, Executors}
+import java.util.concurrent.{Executors, ExecutorService, TimeUnit}
 import java.util.logging.Logger
 
-import org.scalatest.{BeforeAndAfter, FunSuite}
-
-import hivemall.model.{DenseModel, PredictionModel, WeightValue}
 import hivemall.mix.MixMessage.MixEventName
 import hivemall.mix.client.MixClient
 import hivemall.mix.server.MixServer.ServerState
+import hivemall.model.{DenseModel, PredictionModel, WeightValue}
 import hivemall.utils.io.IOUtils
 import hivemall.utils.lang.CommandLineUtils
 import hivemall.utils.net.NetUtils
+import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class MixServerSuite extends FunSuite with BeforeAndAfter {
 
@@ -64,7 +63,8 @@ class MixServerSuite extends FunSuite with BeforeAndAfter {
 
   after { this.executor.shutdown() }
 
-  private[this] def clientDriver(groupId: String, model: PredictionModel, numMsg: Int = 1000000): Unit = {
+  private[this] def clientDriver(
+      groupId: String, model: PredictionModel, numMsg: Int = 1000000): Unit = {
     var client: MixClient = null
     try {
       client = new MixClient(MixEventName.average, groupId, s"localhost:${port}", false, 2, model)

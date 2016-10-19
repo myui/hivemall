@@ -120,6 +120,10 @@ System requirements
 
 * Java 7 or later
 
+* Spark 1.6 or 2.0 for Hivemall on Spark
+
+* Pig 0.15 or later for Hivemall on Pig
+
 Basic Usage
 ------------
 

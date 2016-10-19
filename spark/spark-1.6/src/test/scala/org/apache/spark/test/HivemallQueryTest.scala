@@ -19,13 +19,14 @@ package org.apache.spark.test
 
 import scala.collection.mutable.Seq
 
+import hivemall.tools.RegressionDatagen
+
+import org.apache.spark.sql.{QueryTest, Row}
+import org.apache.spark.sql.functions
 import org.apache.spark.sql.hive.HivemallOps
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.test.TestHiveSingleton
-import org.apache.spark.sql.{QueryTest, Row, functions}
 import org.apache.spark.test.TestUtils._
-
-import hivemall.tools.RegressionDatagen
 
 /**
  * Base class for a shared SparkContext in test uses
@@ -107,7 +108,7 @@ abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
       val res = invokeFunc(new HivemallOps(LargeRegrTrainData),
         func, Seq(add_bias($"features"), $"label"))
       if (!res.columns.contains("conv")) {
-        res.groupby("feature").agg("weight"->"avg")
+        res.groupby("feature").agg("weight" -> "avg")
       } else {
         res.groupby("feature").argmin_kld("weight", "conv")
       }
@@ -133,7 +134,7 @@ abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
     val eval = predict
       .join(testDf, predict("rowid") === testDf("rowid"))
       .groupby()
-      .agg(Map("target"->"avg", "predicted"->"avg"))
+      .agg(Map("target" -> "avg", "predicted" -> "avg"))
       .as("target", "predicted")
 
     val diff = eval.map {
@@ -151,7 +152,7 @@ abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
       val res = invokeFunc(new HivemallOps(LargeClassifierTrainData),
         func, Seq(add_bias($"features"), $"label"))
       if (!res.columns.contains("conv")) {
-        res.groupby("feature").agg("weight"->"avg")
+        res.groupby("feature").agg("weight" -> "avg")
       } else {
         res.groupby("feature").argmin_kld("weight", "conv")
       }
@@ -177,7 +178,8 @@ abstract class HivemallQueryTest extends QueryTest with TestHiveSingleton {
        * WARN Column: Constructing trivially true equals predicate, 'rowid#1323 = rowid#1323'.
        * Perhaps you need to use aliases.
        */
-      // .select($"rowid", functions.when(sigmoid($"sum(value)") > 0.50, 1.0).otherwise(0.0).as("predicted"))
+      // .select($"rowid", functions.when(sigmoid($"sum(value)") > 0.50, 1.0).otherwise(0.0)
+      // .as("predicted"))
       .select($"rowid", functions.when(sigmoid($"sum(value)") > 0.50, 1.0).otherwise(0.0))
       .as("rowid", "predicted")
 

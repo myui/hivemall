@@ -20,10 +20,6 @@ package hivemall.ftvec.binning;
 import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.lang.Preconditions;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -41,78 +37,47 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableBooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDoubleObjectInspector;
 import org.apache.hadoop.io.BooleanWritable;
 
-@Description(
-        name = "build_bins",
-        value = "_FUNC_(int|bigint|float|double weight, const int num_of_bins[, const boolean auto_shrink = false])"
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@Description(name = "build_bins",
+        value = "_FUNC_(number weight, const int num_of_bins[, const boolean auto_shrink = false])"
                 + " - Return quantiles representing bins: array<double>")
 public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
-    private static final int idxOfCol = 0;
-    private static final int idxOfNumOfBins = 1;
-    private static final int idxOfAutoShrink = 2;
-
     @Override
     public GenericUDAFEvaluator getEvaluator(GenericUDAFParameterInfo info)
             throws SemanticException {
         ObjectInspector[] OIs = info.getParameterObjectInspectors();
 
-        if (OIs.length != 2 && OIs.length != 3)
+        if (OIs.length != 2 && OIs.length != 3) {
             throw new UDFArgumentLengthException("Specify two or three arguments.");
-
-        // check type of col
-        if (OIs[idxOfCol].getCategory() != ObjectInspector.Category.PRIMITIVE)
-            throw new UDFArgumentTypeException(idxOfCol,
-                "Only primitive type arguments are accepted but " + OIs[idxOfCol].getTypeName()
-                        + " was passed as `col`.");
-        switch (((PrimitiveObjectInspector) OIs[idxOfCol]).getPrimitiveCategory()) {
-            case BYTE:
-            case SHORT:
-            case INT:
-            case LONG:
-            case FLOAT:
-            case DOUBLE:
-            case TIMESTAMP:
-            case DECIMAL:
-                break;
-            default:
-                throw new UDFArgumentTypeException(idxOfCol,
-                    "Only numeric type arguments are accepted but " + OIs[idxOfCol].getTypeName()
-                            + " was passed as `col`.");
         }
 
-        // check type of num_of_bins
-        if (OIs[idxOfNumOfBins].getCategory() != ObjectInspector.Category.PRIMITIVE)
-            throw new UDFArgumentTypeException(idxOfNumOfBins,
-                "Only primitive type arguments are accepted but " + OIs[idxOfCol].getTypeName()
-                        + " was passed as `num_of_bins`.");
-        switch (((PrimitiveObjectInspector) OIs[idxOfNumOfBins]).getPrimitiveCategory()) {
-            case INT:
-                break;
-            default:
-                throw new UDFArgumentTypeException(idxOfNumOfBins,
-                    "Only int arguments are accepted but " + OIs[idxOfNumOfBins].getTypeName()
-                            + " was passed as `num_of_bins`.");
+        if (!HiveUtils.isNumberOI(OIs[0])) {
+            throw new UDFArgumentTypeException(0, "Only number type argument is acceptable but "
+                    + OIs[0].getTypeName() + " was passed as `weight`");
+        }
+
+        if (!HiveUtils.isIntegerOI(OIs[1])) {
+            throw new UDFArgumentTypeException(1, "Only int type argument is acceptable but "
+                    + OIs[1].getTypeName() + " was passed as `num_of_bins`");
         }
 
         if (OIs.length == 3) {
-            // check type of auto_shrink
-            if (OIs[idxOfAutoShrink].getCategory() != ObjectInspector.Category.PRIMITIVE)
-                throw new UDFArgumentTypeException(idxOfAutoShrink,
-                    "Only primitive type arguments are accepted but " + OIs[idxOfCol].getTypeName()
-                            + " was passed as `auto_shrink`.");
-            switch (((PrimitiveObjectInspector) OIs[idxOfAutoShrink]).getPrimitiveCategory()) {
-                case BOOLEAN:
-                    break;
-                default:
-                    throw new UDFArgumentTypeException(idxOfAutoShrink,
-                        "Only boolean arguments are accepted but "
-                                + OIs[idxOfAutoShrink].getTypeName()
-                                + " was passed as `auto_shrink`.");
+            if (!HiveUtils.isBooleanOI(OIs[2])) {
+                throw new UDFArgumentTypeException(2,
+                    "Only boolean type argument is acceptable but " + OIs[2].getTypeName()
+                            + " was passed as `auto_shrink`");
             }
         }
 
@@ -120,21 +85,22 @@ public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
     }
 
     private static class BuildBinsUDAFEvaluator extends GenericUDAFEvaluator {
+        // PARTIAL1 and COMPLETE
         private PrimitiveObjectInspector weightOI;
+
+        // PARTIAL2 and FINAL
         private StructObjectInspector structOI;
         private StructField autoShrinkField, histogramField, quantilesField;
-        private WritableBooleanObjectInspector autoShrinkOI;
+        private BooleanObjectInspector autoShrinkOI;
         private StandardListObjectInspector histogramOI;
-        private WritableDoubleObjectInspector histogramElOI;
+        private DoubleObjectInspector histogramElOI;
         private StandardListObjectInspector quantilesOI;
-        private WritableDoubleObjectInspector quantileOI;
-
-        private double[] quantiles;
+        private DoubleObjectInspector quantileOI;
 
         private int nBGBins = 10000; // # of bins for creating histogram (background bins)
         private int nBins; // # of bins for result
-        private boolean autoShrink;
-
+        private boolean autoShrink = false; // default: false
+        private double[] quantiles; // for reset
 
         @AggregationType(estimable = true)
         static final class BuildBinsAggregationBuffer extends AbstractAggregationBuffer {
@@ -146,8 +112,8 @@ public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
 
             @Override
             public int estimate() {
-                return histogram.lengthFor() // histogram
-                        + 20 + 8 * quantiles.length // quantiles
+                return (histogram != null ? histogram.lengthFor() : 0) // histogram
+                        + 20 + 8 * (quantiles != null ? quantiles.length : 0) // quantiles
                         + 4; // autoShrink
             }
         }
@@ -157,18 +123,20 @@ public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
             super.init(mode, OIs);
 
             if (mode == Mode.PARTIAL1 || mode == Mode.COMPLETE) {
-                weightOI = (PrimitiveObjectInspector) OIs[idxOfCol];
+                weightOI = HiveUtils.asDoubleCompatibleOI(OIs[0]);
 
                 // set const values
-                nBins = HiveUtils.getConstInt(OIs[idxOfNumOfBins]);
-                if (OIs.length == 3)
-                    autoShrink = HiveUtils.getConstBoolean(OIs[idxOfAutoShrink]);
+                nBins = HiveUtils.getConstInt(OIs[1]);
+                if (OIs.length == 3) {
+                    autoShrink = HiveUtils.getConstBoolean(OIs[2]);
+                }
 
                 // check value of `num_of_bins`
-                if (nBins < 2)
+                if (nBins < 2) {
                     throw new UDFArgumentException(
                         "Only greater than or equal to 2 is accepted but " + nBins
                                 + " was passed as `num_of_bins`.");
+                }
 
                 quantiles = getQuantiles();
             } else {
@@ -184,121 +152,115 @@ public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
             }
 
             if (mode == Mode.PARTIAL1 || mode == Mode.PARTIAL2) {
-                ArrayList<String> fieldNames = new ArrayList<String>();
-                ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
-                fieldNames.add("autoShrink");
+                final ArrayList<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
                 fieldOIs.add(PrimitiveObjectInspectorFactory.writableBooleanObjectInspector);
-                fieldNames.add("histogram");
                 fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
-                fieldNames.add("quantiles");
                 fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
 
-                return ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames, fieldOIs);
+                return ObjectInspectorFactory.getStandardStructObjectInspector(
+                    Arrays.asList("autoShrink", "histogram", "quantiles"), fieldOIs);
             } else {
                 return ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector);
             }
         }
 
         private double[] getQuantiles() throws HiveException {
-            int nQuantiles = nBins - 1;
-            double[] result = new double[nQuantiles];
-            for (int i = 0; i < nQuantiles; i++)
+            final int nQuantiles = nBins - 1;
+            final double[] result = new double[nQuantiles];
+            for (int i = 0; i < nQuantiles; i++) {
                 result[i] = ((double) (i + 1)) / (nQuantiles + 1);
+            }
             return result;
         }
 
         @Override
         public AbstractAggregationBuffer getNewAggregationBuffer() throws HiveException {
-            BuildBinsAggregationBuffer result = new BuildBinsAggregationBuffer();
-            result.histogram = new NumericHistogram();
-            reset(result);
-            return result;
+            final BuildBinsAggregationBuffer myAgg = new BuildBinsAggregationBuffer();
+            myAgg.histogram = new NumericHistogram();
+            reset(myAgg);
+            return myAgg;
         }
 
         @Override
         public void reset(@SuppressWarnings("deprecation") AggregationBuffer agg)
                 throws HiveException {
-            BuildBinsAggregationBuffer result = (BuildBinsAggregationBuffer) agg;
-            result.histogram.reset();
-            result.quantiles = null;
-
-            result.histogram.allocate(nBGBins);
-            result.quantiles = quantiles;
-            result.autoShrink = autoShrink;
+            final BuildBinsAggregationBuffer myAgg = (BuildBinsAggregationBuffer) agg;
+            myAgg.autoShrink = autoShrink;
+            myAgg.histogram.reset();
+            myAgg.histogram.allocate(nBGBins);
+            myAgg.quantiles = quantiles;
         }
 
         @Override
         public void iterate(@SuppressWarnings("deprecation") AggregationBuffer agg,
                 Object[] parameters) throws HiveException {
-            assert (parameters.length == 2 || parameters.length == 3);
+            Preconditions.checkArgument(parameters.length == 2 || parameters.length == 3);
+
             if (parameters[0] == null || parameters[1] == null) {
                 return;
             }
-            BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
+            final BuildBinsAggregationBuffer myAgg = (BuildBinsAggregationBuffer) agg;
 
             // Get and process the current datum
-            double v = PrimitiveObjectInspectorUtils.getDouble(parameters[0], weightOI);
-            myagg.histogram.add(v);
+            myAgg.histogram.add(PrimitiveObjectInspectorUtils.getDouble(parameters[0], weightOI));
         }
 
         @Override
         public void merge(@SuppressWarnings("deprecation") AggregationBuffer agg, Object other)
                 throws HiveException {
-            if (other == null)
+            if (other == null) {
                 return;
+            }
 
-            BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
+            final BuildBinsAggregationBuffer myAgg = (BuildBinsAggregationBuffer) agg;
 
-            myagg.autoShrink = autoShrinkOI.get(structOI.getStructFieldData(other, autoShrinkField));
+            myAgg.autoShrink = autoShrinkOI.get(structOI.getStructFieldData(other, autoShrinkField));
 
-            List<?> histogram = ((LazyBinaryArray) structOI.getStructFieldData(other,
+            final List<?> histogram = ((LazyBinaryArray) structOI.getStructFieldData(other,
                 histogramField)).getList();
+            myAgg.histogram.merge(histogram, histogramElOI);
 
-            myagg.histogram.merge(histogram, histogramElOI);
-
-            double[] quantiles = HiveUtils.asDoubleArray(
+            final double[] quantiles = HiveUtils.asDoubleArray(
                 structOI.getStructFieldData(other, quantilesField), quantilesOI, quantileOI);
-            if (quantiles.length > 0)
-                myagg.quantiles = quantiles;
+            if (quantiles != null && quantiles.length > 0) {
+                myAgg.quantiles = quantiles;
+            }
         }
 
         @SuppressWarnings("serial")
         @Override
         public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
                 throws HiveException {
-            BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
-            Object[] partialResult = new Object[3];
-            partialResult[0] = new BooleanWritable(myagg.autoShrink);
-            partialResult[1] = myagg.histogram.serialize();
-            partialResult[2] = (myagg.quantiles != null) ? WritableUtils.toWritableList(myagg.quantiles)
-                    : new ArrayList<DoubleWritable>() {
-                        {
-                            add(new DoubleWritable(0));
-                        }
-                    };
+            final BuildBinsAggregationBuffer myAgg = (BuildBinsAggregationBuffer) agg;
+            final Object[] partialResult = new Object[3];
+            partialResult[0] = new BooleanWritable(myAgg.autoShrink);
+            partialResult[1] = myAgg.histogram.serialize();
+            partialResult[2] = (myAgg.quantiles != null) ? WritableUtils.toWritableList(myAgg.quantiles)
+                    : Collections.singletonList(new DoubleWritable(0));
             return partialResult;
         }
 
         @Override
         public Object terminate(@SuppressWarnings("deprecation") AggregationBuffer agg)
                 throws HiveException {
-            BuildBinsAggregationBuffer myagg = (BuildBinsAggregationBuffer) agg;
+            final BuildBinsAggregationBuffer myAgg = (BuildBinsAggregationBuffer) agg;
 
-            if (myagg.histogram.getUsedBins() < 1) { // SQL standard - return null for zero elements
+            if (myAgg.histogram.getUsedBins() < 1) { // SQL standard - return null for zero elements
                 return null;
             } else {
-                List<DoubleWritable> result = new ArrayList<DoubleWritable>();
-                Preconditions.checkNotNull(myagg.quantiles);
+                Preconditions.checkNotNull(myAgg.quantiles);
+
+                final List<DoubleWritable> result = new ArrayList<DoubleWritable>();
 
                 double prev = Double.NEGATIVE_INFINITY;
 
                 result.add(new DoubleWritable(Double.NEGATIVE_INFINITY));
-                for (int i = 0; i < myagg.quantiles.length; i++) {
-                    double val = myagg.histogram.quantile(myagg.quantiles[i]);
+                for (int i = 0; i < myAgg.quantiles.length; i++) {
+                    final double val = myAgg.histogram.quantile(myAgg.quantiles[i]);
 
                     // check duplication
                     if (prev == val) {
-                        if (!myagg.autoShrink) {
+                        if (!myAgg.autoShrink) {
                             throw new HiveException(
                                 "Quantiles were repeated even though `auto_shrink` is false."
                                         + " Reduce `num_of_bins` or enable `auto_shrink`.");

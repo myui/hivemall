@@ -18,10 +18,10 @@
 package org.apache.spark.sql.hive
 
 import org.apache.spark.mllib.linalg.{BLAS, Vector, Vectors}
+import org.apache.spark.sql.{Column, DataFrame, Row, UserDefinedFunction}
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, DataFrame, Row, UserDefinedFunction}
 
 object HivemallUtils {
 
@@ -33,13 +33,15 @@ object HivemallUtils {
    * This class must be in o.a.spark.sql._ because
    * a Column class is private.
    */
-  @inline implicit def toBooleanLiteral(i: Boolean) = Column(Literal.create(i, BooleanType))
-  @inline implicit def toIntLiteral(i: Int) = Column(Literal.create(i, IntegerType))
-  @inline implicit def toFloatLiteral(i: Float) = Column(Literal.create(i, FloatType))
-  @inline implicit def toDoubleLiteral(i: Double) = Column(Literal.create(i, DoubleType))
-  @inline implicit def toStringLiteral(i: String) = Column(Literal.create(i, StringType))
-  @inline implicit def toIntArrayLiteral(i: Seq[Int]) = Column(Literal.create(i, ArrayType(IntegerType)))
-  @inline implicit def toStringArrayLiteral(i: Seq[String]) = Column(Literal.create(i, ArrayType(StringType)))
+  @inline implicit def toBooleanLiteral(i: Boolean): Column = Column(Literal.create(i, BooleanType))
+  @inline implicit def toIntLiteral(i: Int): Column = Column(Literal.create(i, IntegerType))
+  @inline implicit def toFloatLiteral(i: Float): Column = Column(Literal.create(i, FloatType))
+  @inline implicit def toDoubleLiteral(i: Double): Column = Column(Literal.create(i, DoubleType))
+  @inline implicit def toStringLiteral(i: String): Column = Column(Literal.create(i, StringType))
+  @inline implicit def toIntArrayLiteral(i: Seq[Int]): Column =
+    Column(Literal.create(i, ArrayType(IntegerType)))
+  @inline implicit def toStringArrayLiteral(i: Seq[String]): Column =
+    Column(Literal.create(i, ArrayType(StringType)))
 
   /**
    * Check whether the given schema contains a column of the required data type.

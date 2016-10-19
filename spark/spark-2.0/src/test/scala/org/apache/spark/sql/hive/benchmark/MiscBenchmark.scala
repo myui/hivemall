@@ -18,23 +18,19 @@
 package org.apache.spark.sql.hive.benchmark
 
 import org.apache.spark.SparkFunSuite
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.catalyst.expressions.{EachTopK, Expression}
+import org.apache.spark.sql.catalyst.expressions.{EachTopK, Expression, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.{Generate, LogicalPlan, Project}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.hive.HiveGenericUDTF
-import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession, functions}
-import org.apache.spark.sql.catalyst.expressions.Literal
-import org.apache.spark.sql.hive.HiveGenericUDF
+import org.apache.spark.sql.functions
+import org.apache.spark.sql.hive.{HiveGenericUDF, HiveGenericUDTF}
+import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.hive.HiveShim.HiveFunctionWrapper
 import org.apache.spark.sql.types._
 import org.apache.spark.test.TestUtils
 import org.apache.spark.util.Benchmark
-
-import org.apache.spark.sql.hive.HivemallUtils._
 
 class TestFuncWrapper(df: DataFrame) {
 
@@ -204,7 +200,7 @@ class MiscBenchmark extends SparkFunSuite {
     addBenchmarkCase(
       "rank",
       testDf.withColumn(
-        "rank", rank().over(Window.partitionBy($"key").orderBy($"score".desc))
+        "rank", functions.rank().over(Window.partitionBy($"key").orderBy($"score".desc))
       ).where($"rank" <= topK)
     )
 

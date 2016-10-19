@@ -19,10 +19,10 @@ package org.apache.spark.test
 
 import scala.collection.mutable.Seq
 
+import hivemall.tools.RegressionDatagen
+
 import org.apache.spark.sql.hive.test.TestHiveSingleton
 import org.apache.spark.sql.QueryTest
-
-import hivemall.tools.RegressionDatagen
 
 /**
  * Base class for tests with Hivemall features.

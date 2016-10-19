@@ -219,6 +219,7 @@
 		<hive.version>0.13.0</hive.version>
 		<scala.version>2.11.8</scala.version>
 		<dependency.locations.enabled>false</dependency.locations.enabled>
+		<scala.binary.version>2.11</scala.binary.version>
 	</properties>
 
 	<repositories>
@@ -244,6 +245,7 @@
 			</modules>
 			<properties>
 				<spark.version>2.0.0</spark.version>
+				<spark.binary.version>2.0</spark.binary.version>
 			</properties>
 		</profile>
 		<profile>
@@ -254,6 +256,7 @@
 			</modules>
 			<properties>
 				<spark.version>1.6.2</spark.version>
+				<spark.binary.version>1.6</spark.binary.version>
 			</properties>
 		</profile>
 		<profile>
@@ -424,26 +427,6 @@
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>regex-scala-property</id>
-						<goals>
-							<goal>regex-property</goal>
-						</goals>
-						<configuration>
-							<name>scala.version.parsed</name>
-							<value>${scala.version}</value>
-							<regex>(\d+\.\d+)\.\d+</regex>
-							<replacement>$1</replacement>
-							<failIfNoMatch>true</failIfNoMatch>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 			<!-- start coveralls -->
 			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
@@ -479,7 +462,6 @@
 				</configuration>
 			</plugin>
 			<!-- end sonatype deploy -->
-
             <!-- start mvn site -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -494,7 +476,30 @@
 				</dependencies>
 			</plugin>
             <!-- end mvn site -->
-
+			<plugin>
+				<groupId>org.scalastyle</groupId>
+				<artifactId>scalastyle-maven-plugin</artifactId>
+				<version>0.8.0</version>
+				<configuration>
+					<verbose>false</verbose>
+					<failOnViolation>true</failOnViolation>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<failOnWarning>false</failOnWarning>
+					<sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+					<testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
+					<configLocation>spark/spark-common/scalastyle-config.xml</configLocation>
+					<outputFile>${basedir}/target/scalastyle-output.xml</outputFile>
+					<inputEncoding>${project.build.sourceEncoding}</inputEncoding>
+					<outputEncoding>${project.reporting.outputEncoding}</outputEncoding>
+				</configuration>
+				<executions>
+					<execution>
+					<goals>
+						<goal>check</goal>
+					</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

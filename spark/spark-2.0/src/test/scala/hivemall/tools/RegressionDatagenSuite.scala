@@ -17,15 +17,15 @@
 
 package hivemall.tools
 
-import org.apache.spark.sql.hive.test.TestHive
 import org.scalatest.FunSuite
+
+import org.apache.spark.sql.hive.test.TestHive
 
 class RegressionDatagenSuite extends FunSuite {
 
   test("datagen") {
-   val df = RegressionDatagen.exec(
-     TestHive, min_examples = 10000, n_features = 100, n_dims = 65536,
-     dense=false, cl=true)
+    val df = RegressionDatagen.exec(
+      TestHive, min_examples = 10000, n_features = 100, n_dims = 65536, dense = false, cl = true)
     assert(df.count() >= 10000)
   }
 }

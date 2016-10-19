@@ -51,6 +51,7 @@ import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazyString;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -161,13 +162,14 @@ public final class HiveUtils {
         }
         return Arrays.asList(ary);
     }
-    
+
     @Nonnull
-    public static StructObjectInspector asStructOI(@Nonnull final ObjectInspector oi) throws UDFArgumentException {
-        if(oi.getCategory() != Category.STRUCT) {
+    public static StructObjectInspector asStructOI(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        if (oi.getCategory() != Category.STRUCT) {
             throw new UDFArgumentException("Expected Struct OI but got: " + oi.getTypeName());
         }
-        return (StructObjectInspector) oi;        
+        return (StructObjectInspector) oi;
     }
 
     public static boolean isPrimitiveOI(@Nonnull final ObjectInspector oi) {
@@ -238,6 +240,10 @@ public final class HiveUtils {
     public static boolean isListOI(@Nonnull final ObjectInspector oi) {
         Category category = oi.getCategory();
         return category == Category.LIST;
+    }
+
+    public static boolean isMapOI(@Nonnull final ObjectInspector oi) {
+        return oi.getCategory() == Category.MAP;
     }
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
@@ -785,6 +791,15 @@ public final class HiveUtils {
             throw new UDFArgumentException("Expected List OI but was: " + oi);
         }
         return (ListObjectInspector) oi;
+    }
+
+    @Nonnull
+    public static MapObjectInspector asMapOI(@Nonnull final ObjectInspector oi)
+            throws UDFArgumentException {
+        if (oi.getCategory() != Category.MAP) {
+            throw new UDFArgumentException("Expected Map OI but was: " + oi);
+        }
+        return (MapObjectInspector) oi;
     }
 
     public static void validateFeatureOI(@Nonnull final ObjectInspector oi)
