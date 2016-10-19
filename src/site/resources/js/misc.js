@@ -16,7 +16,7 @@
  */
 $(document).ready(function(){
     $('#screenshots-carousel').carousel({
-        interval: 4000
+        interval: 5000
     });
 
     $('#carousel-prev' ).on("click", function(){

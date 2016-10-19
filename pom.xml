@@ -8,11 +8,11 @@
 
 	<name>Apache Hivemall</name>
 	<description>Scalable Machine Learning Library for Apache Hive</description>
-	<url>https://github.com/myui/hivemall/</url>
+	<url>http://hivemall.incubator.apache.org/</url>
 	<inceptionYear>2013</inceptionYear>
 	<organization>
-		<name>Makoto YUI</name>
-		<url>http://myui.github.io/</url>
+		<name>Apache Hivemall</name>
+		<url>http://hivemall.incubator.apache.org/</url>
 	</organization>
 
 	<licenses>
@@ -24,19 +24,182 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/myui/hivemall</url>
-		<connection>scm:git:git@github.com:myui/hivemall.git</connection>
-		<developerConnection>scm:git:git@github.com:myui/hivemall.git</developerConnection>
+		<url>https://git-wip-us.apache.org/repos/asf/incubator-hivemall.git</url>
+		<connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-hivemall.git</connection>
+		<developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-hivemall.git</developerConnection>
 	</scm>
 
+	<mailingLists>
+		<mailingList>
+			<name>user</name>
+			<post>user@hivemall.incubator.apache.org</post>
+			<subscribe>user-subscribe@hivemall.incubator.apache.org</subscribe>
+			<unsubscribe>user-unsubscribe@hivemall.incubator.apache.org</unsubscribe>
+			<archive>https://lists.apache.org/list.html?user@hivemall.apache.org</archive>
+			<otherArchives>
+				<otherArchive>http://markmail.org/search/?q=list%3Aorg.apache.hivemall.user</otherArchive>
+			</otherArchives>
+		</mailingList>
+		<mailingList>
+			<name>dev</name>
+			<post>dev@hivemall.incubator.apache.org</post>
+			<subscribe>dev-subscribe@hivemall.incubator.apache.org</subscribe>
+			<unsubscribe>dev-unsubscribe@hivemall.incubator.apache.org</unsubscribe>
+			<archive>https://lists.apache.org/list.html?dev@hivemall.apache.org</archive>
+			<otherArchives>
+				<otherArchive>http://markmail.org/search/?q=list%3Aorg.apache.hivemall.dev</otherArchive>
+			</otherArchives>
+		</mailingList>
+		<mailingList>
+			<name>commits</name>
+			<post>commits@hivemall.incubator.apache.org</post>
+			<subscribe>commits-subscribe@hivemall.incubator.apache.org</subscribe>
+			<unsubscribe>commits-unsubscribe@hivemall.incubator.apache.org</unsubscribe>
+			<archive>https://lists.apache.org/list.html?commits@hivemall.apache.org</archive>
+			<otherArchives>
+				<otherArchive>http://markmail.org/search/?q=list%3Aorg.apache.hivemall.commits</otherArchive>
+			</otherArchives>
+		</mailingList>
+	</mailingLists>
+
 	<developers>
+	   <!-- Initial Committers -->
 		<developer>
 			<id>myui</id>
-			<name>Makoto YUI</name>
-			<email>yuin405@gmail.com</email>
+			<name>Makoto Yui</name>
+			<email>myui[at]apache.org</email>
 			<url>http://myui.github.io/</url>
+			<organization>Treasure Data, Inc.</organization>
+			<organizationUrl>https://www.treasuredata.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Committer</role>
+				<role>Initial Developer</role>
+			</roles>
+			<timezone>+9</timezone>
+		</developer>
+		<developer>
+			<id>maropu</id>
+			<name>Takashi Yamamuro</name>
+			<email>linguin.m.s[at]gmail.com</email>
+			<url>https://github.com/maropu/</url>
+			<organization>Nippon Telegraph and Telephone Corporation (NTT)</organization>
+			<organizationUrl>http://www.ntt.co.jp/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Committer</role>
+				<role>Apache Spark Contributor</role>
+			</roles>
+			<timezone>+9</timezone>
+		</developer>
+		<developer>
+			<id>daijy</id>
+			<name>Daniel Dai</name>
+			<email>daijy[at]apache.org</email>
+			<url>http://people.apache.org/~daijy/</url>
+			<organization>Hortonworks Inc.</organization>
+			<organizationUrl>http://hortonworks.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Committer</role>
+				<role>ASF Member</role>
+				<role>Apache Pig PMC Chair</role>
+			</roles>
+			<timezone>-8</timezone>
+		</developer>
+		<developer>
+			<id>lewuathe</id>
+			<name>Kai Sasaki</name>
+			<email>lewuathe[at]apache.org</email>
+			<url>http://www.lewuathe.com/</url>
+			<organization>Treasure Data, Inc.</organization>
+			<organizationUrl>https://www.treasuredata.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Committer</role>
+			</roles>
+			<timezone>+9</timezone>
+		</developer>
+		<developer>
+			<id>ozawa</id>
+			<name>Tsuyoshi Ozawa</name>
+			<email>ozawa[at]apache.org</email>
+			<url>https://people.apache.org/~ozawa/</url>
+			<organization>Nippon Telegraph and Telephone Corporation (NTT)</organization>
+			<organizationUrl>http://www.ntt.co.jp/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Committer</role>
+				<role>Apache Hadoop Committer</role>
+			</roles>
+			<timezone>+9</timezone>
+		</developer>
+        <!-- Project mentors -->
+		<developer>
+			<id>rvs</id>
+			<name>Roman Shaposhnik</name>
+			<email>rvs[at]apache.org</email>
+			<url>http://github.com/rvs</url>
+			<organization>Pivotal Inc.</organization>
+			<organizationUrl>https://pivotal.io/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Champion</role>
+				<role>ASF Member</role>
+				<role>Incubator PMC Member</role>
+				<role>Apache Bigtop PMC Member</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>rxin</id>
+			<name>Reynold Xin</name>
+			<email>rxin[at]databricks.com</email>
+			<url>http://rxin.org</url>
+			<organization>Databricks Inc.</organization>
+			<organizationUrl>https://databricks.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Mentor</role>
+				<role>ASF Member</role>
+				<role>Apache Spark PMC Member</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>weimer</id>
+			<name>Markus Weimer</name>
+			<email>markus[at]weimo.de</email>
+			<url>http://www.markusweimer.com/</url>
+			<organization>Microsoft Corporation</organization>
+			<organizationUrl>https://www.microsoft.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Mentor</role>
+				<role>ASF Member</role>
+				<role>Apache REEF Chair</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>meng</id>
+			<name>Xiangrui Meng</name>
+			<email>meng[at]databricks.com</email>
+			<url>https://github.com/mengxr</url>
+			<organization>Databricks Inc.</organization>
+			<organizationUrl>https://databricks.com/</organizationUrl>
+			<roles>
+				<role>PPMC Member</role>
+				<role>Mentor</role>
+				<role>ASF Member</role>
+				<role>Apache Spark PMC Member</role>
+			</roles>
 		</developer>
 	</developers>
+
+    <!--
+	<contributors>
+		<contributor>
+		</contributor>
+	</contributors>
+	-->
 
 	<packaging>pom</packaging>
 
@@ -318,21 +481,49 @@
 			<!-- end sonatype deploy -->
 
             <!-- start mvn site -->
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-site-plugin</artifactId>
-              <version>3.5.1</version>
-              <dependencies>
-                <dependency>
-                  <groupId>org.apache.maven.doxia</groupId>
-                  <artifactId>doxia-module-markdown</artifactId>
-                  <version>1.7</version>
-                </dependency>
-              </dependencies>
-            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.5.1</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.doxia</groupId>
+						<artifactId>doxia-module-markdown</artifactId>
+						<version>1.7</version>
+					</dependency>
+				</dependencies>
+			</plugin>
             <!-- end mvn site -->
 
 		</plugins>
 	</build>
+
+    <!-- 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-changes-plugin</artifactId>
+				<version>2.12</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>changes-report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+    -->
+ 
+	<issueManagement>
+		<url>https://issues.apache.org/jira/browse/HIVEMALL/</url>
+		<system>JIRA</system>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/apache/incubator-hivemall</url>
+	</ciManagement>
 
 </project>

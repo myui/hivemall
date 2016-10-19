@@ -47,12 +47,12 @@
 				<projectId>apache/incubator-hivemall</projectId>
 				<ribbonOrientation>right</ribbonOrientation>
 				<ribbonColor>red</ribbonColor>
-			</gitHub>
+			</gitHub>			
             <facebookLike />
 			<twitter>
 				<user>ApacheHivemall</user>
 				<showUser>true</showUser>
-				<showFollowers>false</showFollowers>
+				<showFollowers>false</showFollowers>				
 			</twitter>
 			<skipGenerationDate>true</skipGenerationDate>
 		</fluidoSkin>
@@ -68,37 +68,42 @@
 
 	<body>
 
+        <head><![CDATA[
+            <link rel="stylesheet" href="/css/font-awesome.css" type="text/css" />
+        ]]></head>
+
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
-			<item name="API" href="/apidocs/index.html" />
-			<item name="User Guide" href="/userguide.html" />
 			<item name="Download" href="/download.html" />
-			<item name="FAQ" href="/faq.html" />
-			<item name="Contributing" href="/contributing.html" />
+			<item name="Licenses" href="/license.html" />
 			<item name="Team" href="/team-list.html" />
 		</menu>
-
-		<menu name="Developer Resources">
-			<item name="Mailing Lists" href="/mail-lists.html" />
-			<item name="Source (Git)" href="/source-code.html" />
-			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/HIVEMALL" />
+		
+		<menu name="Documentation">
+		  <item name="User Guide" href="/userguide.html" />
+		  <item name="Overview" href="/overview.html" />
+		  <item name="Wiki" href="https://cwiki.apache.org/confluence/display/HIVEMALL" target="_blank" />
+          <item name="FAQ" href="/404.html" />
 		</menu>
 
-		<menu ref="reports" inherit="top" />
+		<menu name="Get Involved">
+            <item name="Mailing Lists" href="/mail-lists.html" />
+			<item name="Issues (Jira)" href="https://issues.apache.org/jira/browse/HIVEMALL" target="_blank" />		
+            <item name="Source (Git)" href="/repository.html" />
+            <item name="Travis CI" href="https://travis-ci.org/apache/incubator-hivemall" target="_blank" />
+            <item name="Contributing" href="/contributing.html" />
+		</menu>
 
+		<!-- <menu ref="reports" inherit="top" /> -->
+        
 		<menu name="ASF">
-			<item name="How Apache Works" href="http://www.apache.org/foundation/how-it-works.html" />
-			<item name="Foundation" href="http://www.apache.org/foundation/" />
-			<item name="Sponsoring Apache" href="http://www.apache.org/foundation/sponsorship.html" />
-			<item name="Thanks" href="http://www.apache.org/foundation/thanks.html" />
+			<item name="How Apache Works" href="http://www.apache.org/foundation/how-it-works.html" target="_blank" />
+			<item name="Foundation" href="http://www.apache.org/foundation/" target="_blank" />
+			<item name="Sponsoring Apache" href="http://www.apache.org/foundation/sponsorship.html" target="_blank" />
+			<item name="Thanks" href="http://www.apache.org/foundation/thanks.html" target="_blank" />
 		</menu>
-
 
 		<footer><![CDATA[
-			<p>
-                Apache Hivemall, Apache, the Apache feather logo, and the Apache Hivemall project logos are trademarks of The Apache Software Foundation.
-                All other marks mentioned may be trademarks or registered trademarks of their respective owners.
-			</p>
 			<p>
 			  <small>
                 Apache Hivemall is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by <a href="http://incubator.apache.org/">the Apache Incubator</a>.

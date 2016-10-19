@@ -33,7 +33,7 @@
                     <div class="item active">
                         <img alt="" src="/images/hivemall_bg.png" height="120px"/>
                         <div class="carousel-caption">
-                            <p>Hivemall is a scalable machine learning library that runs on Apache Hive, Pig and Spark.</p>
+                            <p>Hivemall is a scalable machine learning library that runs on Apache Hive, Spark and Pig.</p>
                         </div>
                     </div>
                     <div class="item">
@@ -46,7 +46,7 @@
                         <img alt="" src="/images/hivemall_overview_bg.png" height="120px"/>
                         <div class="carousel-caption">
                             <a href="http://www.slideshare.net/myui/introduction-to-hivemall">
-                            <p>Introduction to Hivemall</p>
+                            <p>Introduction to Hivemall (slide)</p>
                             </a>
                         </div>
                     </div>
