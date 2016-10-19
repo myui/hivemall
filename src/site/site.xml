@@ -67,23 +67,26 @@
 	</poweredBy>
 
 	<body>
-
+	
+        <!--
         <head><![CDATA[
             <link rel="stylesheet" href="/css/font-awesome.css" type="text/css" />
         ]]></head>
+        -->
 
 		<menu name="Project">
 			<item name="Home" href="/index.html" />
 			<item name="Download" href="/download.html" />
 			<item name="Licenses" href="/license.html" />
 			<item name="Team" href="/team-list.html" />
+			<item name="Powered By" href="/poweredby.html" />
 		</menu>
 		
 		<menu name="Documentation">
 		  <item name="User Guide" href="/userguide.html" />
 		  <item name="Overview" href="/overview.html" />
 		  <item name="Wiki" href="https://cwiki.apache.org/confluence/display/HIVEMALL" target="_blank" />
-          <item name="FAQ" href="/404.html" />
+          <item name="FAQ" href="/faq.html" />
 		</menu>
 
 		<menu name="Get Involved">
