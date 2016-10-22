@@ -80,6 +80,7 @@
 			<item name="Licenses" href="/license.html" />
 			<item name="Team" href="/team-list.html" />
 			<item name="Powered By" href="/poweredby.html" />
+			<item name="Incubation Status" href="http://incubator.apache.org/projects/hivemall.html" />
 		</menu>
 		
 		<menu name="Documentation">
