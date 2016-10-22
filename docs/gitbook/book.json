@@ -1,0 +1,64 @@
+{
+    "gitbook": "3.x.x",
+    "title": "Hivemall User Manual",
+    "description": "User Manual for Apache Hivemall",       
+    "plugins": [
+        "theme-api",
+        "edit-link",
+        "github",
+        "splitter",
+        "sitemap",
+        "etoc",
+        "callouts",
+        "toggle-chapters",
+        "anchorjs",
+        "codeblock-filename",
+        "expandable-chapters",
+        "multipart",
+        "codeblock-filename",
+        "katex",
+        "emphasize"
+    ],
+    "pluginsConfig": {
+        "theme-default": {
+            "showLevel": true
+        },
+        "theme-api": {
+            "theme": "dark",
+            "split": false
+        },
+        "edit-link": {
+            "base": "https://github.com/apache/incubator-hivemall/docs/gitbook",
+            "label": "Edit"
+        },
+        "github": {
+            "url": "https://github.com/apache/incubator-hivemall/"
+        },
+        "sitemap": {
+            "hostname": "http://hivemall.incubator.apache.org/"
+        },
+        "etoc": {
+          "mindepth": 1,
+          "maxdepth": 3,
+          "notoc": true
+        },
+        "downloadpdf": {
+            "base": "https://github.com/apache/incubator-hivemall/docs/gitbook",
+            "label": "PDF",
+            "multilingual": false
+        },
+        "fontsettings": {
+            "theme": "white",
+            "font": "sans",
+            "size": 2
+        },
+        "anchorjs": {
+            "selector": "h1,h2,h3,*:not(.callout) > h4,h5"
+        }
+    },
+    "links": {
+      "sidebar": {
+        "<i class=\"fa fa-home\"></i> Home": "http://hivemall.incubator.apache.org/"
+      }
+    }
+}

@@ -48,8 +48,8 @@
 				<ribbonOrientation>right</ribbonOrientation>
 				<ribbonColor>red</ribbonColor>
 			</gitHub>			
-            <facebookLike />
-			<twitter>
+            <!-- <facebookLike /> -->
+			<twitter>			    
 				<user>ApacheHivemall</user>
 				<showUser>true</showUser>
 				<showFollowers>false</showFollowers>				
@@ -83,7 +83,7 @@
 		</menu>
 		
 		<menu name="Documentation">
-		  <item name="User Guide" href="/userguide.html" />
+		  <item name="User Guide" href="/userguide/index.html" />
 		  <item name="Overview" href="/overview.html" />
 		  <item name="Wiki" href="https://cwiki.apache.org/confluence/display/HIVEMALL" target="_blank" />
           <item name="FAQ" href="/faq.html" />
