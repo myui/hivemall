@@ -14,6 +14,8 @@ fi
 cd $HIVEMALL_HOME
 mvn clean site
 
+cp -R docs/gitbook/_book target/site/userguide
+
 #
 # Run HTTP server on localhost
 #
