@@ -26,6 +26,9 @@
         <script src="js/misc.js" type="text/javascript"/>
     </head>
     <body>
+        <div class="alert alert-info" role="alert">
+            <strong>Info:</strong> We are now in the process of migrating the project repository from <a href="https://github.com/myui/hivemall">Github</a> to <a href="https://github.com/apache/incubator-hivemall">Apache Incubator</a>.
+        </div>
         <div id="carousel-main" class="row">
             <div id="screenshots-carousel" class="carousel slide span10">
                 <!--  Carousel items  -->
@@ -45,9 +48,7 @@
                     <div class="item">
                         <img alt="" src="/images/hivemall_overview_bg.png" height="120px"/>
                         <div class="carousel-caption">
-                            <a href="http://www.slideshare.net/myui/introduction-to-hivemall">
-                            <p>Introduction to Hivemall (slide)</p>
-                            </a>
+                            <p>Introduction to Hivemall <a href="http://www.slideshare.net/myui/introduction-to-hivemall"></a></p>
                         </div>
                     </div>
                 </div>
