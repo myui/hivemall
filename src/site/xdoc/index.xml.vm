@@ -28,6 +28,7 @@
     <body>
         <div class="alert alert-info" role="alert">
             <strong>Info:</strong> We are now in the process of migrating the project repository from <a href="https://github.com/myui/hivemall">Github</a> to <a href="https://github.com/apache/incubator-hivemall">Apache Incubator</a>.
+            <a href="/userguide/index.html"><button class="btn btn-primary" type="button">Learn more</button></a>
         </div>
         <div id="carousel-main" class="row">
             <div id="screenshots-carousel" class="carousel slide span10">
