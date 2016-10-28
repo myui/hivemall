@@ -13,6 +13,10 @@
 	<name>Hivemall Core</name>
 	<packaging>jar</packaging>
 
+	<properties>
+		<main.basedir>${project.parent.basedir}</main.basedir>
+	</properties>
+
 	<dependencies>
 		<!-- provided scope -->
 		<dependency>
@@ -142,26 +146,6 @@
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<testOutputDirectory>target/test-classes</testOutputDirectory>
 		<plugins>
-			<plugin>
-				<groupId>com.mycila</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>2.8</version>
-				<configuration>
-					<header>${project.parent.basedir}/resources/license-header.txt</header>
-					<properties>
-						<currentYear>${build.year}</currentYear>
-						<copyrightOwner>${project.organization.name}</copyrightOwner>
-					</properties>
-					<includes>
-						<include>src/main/**/*.java</include>
-						<include>src/test/**/*.java</include>
-					</includes>
-					<encoding>UTF-8</encoding>
-					<headerDefinitions>
-						<headerDefinition>${project.parent.basedir}/resources/header-definition.xml</headerDefinition>
-					</headerDefinitions>
-				</configuration>
-			</plugin>
 			<!-- hivemall-core-xx.jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
