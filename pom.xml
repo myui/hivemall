@@ -391,7 +391,6 @@
 							<currentYear>${build.year}</currentYear>
 							<copyrightOwner>${project.organization.name}</copyrightOwner>
 						</properties>
-						<useDefaultExcludes>false</useDefaultExcludes>
 						<includes>
 							<include>src/main/**/*.java</include>
 							<include>src/test/**/*.java</include>
@@ -400,14 +399,25 @@
 							<include>bin/*.sh</include>
 							<include>docs/gitbook/**/*.md</include>
 						</includes>
+						<useDefaultExcludes>false</useDefaultExcludes>
+						<excludes>
+							<exclude>docs/gitbook/node_modules/**</exclude>
+						</excludes>
 						<encoding>UTF-8</encoding>
 						<headerDefinitions>
 							<headerDefinition>${main.basedir}/resources/header-definition.xml</headerDefinition>
 						</headerDefinitions>
 						<mapping>
-						  <md>XML_STYLE</md>
+							<md>XML_STYLE</md>
 						</mapping>
 					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
 				</plugin>
 			</plugins>
 		</pluginManagement>
