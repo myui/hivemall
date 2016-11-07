@@ -415,8 +415,9 @@
 							<include>src/main/**/*.scala</include>
 							<include>src/test/**/*.scala</include>
 							<include>bin/*.sh</include>
-							<include>docs/gitbook/**/*.md</include>
 							<include>**/pom.xml</include>
+							<include>docs/gitbook/**/*.md</include>
+							<include>src/site/markdown/**/*.md</include>
 						</includes>
 						<useDefaultExcludes>false</useDefaultExcludes>
 						<excludes>
