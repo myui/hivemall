@@ -396,6 +396,7 @@
 							<include>src/test/**/*.java</include>
 							<include>src/main/**/*.scala</include>
 							<include>src/test/**/*.scala</include>
+							<include>bin/*.sh</include>
 						</includes>
 						<encoding>UTF-8</encoding>
 						<headerDefinitions>
