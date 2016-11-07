@@ -408,13 +408,6 @@
 						  <md>XML_STYLE</md>
 						</mapping>
 					</configuration>
-					<executions>
-						<execution>
-							<goals>
-								<goal>check</goal>
-							</goals>
-						</execution>
-					</executions>
 				</plugin>
 			</plugins>
 		</pluginManagement>
