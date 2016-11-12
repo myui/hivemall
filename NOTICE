@@ -1,9 +1,33 @@
-Hivemall: Hive scalable machine learning library
+Apache Hivemall
+Copyright 2016 The Apache Software Foundation
 
-Copyright (C) 2013 National Institute of Advanced Industrial Science and Technology (AIST)
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
 
-This product includes/uses software developed by The Apache Software Foundation (http://www.apache.org/).
-The Apache Hive project logo are trademarks of The Apache Software Foundation.
+Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
+Copyright (C) 2015-2016 Makoto Yui
 
-Put the above copyrights and LICENSE file for the services/softwares/distributions 
-that use Hivemall.
+------------------------------------------------------------------------------------------------------
+Copyright notifications which have been relocated from source files
+
+o hivemall/core/src/main/java/hivemall/smile/classification/DecisionTree.java
+  hivemall/core/src/main/java/hivemall/smile/regression/RegressionTree.java
+
+    Copyright (c) 2010 Haifeng Li
+
+    https://github.com/haifengl/smile
+    Licensed under the Apache License, Version 2.0
+
+o hivemall/core/src/main/java/hivemall/utils/codec/Base91.java
+
+    Copyright (c) 2000-2006 Joachim Henke
+
+    https://github.com/bwaldvogel/base91    
+    Licensed under the BSD 3-Clause License
+
+o hivemall/core/src/main/java/hivemall/utils/collections/OpenHashMap.java
+
+    Copyright (C) 2010 catchpole.net
+
+    https://github.com/slipperyseal/atomicobjects/
+    Licensed under the Apache License, Version 2.0
