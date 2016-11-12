@@ -18,7 +18,7 @@
 # under the License.
 #
 
-set -eu
+set -e
 set -o pipefail
 
 # Target commit hash value
