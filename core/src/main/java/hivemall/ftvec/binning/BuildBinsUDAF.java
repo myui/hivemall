@@ -228,7 +228,6 @@ public final class BuildBinsUDAF extends AbstractGenericUDAFResolver {
             }
         }
 
-        @SuppressWarnings("serial")
         @Override
         public Object terminatePartial(@SuppressWarnings("deprecation") AggregationBuffer agg)
                 throws HiveException {
