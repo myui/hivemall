@@ -17,7 +17,8 @@
         "multipart",
         "codeblock-filename",
         "katex",
-        "emphasize"
+        "emphasize",
+        "localized-footer"
     ],
     "pluginsConfig": {
         "theme-default": {

@@ -44,8 +44,10 @@ I'm usually lunching EMR instances with cheap Spot instances through [CLI client
 _To use YARN instead of old Hadoop, specify "[--ami-version 3.0.0](http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html#ami-versions-supported)". Hivemall works on both old Hadoop and YARN._
 
 Or, lunch an interactive EMR job using the EMR GUI wizard.
-![emr-wizard](https://dl.dropboxusercontent.com/u/13123103/emr-wizard.png)
-![emr-bootstrap](https://dl.dropboxusercontent.com/u/13123103/emr-bootstrap.png)
+
+<img src="../resources/images/emr-wizard.png" alt="emr-wizard"/>
+
+<img src="../resources/images/emr-bootstrap.png" alt="emr-bootstrap"/>
 
 ## Data preparation
 

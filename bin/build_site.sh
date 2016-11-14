@@ -30,16 +30,36 @@ if [ "$HIVEMALL_HOME" == "" ]; then
 fi
 
 cd $HIVEMALL_HOME
+HIVEMALL_HOME=`pwd`
+
+##
+# Run maven-site
+##
+
 mvn clean site
+
+##
+# building gitbook userguide
+##
+
+if ! [ -x "$(command -v gitbook)" ]; then
+  echo "gitbook is not installed .." >&2
+  echo "Run 'npm install gitbook-cli -g' to install gitbook" >&2
+  exit 1
+fi
+
+cd ${HIVEMALL_HOME}/docs/gitbook
+gitbook install && gitbook build
+cd $HIVEMALL_HOME
 
 cp -R docs/gitbook/_book target/site/userguide
 
-#
+##
 # Run HTTP server on localhost
-#
+##
 
 # ruby
-cd $HIVEMALL_HOME/target/site
+cd ${HIVEMALL_HOME}/target/site
 ruby -rwebrick -e 'WEBrick::HTTPServer.new(:DocumentRoot => "./", :Port => 8000).start'
 
 # python3
