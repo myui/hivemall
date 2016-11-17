@@ -85,16 +85,20 @@ public class TDSystemTestRunner extends SystemTestRunner {
             fileUploadCommitRetryLimit = Integer.valueOf(props.getProperty("fileUploadCommitRetryLimit"));
         }
 
-        final Properties TDPorps = System.getProperties();
+        boolean fromPropertiesFile = false;
         for (Map.Entry<Object, Object> e : props.entrySet()) {
-            if (e.getKey().toString().startsWith("td.client.")) {
-                TDPorps.setProperty(e.getKey().toString(), e.getValue().toString());
+            final String key = e.getKey().toString();
+            if (key.startsWith("td.client.")) {
+                fromPropertiesFile = true;
+                System.setProperty(key, e.getValue().toString());
             }
         }
-        System.setProperties(TDPorps);
 
-        client = System.getProperties().size() == TDPorps.size() ? TDClient.newClient() // use $HOME/.td/td.conf
-                : TDClient.newBuilder(false).build(); // use *.properties
+        if (fromPropertiesFile) {
+            client = TDClient.newBuilder(false).build(); // use *.properties
+        } else {
+            client = TDClient.newClient(); // use $HOME/.td/td.conf
+        }
     }
 
     @Override
