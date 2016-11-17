@@ -195,8 +195,9 @@ pink	255	192	203
 ```sql
 -- write your hive queries
 -- comments like this and multiple queries in one row are allowed
-SELECT blue FROM color WHERE name = 'lavender';SELECT green FROM color WHERE name LIKE 'orange%' 
-SELECT name FROM color WHERE blue = 255
+SELECT blue FROM color WHERE name = 'lavender';
+SELECT green FROM color WHERE name LIKE 'orange%';
+SELECT name FROM color WHERE blue = 255;
 ```
 
 * `systemtest/src/test/resources/hivemall/QuickExample/answer/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/answer/${fileName}`)
@@ -205,6 +206,6 @@ tsv format is required
 
 ```tsv
 250
-165    69
-azure    blue    magenta
+165	69
+azure	blue	magenta
 ```
