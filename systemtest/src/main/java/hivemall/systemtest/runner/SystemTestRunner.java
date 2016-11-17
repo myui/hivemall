@@ -45,7 +45,6 @@ import javax.annotation.Nullable;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +54,9 @@ import java.util.Set;
 public abstract class SystemTestRunner extends ExternalResource {
     static final Logger logger = LoggerFactory.getLogger(SystemTestRunner.class);
     @Nonnull
-    final List<HQBase> classInitHqs;
+    private final List<HQBase> classInitHqs;
     @Nonnull
-    final Set<String> immutableTables;
+    private final Set<String> immutableTables;
     @Nonnull
     final String dbName;
     @Nonnull
@@ -98,7 +97,7 @@ public abstract class SystemTestRunner extends ExternalResource {
     @Override
     protected void after() {
         try {
-            resetDB(); // clean up database
+            cleanDB(); // clean up database
         } catch (Exception ex) {
             throw new QueryExecutionException("Failed to clean up temporary database. "
                     + ex.getMessage());
@@ -111,16 +110,16 @@ public abstract class SystemTestRunner extends ExternalResource {
 
     abstract void finRunner();
 
-    public void initBy(@Nonnull final HQBase hq) {
+    protected void initBy(@Nonnull final HQBase hq) {
         classInitHqs.add(hq);
     }
 
-    public void initBy(@Nonnull final List<? extends HQBase> hqs) {
+    protected void initBy(@Nonnull final List<? extends HQBase> hqs) {
         classInitHqs.addAll(hqs);
     }
 
     // fix to temporary database and user-defined init (should be called per Test class)
-    void prepareDB() throws Exception {
+    private void prepareDB() throws Exception {
         createDB(dbName);
         use(dbName);
         for (HQBase q : classInitHqs) {
@@ -136,15 +135,21 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // drop temporary database (should be called per Test class)
-    void resetDB() throws Exception {
+    private void cleanDB() throws Exception {
         dropDB(dbName);
     }
 
-    public final boolean isImmutableTable(final String tableName) {
-        return immutableTables.contains(tableName);
+    // drop temporary tables (should be called per Test method)
+    void resetDB() throws Exception {
+        final List<String> tables = tableList();
+        for (String t : tables) {
+            if (!immutableTables.contains(t)) {
+                dropTable(HQ.dropTable(t));
+            }
+        }
     }
 
-    // execute HQBase
+    // >execute HQBase
     public List<String> exec(@Nonnull final HQBase hq) throws Exception {
         if (hq instanceof RawHQ) {
             return exec((RawHQ) hq);
@@ -157,10 +162,10 @@ public abstract class SystemTestRunner extends ExternalResource {
         }
     }
 
-    //// execute RawHQ
+    // >>execute RawHQ
     abstract protected List<String> exec(@Nonnull final RawHQ hq) throws Exception;
 
-    //// execute TableHQ
+    // >>execute TableHQ
     List<String> exec(@Nonnull final TableHQ hq) throws Exception {
         if (hq instanceof CreateTableHQ) {
             return createTable((CreateTableHQ) hq);
@@ -175,7 +180,7 @@ public abstract class SystemTestRunner extends ExternalResource {
         }
     }
 
-    ////// execute UploadFileHQ
+    // >>>execute UploadFileHQ
     List<String> exec(@Nonnull final UploadFileHQ hq) throws Exception {
         if (hq instanceof UploadFileAsNewTableHQ) {
             return uploadFileAsNewTable((UploadFileAsNewTableHQ) hq);
@@ -187,8 +192,8 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // matching HQBase
-    public void matching(@Nonnull final HQBase hq, @CheckForNull final String answer,
-            final boolean ordered) throws Exception {
+    void matching(@Nonnull final HQBase hq, @CheckForNull final String answer, final boolean ordered)
+            throws Exception {
         Preconditions.checkNotNull(answer);
 
         List<String> result = exec(hq);
@@ -203,8 +208,7 @@ public abstract class SystemTestRunner extends ExternalResource {
     }
 
     // matching HQBase (ordered == false)
-    public void matching(@Nonnull final HQBase hq, @CheckForNull final String answer)
-            throws Exception {
+    void matching(@Nonnull final HQBase hq, @CheckForNull final String answer) throws Exception {
         matching(hq, answer, false);
     }
 

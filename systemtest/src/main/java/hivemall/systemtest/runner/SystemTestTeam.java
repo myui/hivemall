@@ -19,7 +19,6 @@
 package hivemall.systemtest.runner;
 
 import hivemall.systemtest.exception.QueryExecutionException;
-import hivemall.systemtest.model.HQ;
 import hivemall.systemtest.model.HQBase;
 import hivemall.systemtest.model.RawHQ;
 import hivemall.systemtest.model.lazy.LazyMatchingResource;
@@ -66,12 +65,7 @@ public class SystemTestTeam extends ExternalResource {
 
         for (SystemTestRunner runner : reachGoal) {
             try {
-                final List<String> tables = runner.exec(HQ.tableList());
-                for (String t : tables) {
-                    if (!runner.isImmutableTable(t)) {
-                        runner.exec(HQ.dropTable(t));
-                    }
-                }
+                runner.resetDB();
             } catch (Exception ex) {
                 throw new QueryExecutionException("Failed to resetPerMethod database. "
                         + ex.getMessage());

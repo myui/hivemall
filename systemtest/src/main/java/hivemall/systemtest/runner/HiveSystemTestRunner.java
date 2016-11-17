@@ -101,7 +101,7 @@ public class HiveSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected void finRunner() {
+    void finRunner() {
         if (container != null) {
             container.tearDown();
         }
@@ -111,7 +111,7 @@ public class HiveSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> exec(@Nonnull final RawHQ hq) {
+    public List<String> exec(@Nonnull final RawHQ hq) {
         logger.info("executing: `" + hq.query + "`");
 
         return hShell.executeQuery(hq.query);

@@ -70,7 +70,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected void initRunner() {
+    void initRunner() {
         // optional
         if (props.containsKey("execFinishRetryLimit")) {
             execFinishRetryLimit = Integer.valueOf(props.getProperty("execFinishRetryLimit"));
@@ -102,14 +102,14 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected void finRunner() {
+    void finRunner() {
         if (client != null) {
             client.close();
         }
     }
 
     @Override
-    protected List<String> exec(@Nonnull final RawHQ hq) throws Exception {
+    public List<String> exec(@Nonnull final RawHQ hq) throws Exception {
         logger.info("executing: `" + hq.query + "`");
 
         final TDJobRequest req = TDJobRequest.newHiveQuery(dbName, hq.query);
@@ -157,7 +157,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> createDB(@Nonnull final String dbName) throws Exception {
+    List<String> createDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: create database if not exists " + dbName);
 
         client.createDatabaseIfNotExists(dbName);
@@ -165,7 +165,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> dropDB(@Nonnull final String dbName) throws Exception {
+    List<String> dropDB(@Nonnull final String dbName) throws Exception {
         logger.info("executing: drop database if exists " + dbName);
 
         client.deleteDatabaseIfExists(dbName);
@@ -173,13 +173,13 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> use(@Nonnull final String dbName) throws Exception {
+    List<String> use(@Nonnull final String dbName) throws Exception {
         return Collections.singletonList("No need to execute `USE` statement on TD, so skipped `USE "
                 + dbName + "`");
     }
 
     @Override
-    protected List<String> tableList() throws Exception {
+    List<String> tableList() throws Exception {
         logger.info("executing: show tables on " + dbName);
 
         final List<TDTable> tables = client.listTables(dbName);
@@ -191,7 +191,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> createTable(@Nonnull final CreateTableHQ hq) throws Exception {
+    List<String> createTable(@Nonnull final CreateTableHQ hq) throws Exception {
         logger.info("executing: create table " + hq.tableName + " if not exists on " + dbName);
 
         final List<TDColumn> columns = new ArrayList<TDColumn>();
@@ -204,7 +204,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> dropTable(@Nonnull final DropTableHQ hq) throws Exception {
+    List<String> dropTable(@Nonnull final DropTableHQ hq) throws Exception {
         logger.info("executing: drop table " + hq.tableName + " if exists on " + dbName);
 
         client.deleteTableIfExists(dbName, hq.tableName);
@@ -212,8 +212,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> uploadFileAsNewTable(@Nonnull final UploadFileAsNewTableHQ hq)
-            throws Exception {
+    List<String> uploadFileAsNewTable(@Nonnull final UploadFileAsNewTableHQ hq) throws Exception {
         logger.info("executing: create " + hq.tableName + " based on " + hq.file.getPath()
                 + " if not exists on " + dbName);
 
@@ -292,8 +291,7 @@ public class TDSystemTestRunner extends SystemTestRunner {
     }
 
     @Override
-    protected List<String> uploadFileToExisting(@Nonnull final UploadFileToExistingHQ hq)
-            throws Exception {
+    List<String> uploadFileToExisting(@Nonnull final UploadFileToExistingHQ hq) throws Exception {
         logger.info("executing: insert " + hq.file.getPath() + " into " + hq.tableName + " on "
                 + dbName);
 
