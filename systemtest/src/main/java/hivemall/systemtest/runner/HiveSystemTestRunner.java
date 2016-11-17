@@ -132,6 +132,7 @@ public class HiveSystemTestRunner extends SystemTestRunner {
                 hShell.insertInto(dbName, hq.tableName).addRowsFromTsv(hq.file).commit();
                 break;
             case MSGPACK:
+                throw new Exception("MessagePack is not supported in HiveSystemTestRunner");
             case UNKNOWN:
                 throw new Exception("Input csv or tsv");
         }
