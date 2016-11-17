@@ -157,7 +157,7 @@ public class QuickExample {
     public void test3() throws Exception {
         // test on HiveRunner once only
         // auto matching by files which name is `test3` in `case/` and `answer/`
-        team.set(HQ.autoMatchingByFileName("test3", ci)); // unordered test
+        team.set(HQ.autoMatchingByFileName("test3"), ci); // unordered test
         team.run(); // this call is required
     }
     
@@ -165,7 +165,7 @@ public class QuickExample {
     public void test4() throws Exception {
         // test on HiveRunner once only
         predictor.expect(Throwable.class); // you can use systemtest w/ other rules 
-        team.set(HQ.fromStatement("invalid queryyy")); // this query throws an exception
+        team.set(HQ.fromStatement("invalid queryyy"), "never used"); // this query throws an exception
         team.run(); // this call is required
         // thrown exception will be caught by `ExpectedException` rule
     }
@@ -174,7 +174,7 @@ public class QuickExample {
 
 The above requires following files
 
-* `systemtest/src/test/resources/hivemall/HogeTest/init/color.tsv` (`systemtest/src/test/resources/${path/to/package}/${className}/init/${fileName}`)
+* `systemtest/src/test/resources/hivemall/QuickExample/init/color.tsv` (`systemtest/src/test/resources/${path/to/package}/${className}/init/${fileName}`)
 
 ```tsv
 blue	0	0	255
@@ -190,7 +190,7 @@ red	255	0	0
 pink	255	192	203
 ```
 
-* `systemtest/src/test/resources/hivemall/HogeTest/case/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/case/${fileName}`)
+* `systemtest/src/test/resources/hivemall/QuickExample/case/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/case/${fileName}`)
 
 ```sql
 -- write your hive queries
@@ -199,12 +199,12 @@ SELECT blue FROM color WHERE name = 'lavender';SELECT green FROM color WHERE nam
 SELECT name FROM color WHERE blue = 255
 ```
 
-* `systemtest/src/test/resources/hivemall/HogeTest/answer/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/answer/${fileName}`)
+* `systemtest/src/test/resources/hivemall/QuickExample/answer/test3` (`systemtest/src/test/resources/${path/to/package}/${className}/answer/${fileName}`)
 
 tsv format is required
 
 ```tsv
-230
+250
 165    69
 azure    blue    magenta
 ```
