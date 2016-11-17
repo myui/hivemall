@@ -195,12 +195,10 @@ public abstract class SystemTestRunner extends ExternalResource {
 
         if (ordered) {
             // take order into consideration (like list)
-            Assert.assertThat(Arrays.asList(answer.split(IO.RD)),
-                Matchers.contains(result.toArray()));
+            Assert.assertThat(result, Matchers.contains(answer.split(IO.RD)));
         } else {
             // not take order into consideration (like multiset)
-            Assert.assertThat(Arrays.asList(answer.split(IO.RD)),
-                Matchers.containsInAnyOrder(result.toArray()));
+            Assert.assertThat(result, Matchers.containsInAnyOrder(answer.split(IO.RD)));
         }
     }
 
