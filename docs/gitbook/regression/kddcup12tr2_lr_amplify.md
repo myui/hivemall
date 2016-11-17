@@ -21,7 +21,7 @@ This article explains *amplify* technique that is useful for improving predictio
 
 Iterations are mandatory in machine learning (e.g., in [stochastic gradient descent](http://en.wikipedia.org/wiki/Stochastic_gradient_descent)) to get good prediction models. However, MapReduce is known to be not suited for iterative algorithms because IN/OUT of each MapReduce job is through HDFS.
 
-In this example, we show how Hivemall deals with this problem. We use [KDD Cup 2012, Track 2 Task](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-dataset) as an example.
+In this example, we show how Hivemall deals with this problem. We use [KDD Cup 2012, Track 2 Task](../regression/kddcup12tr2_dataset.html) as an example.
 
 **WARNING**: rand_amplify() is supported in v0.2-beta1 and later.
 
@@ -73,7 +73,7 @@ The above query is executed by 2 MapReduce jobs as shown below:
 
 <img src="../resources/images/amplify.png" alt="amplifier"/>
 
-Using *trainning_x3*  instead of the plain training table results in higher and better AUC (0.746214) in [this](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-(regression\)) example.
+Using *trainning_x3*  instead of the plain training table results in higher and better AUC (0.746214) in [this example](../regression/kddcup12tr2_lr.html#evaluation).
 
 A problem in amplify() is that the shuffle (copy) and merge phase of the stage 1 could become a bottleneck.
 When the training table is so large that involves 100 Map tasks, the merge operator needs to merge at least 100 files by (external) merge sort! 
@@ -108,7 +108,7 @@ The map-local multiplication and shuffling has no bottleneck in the merge phase 
 
 <img src="../resources/images/randamplify_elapsed.png" alt="rand_amplify elapsed"/>
 
-Using *rand_amplify* results in a better AUC (0.743392) in [this](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-(regression\)) example.
+Using *rand_amplify* results in a better AUC (0.743392) in [this example](../regression/kddcup12tr2_lr.html#evaluation).
 
 ---
 # Conclusion

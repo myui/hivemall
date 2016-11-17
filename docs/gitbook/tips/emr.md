@@ -16,6 +16,8 @@
   specific language governing permissions and limitations
   under the License.
 -->
+
+<!-- toc -->
         
 ## Prerequisite
 Learn how to use Hive with Elastic MapReduce (EMR).  

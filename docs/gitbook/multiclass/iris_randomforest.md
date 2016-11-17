@@ -16,8 +16,6 @@
   specific language governing permissions and limitations
   under the License.
 -->
-        
-*NOTE: RandomForest is being supported from Hivemall v0.4 or later.*
 
 # Dataset
 

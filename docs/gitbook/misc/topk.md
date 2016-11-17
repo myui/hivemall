@@ -23,7 +23,10 @@ This function is particularly useful for applying a similarity/distance function
 
 `each_top_k` is very fast when compared to other methods running top-k queries (e.g., [`rank/distribute by`](https://ragrawal.wordpress.com/2011/11/18/extract-top-n-records-in-each-group-in-hadoophive/)) in Hive.
 
-## Caution
+<!-- toc -->
+
+# Caution
+
 * `each_top_k` is supported from Hivemall v0.3.2-3 or later.
 * This UDTF assumes that input records are sorted by `group`. Use `DISTRIBUTE BY group SORT BY group` to ensure that. Or, you can use `LEFT OUTER JOIN` for certain cases.
 * It takes variable lengths arguments in `argN`. 
@@ -32,7 +35,9 @@ This function is particularly useful for applying a similarity/distance function
 * If k is less than 0, reverse order is used and `tail-K` records are returned for each `group`.
 * Note that this function returns [a pseudo ranking](http://www.michaelpollmeier.com/selecting-top-k-items-from-a-list-efficiently-in-java-groovy/) for top-k. It always returns `at-most K` records for each group. The ranking scheme is similar to `dense_rank` but slightly different in certain cases.
 
-# Efficient Top-k Query Processing using `each_top_k`
+# Usage
+
+## Efficient Top-k Query Processing using `each_top_k`
 
 Efficient processing of Top-k queries is a crucial requirement in many interactive environments that involve massive amounts of data. 
 Our Hive extension `each_top_k` helps running Top-k processing efficiently.
@@ -87,7 +92,8 @@ FROM (
 ```
 
 > #### Note
-`CLUSTER BY x` is a synonym of `DISTRIBUTE BY x CLASS SORT BY x` and required when using `each_top_k`.
+>
+> `CLUSTER BY x` is a synonym of `DISTRIBUTE BY x CLASS SORT BY x` and required when using `each_top_k`.
 
 The function signature of `each_top_k` is `each_top_k(int k, ANY group, double value, arg1, arg2, ..., argN)` and it returns a relation `(int rank, double value, arg1, arg2, .., argN)`.
 
@@ -99,9 +105,8 @@ If `k` is less than 0, reverse order is used and tail-K records are returned for
 The ranking semantics of `each_top_k` follows SQL's `dense_rank` and then limits results by `k`. 
 
 > #### Caution
-`each_top_k` is benefical where the number of grouping keys are large. If the number of grouping keys are not so large (e.g., less than 100), consider using `rank() over` instead.
-
-# Usage
+>
+> `each_top_k` is benefical where the number of grouping keys are large. If the number of grouping keys are not so large (e.g., less than 100), consider using `rank() over` instead.
 
 ## top-k clicks 
 

@@ -21,8 +21,6 @@ Hive v0.13 or later supports [permanent functions](https://cwiki.apache.org/conf
 
 Permanent functions are useful when you are using Hive through Hiveserver or to avoid hivemall installation for each session.
 
-_Note: This feature is supported since hivemall-0.3 beta 3 or later._
-
 <!-- toc -->
 
 # Put hivemall jar to HDFS
@@ -58,4 +56,5 @@ show functions "hivemall.*";
 ```
 
 > #### Caution
-You need to specify "hivemall." prefix to call hivemall UDFs in your queries if UDFs are loaded into non-default scheme, in this case _hivemall_.
+>
+> You need to specify "hivemall." prefix to call hivemall UDFs in your queries if UDFs are loaded into non-default scheme, in this case _hivemall_.

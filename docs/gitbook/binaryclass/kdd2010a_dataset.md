@@ -19,9 +19,9 @@
         
 [http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#kdd2010 (algebra)](http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#kdd2010 (algebra))
 
-* # of classes: 2
-* # of data: 8,407,752 (training) / 510,302 (testing)
-* # of features: 20,216,830 in about 2.73 GB (training) / 20,216,830 (testing) 
+* the number of classes: 2
+* the number of data: 8,407,752 (training) / 510,302 (testing)
+* the number of features: 20,216,830 in about 2.73 GB (training) / 20,216,830 (testing) 
 
 ---
 # Define training/testing tables

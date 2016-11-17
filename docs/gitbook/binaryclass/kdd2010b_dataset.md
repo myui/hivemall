@@ -19,9 +19,9 @@
         
 [http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#kdd2010 (bridge to algebra)](http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#kdd2010 (bridge to algebra))
 
-* # of classes: 2
-* # of data: 19,264,097 / 748,401 (testing)
-* # of features: 29,890,095 / 29,890,095 (testing)
+* the number of classes: 2
+* the number of examples: 19,264,097 (training) / 748,401 (testing)
+* the number of features: 29,890,095 (training) / 29,890,095 (testing)
 
 ---
 # Define training/testing tables

@@ -24,14 +24,14 @@ Here, we use [EBNF](http://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Fo
 
 # Input Format for Classification 
 
-The classifiers of Hivemall takes 2 (or 3) arguments: *features*, *label*, and *options* (a.k.a. [hyperparameters](http://en.wikipedia.org/wiki/Hyperparameter)). The first two arguments of training functions (e.g., [logress](https://github.com/myui/hivemall/wiki/a9a-binary-classification-(logistic-regression)) and [train_scw](https://github.com/myui/hivemall/wiki/news20-binary-classification-%232-(CW,-AROW,-SCW))) represents training examples. 
+The classifiers of Hivemall takes 2 (or 3) arguments: *features*, *label*, and *options* (a.k.a. [hyperparameters](http://en.wikipedia.org/wiki/Hyperparameter)). The first two arguments of training functions represents training examples. 
 
 In Statistics, *features* and *label* are called [Explanatory variable and Response Variable](http://www.oswego.edu/~srp/stats/variable_types.htm), respectively.
 
 # Features format (for classification and regression)
 
 The format of *features* is common between (binary and multi-class) classification and regression.
-Hivemall accepts ARRAY&lt;INT|BIGINT|TEXT> for the type of *features* column.
+Hivemall accepts `ARRAY&lt;INT|BIGINT|TEXT>` for the type of *features* column.
 
 Hivemall uses a *sparse* data format (cf. [Compressed Row Storage](http://netlib.org/linalg/html_templates/node91.html)) which is similar to [LIBSVM](http://stackoverflow.com/questions/12112558/read-write-data-in-libsvm-format) and [Vowpal Wabbit](https://github.com/JohnLangford/vowpal_wabbit/wiki/Input-format).
 
@@ -52,7 +52,7 @@ Here is an instance of a features.
 10:3.4  123:0.5  34567:0.231
 ```
 
-*Note:* As mentioned later, *index* "0" is reserved for a [Bias/Dummy variable](https://github.com/myui/hivemall/wiki/Using-explicit-addBias()-for-a-better-prediction).
+*Note:* As mentioned later, *index* "0" is reserved for a [Bias/Dummy variable](../tips/addbias.html).
 
 In addition to numbers, you can use a TEXT value for an index. For example, you can use array("height:1.5", "length:2.0") for the features.
 ```
@@ -80,15 +80,15 @@ Note 1.0 is used for the weight when omitting *weight*.
 
 Note that "0" is reserved for a Bias variable (called dummy variable in Statistics). 
 
-The [addBias](https://github.com/myui/hivemall/wiki/Using-explicit-addBias()-for-a-better-prediction) function is Hivemall appends "0:1.0" as an element of array in *features*.
+The [addBias](../tips/addbias.html) function is Hivemall appends "0:1.0" as an element of array in *features*.
 
 ## Feature hashing
 
-Hivemall supports [feature hashing/hashing trick](http://en.wikipedia.org/wiki/Feature_hashing) through [mhash function](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-dataset#converting-feature-representation-by-feature-hashing).
+Hivemall supports [feature hashing/hashing trick](http://en.wikipedia.org/wiki/Feature_hashing) through [mhash function](../ft_engineering/hashing.html#mhash-function).
 
 The mhash function takes a feature (i.e., *index*) of TEXT format and generates a hash number of a range from 1 to 2^24 (=16777216) by the default setting.
 
-Feature hashing is useful where the dimension of feature vector (i.e., the number of elements in *features*) is so large. Consider applying [mhash function]((https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-dataset#converting-feature-representation-by-feature-hashing)) when a prediction model does not fit in memory and OutOfMemory exception happens.
+Feature hashing is useful where the dimension of feature vector (i.e., the number of elements in *features*) is so large. Consider applying [mhash function]((../ft_engineering/hashing.html#mhash-function)) when a prediction model does not fit in memory and OutOfMemory exception happens.
 
 In general, you don't need to use mhash when the dimension of feature vector is less than 16777216.
 If feature *index* is very long TEXT (e.g., "xxxxxxx-yyyyyy-weight:55.3") and uses huge memory spaces, consider using mhash as follows:
@@ -103,7 +103,7 @@ feature(mhash(extract_feature("xxxxxxx-yyyyyy-weight:55.3")), extract_weight("xx
 
 ## Feature Normalization
 
-Feature (weight) normalization is important in machine learning. Please refer [https://github.com/myui/hivemall/wiki/Feature-scaling](https://github.com/myui/hivemall/wiki/Feature-scaling) for detail.
+Feature (weight) normalization is important in machine learning. Please refer [this article](../ft_engineering/scaling.html) for detail.
 
 ***
 

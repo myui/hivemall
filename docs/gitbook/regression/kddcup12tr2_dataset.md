@@ -35,7 +35,7 @@ http://www.kddcup2012.org/c/kddcup2012-track2
 | training.txt | 9.9GB | 149,639,105 |
 | serid_profile.txt | 283MB | 23,669,283 |
 
-![tables](https://raw.github.com/myui/hivemall/master/resources/examples/kddtrack2/tables.png)
+![tables](../resources/images/kddtrack2tables.png)
 
 _Tokens are actually not used in this example. Try using them on your own._
 

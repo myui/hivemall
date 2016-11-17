@@ -17,9 +17,9 @@
   under the License.
 -->
         
-This page explains how to run matrix factorization on [MovieLens 1M dataset](https://github.com/myui/hivemall/wiki/MovieLens-Dataset).
+This page explains how to run matrix factorization on [MovieLens 1M dataset](../recommend/movielens_dataset.html).
 
-*Caution:* Matrix factorization is supported in Hivemall v0.3 or later.
+<!-- toc -->
 
 ## Calculate the mean rating in the training dataset
 ```sql
@@ -38,9 +38,8 @@ set hivevar:factor=10;
 -- maximum number of training iterations
 set hivevar:iters=50;
 ```
-See [this article](https://github.com/myui/hivemall/wiki/List-of-parameters-of-Matrix-Factorization) or [OnlineMatrixFactorizationUDTF#getOption()](https://github.com/myui/hivemall/blob/master/src/main/java/hivemall/mf/OnlineMatrixFactorizationUDTF.java#L123) to get the details of options.
 
-Note that there are no need to set an exact value for $mu. It actually works without setting $mu but recommended to set one for getting a better prediction.
+Note that there are no need to set an exact value for `$mu`. It actually works without setting `$mu` but recommended to set one for getting a better prediction.
 
 _Due to [a bug](https://issues.apache.org/jira/browse/HIVE-8396) in Hive, do not issue comments in CLI._
 
@@ -56,13 +55,17 @@ select
   avg(m_bias) as Bi
 from (
   select 
-    train_mf_sgd(userid, movieid, rating, "-factor ${factor} -mu ${mu} -iter ${iters}") as (idx, u_rank, m_rank, u_bias, m_bias)
+    train_mf_sgd(userid, movieid, rating, '-factor ${factor} -mu ${mu} -iter ${iters}') as (idx, u_rank, m_rank, u_bias, m_bias)
   from 
     training
 ) t
 group by idx;
 ```
-Note: Hivemall also provides *train_mf_adagrad* for training using AdaGrad.
+
+> #### Note
+>
+> Hivemall also provides *train_mf_adagrad* for training using AdaGrad. 
+> `-help` option shows a complete list of hyperparameters.
 
 # Predict
 
@@ -109,9 +112,10 @@ from (
   ON (t2.movieid = p2.idx)
 ) t;
 ```
-> 0.6728969407733578 (MAE) 
 
-> 0.8584162122694449 (RMSE)
+| MAE | RMSE |
+|:---:|:----:|
+| 0.6728969407733578 | 0.8584162122694449 |
 
 # Item Recommendation
 

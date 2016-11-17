@@ -90,7 +90,7 @@ group by
 
 **Caution:** _Item-Item cooccurrence matrix is a symmetric matrix that has the number of total occurrence for each diagonal element . If the size of items are `k`, then the size of expected matrix is `k * (k - 1) / 2`, usually a very large one._
 
-_Better to use [2.2.2.](https://github.com/myui/hivemall/wiki/Item-based-Collaborative-Filtering#limiting-size-of-elements-in-cooccurrence_upper_triangular) instead of [2.2.1.](https://github.com/myui/hivemall/wiki/Item-based-Collaborative-Filtering#221-create-cooccurrence-table-directly) for creating a `cooccurrence` table where dataset is large._
+_Better to use [2.2.2.](#222-create-cooccurrence-table-from-upper-triangular-matrix-of-cooccurrence) instead of [2.2.1.](#221-create-cooccurrence-table-directly) for creating a `cooccurrence` table where dataset is large._
 
 ### 2.2.1. Create cooccurrence table directly
 
@@ -257,7 +257,7 @@ GROUP BY
 Item-Item similarity computation is known to be computation complexity `O(n^2)` where `n` is the number of items.
 Depending on your cluster size and your dataset, the optimal solution differs.
 
-**Note:** _Better to use [3.1.1.](https://github.com/myui/hivemall/wiki/Item-based-Collaborative-Filtering#311-similarity-computation-using-the-symmetric-property-of-item-similarity-matrix) scheme where dataset is large._
+**Note:** _Better to use [3.1.1.](#311-similarity-computation-using-the-symmetric-property-of-item-similarity-matrix) scheme where dataset is large._
 
 ### 3.1. Shuffle heavy similarity computation
 

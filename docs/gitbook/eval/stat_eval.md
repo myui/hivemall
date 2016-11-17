@@ -17,7 +17,9 @@
   under the License.
 -->
         
-Using the [E2006 tfidf regression example](https://github.com/myui/hivemall/wiki/E2006-tfidf-regression-evaluation-(PA,-AROW)), we explain how to evaluate the prediction model on Hive.
+Using the [E2006 tfidf regression example](../regression/e2006_arow.html), we explain how to evaluate the prediction model on Hive.
+
+<!-- toc -->
 
 # Scoring by evaluation metrics
 
@@ -69,7 +71,7 @@ from t;
 ```
 > 1.9610366706408238	1.9610366706408238
 
---
-**References**
+# References
+
 * R2 http://en.wikipedia.org/wiki/Coefficient_of_determination
 * Evaluation Metrics https://www.kaggle.com/wiki/Metrics

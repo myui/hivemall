@@ -28,7 +28,7 @@ Then, the predicted model considers bias existing in the dataset and the predict
 
 **addBias()** of Hivemall, adds a bias to a feature vector. 
 To enable a bias clause, use addBias() for **both**_(important!)_ training and test data as follows.
-The bias _b_ is a feature of "0" ("-1" in before v0.3) by the default. See [AddBiasUDF](https://github.com/myui/hivemall/blob/master/src/main/hivemall/ftvec/AddBiasUDF.java) for the detail.
+The bias _b_ is a feature of "0" ("-1" in before v0.3) by the default. See [AddBiasUDF](../tips/addbias.html) for the detail.
 
 Note that Bias is expressed as a feature that found in all training/testing examples.
 

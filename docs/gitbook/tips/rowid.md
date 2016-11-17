@@ -16,7 +16,21 @@
   specific language governing permissions and limitations
   under the License.
 -->
-        
+
+<!-- toc -->
+
+# Rowid generator provided in Hivemall
+You can use [rowid() function](https://github.com/myui/hivemall/blob/master/src/main/java/hivemall/tools/mapred/RowIdUDF.java) to generate an unique rowid in Hivemall v0.2 or later.
+```sql
+select
+  rowid() as rowid, -- returns ${task_id}-${sequence_number}
+  *
+from 
+  xxx
+```
+
+# Other Rowid generation schemes using SQL
+
 ```sql
 CREATE TABLE xxx
 AS
@@ -36,15 +50,4 @@ select
   row_number() over () as rowid, 
   * 
 from a9atest;
-```
-
-***
-# Rowid generator provided in Hivemall v0.2 or later
-You can use [rowid() function](https://github.com/myui/hivemall/blob/master/src/main/java/hivemall/tools/mapred/RowIdUDF.java) to generate an unique rowid in Hivemall v0.2 or later.
-```sql
-select
-  rowid() as rowid, -- returns ${task_id}-${sequence_number}
-  *
-from 
-  xxx
 ```

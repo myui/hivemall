@@ -16,23 +16,25 @@
   specific language governing permissions and limitations
   under the License.
 -->
-        
-Hivemall provides a batch learning scheme that builds prediction models on Apache Hive.
+
+Apache Hivemall provides a batch learning scheme that builds prediction models on Apache Hive.
 The learning process itself is a batch process; however, an online/real-time prediction can be achieved by carrying a prediction on a transactional relational DBMS.
 
 In this article, we explain how to run a real-time prediction using a relational DBMS. 
-We assume that you have already run the [a9a binary classification task](https://github.com/myui/hivemall/wiki#a9a-binary-classification).
+We assume that you have already run the [a9a binary classification task](../binaryclass/a9a.html).
+
+<!-- toc -->
 
 # Prerequisites
 
 - MySQL
 
-Put mysql-connector-java.jar (JDBC driver) on $SQOOP_HOME/lib.
+    Put mysql-connector-java.jar (JDBC driver) on $SQOOP_HOME/lib.
 
 - [Sqoop](http://sqoop.apache.org/)
 
-Sqoop 1.4.5 does not support Hadoop v2.6.0. So, you need to build packages for Hadoop 2.6.
-To do that you need to edit build.xml and ivy.xml as shown in [this patch](https://gist.github.com/myui/e8db4a31b574103133c6).
+    Sqoop 1.4.5 does not support Hadoop v2.6.0. So, you need to build packages for Hadoop 2.6.
+    To do that you need to edit build.xml and ivy.xml as shown in [this patch](https://gist.github.com/myui/e8db4a31b574103133c6).
 
 # Preparing Model Tables on MySQL
 
@@ -228,7 +230,7 @@ where
 1 row in set (0.00 sec)
 ```
 
-Similar to [the way in Hive](https://github.com/myui/hivemall/wiki/a9a-binary-classification-(logistic-regression)#prediction), you can run prediction as follows:
+Similar to [the way in Hive](../binaryclass/a9a_lr.html#prediction), you can run prediction as follows:
 
 ```sql
 select

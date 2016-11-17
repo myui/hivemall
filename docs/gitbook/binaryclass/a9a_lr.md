@@ -16,17 +16,10 @@
   specific language governing permissions and limitations
   under the License.
 -->
-        
-a9a
-===
-http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#a9a
 
-_Training with iterations is OBSOLUTE in Hivemall._  
-_Using amplifier and shuffling inputs is RECOMMENDED in Hivemall._
+<!-- toc -->
 
----
-
-## UDF preparation
+# UDF preparation
 
 ```sql
 select count(1) from a9atrain;
@@ -37,7 +30,7 @@ select count(1) from a9atest;
 set hivevar:num_test_instances=16281;
 ```
 
-## training
+# training
 ```sql
 create table a9a_model1 
 as
@@ -55,7 +48,7 @@ group by feature;
 _"-total_steps" option is optional for logress() function._  
 _I recommend you NOT to use options (e.g., total_steps and eta0) if you are not familiar with those options. Hivemall then uses an autonomic ETA (learning rate) estimator._
 
-## prediction
+# prediction
 ```sql
 create or replace view a9a_predict1 
 as
@@ -79,7 +72,7 @@ group by
   t.rowid;
 ```
 
-## evaluation
+# evaluation
 ```sql
 create or replace view a9a_submit1 as
 select 

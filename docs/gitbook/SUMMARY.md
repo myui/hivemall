@@ -92,6 +92,8 @@
 * [Webspam Tutorial](binaryclass/webspam.md)
     * [Data pareparation](binaryclass/webspam_dataset.md)
     * [PA1, AROW, SCW](binaryclass/webspam_scw.md)
+
+* [Kaggle Titanic Tutorial](binaryclass/titanic_rf.md)
     
 ## Part VI - Multiclass classification
 

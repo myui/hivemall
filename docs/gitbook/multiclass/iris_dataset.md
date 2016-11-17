@@ -113,7 +113,7 @@ select * from iris_scaled limit 3;
 > 3       Iris-setosa     ["1:0.11111101","2:0.5","3:0.05084745","4:0.041666664","0:1.0"]
 ```
 
-_[LibSVM web page](http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html#iris) provides a normalized (using [ZScore](https://github.com/myui/hivemall/wiki/Feature-scaling)) version of Iris dataset._
+_[LibSVM web page](http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html#iris) provides a normalized (using [ZScore](../ft_engineering/scaling.html#feature-scaling-by-zscore)) version of Iris dataset._
 
 # Create training/test data
 

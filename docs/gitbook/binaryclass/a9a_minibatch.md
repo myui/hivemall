@@ -17,13 +17,12 @@
   under the License.
 -->
         
-This page explains how to apply [Mini-Batch Gradient Descent](https://class.coursera.org/ml-003/lecture/106) for the training of logistic regression explained in [this example](https://github.com/myui/hivemall/wiki/a9a-binary-classification-(logistic-regression)). 
-
-See [this page](https://github.com/myui/hivemall/wiki/a9a-binary-classification-(logistic-regression)) first. This content depends on it.
+This page explains how to apply [Mini-Batch Gradient Descent](https://class.coursera.org/ml-003/lecture/106) for the training of logistic regression explained in [this example](./a9a_lr.html). 
+So, refer [this page](./a9a_lr.html) first. This content depends on it.
 
 # Training
 
-Replace `a9a_model1` of [this example](https://github.com/myui/hivemall/wiki/a9a-binary-classification-(logistic-regression)).
+Replace `a9a_model1` of [this example](./a9a_lr.html).
 
 ```sql
 set hivevar:total_steps=32561;

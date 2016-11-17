@@ -18,17 +18,16 @@
 -->
         
 In this page, we will explain how to use model mixing on Hivemall. The model mixing is useful for a better prediction performance and faster convergence in training classifiers. 
-
-<!--
 You can find a brief explanation of the internal design of MIX protocol in [this slide](http://www.slideshare.net/myui/hivemall-mix-internal).
--->
+
+<!-- toc -->
 
 Prerequisite
 ============
 
 * Hivemall v0.3 or later
 
-We recommend to use Mixing in a cluster with fast networking. The current standard GbE is enough though.
+    We recommend to use Mixing in a cluster with fast networking. The current standard GbE is enough though.
 
 Running Mix Server
 ===================
@@ -54,11 +53,11 @@ We recommended to use multiple MIX servers to get better MIX throughput (3-5 or 
 Using Mix Protocol through Hivemall
 ===================================
 
-[Install Hivemall](https://github.com/myui/hivemall/wiki/Installation) on Hive.
+[Install Hivemall](../getting_started/installation.html) on Hive.
 
 _Make sure that [hivemall-with-dependencies.jar](https://github.com/myui/hivemall/raw/master/target/hivemall-with-dependencies.jar) is used for installation. The jar contains minimum requirement jars (netty,jsr305) for running Hivemall on Hive._
 
-Now, we explain that how to use mixing in [an example using KDD2010a dataset](https://github.com/myui/hivemall/wiki/KDD2010a-classification).
+Now, we explain that how to use mixing in [an example using KDD2010a dataset](../binaryclass/kdd2010a_dataset.html).
 
 Enabling the mixing on Hivemall is simple as follows:
 ```sql

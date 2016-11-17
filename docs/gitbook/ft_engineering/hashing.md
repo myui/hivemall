@@ -17,10 +17,10 @@
   under the License.
 -->
         
-Hivemall supports [Feature Hashing](https://github.com/myui/hivemall/wiki/Feature-hashing) (a.k.a. hashing trick) through `feature_hashing` and `mhash` functions. 
+Hivemall supports [Feature Hashing](https://en.wikipedia.org/wiki/Feature_hashing) (a.k.a. hashing trick) through `feature_hashing` and `mhash` functions. 
 Find the differences in the following examples.
 
-_Note: `feature_hashing` UDF is supported since Hivemall `v0.4.2-rc.1`._
+<!-- toc -->
 
 ## `feature_hashing` function
 

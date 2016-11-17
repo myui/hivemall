@@ -17,7 +17,7 @@
   under the License.
 -->
         
-_Note this feature is supported on hivemall v0.2-alpha3 or later._
+<!-- toc -->
 
 # create a dual table
 
@@ -33,10 +33,10 @@ INSERT INTO TABLE dual SELECT count(*)+1 FROM dual;
 ```sql
 create table regression_data1
 as
-select lr_datagen("-n_examples 10k -n_features 10 -seed 100") as (label,features)
+select lr_datagen('-n_examples 10k -n_features 10 -seed 100') as (label,features)
 from dual;
 ```
-Find the details of the option in [LogisticRegressionDataGeneratorUDTF.java](https://github.com/myui/hivemall/blob/master/core/src/main/java/hivemall/dataset/LogisticRegressionDataGeneratorUDTF.java#L69).
+Find the details of the option, run `lr_datagen('-help')`.
 
 You can generate a sparse dataset as well as a dense dataset. By the default, a sparse dataset is generated.
 ```sql

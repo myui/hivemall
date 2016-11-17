@@ -21,8 +21,7 @@ _Caution: Factorization Machine is supported from Hivemall v0.4 or later._
 
 # Data preparation
 
-First of all, please create `ratings` table described in the following page: 
-https://github.com/myui/hivemall/wiki/MovieLens-Dataset
+First of all, please create `ratings` table described in [this article](../recommend/movielens_dataset.html).
 
 ```sql
 use movielens;
@@ -190,7 +189,7 @@ usage: train_fm(array<string> x, double y [, const string options]) -
 
 ```sql
 -- workaround for a bug 
--- https://github.com/myui/hivemall/wiki/Map-side-Join-causes-ClassCastException-on-Tez:-LazyBinaryArray-cannot-be-cast-to-%5BLjava.lang.Object;
+-- https://issues.apache.org/jira/browse/HIVE-11051
 set hive.mapjoin.optimized.hashtable=false;
 
 drop table fm_predict;
@@ -222,7 +221,7 @@ from
 # Fast Factorization Machines Training using Int Features
 
 Training of Factorization Machines (FM) can be done more efficietly, in term of speed, by using INT features.
-In this section, we show how to run FM training by using int features, more specifically by using [feature hashing](https://github.com/myui/hivemall/wiki/Feature-hashing).
+In this section, we show how to run FM training by using int features, more specifically by using [feature hashing](../ft_engineering/hashing.html).
 
 ```sql
 set hivevar:factor=10;

@@ -119,4 +119,4 @@ limit ${topn};
 | 8482  | 0.15229382 |
 
 
-Refer [this page](https://github.com/myui/hivemall/wiki/Efficient-Top-k-computation-on-Apache-Hive-using-Hivemall-UDTF#top-k-similarity-computation) for efficient top-k kNN computation.
+Refer [this page](../misc/topk.html#top-k-similarity-computation) for efficient top-k kNN computation.

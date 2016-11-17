@@ -19,6 +19,8 @@
         
 This article introduce how to find outliers using [Local Outlier Detection (LOF)](http://en.wikipedia.org/wiki/Local_outlier_factor) on Hivemall.
 
+<!-- toc -->
+
 # Data Preparation
 
 ```sql
@@ -36,9 +38,9 @@ ROW FORMAT DELIMITED
 STORED AS TEXTFILE LOCATION '/dataset/lof/hundred_balls';
 ```
 
-Download [hundred_balls.txt](https://github.com/myui/hivemall/blob/master/resources/examples/lof/hundred_balls.txt) that is originally provides in [this article](http://next.rikunabi.com/tech/docs/ct_s03600.jsp?p=002259).
+Download [hundred_balls.txt](https://gist.githubusercontent.com/myui/f8b44ab925bc198e6d11b18fdd21269d/raw/bed05f811e4c351ed959e0159405690f2f11e577/hundred_balls.txt) that is originally provides in [this article](http://next.rikunabi.com/tech/docs/ct_s03600.jsp?p=002259).
 
-You can find outliers in [this picture](http://next.rikunabi.com/tech/contents/ts_report/img/201303/002259/part1_img1.jpg). As you can see, Rowid `87` is apparently an outlier.
+In this example, Rowid `87` is apparently an outlier.
 
 ```sh
 awk '{FS=" "; OFS=" "; print NR,$0}' hundred_balls.txt | \
@@ -144,11 +146,15 @@ where
 ;
 ```
 
-_Note: `list_neighbours` table SHOULD be created because `list_neighbours` is used multiple times._
+> #### Caution
+>
+> `list_neighbours` table SHOULD be created because `list_neighbours` is used multiple times.
 
-_Note: [`each_top_k`](https://github.com/myui/hivemall/pull/196) is supported from Hivemall v0.3.2-3 or later._
+# Parallelize Top-k computation
 
-_Note: To parallelize a top-k computation, break LEFT-hand table into piece as describe in [this page](https://github.com/myui/hivemall/wiki/Efficient-Top-k-computation-on-Apache-Hive-using-Hivemall-UDTF#parallelization-of-similarity-computation-using-with-clause)._
+> #### Info
+>
+> To parallelize a top-k computation, break LEFT-hand table into piece as describe in [this page](../misc/topk.html).
 
 ```sql
 WITH k_distance as (

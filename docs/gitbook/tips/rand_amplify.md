@@ -21,16 +21,16 @@ This article explains *amplify* technique that is useful for improving predictio
 
 Iterations are mandatory in machine learning (e.g., in [stochastic gradient descent](http://en.wikipedia.org/wiki/Stochastic_gradient_descent)) to get good prediction models. However, MapReduce is known to be not suited for iterative algorithms because IN/OUT of each MapReduce job is through HDFS.
 
-In this example, we show how Hivemall deals with this problem. We use [KDD Cup 2012, Track 2 Task](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-dataset) as an example.
+In this example, we show how Hivemall deals with this problem. We use [KDD Cup 2012, Track 2 Task](../regression/kddcup12tr2_dataset.html) as an example.
 
-**WARNING**: rand_amplify() is supported in v0.2-beta1 and later.
+<!-- toc -->
 
 ---
 # Amplify training examples in Map phase and shuffle them in Reduce phase
 Hivemall provides the **amplify** UDTF to enumerate iteration effects in machine learning without several MapReduce steps. 
 
 The amplify function returns multiple rows for each row.
-The first argument ${xtimes} is the multiplication factor.  
+The first argument `${xtimes}` is the multiplication factor.  
 In the following examples, the multiplication factor is set to 3.
 
 ```sql
@@ -72,9 +72,9 @@ group by feature;
 The above query is executed by 2 MapReduce jobs as shown below:
 <img src="../resources/images/amplify.png" alt="amplifier"/>
 
-Using *trainning_x3*  instead of the plain training table results in higher and better AUC (0.746214) in [this](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-(regression\)) example.
+Using *trainning_x3*  instead of the plain training table results in higher and better AUC (0.746214) in [this example](../regression/kddcup12tr2_lr_amplify.html#conclusion).
 
-A problem in amplify() is that the shuffle (copy) and merge phase of the stage 1 could become a bottleneck.
+A problem in `amplify()` is that the shuffle (copy) and merge phase of the stage 1 could become a bottleneck.
 When the training table is so large that involves 100 Map tasks, the merge operator needs to merge at least 100 files by (external) merge sort! 
 
 Note that the actual bottleneck is not M/R iterations but shuffling training instance. Iteration without shuffling (as in [the Spark example](http://spark.incubator.apache.org/examples.html)) causes very slow convergence and results in requiring more iterations. Shuffling cannot be avoided even in iterative MapReduce variants.
@@ -107,7 +107,7 @@ The map-local multiplication and shuffling has no bottleneck in the merge phase 
 
 <img src="../resources/images/randamplify_elapsed.png" alt="randamplify_elapsed"/>
 
-Using *rand_amplify* results in a better AUC (0.743392) in [this](https://github.com/myui/hivemall/wiki/KDDCup-2012-track-2-CTR-prediction-(regression\)) example.
+Using *rand_amplify* results in a better AUC (0.743392) in [this example](../regression/kddcup12tr2_lr_amplify.html#conclusion).
 
 ---
 # Conclusion
