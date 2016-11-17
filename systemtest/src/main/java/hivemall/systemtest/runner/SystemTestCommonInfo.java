@@ -21,6 +21,10 @@ package hivemall.systemtest.runner;
 import javax.annotation.Nonnull;
 
 public class SystemTestCommonInfo {
+    private static final String CASE = "case";
+    private static final String ANSWER = "answer";
+    private static final String INIT = "init";
+
     @Nonnull
     public final String baseDir;
     @Nonnull
@@ -34,9 +38,9 @@ public class SystemTestCommonInfo {
 
     public SystemTestCommonInfo(@Nonnull final Class<?> clazz) {
         baseDir = clazz.getName().replace(".", "/");
-        caseDir = baseDir + "/case/";
-        answerDir = baseDir + "/answer/";
-        initDir = baseDir + "/init/";
+        caseDir = baseDir + "/" + CASE + "/";
+        answerDir = baseDir + "/" + ANSWER + "/";
+        initDir = baseDir + "/" + INIT + "/";
         dbName = clazz.getName().replace(".", "_").toLowerCase();
     }
 }
