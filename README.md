@@ -21,7 +21,7 @@ Apache Hivemall: Hive scalable machine learning library
 =======================================================
 [![Build Status](https://travis-ci.org/myui/hivemall.svg?branch=master)](https://travis-ci.org/myui/hivemall)
 [![Coversity](https://scan.coverity.com/projects/4549/badge.svg)](https://scan.coverity.com/projects/4549)
-[![Documentation Status](https://readthedocs.org/projects/hivemall-docs/badge/?version=latest)](https://readthedocs.org/projects/hivemall-docs/?badge=latest)
+[![Documentation Status](https://img.shields.io/:docs-latest-green.svg)](http://hivemall.incubator.apache.org/userguide/)
 [![License](http://img.shields.io/:license-Apache_v2-blue.svg)](https://github.com/myui/hivemall/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/myui/hivemall/badge.svg)](https://coveralls.io/github/myui/hivemall)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ApacheHivemall.svg?style=social&label=Follow)](https://twitter.com/ApacheHivemall)
@@ -35,7 +35,7 @@ Hivemall is a scalable machine learning library that runs on Apache Hive, Apache
 Usage
 -----
 
-[![Hivemall](https://gist.githubusercontent.com/myui/d29241262f9313dec706/raw/caead313efd829b42a4a4183285e8b53cf26ab62/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/hadoopsummit16-myui)
+[![Hivemall](https://gist.githubusercontent.com/myui/d29241262f9313dec706/raw/caead313efd829b42a4a4183285e8b53cf26ab62/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/dots20161029-myui/7)
 
 Find more examples on [our user guide](http://hivemall.incubator.apache.org/userguide/index.html) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hadoopsummit16-myui).
 
