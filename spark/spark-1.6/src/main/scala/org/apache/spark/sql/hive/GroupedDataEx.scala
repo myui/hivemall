@@ -274,6 +274,27 @@ final class GroupedDataEx protected[sql](
         new HiveFunctionWrapper("hivemall.ftvec.trans.OnehotEncodingUDAF"),
         features.map(df.col(_).expr),
         isUDAFBridgeRequired = false)
+
+  /**
+   * @see hivemall.ftvec.selection.SignalNoiseRatioUDAF
+   */
+  def snr(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+      new HiveFunctionWrapper("hivemall.ftvec.selection.SignalNoiseRatioUDAF"),
+      Seq(X, Y).map(df.col(_).expr),
+      isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyString)()))
+  }
+
+  /**
+   * @see hivemall.tools.matrix.TransposeAndDotUDAF
+   */
+  def transpose_and_dot(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+      new HiveFunctionWrapper("hivemall.tools.matrix.TransposeAndDotUDAF"),
+      Seq(X, Y).map(df.col(_).expr),
+      isUDAFBridgeRequired = false)
       .toAggregateExpression()
     toDF(Seq(Alias(udaf, udaf.prettyString)()))
   }

@@ -198,6 +198,16 @@ create temporary function zscore as 'hivemall.ftvec.scaling.ZScoreUDF';
 drop temporary function l2_normalize;
 create temporary function l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF';
 
+-------------------------
+-- selection functions --
+-------------------------
+
+drop temporary function chi2;
+create temporary function chi2 as 'hivemall.ftvec.selection.ChiSquareUDF';
+
+drop temporary function snr;
+create temporary function snr as 'hivemall.ftvec.selection.SignalNoiseRatioUDAF';
+
 -----------------------------------
 -- Feature engineering functions --
 -----------------------------------
@@ -385,6 +395,9 @@ create temporary function to_string_array as 'hivemall.tools.array.ToStringArray
 drop temporary function array_intersect;
 create temporary function array_intersect as 'hivemall.tools.array.ArrayIntersectUDF';
 
+drop temporary function select_k_best;
+create temporary function select_k_best as 'hivemall.tools.array.SelectKBestUDF';
+
 -----------------------------
 -- bit operation functions --
 -----------------------------
@@ -433,6 +446,13 @@ create temporary function to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap
 
 drop temporary function sigmoid;
 create temporary function sigmoid as 'hivemall.tools.math.SigmoidGenericUDF';
+
+----------------------
+-- Matrix functions --
+----------------------
+
+drop temporary function transpose_and_dot;
+create temporary function transpose_and_dot as 'hivemall.tools.matrix.TransposeAndDotUDAF';
 
 ----------------------
 -- mapred functions --

@@ -202,6 +202,16 @@ CREATE FUNCTION zscore as 'hivemall.ftvec.scaling.ZScoreUDF' USING JAR '${hivema
 DROP FUNCTION IF EXISTS l2_normalize;
 CREATE FUNCTION l2_normalize as 'hivemall.ftvec.scaling.L2NormalizationUDF' USING JAR '${hivemall_jar}';
 
+-------------------------
+-- selection functions --
+-------------------------
+
+DROP FUNCTION IF EXISTS chi2;
+CREATE FUNCTION chi2 as 'hivemall.ftvec.selection.ChiSquareUDF' USING JAR '${hivemall_jar}';
+
+DROP FUNCTION IF EXISTS snr;
+CREATE FUNCTION snr as 'hivemall.ftvec.selection.SignalNoiseRatioUDAF' USING JAR '${hivemall_jar}';
+
 --------------------
 -- misc functions --
 --------------------
@@ -389,6 +399,9 @@ CREATE FUNCTION to_string_array as 'hivemall.tools.array.ToStringArrayUDF' USING
 DROP FUNCTION IF EXISTS array_intersect;
 CREATE FUNCTION array_intersect as 'hivemall.tools.array.ArrayIntersectUDF' USING JAR '${hivemall_jar}';
 
+DROP FUNCTION IF EXISTS select_k_best;
+CREATE FUNCTION select_k_best as 'hivemall.tools.array.SelectKBestUDF' USING JAR '${hivemall_jar}';
+
 -----------------------------
 -- bit operation functions --
 -----------------------------
@@ -437,6 +450,13 @@ CREATE FUNCTION to_ordered_map as 'hivemall.tools.map.UDAFToOrderedMap' USING JA
 
 DROP FUNCTION IF EXISTS sigmoid;
 CREATE FUNCTION sigmoid as 'hivemall.tools.math.SigmoidGenericUDF' USING JAR '${hivemall_jar}';
+
+----------------------
+-- Matrix functions --
+----------------------
+
+DROP FUNCTION IF EXISTS transpose_and_dot;
+CREATE FUNCTION transpose_and_dot as 'hivemall.tools.matrix.TransposeAndDotUDAF' USING JAR '${hivemall_jar}';
 
 ----------------------
 -- mapred functions --

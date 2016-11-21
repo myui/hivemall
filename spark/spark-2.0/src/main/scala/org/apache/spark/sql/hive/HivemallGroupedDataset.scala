@@ -273,5 +273,30 @@ object HivemallGroupedDataset {
   implicit def relationalGroupedDatasetToHivemallOne(
       groupBy: RelationalGroupedDataset): HivemallGroupedDataset = {
     new HivemallGroupedDataset(groupBy)
+
+  /**
+   * @see hivemall.ftvec.selection.SignalNoiseRatioUDAF
+   */
+  def snr(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+        "snr",
+        new HiveFunctionWrapper("hivemall.ftvec.selection.SignalNoiseRatioUDAF"),
+        Seq(X, Y).map(df.col(_).expr),
+        isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyName)()))
+  }
+
+  /**
+   * @see hivemall.tools.matrix.TransposeAndDotUDAF
+   */
+  def transpose_and_dot(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+        "transpose_and_dot",
+        new HiveFunctionWrapper("hivemall.tools.matrix.TransposeAndDotUDAF"),
+        Seq(X, Y).map(df.col(_).expr),
+        isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyName)()))
   }
 }
