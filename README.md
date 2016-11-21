@@ -24,6 +24,7 @@ Apache Hivemall: Hive scalable machine learning library
 [![Documentation Status](https://readthedocs.org/projects/hivemall-docs/badge/?version=latest)](https://readthedocs.org/projects/hivemall-docs/?badge=latest)
 [![License](http://img.shields.io/:license-Apache_v2-blue.svg)](https://github.com/myui/hivemall/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/myui/hivemall/badge.svg)](https://coveralls.io/github/myui/hivemall)
+[![Twitter Follow](https://img.shields.io/twitter/follow/ApacheHivemall.svg?style=social&label=Follow)](https://twitter.com/ApacheHivemall)
 
 **News:** Hivemall joins [Apache Incubator](http://hivemall.incubator.apache.org/)! :tada: Currently in the process of moving the project repository to ASF. This repository will be deprecated soon. Please move your stars and forks to [the new repository](https://github.com/apache/incubator-hivemall).
 
