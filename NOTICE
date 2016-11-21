@@ -23,7 +23,7 @@ o hivemall/core/src/main/java/hivemall/utils/codec/Base91.java
 
     Copyright (c) 2000-2006 Joachim Henke
 
-    https://github.com/bwaldvogel/base91    
+    https://github.com/bwaldvogel/base91
     Licensed under the BSD 3-Clause License
 
 o hivemall/core/src/main/java/hivemall/utils/collections/OpenHashMap.java
@@ -31,4 +31,13 @@ o hivemall/core/src/main/java/hivemall/utils/collections/OpenHashMap.java
     Copyright (C) 2010 catchpole.net
 
     https://github.com/slipperyseal/atomicobjects/
+    Licensed under the Apache License, Version 2.0
+
+o hivemall/spark/spark-1.6/extra-src/hive/src/main/scala/org/apache/spark/sql/hive/HiveShim.scala
+  hivemall/spark/spark-2.0/extra-src/hive/src/main/scala/org/apache/spark/sql/hive/HiveShim.scala
+  hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/QueryTest.scala
+  hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/catalyst/plans/PlanTest.scala
+  hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/hive/test/TestHiveSingleton.scala
+
+    https://github.com/apache/spark
     Licensed under the Apache License, Version 2.0
