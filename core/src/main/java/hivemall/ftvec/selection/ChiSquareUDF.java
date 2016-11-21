@@ -1,20 +1,20 @@
 /*
- * Hivemall: Hive scalable Machine Learning Library
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2016 Makoto YUI
- * Copyright (C) 2013-2015 National Institute of Advanced Industrial Science and Technology (AIST)
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package hivemall.ftvec.selection;
 
@@ -22,11 +22,18 @@ import hivemall.utils.hadoop.HiveUtils;
 import hivemall.utils.hadoop.WritableUtils;
 import hivemall.utils.lang.Preconditions;
 import hivemall.utils.math.StatsUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.udf.UDFType;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -34,15 +41,12 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 @Description(name = "chi2",
         value = "_FUNC_(array<array<number>> observed, array<array<number>> expected)"
                 + " - Returns chi2_val and p_val of each columns as <array<double>, array<double>>")
-public class ChiSquareUDF extends GenericUDF {
+@UDFType(deterministic = true, stateful = false)
+public final class ChiSquareUDF extends GenericUDF {
+
     private ListObjectInspector observedOI;
     private ListObjectInspector observedRowOI;
     private PrimitiveObjectInspector observedElOI;
@@ -61,27 +65,25 @@ public class ChiSquareUDF extends GenericUDF {
         if (OIs.length != 2) {
             throw new UDFArgumentLengthException("Specify two arguments.");
         }
-
         if (!HiveUtils.isNumberListListOI(OIs[0])) {
             throw new UDFArgumentTypeException(0,
                 "Only array<array<number>> type argument is acceptable but " + OIs[0].getTypeName()
                         + " was passed as `observed`");
         }
-
         if (!HiveUtils.isNumberListListOI(OIs[1])) {
             throw new UDFArgumentTypeException(1,
                 "Only array<array<number>> type argument is acceptable but " + OIs[1].getTypeName()
                         + " was passed as `expected`");
         }
 
-        observedOI = HiveUtils.asListOI(OIs[1]);
-        observedRowOI = HiveUtils.asListOI(observedOI.getListElementObjectInspector());
-        observedElOI = HiveUtils.asDoubleCompatibleOI(observedRowOI.getListElementObjectInspector());
-        expectedOI = HiveUtils.asListOI(OIs[0]);
-        expectedRowOI = HiveUtils.asListOI(expectedOI.getListElementObjectInspector());
-        expectedElOI = HiveUtils.asDoubleCompatibleOI(expectedRowOI.getListElementObjectInspector());
+        this.observedOI = HiveUtils.asListOI(OIs[1]);
+        this.observedRowOI = HiveUtils.asListOI(observedOI.getListElementObjectInspector());
+        this.observedElOI = HiveUtils.asDoubleCompatibleOI(observedRowOI.getListElementObjectInspector());
+        this.expectedOI = HiveUtils.asListOI(OIs[0]);
+        this.expectedRowOI = HiveUtils.asListOI(expectedOI.getListElementObjectInspector());
+        this.expectedElOI = HiveUtils.asDoubleCompatibleOI(expectedRowOI.getListElementObjectInspector());
 
-        final List<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
+        List<ObjectInspector> fieldOIs = new ArrayList<ObjectInspector>();
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
         fieldOIs.add(ObjectInspectorFactory.getStandardListObjectInspector(PrimitiveObjectInspectorFactory.writableDoubleObjectInspector));
 
@@ -90,25 +92,26 @@ public class ChiSquareUDF extends GenericUDF {
     }
 
     @Override
-    public Object evaluate(GenericUDF.DeferredObject[] dObj) throws HiveException {
-        List observedObj = observedOI.getList(dObj[0].get()); // shape = (#classes, #features)
-        List expectedObj = expectedOI.getList(dObj[1].get()); // shape = (#classes, #features)
+    public Object[] evaluate(DeferredObject[] dObj) throws HiveException {
+        List<?> observedObj = observedOI.getList(dObj[0].get()); // shape = (#classes, #features)
+        List<?> expectedObj = expectedOI.getList(dObj[1].get()); // shape = (#classes, #features)
 
-        Preconditions.checkNotNull(observedObj);
-        Preconditions.checkNotNull(expectedObj);
+        if (observedObj == null || expectedObj == null) {
+            return null;
+        }
+
         final int nClasses = observedObj.size();
         Preconditions.checkArgument(nClasses == expectedObj.size()); // same #rows
 
         // explode and transpose matrix
         for (int i = 0; i < nClasses; i++) {
-            final Object observedObjRow = observedObj.get(i);
-            final Object expectedObjRow = expectedObj.get(i);
+            Object observedObjRow = observedObj.get(i);
+            Object expectedObjRow = expectedObj.get(i);
 
             Preconditions.checkNotNull(observedObjRow);
             Preconditions.checkNotNull(expectedObjRow);
 
             if (observedRow == null) {
-                // init
                 observedRow = HiveUtils.asDoubleArray(observedObjRow, observedRowOI, observedElOI,
                     false);
                 expectedRow = HiveUtils.asDoubleArray(expectedObjRow, expectedRowOI, expectedElOI,
