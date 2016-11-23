@@ -22,7 +22,6 @@ import org.apache.spark.sql.{Column, Row}
 import org.apache.spark.sql.hive.HivemallOps._
 import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, Row}
 import org.apache.spark.test.HivemallQueryTest
 import org.apache.spark.test.TestDoubleWrapper._
 import org.apache.spark.test.TestUtils._
@@ -575,14 +574,13 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     assert(row4(0).getDouble(1) ~== 0.25)
   }
 
-  test("user-defined aggregators for ftvec.trans") {
+  ignore("user-defined aggregators for ftvec.trans") {
     import hiveContext.implicits._
 
     val df0 = Seq((1, "cat", "mammal", 9), (1, "dog", "mammal", 10), (1, "human", "mammal", 10),
       (1, "seahawk", "bird", 101), (1, "wasp", "insect", 3), (1, "wasp", "insect", 9),
       (1, "cat", "mammal", 101), (1, "dog", "mammal", 1), (1, "human", "mammal", 9))
-    .toDF("col0", "cat1", "cat2", "cat3")
-
+      .toDF("col0", "cat1", "cat2", "cat3")
     val row00 = df0.groupby($"col0").onehot_encoding("cat1")
     val row01 = df0.groupby($"col0").onehot_encoding("cat1", "cat2", "cat3")
 
@@ -600,6 +598,7 @@ final class HivemallOpsSuite extends HivemallQueryTest {
     assert(result011.values.toSet === Set(6, 7, 8))
     assert(result012.keySet === Set(1, 3, 9, 10, 101))
     assert(result012.values.toSet === Set(9, 10, 11, 12, 13))
+  }
 
   test("user-defined aggregators for ftvec.selection") {
     import hiveContext.implicits._

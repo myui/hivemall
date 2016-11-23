@@ -271,9 +271,11 @@ final class GroupedDataEx protected[sql](
    */
   def onehot_encoding(features: String*): DataFrame = {
     val udaf = HiveUDAFFunction(
-        new HiveFunctionWrapper("hivemall.ftvec.trans.OnehotEncodingUDAF"),
-        features.map(df.col(_).expr),
-        isUDAFBridgeRequired = false)
+      new HiveFunctionWrapper("hivemall.ftvec.trans.OnehotEncodingUDAF"),
+      features.map(df.col(_).expr),
+      isUDAFBridgeRequired = false)
+    toDF(Seq(Alias(udaf, udaf.prettyString)()))
+  }
 
   /**
    * @see hivemall.ftvec.selection.SignalNoiseRatioUDAF

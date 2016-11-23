@@ -1010,9 +1010,9 @@ object HivemallOps {
   }
 
   /**
-    * @see hivemall.ftvec.selection.ChiSquareUDF
-    * @group ftvec.selection
-    */
+   * @see hivemall.ftvec.selection.ChiSquareUDF
+   * @group ftvec.selection
+   */
   def chi2(observed: Column, expected: Column): Column = {
     HiveGenericUDF(new HiveFunctionWrapper(
       "hivemall.ftvec.selection.ChiSquareUDF"), Seq(observed.expr, expected.expr))
