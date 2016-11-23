@@ -26,12 +26,6 @@ import org.apache.spark.sql.hive.HivemallUtils._
 import org.apache.spark.sql.types._
 import org.apache.spark.test.{HivemallFeatureQueryTest, TestUtils, VectorQueryTest}
 import org.apache.spark.test.TestDoubleWrapper._
-import org.apache.spark.sql.hive.HivemallOps._
-import org.apache.spark.sql.hive.HivemallUtils._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{AnalysisException, Column, Row, functions}
-import org.apache.spark.test.TestDoubleWrapper._
-import org.apache.spark.test.{HivemallFeatureQueryTest, TestUtils, VectorQueryTest}
 
 final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
 
@@ -705,6 +699,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     assert(result011.values.toSet === Set(6, 7, 8))
     assert(result012.keySet === Set(1, 3, 9, 10, 101))
     assert(result012.values.toSet === Set(9, 10, 11, 12, 13))
+  }
 
   test("user-defined aggregators for ftvec.selection") {
     import hiveContext.implicits._
@@ -726,7 +721,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       (1, Seq(4.7, 3.2, 1.3, 0.2), Seq(1, 0)), (1, Seq(7.0, 3.2, 4.7, 1.4), Seq(0, 1)),
       (1, Seq(6.4, 3.2, 4.5, 1.5), Seq(0, 1)), (1, Seq(6.9, 3.1, 4.9, 1.5), Seq(0, 1)))
       .toDF("c0", "arg0", "arg1")
-    val row0 = df0.groupby($"c0").snr("arg0", "arg1").collect
+    val row0 = df0.groupBy($"c0").snr("arg0", "arg1").collect
     (row0(0).getAs[Seq[Double]](1), Seq(4.38425236, 0.26390002, 15.83984511, 26.87005769))
       .zipped
       .foreach((actual, expected) => assert(actual ~== expected))
@@ -747,7 +742,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       (1, Seq(7.0, 3.2, 4.7, 1.4), Seq(0, 1, 0)), (1, Seq(6.4, 3.2, 4.5, 1.5), Seq(0, 1, 0)),
       (1, Seq(6.3, 3.3, 6.0, 2.5), Seq(0, 0, 1)), (1, Seq(5.8, 2.7, 5.1, 1.9), Seq(0, 0, 1)))
       .toDF("c0", "arg0", "arg1")
-    val row1 = df1.groupby($"c0").snr("arg0", "arg1").collect
+    val row1 = df1.groupBy($"c0").snr("arg0", "arg1").collect
     (row1(0).getAs[Seq[Double]](1), Seq(8.43181818, 1.32121212, 42.94949495, 33.80952381))
       .zipped
       .foreach((actual, expected) => assert(actual ~== expected))
@@ -761,7 +756,7 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     val df0 = Seq((1, Seq(1, 2, 3), Seq(5, 6, 7)), (1, Seq(3, 4, 5), Seq(7, 8, 9)))
       .toDF("c0", "arg0", "arg1")
 
-    checkAnswer(df0.groupby($"c0").transpose_and_dot("arg0", "arg1"),
+    checkAnswer(df0.groupBy($"c0").transpose_and_dot("arg0", "arg1"),
       Seq(Row(1, Seq(Seq(26.0, 30.0, 34.0), Seq(38.0, 44.0, 50.0), Seq(50.0, 58.0, 66.0)))))
   }
 }
