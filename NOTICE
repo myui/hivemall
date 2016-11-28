@@ -1,5 +1,5 @@
 Apache Hivemall
-Copyright 2016 The Apache Software Foundation
+Copyright 2016 and onwards The Apache Software Foundation
 
 This product includes software developed at
 The Apache Software Foundation (http://www.apache.org/).
@@ -33,11 +33,30 @@ o hivemall/core/src/main/java/hivemall/utils/collections/OpenHashMap.java
     https://github.com/slipperyseal/atomicobjects/
     Licensed under the Apache License, Version 2.0
 
+------------------------------------------------------------------------------------------------------
+Copyright notifications which have been relocated from ASF projects
+
+o hivemall/core/src/main/java/hivemall/utils/math/MathUtils.java#erfInv()
+
+    Copyright (C) 2003-2016 The Apache Software Foundation. 
+
+    http://commons.apache.org/proper/commons-math/
+    Licensed under the Apache License, Version 2.0
+
+o hivemall/core/src/main/java/hivemall/utils/buffer/DynamicByteArray.java
+
+    Copyright 2013-2015 The Apache Software Foundation
+
+    https://orc.apache.org/
+    Licensed under the Apache License, Version 2.0
+
 o hivemall/spark/spark-1.6/extra-src/hive/src/main/scala/org/apache/spark/sql/hive/HiveShim.scala
   hivemall/spark/spark-2.0/extra-src/hive/src/main/scala/org/apache/spark/sql/hive/HiveShim.scala
   hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/QueryTest.scala
   hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/catalyst/plans/PlanTest.scala
   hivemall/spark/spark-2.0/src/test/scala/org/apache/spark/sql/hive/test/TestHiveSingleton.scala
 
-    https://github.com/apache/spark
+    Copyright (C) 2014-2016 The Apache Software Foundation.
+
+    http://spark.apache.org/
     Licensed under the Apache License, Version 2.0
