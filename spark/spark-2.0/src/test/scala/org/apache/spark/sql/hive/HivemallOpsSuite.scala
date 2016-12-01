@@ -188,6 +188,35 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
         Row(Seq("1:1.0"))))
   }
 
+  test("ftvec.selection - chi2") {
+    import hiveContext.implicits._
+
+    // see also hivemall.ftvec.selection.ChiSquareUDFTest
+    val df = Seq(
+      Seq(
+        Seq(250.29999999999998, 170.90000000000003, 73.2, 12.199999999999996),
+        Seq(296.8, 138.50000000000003, 212.99999999999997, 66.3),
+        Seq(329.3999999999999, 148.7, 277.59999999999997, 101.29999999999998)
+      ) -> Seq(
+        Seq(292.1666753739119, 152.70000455081467, 187.93333893418327, 59.93333511948589),
+        Seq(292.1666753739119, 152.70000455081467, 187.93333893418327, 59.93333511948589),
+        Seq(292.1666753739119, 152.70000455081467, 187.93333893418327, 59.93333511948589)))
+      .toDF("arg0", "arg1")
+
+    val result = df.select(chi2(df("arg0"), df("arg1"))).collect
+    assert(result.length == 1)
+    val chi2Val = result.head.getAs[Row](0).getAs[Seq[Double]](0)
+    val pVal = result.head.getAs[Row](0).getAs[Seq[Double]](1)
+
+    (chi2Val, Seq(10.81782088, 3.59449902, 116.16984746, 67.24482759))
+      .zipped
+      .foreach((actual, expected) => assert(actual ~== expected))
+
+    (pVal, Seq(4.47651499e-03, 1.65754167e-01, 5.94344354e-26, 2.50017968e-15))
+      .zipped
+      .foreach((actual, expected) => assert(actual ~== expected))
+  }
+
   test("ftvec.conv - quantify") {
     import hiveContext.implicits._
     val testDf = Seq((1, "aaa", true), (2, "bbb", false), (3, "aaa", false)).toDF
@@ -359,6 +388,16 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
       .select($"predicted.label")
 
     checkAnswer(predicted, Seq(Row(0), Row(1)))
+  }
+
+  test("tools.array - select_k_best") {
+    import hiveContext.implicits._
+
+    val data = Seq(Seq(0, 1, 3), Seq(2, 4, 1), Seq(5, 4, 9))
+    val df = data.map(d => (d, Seq(3, 1, 2), 2)).toDF("features", "importance_list", "k")
+
+    checkAnswer(df.select(select_k_best(df("features"), df("importance_list"), df("k"))),
+      data.map(s => Row(Seq(s(0).toDouble, s(2).toDouble))))
   }
 
   test("misc - sigmoid") {
@@ -660,6 +699,65 @@ final class HivemallOpsWithFeatureSuite extends HivemallFeatureQueryTest {
     assert(result011.values.toSet === Set(6, 7, 8))
     assert(result012.keySet === Set(1, 3, 9, 10, 101))
     assert(result012.values.toSet === Set(9, 10, 11, 12, 13))
+  }
+
+  test("user-defined aggregators for ftvec.selection") {
+    import hiveContext.implicits._
+
+    // see also hivemall.ftvec.selection.SignalNoiseRatioUDAFTest
+    // binary class
+    // +-----------------+-------+
+    // |     features    | class |
+    // +-----------------+-------+
+    // | 5.1,3.5,1.4,0.2 |     0 |
+    // | 4.9,3.0,1.4,0.2 |     0 |
+    // | 4.7,3.2,1.3,0.2 |     0 |
+    // | 7.0,3.2,4.7,1.4 |     1 |
+    // | 6.4,3.2,4.5,1.5 |     1 |
+    // | 6.9,3.1,4.9,1.5 |     1 |
+    // +-----------------+-------+
+    val df0 = Seq(
+      (1, Seq(5.1, 3.5, 1.4, 0.2), Seq(1, 0)), (1, Seq(4.9, 3.0, 1.4, 0.2), Seq(1, 0)),
+      (1, Seq(4.7, 3.2, 1.3, 0.2), Seq(1, 0)), (1, Seq(7.0, 3.2, 4.7, 1.4), Seq(0, 1)),
+      (1, Seq(6.4, 3.2, 4.5, 1.5), Seq(0, 1)), (1, Seq(6.9, 3.1, 4.9, 1.5), Seq(0, 1)))
+      .toDF("c0", "arg0", "arg1")
+    val row0 = df0.groupBy($"c0").snr("arg0", "arg1").collect
+    (row0(0).getAs[Seq[Double]](1), Seq(4.38425236, 0.26390002, 15.83984511, 26.87005769))
+      .zipped
+      .foreach((actual, expected) => assert(actual ~== expected))
+
+    // multiple class
+    // +-----------------+-------+
+    // |     features    | class |
+    // +-----------------+-------+
+    // | 5.1,3.5,1.4,0.2 |     0 |
+    // | 4.9,3.0,1.4,0.2 |     0 |
+    // | 7.0,3.2,4.7,1.4 |     1 |
+    // | 6.4,3.2,4.5,1.5 |     1 |
+    // | 6.3,3.3,6.0,2.5 |     2 |
+    // | 5.8,2.7,5.1,1.9 |     2 |
+    // +-----------------+-------+
+    val df1 = Seq(
+      (1, Seq(5.1, 3.5, 1.4, 0.2), Seq(1, 0, 0)), (1, Seq(4.9, 3.0, 1.4, 0.2), Seq(1, 0, 0)),
+      (1, Seq(7.0, 3.2, 4.7, 1.4), Seq(0, 1, 0)), (1, Seq(6.4, 3.2, 4.5, 1.5), Seq(0, 1, 0)),
+      (1, Seq(6.3, 3.3, 6.0, 2.5), Seq(0, 0, 1)), (1, Seq(5.8, 2.7, 5.1, 1.9), Seq(0, 0, 1)))
+      .toDF("c0", "arg0", "arg1")
+    val row1 = df1.groupBy($"c0").snr("arg0", "arg1").collect
+    (row1(0).getAs[Seq[Double]](1), Seq(8.43181818, 1.32121212, 42.94949495, 33.80952381))
+      .zipped
+      .foreach((actual, expected) => assert(actual ~== expected))
+  }
+
+  test("user-defined aggregators for tools.matrix") {
+    import hiveContext.implicits._
+
+    // | 1  2  3 |T    | 5  6  7 |
+    // | 3  4  5 |  *  | 7  8  9 |
+    val df0 = Seq((1, Seq(1, 2, 3), Seq(5, 6, 7)), (1, Seq(3, 4, 5), Seq(7, 8, 9)))
+      .toDF("c0", "arg0", "arg1")
+
+    checkAnswer(df0.groupBy($"c0").transpose_and_dot("arg0", "arg1"),
+      Seq(Row(1, Seq(Seq(26.0, 30.0, 34.0), Seq(38.0, 44.0, 50.0), Seq(50.0, 58.0, 66.0)))))
   }
 }
 

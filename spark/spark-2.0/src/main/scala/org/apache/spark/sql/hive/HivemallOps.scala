@@ -1216,6 +1216,16 @@ object HivemallOps {
   }
 
   /**
+   * @see hivemall.ftvec.selection.ChiSquareUDF
+   * @group ftvec.selection
+   */
+  def chi2(observed: Column, expected: Column): Column = withExpr {
+    HiveGenericUDF("chi2",
+      new HiveFunctionWrapper("hivemall.ftvec.selection.ChiSquareUDF"),
+      Seq(observed.expr, expected.expr))
+  }
+
+  /**
    * @see hivemall.ftvec.conv.ToDenseFeaturesUDF
    * @group ftvec.conv
    */
@@ -1292,6 +1302,16 @@ object HivemallOps {
     HiveGenericUDF("tree_predict",
       new HiveFunctionWrapper("hivemall.smile.tools.TreePredictUDF"),
       exprs.map(_.expr))
+  }
+
+  /**
+   * @see hivemall.tools.array.SelectKBestUDF
+   * @group tools.array
+   */
+  def select_k_best(X: Column, importanceList: Column, k: Column): Column = withExpr {
+    HiveGenericUDF("select_k_best",
+      new HiveFunctionWrapper("hivemall.tools.array.SelectKBestUDF"),
+      Seq(X.expr, importanceList.expr, k.expr))
   }
 
   /**

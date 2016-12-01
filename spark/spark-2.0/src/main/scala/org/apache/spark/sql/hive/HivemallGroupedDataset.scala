@@ -133,6 +133,19 @@ final class HivemallGroupedDataset(groupBy: RelationalGroupedDataset) {
   }
 
   /**
+   * @see hivemall.tools.matrix.TransposeAndDotUDAF
+   */
+  def transpose_and_dot(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+        "transpose_and_dot",
+        new HiveFunctionWrapper("hivemall.tools.matrix.TransposeAndDotUDAF"),
+        Seq(X, Y).map(df.col(_).expr),
+        isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyName)()))
+  }
+
+  /**
    * @see hivemall.ftvec.trans.OnehotEncodingUDAF
    * @group ftvec.trans
    */
@@ -141,6 +154,19 @@ final class HivemallGroupedDataset(groupBy: RelationalGroupedDataset) {
         "onehot_encoding",
         new HiveFunctionWrapper("hivemall.ftvec.trans.OnehotEncodingUDAF"),
         cols.map(df.col(_).expr),
+        isUDAFBridgeRequired = false)
+      .toAggregateExpression()
+    toDF(Seq(Alias(udaf, udaf.prettyName)()))
+  }
+
+  /**
+   * @see hivemall.ftvec.selection.SignalNoiseRatioUDAF
+   */
+  def snr(X: String, Y: String): DataFrame = {
+    val udaf = HiveUDAFFunction(
+        "snr",
+        new HiveFunctionWrapper("hivemall.ftvec.selection.SignalNoiseRatioUDAF"),
+        Seq(X, Y).map(df.col(_).expr),
         isUDAFBridgeRequired = false)
       .toAggregateExpression()
     toDF(Seq(Alias(udaf, udaf.prettyName)()))

@@ -61,6 +61,8 @@
     * [Vectorize Features](ft_engineering/vectorizer.md)
     * [Quantify non-number features](ft_engineering/quantify.md)
 
+* [Feature selection](ft_engineering/feature_selection.md)
+
 ## Part IV - Evaluation
 
 * [Statistical evaluation of a prediction model](eval/stat_eval.md)

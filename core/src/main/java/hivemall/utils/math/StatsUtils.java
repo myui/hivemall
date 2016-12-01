@@ -22,11 +22,19 @@ import hivemall.utils.lang.Preconditions;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.math3.distribution.ChiSquaredDistribution;
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.NotPositiveException;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
+import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.MathArrays;
+
+import java.util.AbstractMap;
+import java.util.Map;
 
 public final class StatsUtils {
 
@@ -189,4 +197,87 @@ public final class StatsUtils {
         return 1.d - numerator / denominator;
     }
 
+    /**
+     * @param observed means non-negative vector
+     * @param expected means positive vector
+     * @return chi2 value
+     */
+    public static double chiSquare(@Nonnull final double[] observed,
+            @Nonnull final double[] expected) {
+        if (observed.length < 2) {
+            throw new DimensionMismatchException(observed.length, 2);
+        }
+        if (expected.length != observed.length) {
+            throw new DimensionMismatchException(observed.length, expected.length);
+        }
+        MathArrays.checkPositive(expected);
+        for (double d : observed) {
+            if (d < 0.d) {
+                throw new NotPositiveException(d);
+            }
+        }
+
+        double sumObserved = 0.d;
+        double sumExpected = 0.d;
+        for (int i = 0; i < observed.length; i++) {
+            sumObserved += observed[i];
+            sumExpected += expected[i];
+        }
+        double ratio = 1.d;
+        boolean rescale = false;
+        if (FastMath.abs(sumObserved - sumExpected) > 10e-6) {
+            ratio = sumObserved / sumExpected;
+            rescale = true;
+        }
+        double sumSq = 0.d;
+        for (int i = 0; i < observed.length; i++) {
+            if (rescale) {
+                final double dev = observed[i] - ratio * expected[i];
+                sumSq += dev * dev / (ratio * expected[i]);
+            } else {
+                final double dev = observed[i] - expected[i];
+                sumSq += dev * dev / expected[i];
+            }
+        }
+        return sumSq;
+    }
+
+    /**
+     * @param observed means non-negative vector
+     * @param expected means positive vector
+     * @return p value
+     */
+    public static double chiSquareTest(@Nonnull final double[] observed,
+            @Nonnull final double[] expected) {
+        final ChiSquaredDistribution distribution = new ChiSquaredDistribution(
+            expected.length - 1.d);
+        return 1.d - distribution.cumulativeProbability(chiSquare(observed, expected));
+    }
+
+    /**
+     * This method offers effective calculation for multiple entries rather than calculation
+     * individually
+     * 
+     * @param observeds means non-negative matrix
+     * @param expecteds means positive matrix
+     * @return (chi2 value[], p value[])
+     */
+    public static Map.Entry<double[], double[]> chiSquare(@Nonnull final double[][] observeds,
+            @Nonnull final double[][] expecteds) {
+        Preconditions.checkArgument(observeds.length == expecteds.length);
+
+        final int len = expecteds.length;
+        final int lenOfEach = expecteds[0].length;
+
+        final ChiSquaredDistribution distribution = new ChiSquaredDistribution(lenOfEach - 1.d);
+
+        final double[] chi2s = new double[len];
+        final double[] ps = new double[len];
+        for (int i = 0; i < len; i++) {
+            chi2s[i] = chiSquare(observeds[i], expecteds[i]);
+            ps[i] = 1.d - distribution.cumulativeProbability(chi2s[i]);
+        }
+
+        return new AbstractMap.SimpleEntry<double[], double[]>(chi2s, ps);
+    }
 }

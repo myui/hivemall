@@ -59,6 +59,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.IntObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.LongObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
@@ -200,8 +201,7 @@ public final class HiveUtils {
         return BOOLEAN_TYPE_NAME.equals(typeName);
     }
 
-    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI)
-            throws UDFArgumentTypeException {
+    public static boolean isNumberOI(@Nonnull final ObjectInspector argOI) {
         if (argOI.getCategory() != Category.PRIMITIVE) {
             return false;
         }
@@ -244,6 +244,16 @@ public final class HiveUtils {
 
     public static boolean isMapOI(@Nonnull final ObjectInspector oi) {
         return oi.getCategory() == Category.MAP;
+    }
+
+    public static boolean isNumberListOI(@Nonnull final ObjectInspector oi) {
+        return isListOI(oi)
+                && isNumberOI(((ListObjectInspector) oi).getListElementObjectInspector());
+    }
+
+    public static boolean isNumberListListOI(@Nonnull final ObjectInspector oi) {
+        return isListOI(oi)
+                && isNumberListOI(((ListObjectInspector) oi).getListElementObjectInspector());
     }
 
     public static boolean isPrimitiveTypeInfo(@Nonnull TypeInfo typeInfo) {
@@ -685,6 +695,14 @@ public final class HiveUtils {
             throw new UDFArgumentException("Argument type must be BIGINT: " + argOI.getTypeName());
         }
         return (LongObjectInspector) argOI;
+    }
+
+    public static DoubleObjectInspector asDoubleOI(@Nonnull final ObjectInspector argOI)
+            throws UDFArgumentException {
+        if (!DOUBLE_TYPE_NAME.equals(argOI.getTypeName())) {
+            throw new UDFArgumentException("Argument type must be DOUBLE: " + argOI.getTypeName());
+        }
+        return (DoubleObjectInspector) argOI;
     }
 
     public static PrimitiveObjectInspector asIntCompatibleOI(@Nonnull final ObjectInspector argOI)
