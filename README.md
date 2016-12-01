@@ -17,8 +17,8 @@
   under the License.
 -->
 
-Apache Hivemall: Hive scalable machine learning library
-=======================================================
+Apache Hivemall: Scalable Machine Learning Library for Apache Hive/Spark/Pig
+=============================================================================
 [![Build Status](https://travis-ci.org/myui/hivemall.svg?branch=master)](https://travis-ci.org/myui/hivemall)
 [![Coversity](https://scan.coverity.com/projects/4549/badge.svg)](https://scan.coverity.com/projects/4549)
 [![Documentation Status](https://img.shields.io/:docs-latest-green.svg)](http://hivemall.incubator.apache.org/userguide/)
@@ -26,20 +26,6 @@ Apache Hivemall: Hive scalable machine learning library
 [![Coverage Status](https://coveralls.io/repos/github/myui/hivemall/badge.svg)](https://coveralls.io/github/myui/hivemall)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ApacheHivemall.svg?style=social&label=Follow)](https://twitter.com/ApacheHivemall)
 
-**News:** Hivemall joins [Apache Incubator](http://hivemall.incubator.apache.org/)! :tada: Currently in the process of moving the project repository to ASF. This repository will be deprecated soon. Please move your stars and forks to [the new repository](https://github.com/apache/incubator-hivemall).
+**Important:** Hivemall joins [Apache Incubator](http://hivemall.incubator.apache.org/) :tada: The development moved to [the ASF repository](https://github.com/apache/incubator-hivemall). Please move your star/watch/fork to it.
 
-[![Incubator](http://incubator.apache.org/images/egg-logo2.png "Apache Incubator")](http://hivemall.incubator.apache.org/)
-
-Hivemall is a scalable machine learning library that runs on Apache Hive, Apache Spark, and Apache Pig. Hivemall is designed to be scalable to the number of training instances as well as the number of training features.
-
-Usage
------
-
-[![Hivemall](https://gist.githubusercontent.com/myui/d29241262f9313dec706/raw/caead313efd829b42a4a4183285e8b53cf26ab62/hadoopsummit14_slideshare.png)](http://www.slideshare.net/myui/dots20161029-myui/7)
-
-Find more examples on [our user guide](http://hivemall.incubator.apache.org/userguide/index.html) and find a brief introduction to Hivemall in [this slide](http://www.slideshare.net/myui/hadoopsummit16-myui).
-
-Support
--------
-
-Support is through [user@hivemall.incubator.apache.org](http://hivemall.incubator.apache.org/mail-lists.html), not by a direct e-mail. 
+This repository will be deprecated soon. 
