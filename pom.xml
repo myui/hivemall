@@ -226,6 +226,7 @@
 		<module>nlp</module>
 		<module>xgboost</module>
 		<module>mixserv</module>
+		<module>systemtest</module>
 	</modules>
 
 	<properties>
