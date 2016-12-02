@@ -19,4 +19,4 @@
 
 **Important:** Hivemall joins [Apache Incubator](http://hivemall.incubator.apache.org/) :tada: The development moved to [the ASF repository](https://github.com/apache/incubator-hivemall). Please move your star/watch/fork to it.
 
-This repository will be deprecated soon. 
+This repository became deprecated.
